@@ -19,15 +19,23 @@ func resourceMachine() *schema.Resource {
 		//UpdateContext: resourceMachineUpdate,s
 		DeleteContext: resourceMachineDelete,
 		Schema: map[string]*schema.Schema{
-			"key_name": &schema.Schema{
+			"region": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				ForceNew: true,
+				Default:  "us-west-2",
 			},
-			"private_key": &schema.Schema{
+			"instance_ami": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				ForceNew: true,
+				Default:  "ami-e7527ed7",
+			},
+			"instance_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "t2.micro",
 			},
 			"instance_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -44,23 +52,27 @@ func resourceMachine() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"instance_ami": &schema.Schema{
+			"key_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
-				Default:  "ami-e7527ed7",
+				Computed: true,
 			},
-			"instance_type": &schema.Schema{
+			"key_public": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Default:  "t2.micro",
+				Default:  "",
 			},
-			"region": &schema.Schema{
+			"key_private": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"aws_security_group": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Default:  "us-west-2",
+				Default:  "",
 			},
 		},
 	}
@@ -69,42 +81,56 @@ func resourceMachine() *schema.Resource {
 func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	svc, errClient := awsClient(d)
+	if errClient != nil {
+		return diag.FromErr(errClient)
+	}
+
 	sid, err := shortid.New(1, shortid.DefaultABC, 2342)
 	id, _ := sid.Generate()
 
-	svc, _ := awsClient(d)
-	ctxx := context.Background()
-
-	ami := d.Get("instance_ami").(string)
+	instanceAmi := d.Get("instance_ami").(string)
 	instanceType := d.Get("instance_type").(string)
+	keyPublic := d.Get("key_public").(string)
+
+	securityGroup := d.Get("aws_security_group").(string)
+
 	pairName := "cml_" + id
-	groupName := "cml"
+	var keyMaterial string
 
-	keyResult, err := svc.CreateKeyPair(&ec2.CreateKeyPairInput{
-		KeyName: aws.String(pairName),
-	})
-	if err != nil {
-		return diag.FromErr(err)
+	// key-pair
+	if len(keyPublic) != 0 {
+		_, errImportKeyPair := svc.ImportKeyPair(&ec2.ImportKeyPairInput{
+			KeyName:           aws.String(pairName),
+			PublicKeyMaterial: []byte(keyPublic),
+		})
+		if errImportKeyPair != nil {
+			return diag.FromErr(errImportKeyPair)
+		}
+
+	} else {
+		keyResult, err := svc.CreateKeyPair(&ec2.CreateKeyPairInput{
+			KeyName: aws.String(pairName),
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		keyMaterial = *keyResult.KeyMaterial
 	}
-	keyMaterial := *keyResult.KeyMaterial
 
-	vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{
-		/* Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("tag:Name"),
-				Values: []*string{aws.String("cml")},
-			},
-		}, */
-	})
-	vpc := vpcsDesc.Vpcs[0]
+	if len(securityGroup) == 0 {
+		securityGroup = "cml"
 
-	gpResult, ee := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
-		GroupName:   aws.String(groupName),
-		Description: aws.String("CML security group"),
-		VpcId:       aws.String(*vpc.VpcId),
-	})
+		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
+		vpc := vpcsDesc.Vpcs[0]
+		vpcID := *vpc.VpcId
 
-	if ee == nil {
+		gpResult, ee := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
+			GroupName:   aws.String(securityGroup),
+			Description: aws.String("CML security group"),
+			VpcId:       aws.String(vpcID),
+		})
+
 		svc.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
 			GroupId: aws.String(*gpResult.GroupId),
 			IpPermissions: []*ec2.IpPermission{
@@ -130,18 +156,20 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 					}),
 			},
 		})
+		if ee != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	runResult, err := svc.RunInstancesWithContext(ctxx, &ec2.RunInstancesInput{
+	runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
+		ImageId:      aws.String(instanceAmi),
 		KeyName:      aws.String(pairName),
-		ImageId:      aws.String(ami),
 		InstanceType: aws.String(instanceType),
 		MinCount:     aws.Int64(1),
 		MaxCount:     aws.Int64(1),
 		SecurityGroups: []*string{
-			aws.String(groupName),
+			aws.String(securityGroup),
 		},
-
 		//CpuOptions:   instanceOpts.CpuOptions,
 	})
 	if err != nil {
@@ -169,12 +197,16 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceIds[0] = &instanceID
 	statusInput := ec2.DescribeInstancesInput{
 		InstanceIds: instanceIds,
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("instance-state-name"),
+				Values: []*string{aws.String("running")},
+			},
+		},
 	}
-	svc.WaitUntilInstanceExistsWithContext(ctxx, &statusInput)
+	svc.WaitUntilInstanceExistsWithContext(ctx, &statusInput)
 
-	time.Sleep(50 * time.Second)
-
-	descResult, _ := svc.DescribeInstancesWithContext(ctxx, &statusInput)
+	descResult, _ := svc.DescribeInstancesWithContext(ctx, &statusInput)
 	instanceDesc := descResult.Reservations[0].Instances[0]
 
 	d.SetId(instanceID)
@@ -182,11 +214,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	d.Set("instance_ip", instanceDesc.PublicIpAddress)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
 	d.Set("key_name", pairName)
-	d.Set("private_key", keyMaterial)
-
-	/* if err := d.Set("instaceID", instanceID); err != nil {
-		return diag.FromErr(err)
-	} */
+	d.Set("key_privates", keyMaterial)
 
 	return diags
 }
@@ -230,14 +258,12 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func awsClient(d *schema.ResourceData) (*ec2.EC2, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+func awsClient(d *schema.ResourceData) (*ec2.EC2, error) {
 	region := d.Get("region").(string)
-	sess, _ := session.NewSession(&aws.Config{
+	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(region)},
 	)
 	svc := ec2.New(sess)
 
-	return svc, diags
+	return svc, err
 }
