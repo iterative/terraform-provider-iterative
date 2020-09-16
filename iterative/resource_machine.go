@@ -214,7 +214,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	d.Set("instance_ip", instanceDesc.PublicIpAddress)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
 	d.Set("key_name", pairName)
-	d.Set("key_privates", keyMaterial)
+	d.Set("key_private", keyMaterial)
 
 	return diags
 }
