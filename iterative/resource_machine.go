@@ -2,6 +2,7 @@ package iterative
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,19 +24,19 @@ func resourceMachine() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Default:  "us-west-2",
-			},
-			"instance_ami": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "ami-e7527ed7",
+				Default:  "us-east-1",
 			},
 			"instance_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Default:  "t2.micro",
+			},
+			"instance_hdd_size": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
+				Default:  100,
 			},
 			"instance_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -89,11 +90,43 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sid, err := shortid.New(1, shortid.DefaultABC, 2342)
 	id, _ := sid.Generate()
 
-	instanceAmi := d.Get("instance_ami").(string)
+	amiParams := &ec2.DescribeImagesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("name"),
+				Values: []*string{aws.String("Deep*Ubuntu 18.04*")},
+			},
+			{
+				Name:   aws.String("architecture"),
+				Values: []*string{aws.String("x86_64")},
+			},
+		},
+	}
+	imagesRes, imagesErr := svc.DescribeImages(amiParams)
+	if imagesErr != nil {
+		diag.FromErr(imagesErr)
+	}
+
+	sort.Slice(imagesRes.Images, func(i, j int) bool {
+		itime, _ := time.Parse(time.RFC3339, aws.StringValue(imagesRes.Images[i].CreationDate))
+		jtime, _ := time.Parse(time.RFC3339, aws.StringValue(imagesRes.Images[j].CreationDate))
+		return itime.Unix() > jtime.Unix()
+	})
+
+	/* diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  "Unable to create HashiCups client",
+		Detail:   fmt.Sprint(len(imagesRes.Images)),
+	})
+
+	return diags */
+
+	instanceAmi := *imagesRes.Images[0].ImageId
 	instanceType := d.Get("instance_type").(string)
 	keyPublic := d.Get("key_public").(string)
 
 	securityGroup := d.Get("aws_security_group").(string)
+	hddSize := d.Get("instance_hdd_size").(int)
 
 	pairName := "cml_" + id
 	var keyMaterial string
@@ -131,33 +164,32 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			VpcId:       aws.String(vpcID),
 		})
 
-		svc.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
-			GroupId: aws.String(*gpResult.GroupId),
-			IpPermissions: []*ec2.IpPermission{
-				(&ec2.IpPermission{}).
-					SetIpProtocol("-1").
-					SetFromPort(-1).
-					SetToPort(-1).
-					SetIpRanges([]*ec2.IpRange{
-						{CidrIp: aws.String("0.0.0.0/0")},
-					}),
-			},
-		})
+		if ee == nil {
+			svc.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
+				GroupId: aws.String(*gpResult.GroupId),
+				IpPermissions: []*ec2.IpPermission{
+					(&ec2.IpPermission{}).
+						SetIpProtocol("-1").
+						SetFromPort(-1).
+						SetToPort(-1).
+						SetIpRanges([]*ec2.IpRange{
+							{CidrIp: aws.String("0.0.0.0/0")},
+						}),
+				},
+			})
 
-		svc.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
-			GroupId: aws.String(*gpResult.GroupId),
-			IpPermissions: []*ec2.IpPermission{
-				(&ec2.IpPermission{}).
-					SetIpProtocol("-1").
-					SetFromPort(-1).
-					SetToPort(-1).
-					SetIpRanges([]*ec2.IpRange{
-						{CidrIp: aws.String("0.0.0.0/0")},
-					}),
-			},
-		})
-		if ee != nil {
-			return diag.FromErr(err)
+			svc.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
+				GroupId: aws.String(*gpResult.GroupId),
+				IpPermissions: []*ec2.IpPermission{
+					(&ec2.IpPermission{}).
+						SetIpProtocol("-1").
+						SetFromPort(-1).
+						SetToPort(-1).
+						SetIpRanges([]*ec2.IpRange{
+							{CidrIp: aws.String("0.0.0.0/0")},
+						}),
+				},
+			})
 		}
 	}
 
@@ -170,7 +202,19 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		SecurityGroups: []*string{
 			aws.String(securityGroup),
 		},
-		//CpuOptions:   instanceOpts.CpuOptions,
+		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+			{
+				//VirtualName: aws.String("Root"),
+				DeviceName: aws.String("/dev/sda1"),
+				Ebs: &ec2.EbsBlockDevice{
+					DeleteOnTermination: aws.Bool(true),
+					Encrypted:           aws.Bool(false),
+					//Iops:                aws.Int64(0),
+					VolumeSize: aws.Int64(int64(hddSize)),
+					VolumeType: aws.String("gp2"),
+				},
+			},
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -232,8 +276,8 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	svc, _ := awsClient(d)
 
-	instanceID := d.Get("instance_id").(string)
 	pairName := d.Get("key_name").(string)
+	instanceID := d.Get("instance_id").(string)
 
 	_, erro := svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
 		KeyName: aws.String(pairName),
