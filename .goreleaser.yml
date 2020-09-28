@@ -1,15 +1,8 @@
-# Visit https://goreleaser.com for documentation on how to customize this
-# behavior.
 before:
   hooks:
-    # this is just an example and not a requirement for provider building/publishing
-    - go mod tidy
     - go mod vendor
 builds:
 - env:
-  # goreleaser does not work with CGO, it could also complicate
-  # usage by users in CI/CD systems like Terraform Cloud where
-  # they are unable to install libraries.
   - CGO_ENABLED=0
   mod_timestamp: '{{ .CommitTimestamp }}'
   flags:
@@ -20,12 +13,12 @@ builds:
     # - freebsd
     # - windows
     - linux
-    # - darwin
+    - darwin
   goarch:
     - amd64
-    # - '386'
-    # - arm
-    # - arm64
+    - '386'
+    - arm
+    - arm64
   ignore:
     - goos: darwin
       goarch: '386'
