@@ -279,9 +279,11 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	pairName := d.Get("key_name").(string)
 	instanceID := d.Get("instance_id").(string)
 
-	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
-		KeyName: aws.String(pairName),
-	})
+	/*
+		svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+			KeyName: aws.String(pairName),
+		})
+	*/
 
 	input := &ec2.TerminateInstancesInput{
 		InstanceIds: []*string{
