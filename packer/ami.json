@@ -1,20 +1,28 @@
 {
     "variables" : {
-        "region" : "${AWS_REGION}"
+        "region" : "{{env `AWS_REGION`}}"
     },
     "builders" : [
         {
-            "profile" : "default",
-            "region" : "{{user `region`}}",
-            "ssh_username" : "ubuntu",
             "ami_name" : "iterative-cml",
             "ami_description" : "CML (Continous Machine Learning)",
+            "ami_groups": ["all"],
+            "force_deregister": "true",
+            "force_delete_snapshot": "true",
+            "region" : "{{user `region`}}",
+            "ssh_username" : "ubuntu",
             "type" : "amazon-ebs", 
-            "instance_type" : "t2.micro",
-            "source_ami" : "ami-0b5cb7048c06279ae",
+            "instance_type" : "m3.medium",
+            "source_ami_filter": {
+                "filters": {
+                  "virtualization-type": "hvm",
+                  "name": "ubuntu/images/*ubuntu-*-18.04-amd64-server-*",
+                  "root-device-type": "ebs"
+                },
+                "owners": ["099720109477"],
+                "most_recent": true
+            },
             "run_tags" : {
-                "Name" : "packer-builder-cml",
-                "Tool" : "Packer",
                 "Author" : "iterative"
             }
         }
@@ -22,6 +30,7 @@
     "provisioners" : [
         {
             "type" : "shell",
+            "environment_vars": ["DEBIAN_FRONTEND=noninteractive"],
             "script" : "./setup.sh"
         }
     ]

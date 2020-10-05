@@ -9,26 +9,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        region: ['us-east-1', 'us-west-1']
-    env:
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-
+        region: ['us-east-1', 'us-west-1', 'eu-west-1']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Packer
+        env:
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         run: |
           sudo apt install unzip
 
-          # install packer
-          # export VER="1.5.6"
-          # wget https://releases.hashicorp.com/packer/${VER}/packer_${VER}_linux_amd64.zip
-          # sudo unzip packer_${VER}_linux_amd64.zip
-          # sudo mv packer /usr/local/bin
-
-          # execute packer
           cd packer
           export AWS_REGION=${{ matrix.region }}
           packer validate ami.json

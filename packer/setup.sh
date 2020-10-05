@@ -1,3 +1,7 @@
+#/bin/sh
+
+echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
+
 curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh && \
 sudo usermod -aG docker \${USER}
 sudo setfacl --modify user:\${USER}:rw /var/run/docker.sock
