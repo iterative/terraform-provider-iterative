@@ -124,6 +124,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceAmi := *imagesRes.Images[0].ImageId
 	instanceType := d.Get("instance_type").(string)
 	keyPublic := d.Get("key_public").(string)
+	OWNER := aws.String("DVC CML")
 
 	securityGroup := d.Get("aws_security_group").(string)
 	hddSize := d.Get("instance_hdd_size").(int)
@@ -136,6 +137,17 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		_, errImportKeyPair := svc.ImportKeyPair(&ec2.ImportKeyPairInput{
 			KeyName:           aws.String(pairName),
 			PublicKeyMaterial: []byte(keyPublic),
+			TagSpecifications: []*ec2.TagSpecification{
+				{
+					ResourceType: aws.String("key-pair"),
+					Tags: []*ec2.Tag{
+						{
+							Key: aws.String("Managed by"),
+							Value: OWNER,
+						},
+					},
+				},
+			},
 		})
 		if errImportKeyPair != nil {
 			return diag.FromErr(errImportKeyPair)
@@ -144,6 +156,17 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	} else {
 		keyResult, err := svc.CreateKeyPair(&ec2.CreateKeyPairInput{
 			KeyName: aws.String(pairName),
+			TagSpecifications: []*ec2.TagSpecification{
+				{
+					ResourceType: aws.String("key-pair"),
+					Tags: []*ec2.Tag{
+						{
+							Key: aws.String("Managed by"),
+							Value: OWNER,
+						},
+					},
+				},
+			},
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -215,23 +238,24 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				},
 			},
 		},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Add tags to the created instance
-	_, errtag := svc.CreateTags(&ec2.CreateTagsInput{
-		Resources: []*string{runResult.Instances[0].InstanceId},
-		Tags: []*ec2.Tag{
+		TagSpecifications: []*ec2.TagSpecification{
 			{
-				Key:   aws.String("Name"),
-				Value: aws.String("cml"),
+				ResourceType: aws.String("instance"),
+				Tags: []*ec2.Tag{
+					{
+						Key: aws.String("Managed by"),
+						Value: OWNER,
+					},
+					{
+						Key: aws.String("Name"),
+						Value: aws.String("cml"),
+					},
+				},
 			},
 		},
 	})
-	if errtag != nil {
-		return diag.FromErr(errtag)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	instance := *runResult.Instances[0]
