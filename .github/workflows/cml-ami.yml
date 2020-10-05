@@ -30,6 +30,6 @@ jobs:
 
           # execute packer
           cd packer
-          export AWS_REGION={{ matrix.region }}
+          export AWS_REGION=${{ matrix.region }}
           packer validate ami.json
           packer build ami.json
