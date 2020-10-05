@@ -1,0 +1,28 @@
+{
+    "variables" : {
+        "region" : "${AWS_REGION}"
+    },
+    "builders" : [
+        {
+            "profile" : "default",
+            "region" : "{{user `region`}}",
+            "ssh_username" : "ubuntu",
+            "ami_name" : "iterative-cml",
+            "ami_description" : "CML (Continous Machine Learning)",
+            "type" : "amazon-ebs", 
+            "instance_type" : "t2.micro",
+            "source_ami" : "ami-0b5cb7048c06279ae",
+            "run_tags" : {
+                "Name" : "packer-builder-cml",
+                "Tool" : "Packer",
+                "Author" : "iterative"
+            }
+        }
+    ],
+    "provisioners" : [
+        {
+            "type" : "shell",
+            "script" : "./setup.sh"
+        }
+    ]
+}
