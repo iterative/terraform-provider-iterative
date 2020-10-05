@@ -28,7 +28,3 @@ jobs:
           export AWS_REGION={{ matrix.region }}
           packer validate ami.json
           packer build ami.json
-
-
-
-      
