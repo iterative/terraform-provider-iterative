@@ -5,7 +5,7 @@ on:
       - 'ami*'
 
 jobs:
-  buiild-ami:
+  build-ami:
     runs-on: ubuntu-latest
     strategy:
       matrix:
