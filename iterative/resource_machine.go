@@ -2,6 +2,7 @@ package iterative
 
 import (
 	"context"
+	"log"
 	"sort"
 	"time"
 
@@ -82,6 +83,12 @@ func resourceMachine() *schema.Resource {
 func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	region := d.Get("region").(string)
+	instanceType := d.Get("instance_type").(string)
+
+	log.Printf("[ERROR] instance_type: %", instanceType)
+	log.Printf("[ERROR] reegion: %", region)
+
 	svc, errClient := awsClient(d)
 	if errClient != nil {
 		return diag.FromErr(errClient)
@@ -94,7 +101,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: []*string{aws.String("Deep*Ubuntu 18.04*")},
+				Values: []*string{aws.String("iterative-cml")},
 			},
 			{
 				Name:   aws.String("architecture"),
@@ -122,7 +129,6 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return diags */
 
 	instanceAmi := *imagesRes.Images[0].ImageId
-	instanceType := d.Get("instance_type").(string)
 	keyPublic := d.Get("key_public").(string)
 
 	securityGroup := d.Get("aws_security_group").(string)
@@ -157,6 +163,8 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 		vpc := vpcsDesc.Vpcs[0]
 		vpcID := *vpc.VpcId
+
+		log.Printf("[ERROR] vpcID: %", vpcID)
 
 		gpResult, ee := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
@@ -277,13 +285,11 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	svc, _ := awsClient(d)
 
 	instanceID := d.Get("instance_id").(string)
-	//pairName := d.Get("key_name").(string)
+	pairName := d.Get("key_name").(string)
 
-	/*
-		svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
-			KeyName: aws.String(pairName),
-		})
-	*/
+	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+		KeyName: aws.String(pairName),
+	})
 
 	input := &ec2.TerminateInstancesInput{
 		InstanceIds: []*string{
