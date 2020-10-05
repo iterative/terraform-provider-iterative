@@ -20,13 +20,13 @@ jobs:
 
       - name: Packer
         run: |
-          apt install unzip
+          sudo apt install unzip
 
           # install packer
           export VER="1.5.6"
           wget https://releases.hashicorp.com/packer/${VER}/packer_${VER}_linux_amd64.zip
-          unzip packer_${VER}_linux_amd64.zip
-          mv packer /usr/local/bin
+          sudo unzip packer_${VER}_linux_amd64.zip
+          sudo mv packer /usr/local/bin
 
           # execute packer
           cd packer
