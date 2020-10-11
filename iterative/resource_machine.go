@@ -36,7 +36,7 @@ func resourceMachine() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
-				Default:  100,
+				Default:  10,
 			},
 			"instance_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -94,7 +94,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: []*string{aws.String("Deep*Ubuntu 18.04*")},
+				Values: []*string{aws.String("iterative-cml")},
 			},
 			{
 				Name:   aws.String("architecture"),
