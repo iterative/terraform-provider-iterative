@@ -1,10 +1,10 @@
 TEST?=$$(go list ./... | grep -v 'vendor')
 HOSTNAME=github.com
-NAMESPACE=iterative
+NAMESPACE=DavidGOrtega
 NAME=iterative
-VERSION=0.1
-OS_ARCH=linux_amd64
-#OS_ARCH=darwin_amd64
+VERSION=0.3
+#OS_ARCH=linux_amd64
+OS_ARCH=darwin_amd64
 BINARY=terraform-provider-${NAME}
 
 default: install

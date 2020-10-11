@@ -9,7 +9,7 @@
             "ami_groups": ["all"],
             "force_deregister": "true",
             "force_delete_snapshot": "true",
-            "region" : "{{user `region`}}",
+            "region" : "us-east-1",
             "ssh_username" : "ubuntu",
             "type" : "amazon-ebs", 
             "instance_type" : "m3.medium",
@@ -32,6 +32,14 @@
             "type" : "shell",
             "environment_vars": ["DEBIAN_FRONTEND=noninteractive"],
             "script" : "./setup.sh"
+        },
+        {
+            "type": "shell",
+            "inline": [
+              "sudo shutdown -r now",
+              "sleep 60"
+            ],
+            "start_retry_timeout": "10m"
         }
     ]
 }
