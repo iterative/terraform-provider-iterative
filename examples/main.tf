@@ -32,9 +32,9 @@ resource "iterative_machine" "machine2" {
 # }
 
 resource "iterative_machine" "machine5" {
-  region = "us-west-1"
+  region = "eu-west-1"
   instance_hdd_size = 15
-  instance_type = "t2.micro"
+  #instance_type = "m3.medium"
 }
 
 /*

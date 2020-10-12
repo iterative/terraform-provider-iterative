@@ -9,7 +9,7 @@
             "ami_groups": ["all"],
             "force_deregister": "true",
             "force_delete_snapshot": "true",
-            "region" : "us-east-1",
+            "region" : "{{user `region`}}",
             "ssh_username" : "ubuntu",
             "type" : "amazon-ebs", 
             "instance_type" : "m3.medium",
