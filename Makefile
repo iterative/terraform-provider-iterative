@@ -6,6 +6,7 @@ VERSION=0.3
 #OS_ARCH=linux_amd64
 OS_ARCH=darwin_amd64
 BINARY=terraform-provider-${NAME}
+VERSION2=0.3.3
 
 default: install
 

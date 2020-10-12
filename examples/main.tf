@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     iterative = {
-      versions = ["0.3"]
-      source = "github.com/DavidGOrtega/iterative"
+      versions = ["0.3.1"]
+      source = "DavidGOrtega/kxjcksds"
     }
   }
 }
