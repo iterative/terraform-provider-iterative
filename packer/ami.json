@@ -1,6 +1,6 @@
 {
     "variables" : {
-        "region" : "{{env `AWS_REGION`}}"
+        "instance_type" : "{{env `AWS_INSTANCE_TYPE`}}"
     },
     "builders" : [
         {
@@ -9,10 +9,10 @@
             "ami_groups": ["all"],
             "force_deregister": "true",
             "force_delete_snapshot": "true",
-            "region" : "{{user `region`}}",
+            "region" : "us-west-1",
             "ssh_username" : "ubuntu",
             "type" : "amazon-ebs", 
-            "instance_type" : "m3.medium",
+            "instance_type" : "{{user `instance_type`}}",
             "source_ami_filter": {
                 "filters": {
                   "virtualization-type": "hvm",
@@ -39,7 +39,8 @@
               "sudo shutdown -r now",
               "sleep 60"
             ],
-            "start_retry_timeout": "10m"
+            "start_retry_timeout": "10m",
+            "expect_disconnect": true
         }
     ]
 }
