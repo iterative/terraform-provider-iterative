@@ -2,6 +2,8 @@ package iterative
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"sort"
 	"time"
 
@@ -36,7 +38,7 @@ func resourceMachine() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
-				Default:  100,
+				Default:  10,
 			},
 			"instance_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -94,7 +96,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: []*string{aws.String("Deep*Ubuntu 18.04*")},
+				Values: []*string{aws.String("iterative-cml")},
 			},
 			{
 				Name:   aws.String("architecture"),
@@ -130,6 +132,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	pairName := "cml_" + id
 	var keyMaterial string
+	var vpcID string
 
 	// key-pair
 	if len(keyPublic) != 0 {
@@ -156,7 +159,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 		vpc := vpcsDesc.Vpcs[0]
-		vpcID := *vpc.VpcId
+		vpcID = *vpc.VpcId
 
 		gpResult, ee := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
@@ -193,15 +196,42 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	sgDesc, sgDescErr := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("group-name"),
+				Values: []*string{aws.String(securityGroup)},
+			},
+		},
+	})
+
+	if sgDescErr != nil {
+		return diag.FromErr(sgDescErr)
+	}
+
+	sgID := *sgDesc.SecurityGroups[0].GroupId
+
+	subDesc, _ := svc.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("vpc-id"),
+				Values: []*string{aws.String(vpcID)},
+			},
+		},
+	})
+
+	log.Printf("[ERROR] %s %s %s", instanceAmi, instanceType, sgID)
 	runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
 		ImageId:      aws.String(instanceAmi),
 		KeyName:      aws.String(pairName),
 		InstanceType: aws.String(instanceType),
 		MinCount:     aws.Int64(1),
 		MaxCount:     aws.Int64(1),
-		SecurityGroups: []*string{
-			aws.String(securityGroup),
-		},
+		//SecurityGroups: []*string{
+		//aws.String(securityGroup),
+		//},
+		SubnetId:         aws.String(*subDesc.Subnets[0].SubnetId),
+		SecurityGroupIds: []*string{aws.String(sgID)},
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
 				//VirtualName: aws.String("Root"),
@@ -217,7 +247,17 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 	if err != nil {
-		return diag.FromErr(err)
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Unable to create HashiCups client",
+			Detail:   fmt.Sprintf("[ERROR] %s %s %s", instanceAmi, instanceType, sgID),
+		})
+
+		diags = append(diags, diag.FromErr(err)[0])
+
+		//return diag.FromErr(err)
+
+		return diags
 	}
 
 	// Add tags to the created instance
@@ -279,12 +319,9 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	pairName := d.Get("key_name").(string)
 	instanceID := d.Get("instance_id").(string)
 
-	_, erro := svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
 		KeyName: aws.String(pairName),
 	})
-	if erro != nil {
-		diag.FromErr(erro)
-	}
 
 	input := &ec2.TerminateInstancesInput{
 		InstanceIds: []*string{
