@@ -3,6 +3,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,11 +15,16 @@ import (
 func main() {
 	region := "us-west-1"
 	amiName := "iterative-cml"
-	regions := []string{"us-east-1", "eu-central-1", "eu-west-1"}
+	regions := []string{"us-east-1", "us-east-2", "us-west-2", "eu-central-1", "eu-west-1"}
 
-	sess, _ := session.NewSession(&aws.Config{
+	sess, sessError := session.NewSession(&aws.Config{
 		Region: aws.String(region)},
 	)
+	if sessError != nil {
+		log.Printf("[ERROR] %s", sessError)
+		os.Exit(1)
+	}
+
 	svc := ec2.New(sess)
 
 	amiParams := &ec2.DescribeImagesInput{
@@ -35,6 +42,10 @@ func main() {
 	imagesRes, imagesErr := svc.DescribeImages(amiParams)
 	if imagesErr != nil {
 		diag.FromErr(imagesErr)
+	}
+	if len(imagesRes.Images) == 0 {
+		log.Printf("[ERROR] ami %s not found", amiName)
+		os.Exit(1)
 	}
 
 	ami := imagesRes.Images[0]

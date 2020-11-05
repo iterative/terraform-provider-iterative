@@ -3,7 +3,6 @@ package iterative
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
@@ -19,26 +18,38 @@ func resourceMachine() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceMachineCreate,
 		ReadContext:   resourceMachineRead,
-		//UpdateContext: resourceMachineUpdate,s
+		//UpdateContext: resourceMachineUpdate,
 		DeleteContext: resourceMachineDelete,
 		Schema: map[string]*schema.Schema{
 			"region": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Default:  "us-east-1",
+				Default:  "us-west",
+			},
+			"instance_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "",
 			},
 			"instance_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Default:  "t2.micro",
+				Default:  "m",
 			},
 			"instance_hdd_size": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 				Default:  10,
+			},
+			"instance_gpu": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "",
 			},
 			"instance_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -84,15 +95,24 @@ func resourceMachine() *schema.Resource {
 func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	svc, errClient := awsClient(d)
+	region := getRegion(d)
+
+	sid, _ := shortid.New(1, shortid.DefaultABC, 2342)
+	id, _ := sid.Generate()
+	instanceName := d.Get("instance_name").(string)
+	if len(instanceName) == 0 {
+		instanceName = "cml_" + id
+	}
+
+	instanceType := getInstanceType(d)
+	hddSize := d.Get("instance_hdd_size").(int)
+
+	svc, errClient := awsClient(region)
 	if errClient != nil {
 		return diag.FromErr(errClient)
 	}
 
-	sid, err := shortid.New(1, shortid.DefaultABC, 2342)
-	id, _ := sid.Generate()
-
-	amiParams := &ec2.DescribeImagesInput{
+	imagesRes, imagesErr := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
@@ -103,10 +123,17 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Values: []*string{aws.String("x86_64")},
 			},
 		},
-	}
-	imagesRes, imagesErr := svc.DescribeImages(amiParams)
+	})
 	if imagesErr != nil {
-		diag.FromErr(imagesErr)
+		return diag.FromErr(imagesErr)
+	}
+	if len(imagesRes.Images) == 0 {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "iterative-cml ami not found in region",
+		})
+
+		return diags
 	}
 
 	sort.Slice(imagesRes.Images, func(i, j int) bool {
@@ -115,24 +142,15 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return itime.Unix() > jtime.Unix()
 	})
 
-	/* diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  "Unable to create HashiCups client",
-		Detail:   fmt.Sprint(len(imagesRes.Images)),
-	})
-
-	return diags */
+	keyPublic := d.Get("key_public").(string)
+	securityGroup := d.Get("aws_security_group").(string)
 
 	instanceAmi := *imagesRes.Images[0].ImageId
-	instanceType := d.Get("instance_type").(string)
-	keyPublic := d.Get("key_public").(string)
+	pairName := instanceName
 
-	securityGroup := d.Get("aws_security_group").(string)
-	hddSize := d.Get("instance_hdd_size").(int)
-
-	pairName := "cml_" + id
 	var keyMaterial string
 	var vpcID string
+	var sgID string
 
 	// key-pair
 	if len(keyPublic) != 0 {
@@ -158,8 +176,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		securityGroup = "cml"
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
-		vpc := vpcsDesc.Vpcs[0]
-		vpcID = *vpc.VpcId
+		vpcID = *vpcsDesc.Vpcs[0].VpcId
 
 		gpResult, ee := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
@@ -204,12 +221,10 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	})
-
 	if sgDescErr != nil {
 		return diag.FromErr(sgDescErr)
 	}
-
-	sgID := *sgDesc.SecurityGroups[0].GroupId
+	sgID = *sgDesc.SecurityGroups[0].GroupId
 
 	subDesc, _ := svc.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
 		Filters: []*ec2.Filter{
@@ -220,16 +235,13 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 
-	log.Printf("[ERROR] %s %s %s", instanceAmi, instanceType, sgID)
+	//launch instance
 	runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
-		ImageId:      aws.String(instanceAmi),
-		KeyName:      aws.String(pairName),
-		InstanceType: aws.String(instanceType),
-		MinCount:     aws.Int64(1),
-		MaxCount:     aws.Int64(1),
-		//SecurityGroups: []*string{
-		//aws.String(securityGroup),
-		//},
+		ImageId:          aws.String(instanceAmi),
+		KeyName:          aws.String(pairName),
+		InstanceType:     aws.String(instanceType),
+		MinCount:         aws.Int64(1),
+		MaxCount:         aws.Int64(1),
 		SubnetId:         aws.String(*subDesc.Subnets[0].SubnetId),
 		SecurityGroupIds: []*string{aws.String(sgID)},
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
@@ -249,38 +261,33 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Unable to create HashiCups client",
-			Detail:   fmt.Sprintf("[ERROR] %s %s %s", instanceAmi, instanceType, sgID),
+			Summary:  "Unable to create instance",
+			Detail:   fmt.Sprintf("[ERROR] Instance %s of type %s at region %s", instanceName, instanceType, region),
 		})
 
 		diags = append(diags, diag.FromErr(err)[0])
 
-		//return diag.FromErr(err)
-
 		return diags
 	}
 
-	// Add tags to the created instance
-	_, errtag := svc.CreateTags(&ec2.CreateTagsInput{
-		Resources: []*string{runResult.Instances[0].InstanceId},
+	instanceID := *runResult.Instances[0].InstanceId
+
+	// Add name to the created instance
+	_, errTag := svc.CreateTags(&ec2.CreateTagsInput{
+		Resources: []*string{aws.String(instanceID)},
 		Tags: []*ec2.Tag{
 			{
 				Key:   aws.String("Name"),
-				Value: aws.String("cml"),
+				Value: aws.String(instanceName),
 			},
 		},
 	})
-	if errtag != nil {
-		return diag.FromErr(errtag)
+	if errTag != nil {
+		return diag.FromErr(errTag)
 	}
 
-	instance := *runResult.Instances[0]
-	instanceID := *instance.InstanceId
-
-	instanceIds := make([]*string, 1)
-	instanceIds[0] = &instanceID
 	statusInput := ec2.DescribeInstancesInput{
-		InstanceIds: instanceIds,
+		InstanceIds: []*string{aws.String(instanceID)},
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("instance-state-name"),
@@ -288,12 +295,14 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	}
+
 	svc.WaitUntilInstanceExistsWithContext(ctx, &statusInput)
 
 	descResult, _ := svc.DescribeInstancesWithContext(ctx, &statusInput)
 	instanceDesc := descResult.Reservations[0].Instances[0]
 
 	d.SetId(instanceID)
+	d.Set("instance_name", instanceName)
 	d.Set("instance_id", instanceID)
 	d.Set("instance_ip", instanceDesc.PublicIpAddress)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
@@ -314,7 +323,7 @@ func resourceMachineUpdate(ctx context.Context, d *schema.ResourceData, m interf
 func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	svc, _ := awsClient(d)
+	svc, _ := awsClient(getRegion(d))
 
 	pairName := d.Get("key_name").(string)
 	instanceID := d.Get("instance_id").(string)
@@ -339,12 +348,45 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func awsClient(d *schema.ResourceData) (*ec2.EC2, error) {
-	region := d.Get("region").(string)
+func awsClient(region string) (*ec2.EC2, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(region)},
 	)
 	svc := ec2.New(sess)
-
 	return svc, err
+}
+
+func getRegion(d *schema.ResourceData) string {
+	instanceRegions := make(map[string]string)
+	instanceRegions["us-east"] = "us-east-1"
+	instanceRegions["us-west"] = "us-west-1"
+	instanceRegions["eu-north"] = "eu-north-1"
+	instanceRegions["eu-west"] = "eu-west-1"
+
+	region := d.Get("region").(string)
+	if val, ok := instanceRegions[region]; ok {
+		region = val
+	}
+
+	return region
+}
+
+func getInstanceType(d *schema.ResourceData) string {
+	instanceTypes := make(map[string]string)
+	instanceTypes["m"] = "m5.2xlarge"
+	instanceTypes["l"] = "m5.8xlarge"
+	instanceTypes["xl"] = "m5.16xlarge"
+	instanceTypes["mk80"] = "p2.xlarge"
+	instanceTypes["lk80"] = "p2.8xlarge"
+	instanceTypes["xlk80"] = "p2.16xlarge"
+	instanceTypes["mtesla"] = "p3.xlarge"
+	instanceTypes["ltesla"] = "p3.8xlarge"
+	instanceTypes["xltesla"] = "p3.16xlarge"
+
+	instanceType := d.Get("instance_type").(string)
+	if val, ok := instanceTypes[instanceType+d.Get("instance_gpu").(string)]; ok {
+		instanceType = val
+	}
+
+	return instanceType
 }

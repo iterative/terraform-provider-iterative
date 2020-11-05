@@ -2,8 +2,10 @@
 terraform {
   required_providers {
     iterative = {
-      source = "DavidGOrtega/iterative"
-      version = "0.4.0"
+      #source = "DavidGOrtega/iterative"
+      #version = "0.4.0"
+      versions = ["0.3"]
+      source = "github.com/davidgortega/iterative"
     }
   }
 }
@@ -11,8 +13,7 @@ terraform {
 provider "iterative" {}
 
 resource "iterative_machine" "machine" {
-  region = "us-east-1"
-  
-  
-  
+  region = "us-west"
+  instance_type = "t2.micro"
+  instance_gpu = "tesla"
 }
