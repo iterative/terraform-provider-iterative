@@ -66,11 +66,6 @@ func resourceMachine() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			"key_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
 			"key_public": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -78,6 +73,11 @@ func resourceMachine() *schema.Resource {
 				Default:  "",
 			},
 			"key_private": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"key_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -224,7 +224,9 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if sgDescErr != nil {
 		return diag.FromErr(sgDescErr)
 	}
+
 	sgID = *sgDesc.SecurityGroups[0].GroupId
+	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
 	subDesc, _ := svc.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
 		Filters: []*ec2.Filter{

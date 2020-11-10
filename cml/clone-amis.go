@@ -61,15 +61,38 @@ func main() {
 
 		svc := ec2.New(sess)
 
-		_, err := svc.CopyImage(&ec2.CopyImageInput{
+		copyResult, err := svc.CopyImage(&ec2.CopyImageInput{
 			SourceImageId: aws.String(amiID),
 			SourceRegion:  aws.String(region),
 			Name:          aws.String(amiName),
 			Description:   aws.String(amiDesc),
 		})
-
 		if err != nil {
 			fmt.Println(err)
+		}
+
+		svc.WaitUntilImageExists(&ec2.DescribeImagesInput{
+			ImageIds: []*string{aws.String(*copyResult.ImageId)},
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("state"),
+					Values: []*string{aws.String("available")},
+				},
+			},
+		})
+
+		_, modifyErr := svc.ModifyImageAttribute(&ec2.ModifyImageAttributeInput{
+			ImageId: aws.String(*copyResult.ImageId),
+			LaunchPermission: &ec2.LaunchPermissionModifications{
+				Add: []*ec2.LaunchPermission{
+					{
+						Group: aws.String("all"),
+					},
+				},
+			},
+		})
+		if modifyErr != nil {
+			fmt.Println(modifyErr)
 		}
 	}
 }
