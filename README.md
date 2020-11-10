@@ -11,7 +11,7 @@ terraform {
   required_providers {
     iterative = {
       source = "iterative/iterative"
-      version = "0.5.0"
+      version = "0.5.1"
     }
   }
 }
@@ -32,6 +32,7 @@ resource "iterative_machine" "machine" {
 | Variable | Values | Default | |
 | ------- | ------ | -------- | ------------- |
 | ```region``` | ```us-west``` ```us-east``` ```eu-west``` ```eu-north``` | ```us-west``` | Sets the collocation region |
+| ```ami``` | | ```iterative-cml``` | Sets the ami to be used. For that the provider does a search in the cloud provider by image name not by id, taking the lastest version in case there are many with the same name. Defaults to [iterative-cml image](#iterative-cml-image) |
 | ```instance_name``` |  | cml_{UID} | Sets the instance name and related resources like AWS key pair. |
 | ```instance_hdd_size``` | | 10 | Sets the instance hard disk size in gb |
 | ```instance_type``` | ```m```, ```l```, ```xl``` | ```m``` | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. ```t2.micro``` |
@@ -65,3 +66,11 @@ The instance type in AWS is calculated joining the ```instance_type``` and ```in
 | us-east | us-east-1 |
 | eu-north | us-north-1 |
 | eu-west | us-west-1 |
+
+# Iterative CML image
+
+It's a GPU ready image based on Ubuntu 18.04. It has the following stack already installed:
+
+ - nvidia drivers
+ - docker
+ - nvidia-docker

@@ -27,6 +27,12 @@ func resourceMachine() *schema.Resource {
 				ForceNew: true,
 				Default:  "us-west",
 			},
+			"ami": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "iterative-cml",
+			},
 			"instance_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -112,11 +118,13 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(errClient)
 	}
 
+	ami := d.Get("ami").(string)
+
 	imagesRes, imagesErr := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: []*string{aws.String("iterative-cml")},
+				Values: []*string{aws.String(ami)},
 			},
 			{
 				Name:   aws.String("architecture"),
@@ -130,7 +138,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if len(imagesRes.Images) == 0 {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "iterative-cml ami not found in region",
+			Summary:  ami + " ami not found in region",
 		})
 
 		return diags
