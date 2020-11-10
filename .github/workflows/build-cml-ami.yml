@@ -1,4 +1,4 @@
-name: cml-ami
+name: build-cml-ami
 on: 
   push:
     tags:
@@ -11,15 +11,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Packer
+      - name: Build and copy
         env:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_INSTANCE_TYPE: g2.2xlarge
         run: |
           sudo apt install unzip
 
-          cd packer
+          cd cml
           packer validate ami.json
           packer build ami.json
-          ./clone-amis.go
+
