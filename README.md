@@ -43,9 +43,13 @@ resource "iterative_machine" "machine" {
 ```
 terraform init
 terraform apply --auto-approve
+```
 
-# run it to destroy your instance
-# terraform destroy --auto-approve
+#### 4- Stop it
+
+Run it to destroy your instance
+```
+terraform destroy --auto-approve
 ```
 
 ## Pitfalls
