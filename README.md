@@ -33,7 +33,8 @@ resource "iterative_machine" "machine" {
   instance_name = "machine"
   instance_hdd_size = "10"
   instance_type = "m"
-  instance_gpu = "tesla"
+  ## Uncomment it if GPU is needed:
+  # instance_gpu = "tesla" 
 }
 ```
 
