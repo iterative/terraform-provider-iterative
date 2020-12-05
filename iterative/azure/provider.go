@@ -3,7 +3,7 @@ package azure
 import (
 	"context"
 	"fmt"
-git 
+
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
@@ -276,7 +276,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	*/
 
 	groupsClient, err := getGroupsClient(subscriptionID)
-	err = groupsClient.Delete(ctx, gpName)
+	_, err = groupsClient.Delete(ctx, gpName)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -287,7 +287,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func getGroupsClient(subscriptionID string) (resources.NewGroupsClient, error) {
+func getGroupsClient(subscriptionID string) (resources.GroupsClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
 
 	client := resources.NewGroupsClient(subscriptionID)
