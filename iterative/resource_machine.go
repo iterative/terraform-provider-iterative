@@ -3,7 +3,7 @@ package iterative
 import (
 	"context"
 
-	"terraform-provider-iterative/iterative/aws"
+	"terraform-provider-iterative/iterative/azure"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -98,7 +98,8 @@ func resourceMachine() *schema.Resource {
 	}
 }
 
-func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMachineCreate(ctx2 context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	ctx := context.Background()
 	keyPublic := d.Get("key_public").(string)
 	//keyPrivate := d.Get("key_private").(string)
 
@@ -113,14 +114,18 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if len(instanceName) == 0 {
 		sid, _ := shortid.New(1, shortid.DefaultABC, 2342)
 		id, _ := sid.Generate()
-		instanceName = "iterative_" + id
+		instanceName = "iterative-" + id
+
+		d.Set("instance_name", instanceName)
 	}
 
-	return aws.ResourceMachineCreate(ctx, d, m)
+	return azure.ResourceMachineCreate(ctx, d, m)
+	//return aws.ResourceMachineCreate(ctx, d, m)
 }
 
 func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return aws.ResourceMachineDelete(ctx, d, m)
+	return azure.ResourceMachineCreate(ctx, d, m)
+	//return aws.ResourceMachineDelete(ctx, d, m)
 }
 
 func resourceMachineRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
