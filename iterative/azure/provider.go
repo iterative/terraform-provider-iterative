@@ -19,63 +19,53 @@ import (
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	//subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
+	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 
-	//region := getRegion(d)
-	//instanceType := getInstanceType(d)
-	//keyPublic := d.Get("key_public").(string)
+	region := getRegion(d)
+	instanceType := getInstanceType(d)
+	keyPublic := d.Get("key_public").(string)
 	vmName := d.Get("instance_name").(string)
 
-	//publisher := "Canonical"
-	//offer := "UbuntuServer"
-	//sku := "18.04-LTS"
-	//version := "latest"
+	publisher := "Canonical"
+	offer := "UbuntuServer"
+	sku := "18.04-LTS"
+	version := "latest"
 
 	gpName := vmName + "-sg"
 	nsgName := vmName + "-nsg"
-	//vnetName := vmName + "-vnet"
-	//ipName := vmName + "-ip"
-	//subnetName := vmName + "-sn"
-	//nicName := vmName + "-nic"
-	//ipConfigName := vmName + "-ipc"
+	vnetName := vmName + "-vnet"
+	ipName := vmName + "-ip"
+	subnetName := vmName + "-sn"
+	nicName := vmName + "-nic"
+	ipConfigName := vmName + "-ipc"
 
-	//username := "ubuntu"
-	//password := "ubuntu"
+	username := "ubuntu"
+	password := "ubuntu"
 
-	/*
-		groupsClient, err := getGroupsClient(subscriptionID)
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("ksdksdjksdksdjksjdksjdskp: %v", err),
-			})
+	groupsClient, err := getGroupsClient(subscriptionID)
+	_, err = groupsClient.CreateOrUpdate(
+		ctx,
+		gpName,
+		resources.Group{
+			Location: to.StringPtr(region),
+		})
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Error creating resource group: %v", err),
+		})
 
-			return diags
-		}
-		_, err = groupsClient.CreateOrUpdate(
-			ctx,
-			gpName,
-			resources.Group{
-				Location: to.StringPtr(region),
-			})
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Error creating resource group: %v", err),
-			})
-
-			return diags
-		}
-	*/
+		return diags
+	}
 
 	// securityGroup
-	nsgClient, _ := getNsgClient("cee76754-ef49-49f7-b371-f6841fa82182")
+	nsgClient, _ := getNsgClient(subscriptionID)
 	futureNsg, _ := nsgClient.CreateOrUpdate(
 		ctx,
 		gpName,
 		nsgName,
 		network.SecurityGroup{
-			Location: to.StringPtr("westus"),
+			Location: to.StringPtr(region),
 			SecurityGroupPropertiesFormat: &network.SecurityGroupPropertiesFormat{
 				SecurityRules: &[]network.SecurityRule{
 					{
@@ -95,16 +85,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	)
-	err := futureNsg.WaitForCompletionRef(ctx, nsgClient.Client)
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("error waiting: %v", err),
-		})
-
-		return diags
-	}
-	_, err = nsgClient.Get(ctx, gpName, nsgName, "")
+	futureNsg.WaitForCompletionRef(ctx, nsgClient.Client)
+	nsg, err := nsgClient.Get(ctx, gpName, nsgName, "")
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -114,161 +96,183 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diags
 	}
 
-	/*
-		//ip
-		ipClient, err := getIPClient(subscriptionID)
-		futureIP, err := ipClient.CreateOrUpdate(
-			ctx,
-			gpName,
-			ipName,
-			network.PublicIPAddress{
-				Name:     to.StringPtr(ipName),
-				Location: to.StringPtr(region),
-				PublicIPAddressPropertiesFormat: &network.PublicIPAddressPropertiesFormat{
-					PublicIPAddressVersion:   network.IPv4,
-					PublicIPAllocationMethod: network.Static,
-				},
-			},
-		)
-		futureIP.WaitForCompletionRef(ctx, ipClient.Client)
-		ip, err := ipClient.Get(ctx, gpName, ipName, "")
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("cannot create pi: %v", err),
-			})
-
-			return diags
-		}
-
-		// subnet
-		subnetsClient, err := getSubnetsClient(subscriptionID)
-		futureSubnet, err := subnetsClient.CreateOrUpdate(
-			ctx,
-			gpName,
-			vnetName,
-			subnetName,
-			network.Subnet{
-				SubnetPropertiesFormat: &network.SubnetPropertiesFormat{
-					AddressPrefix:        to.StringPtr("10.0.0.0/16"),
-					NetworkSecurityGroup: &nsg,
-				},
-			})
-		futureSubnet.WaitForCompletionRef(ctx, subnetsClient.Client)
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("cannot create subnet: %v", err),
-			})
-
-			return diags
-		}
-		subnet, err := subnetsClient.Get(ctx, gpName, vnetName, subnetName, "")
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("cannot create subnet: %v", err),
-			})
-
-			return diags
-		}
-
-		nicClient, _ := getNicClient(subscriptionID)
-		nicParams := network.Interface{
-			Name:     to.StringPtr(nicName),
+	//ip
+	ipClient, err := getIPClient(subscriptionID)
+	futureIP, err := ipClient.CreateOrUpdate(
+		ctx,
+		gpName,
+		ipName,
+		network.PublicIPAddress{
+			Name:     to.StringPtr(ipName),
 			Location: to.StringPtr(region),
-			InterfacePropertiesFormat: &network.InterfacePropertiesFormat{
-				IPConfigurations: &[]network.InterfaceIPConfiguration{
-					{
-						Name: to.StringPtr(ipConfigName),
-						InterfaceIPConfigurationPropertiesFormat: &network.InterfaceIPConfigurationPropertiesFormat{
-							PrivateIPAllocationMethod: network.Dynamic,
-							Subnet:                    &subnet,
-							PublicIPAddress:           &ip,
-						},
+			PublicIPAddressPropertiesFormat: &network.PublicIPAddressPropertiesFormat{
+				PublicIPAddressVersion:   network.IPv4,
+				PublicIPAllocationMethod: network.Static,
+			},
+		},
+	)
+	futureIP.WaitForCompletionRef(ctx, ipClient.Client)
+	ip, err := ipClient.Get(ctx, gpName, ipName, "")
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create pi: %v", err),
+		})
+
+		return diags
+	}
+
+	vnetClient, err := getVnetClient(subscriptionID)
+	futureVnet, err := vnetClient.CreateOrUpdate(
+		ctx,
+		gpName,
+		vnetName,
+		network.VirtualNetwork{
+			Location: to.StringPtr(region),
+			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
+				AddressSpace: &network.AddressSpace{
+					AddressPrefixes: &[]string{"10.0.0.0/8"},
+				},
+			},
+		})
+	futureVnet.WaitForCompletionRef(ctx, vnetClient.Client)
+	_, err = vnetClient.Get(ctx, gpName, vnetName, "")
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create vnet: %v", err),
+		})
+
+		return diags
+	}
+
+	// subnet
+	subnetsClient, err := getSubnetsClient(subscriptionID)
+	futureSubnet, err := subnetsClient.CreateOrUpdate(
+		ctx,
+		gpName,
+		vnetName,
+		subnetName,
+		network.Subnet{
+			SubnetPropertiesFormat: &network.SubnetPropertiesFormat{
+				AddressPrefix:        to.StringPtr("10.0.0.0/16"),
+				NetworkSecurityGroup: &nsg,
+			},
+		})
+	futureSubnet.WaitForCompletionRef(ctx, subnetsClient.Client)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create subnet: %v", err),
+		})
+
+		return diags
+	}
+	subnet, err := subnetsClient.Get(ctx, gpName, vnetName, subnetName, "")
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create subnet: %v", err),
+		})
+
+		return diags
+	}
+
+	nicClient, _ := getNicClient(subscriptionID)
+	nicParams := network.Interface{
+		Name:     to.StringPtr(nicName),
+		Location: to.StringPtr(region),
+		InterfacePropertiesFormat: &network.InterfacePropertiesFormat{
+			IPConfigurations: &[]network.InterfaceIPConfiguration{
+				{
+					Name: to.StringPtr(ipConfigName),
+					InterfaceIPConfigurationPropertiesFormat: &network.InterfaceIPConfigurationPropertiesFormat{
+						PrivateIPAllocationMethod: network.Dynamic,
+						Subnet:                    &subnet,
+						PublicIPAddress:           &ip,
 					},
 				},
 			},
-		}
-		nicParams.NetworkSecurityGroup = &nsg
-		futureNic, err := nicClient.CreateOrUpdate(ctx, gpName, nicName, nicParams)
-		futureNic.WaitForCompletionRef(ctx, nicClient.Client)
-		nic, err := nicClient.Get(ctx, gpName, nicName, "")
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("cannot create nic: %v", err),
-			})
+		},
+	}
+	nicParams.NetworkSecurityGroup = &nsg
+	futureNic, err := nicClient.CreateOrUpdate(ctx, gpName, nicName, nicParams)
+	futureNic.WaitForCompletionRef(ctx, nicClient.Client)
+	nic, err := nicClient.Get(ctx, gpName, nicName, "")
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create nic: %v", err),
+		})
 
-			return diags
-		}
+		return diags
+	}
 
-		vmClient, _ := getVMClient(subscriptionID)
-		futureVM, err := vmClient.CreateOrUpdate(
-			ctx,
-			gpName,
-			vmName,
-			compute.VirtualMachine{
-				Location: to.StringPtr(region),
-				VirtualMachineProperties: &compute.VirtualMachineProperties{
-					HardwareProfile: &compute.HardwareProfile{
-						VMSize: compute.VirtualMachineSizeTypes(instanceType),
+	vmClient, _ := getVMClient(subscriptionID)
+	futureVM, err := vmClient.CreateOrUpdate(
+		ctx,
+		gpName,
+		vmName,
+		compute.VirtualMachine{
+			Location: to.StringPtr(region),
+			VirtualMachineProperties: &compute.VirtualMachineProperties{
+				HardwareProfile: &compute.HardwareProfile{
+					VMSize: compute.VirtualMachineSizeTypes(instanceType),
+				},
+				StorageProfile: &compute.StorageProfile{
+					ImageReference: &compute.ImageReference{
+						Publisher: to.StringPtr(publisher),
+						Offer:     to.StringPtr(offer),
+						Sku:       to.StringPtr(sku),
+						Version:   to.StringPtr(version),
 					},
-					StorageProfile: &compute.StorageProfile{
-						ImageReference: &compute.ImageReference{
-							Publisher: to.StringPtr(publisher),
-							Offer:     to.StringPtr(offer),
-							Sku:       to.StringPtr(sku),
-							Version:   to.StringPtr(version),
-						},
-					},
-					OsProfile: &compute.OSProfile{
-						ComputerName:  to.StringPtr(vmName),
-						AdminUsername: to.StringPtr(username),
-						AdminPassword: to.StringPtr(password),
-						LinuxConfiguration: &compute.LinuxConfiguration{
-							SSH: &compute.SSHConfiguration{
-								PublicKeys: &[]compute.SSHPublicKey{
-									{
-										Path:    to.StringPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", username)),
-										KeyData: to.StringPtr(keyPublic),
-									},
+				},
+				OsProfile: &compute.OSProfile{
+					ComputerName:  to.StringPtr(vmName),
+					AdminUsername: to.StringPtr(username),
+					AdminPassword: to.StringPtr(password),
+					LinuxConfiguration: &compute.LinuxConfiguration{
+						SSH: &compute.SSHConfiguration{
+							PublicKeys: &[]compute.SSHPublicKey{
+								{
+									Path:    to.StringPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", username)),
+									KeyData: to.StringPtr(keyPublic),
 								},
 							},
 						},
 					},
-					NetworkProfile: &compute.NetworkProfile{
-						NetworkInterfaces: &[]compute.NetworkInterfaceReference{
-							{
-								ID: nic.ID,
-								NetworkInterfaceReferenceProperties: &compute.NetworkInterfaceReferenceProperties{
-									Primary: to.BoolPtr(true),
-								},
+				},
+				NetworkProfile: &compute.NetworkProfile{
+					NetworkInterfaces: &[]compute.NetworkInterfaceReference{
+						{
+							ID: nic.ID,
+							NetworkInterfaceReferenceProperties: &compute.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
 						},
 					},
 				},
 			},
-		)
-		futureVM.WaitForCompletionRef(ctx, vmClient.Client)
-		_, err = vmClient.Get(ctx, gpName, vmName, "")
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("cannot create vm: %v", err),
-			})
+		},
+	)
+	futureVM.WaitForCompletionRef(ctx, vmClient.Client)
+	_, err = vmClient.Get(ctx, gpName, vmName, "")
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create vm: %v", err),
+		})
 
-			return diags
-		}
+		return diags
+	}
 
-		//d.SetId(instanceID)
-		//d.Set("instance_id", instanceID)
-		//d.Set("key_name", pairName)
+	d.SetId(gpName)
+	d.Set("instance_id", gpName)
+	//d.Set("key_name", pairName)
 
-		//d.Set("instance_name", instanceName)
-		d.Set("instance_ip", ip.IPAddress)
-		//d.Set("instance_launch_time", vm.)
-	*/
+	//d.Set("instance_name", instanceName)
+	d.Set("instance_ip", ip.IPAddress)
+	//d.Set("instance_launch_time", vm.)
 
 	return diags
 }
@@ -278,8 +282,6 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
-	vmName := d.Get("instance_name").(string)
-	gpName := vmName + "-sg"
 
 	//vmName := ""
 	//ipName := ""
@@ -299,7 +301,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	*/
 
 	groupsClient, err := getGroupsClient(subscriptionID)
-	_, err = groupsClient.Delete(ctx, gpName)
+	_, err = groupsClient.Delete(ctx, d.Id())
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -334,6 +336,16 @@ func getIPClient(subscriptionID string) (network.PublicIPAddressesClient, error)
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
 
 	client := network.NewPublicIPAddressesClient(subscriptionID)
+	client.Authorizer = authorizer
+	client.AddToUserAgent("iterative-provider")
+
+	return client, err
+}
+
+func getVnetClient(subscriptionID string) (network.VirtualNetworksClient, error) {
+	authorizer, err := auth.NewAuthorizerFromEnvironment()
+
+	client := network.NewVirtualNetworksClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
 
