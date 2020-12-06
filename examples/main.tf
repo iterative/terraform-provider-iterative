@@ -9,11 +9,13 @@ terraform {
 
 provider "iterative" {}
 
-/* resource "iterative_machine" "machine-aws" {
+
+resource "iterative_machine" "machine-aws" {
   driver = "aws"
   region = "us-west"
   instance_type = "t2.micro" //fallback to known instance type
-} */
+} 
+
 
 resource "iterative_machine" "machine-azure" {
   driver = "azure"
@@ -22,13 +24,34 @@ resource "iterative_machine" "machine-azure" {
 
   provisioner "remote-exec" {
     inline = [
-      "ls",
+      "echo 'hello azure'"
     ]
 
     connection {
-      user     = "ubuntu"
+      user        = "ubuntu"
       private_key = "${self.key_private}"
-      host     = "${self.instance_ip}"
+      host        = "${self.instance_ip}"
     }
   }
 }
+
+
+/* resource "iterative_machine" "machine-azure-gpu" {
+  driver = "azure"
+  region = "us-east"
+  instance_type = "m"
+  instance_gpu = "k80"
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo 'hello azure'",
+      "nvidia-smi"
+    ]
+
+    connection {
+      user        = "ubuntu"
+      private_key = "${self.key_private}"
+      host        = "${self.instance_ip}"
+    }
+  }
+} */

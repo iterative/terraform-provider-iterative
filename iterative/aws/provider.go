@@ -28,7 +28,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// Image
-	ami := d.Get("ami").(string)
+	ami := ""
+	if ami == "" {
+		ami = "iterative-cml"
+	}
 	imagesRes, imagesErr := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -275,7 +278,8 @@ func getInstanceType(d *schema.ResourceData) string {
 	instanceTypes["xltesla"] = "p3.16xlarge"
 
 	instanceType := d.Get("instance_type").(string)
-	if val, ok := instanceTypes[instanceType+d.Get("instance_gpu").(string)]; ok {
+	instanceGPU := d.Get("instance_gpu").(string)
+	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
 		instanceType = val
 	}
 

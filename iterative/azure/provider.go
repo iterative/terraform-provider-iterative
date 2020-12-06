@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
+
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
 
@@ -25,18 +28,20 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceType := getInstanceType(d)
 	keyPublic := d.Get("key_public").(string)
 	vmName := d.Get("instance_name").(string)
+	hddSize := int32(d.Get("instance_hdd_size").(int))
 
-	publisher := "Canonical"
-	offer := "UbuntuServer"
-	sku := "18.04-LTS"
-	version := "latest"
+	image := d.Get("ami").(string)
+	if image == "" {
+		image = "Canonical:UbuntuServer:18.04-LTS:latest"
+	}
+	imageParts := strings.Split(image, ":")
 
-	//publisher := "NVIDIA-GPU"
-	//offer := "GPU"
-	//sku := "Cloud-Image"
-	//version := "2020.06.29"
+	publisher := imageParts[0]
+	offer := imageParts[1]
+	sku := imageParts[2]
+	version := imageParts[3]
 
-	gpName := vmName + "-sg"
+	gpName := vmName
 	nsgName := vmName + "-nsg"
 	vnetName := vmName + "-vnet"
 	ipName := vmName + "-ip"
@@ -45,7 +50,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	ipConfigName := vmName + "-ipc"
 
 	username := "ubuntu"
-	password := "ubuntu"
+
+	d.Set("instance_id", vmName)
 
 	groupsClient, err := getGroupsClient(subscriptionID)
 	_, err = groupsClient.CreateOrUpdate(
@@ -80,7 +86,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 							SourceAddressPrefix:      to.StringPtr("0.0.0.0/0"),
 							SourcePortRange:          to.StringPtr("1-65535"),
 							DestinationAddressPrefix: to.StringPtr("0.0.0.0/0"),
-							DestinationPortRange:     to.StringPtr("22"),
+							DestinationPortRange:     to.StringPtr("1-65535"),
 							Access:                   network.SecurityRuleAccessAllow,
 							Direction:                network.SecurityRuleDirectionInbound,
 							Priority:                 to.Int32Ptr(100),
@@ -93,6 +99,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureNsg.WaitForCompletionRef(ctx, nsgClient.Client)
 	nsg, err := nsgClient.Get(ctx, gpName, nsgName, "")
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Security group is not ready: %v", err),
@@ -119,6 +127,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureIP.WaitForCompletionRef(ctx, ipClient.Client)
 	ip, err := ipClient.Get(ctx, gpName, ipName, "")
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("cannot create pi: %v", err),
@@ -143,6 +152,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureVnet.WaitForCompletionRef(ctx, vnetClient.Client)
 	_, err = vnetClient.Get(ctx, gpName, vnetName, "")
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("cannot create vnet: %v", err),
@@ -166,6 +176,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	futureSubnet.WaitForCompletionRef(ctx, subnetsClient.Client)
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("cannot create subnet: %v", err),
@@ -175,6 +186,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	subnet, err := subnetsClient.Get(ctx, gpName, vnetName, subnetName, "")
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("cannot create subnet: %v", err),
@@ -205,6 +217,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureNic.WaitForCompletionRef(ctx, nicClient.Client)
 	nic, err := nicClient.Get(ctx, gpName, nicName, "")
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("cannot create nic: %v", err),
@@ -220,6 +233,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		vmName,
 		compute.VirtualMachine{
 			Location: to.StringPtr(region),
+			/*
+				Plan: &compute.Plan{
+					Name:      to.StringPtr(sku),
+					Publisher: to.StringPtr(publisher),
+					Product:   to.StringPtr(offer),
+				},
+			*/
 			VirtualMachineProperties: &compute.VirtualMachineProperties{
 				HardwareProfile: &compute.HardwareProfile{
 					VMSize: compute.VirtualMachineSizeTypes(instanceType),
@@ -231,12 +251,21 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 						Sku:       to.StringPtr(sku),
 						Version:   to.StringPtr(version),
 					},
+					OsDisk: &compute.OSDisk{
+						Name:         to.StringPtr(fmt.Sprintf(vmName + "-hdd")),
+						Caching:      compute.CachingTypesReadWrite,
+						CreateOption: compute.DiskCreateOptionTypesFromImage,
+						DiskSizeGB:   to.Int32Ptr(hddSize),
+						ManagedDisk: &compute.ManagedDiskParameters{
+							StorageAccountType: compute.StorageAccountTypesStandardLRS,
+						},
+					},
 				},
 				OsProfile: &compute.OSProfile{
-					ComputerName:  to.StringPtr(vmName),
+					ComputerName:  to.StringPtr("iterative"),
 					AdminUsername: to.StringPtr(username),
-					AdminPassword: to.StringPtr(password),
 					LinuxConfiguration: &compute.LinuxConfiguration{
+						DisablePasswordAuthentication: to.BoolPtr(true),
 						SSH: &compute.SSHConfiguration{
 							PublicKeys: &[]compute.SSHPublicKey{
 								{
@@ -260,9 +289,28 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	)
-	futureVM.WaitForCompletionRef(ctx, vmClient.Client)
+	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create vm: %v", err),
+		})
+
+		return diags
+	}
+	err = futureVM.WaitForCompletionRef(ctx, vmClient.Client)
+	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("cannot create vm: %v", err),
+		})
+
+		return diags
+	}
 	_, err = vmClient.Get(ctx, gpName, vmName, "")
 	if err != nil {
+		ResourceMachineDelete(ctx, d, m)
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("cannot create vm: %v", err),
@@ -272,9 +320,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	d.SetId(gpName)
-	d.Set("instance_id", vmName)
 	d.Set("instance_ip", ip.IPAddress)
-	//d.Set("instance_launch_time", vm.)
+	d.Set("instance_launch_time", time.Now().String())
 
 	return diags
 }
@@ -285,8 +332,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 	groupsClient, err := getGroupsClient(subscriptionID)
-	future, err := groupsClient.Delete(context.Background(), d.Id())
-	err = future.WaitForCompletionRef(ctx, groupsClient.Client)
+	_, err = groupsClient.Delete(context.Background(), d.Get("instance_id").(string))
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -370,7 +416,7 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 func getRegion(d *schema.ResourceData) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "eastus"
-	instanceRegions["us-west"] = "westus"
+	instanceRegions["us-west"] = "westus2"
 	instanceRegions["eu-north"] = "northeurope"
 	instanceRegions["eu-west"] = "westeurope"
 
@@ -390,12 +436,13 @@ func getInstanceType(d *schema.ResourceData) string {
 	instanceTypes["mk80"] = "Standard_NC6"
 	instanceTypes["lk80"] = "Standard_NC12"
 	instanceTypes["xlk80"] = "Standard_NC24"
-	instanceTypes["mtesla"] = "Standard_NC6s_v2"
-	instanceTypes["ltesla"] = "Standard_NC12s_v2"
-	instanceTypes["xltesla"] = "Standard_NC24s_v2"
+	instanceTypes["mtesla"] = "Standard_NC6s_v3"
+	instanceTypes["ltesla"] = "Standard_NC12s_v3"
+	instanceTypes["xltesla"] = "Standard_NC24s_v3"
 
 	instanceType := d.Get("instance_type").(string)
-	if val, ok := instanceTypes[instanceType+d.Get("instance_gpu").(string)]; ok {
+	instanceGPU := d.Get("instance_gpu").(string)
+	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
 		instanceType = val
 	}
 

@@ -35,7 +35,7 @@ func resourceMachine() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Default:  "iterative-cml",
+				Default:  "",
 			},
 			"instance_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -53,7 +53,7 @@ func resourceMachine() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
-				Default:  10,
+				Default:  35,
 			},
 			"instance_gpu": &schema.Schema{
 				Type:     schema.TypeString,
@@ -105,10 +105,9 @@ func resourceMachine() *schema.Resource {
 	}
 }
 
-func resourceMachineCreate(ctx2 context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	ctx := context.Background()
 	keyPublic := d.Get("key_public").(string)
 	//keyPrivate := d.Get("key_private").(string)
 
@@ -129,6 +128,7 @@ func resourceMachineCreate(ctx2 context.Context, d *schema.ResourceData, m inter
 	}
 
 	driver := d.Get("driver").(string)
+
 	if driver == "aws" {
 		return aws.ResourceMachineCreate(ctx, d, m)
 	}
