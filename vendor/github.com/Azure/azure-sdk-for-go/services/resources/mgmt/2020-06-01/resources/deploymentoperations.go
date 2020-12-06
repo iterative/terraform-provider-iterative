@@ -101,7 +101,7 @@ func (client DeploymentOperationsClient) GetPreparer(ctx context.Context, resour
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2019-05-01"
+	const APIVersion = "2020-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -188,7 +188,7 @@ func (client DeploymentOperationsClient) GetAtManagementGroupScopePreparer(ctx c
 		"operationId":    autorest.Encode("path", operationID),
 	}
 
-	const APIVersion = "2019-05-01"
+	const APIVersion = "2020-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -210,6 +210,90 @@ func (client DeploymentOperationsClient) GetAtManagementGroupScopeSender(req *ht
 // GetAtManagementGroupScopeResponder handles the response to the GetAtManagementGroupScope request. The method always
 // closes the http.Response Body.
 func (client DeploymentOperationsClient) GetAtManagementGroupScopeResponder(resp *http.Response) (result DeploymentOperation, err error) {
+	err = autorest.Respond(
+		resp,
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetAtScope gets a deployments operation.
+// Parameters:
+// scope - the resource scope.
+// deploymentName - the name of the deployment.
+// operationID - the ID of the operation to get.
+func (client DeploymentOperationsClient) GetAtScope(ctx context.Context, scope string, deploymentName string, operationID string) (result DeploymentOperation, err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/DeploymentOperationsClient.GetAtScope")
+		defer func() {
+			sc := -1
+			if result.Response.Response != nil {
+				sc = result.Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: deploymentName,
+			Constraints: []validation.Constraint{{Target: "deploymentName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "deploymentName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "deploymentName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("resources.DeploymentOperationsClient", "GetAtScope", err.Error())
+	}
+
+	req, err := client.GetAtScopePreparer(ctx, scope, deploymentName, operationID)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "GetAtScope", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetAtScopeSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "GetAtScope", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetAtScopeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "GetAtScope", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetAtScopePreparer prepares the GetAtScope request.
+func (client DeploymentOperationsClient) GetAtScopePreparer(ctx context.Context, scope string, deploymentName string, operationID string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"deploymentName": autorest.Encode("path", deploymentName),
+		"operationId":    autorest.Encode("path", operationID),
+		"scope":          scope,
+	}
+
+	const APIVersion = "2020-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/{scope}/providers/Microsoft.Resources/deployments/{deploymentName}/operations/{operationId}", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetAtScopeSender sends the GetAtScope request. The method will close the
+// http.Response Body if it receives an error.
+func (client DeploymentOperationsClient) GetAtScopeSender(req *http.Request) (*http.Response, error) {
+	return client.Send(req, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetAtScopeResponder handles the response to the GetAtScope request. The method always
+// closes the http.Response Body.
+func (client DeploymentOperationsClient) GetAtScopeResponder(resp *http.Response) (result DeploymentOperation, err error) {
 	err = autorest.Respond(
 		resp,
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
@@ -271,7 +355,7 @@ func (client DeploymentOperationsClient) GetAtSubscriptionScopePreparer(ctx cont
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2019-05-01"
+	const APIVersion = "2020-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -293,6 +377,88 @@ func (client DeploymentOperationsClient) GetAtSubscriptionScopeSender(req *http.
 // GetAtSubscriptionScopeResponder handles the response to the GetAtSubscriptionScope request. The method always
 // closes the http.Response Body.
 func (client DeploymentOperationsClient) GetAtSubscriptionScopeResponder(resp *http.Response) (result DeploymentOperation, err error) {
+	err = autorest.Respond(
+		resp,
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetAtTenantScope gets a deployments operation.
+// Parameters:
+// deploymentName - the name of the deployment.
+// operationID - the ID of the operation to get.
+func (client DeploymentOperationsClient) GetAtTenantScope(ctx context.Context, deploymentName string, operationID string) (result DeploymentOperation, err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/DeploymentOperationsClient.GetAtTenantScope")
+		defer func() {
+			sc := -1
+			if result.Response.Response != nil {
+				sc = result.Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: deploymentName,
+			Constraints: []validation.Constraint{{Target: "deploymentName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "deploymentName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "deploymentName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("resources.DeploymentOperationsClient", "GetAtTenantScope", err.Error())
+	}
+
+	req, err := client.GetAtTenantScopePreparer(ctx, deploymentName, operationID)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "GetAtTenantScope", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetAtTenantScopeSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "GetAtTenantScope", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetAtTenantScopeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "GetAtTenantScope", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetAtTenantScopePreparer prepares the GetAtTenantScope request.
+func (client DeploymentOperationsClient) GetAtTenantScopePreparer(ctx context.Context, deploymentName string, operationID string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"deploymentName": autorest.Encode("path", deploymentName),
+		"operationId":    autorest.Encode("path", operationID),
+	}
+
+	const APIVersion = "2020-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/providers/Microsoft.Resources/deployments/{deploymentName}/operations/{operationId}", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetAtTenantScopeSender sends the GetAtTenantScope request. The method will close the
+// http.Response Body if it receives an error.
+func (client DeploymentOperationsClient) GetAtTenantScopeSender(req *http.Request) (*http.Response, error) {
+	return client.Send(req, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetAtTenantScopeResponder handles the response to the GetAtTenantScope request. The method always
+// closes the http.Response Body.
+func (client DeploymentOperationsClient) GetAtTenantScopeResponder(resp *http.Response) (result DeploymentOperation, err error) {
 	err = autorest.Respond(
 		resp,
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
@@ -363,7 +529,7 @@ func (client DeploymentOperationsClient) ListPreparer(ctx context.Context, resou
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2019-05-01"
+	const APIVersion = "2020-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -493,7 +659,7 @@ func (client DeploymentOperationsClient) ListAtManagementGroupScopePreparer(ctx 
 		"groupId":        autorest.Encode("path", groupID),
 	}
 
-	const APIVersion = "2019-05-01"
+	const APIVersion = "2020-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -564,6 +730,133 @@ func (client DeploymentOperationsClient) ListAtManagementGroupScopeComplete(ctx 
 	return
 }
 
+// ListAtScope gets all deployments operations for a deployment.
+// Parameters:
+// scope - the resource scope.
+// deploymentName - the name of the deployment.
+// top - the number of results to return.
+func (client DeploymentOperationsClient) ListAtScope(ctx context.Context, scope string, deploymentName string, top *int32) (result DeploymentOperationsListResultPage, err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/DeploymentOperationsClient.ListAtScope")
+		defer func() {
+			sc := -1
+			if result.dolr.Response.Response != nil {
+				sc = result.dolr.Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: deploymentName,
+			Constraints: []validation.Constraint{{Target: "deploymentName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "deploymentName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "deploymentName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("resources.DeploymentOperationsClient", "ListAtScope", err.Error())
+	}
+
+	result.fn = client.listAtScopeNextResults
+	req, err := client.ListAtScopePreparer(ctx, scope, deploymentName, top)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "ListAtScope", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListAtScopeSender(req)
+	if err != nil {
+		result.dolr.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "ListAtScope", resp, "Failure sending request")
+		return
+	}
+
+	result.dolr, err = client.ListAtScopeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "ListAtScope", resp, "Failure responding to request")
+	}
+	if result.dolr.hasNextLink() && result.dolr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+	}
+
+	return
+}
+
+// ListAtScopePreparer prepares the ListAtScope request.
+func (client DeploymentOperationsClient) ListAtScopePreparer(ctx context.Context, scope string, deploymentName string, top *int32) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"deploymentName": autorest.Encode("path", deploymentName),
+		"scope":          scope,
+	}
+
+	const APIVersion = "2020-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if top != nil {
+		queryParameters["$top"] = autorest.Encode("query", *top)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/{scope}/providers/Microsoft.Resources/deployments/{deploymentName}/operations", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListAtScopeSender sends the ListAtScope request. The method will close the
+// http.Response Body if it receives an error.
+func (client DeploymentOperationsClient) ListAtScopeSender(req *http.Request) (*http.Response, error) {
+	return client.Send(req, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// ListAtScopeResponder handles the response to the ListAtScope request. The method always
+// closes the http.Response Body.
+func (client DeploymentOperationsClient) ListAtScopeResponder(resp *http.Response) (result DeploymentOperationsListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// listAtScopeNextResults retrieves the next set of results, if any.
+func (client DeploymentOperationsClient) listAtScopeNextResults(ctx context.Context, lastResults DeploymentOperationsListResult) (result DeploymentOperationsListResult, err error) {
+	req, err := lastResults.deploymentOperationsListResultPreparer(ctx)
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "listAtScopeNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.ListAtScopeSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "listAtScopeNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.ListAtScopeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "listAtScopeNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// ListAtScopeComplete enumerates all values, automatically crossing page boundaries as required.
+func (client DeploymentOperationsClient) ListAtScopeComplete(ctx context.Context, scope string, deploymentName string, top *int32) (result DeploymentOperationsListResultIterator, err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/DeploymentOperationsClient.ListAtScope")
+		defer func() {
+			sc := -1
+			if result.Response().Response.Response != nil {
+				sc = result.page.Response().Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	result.page, err = client.ListAtScope(ctx, scope, deploymentName, top)
+	return
+}
+
 // ListAtSubscriptionScope gets all deployments operations for a deployment.
 // Parameters:
 // deploymentName - the name of the deployment.
@@ -619,7 +912,7 @@ func (client DeploymentOperationsClient) ListAtSubscriptionScopePreparer(ctx con
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2019-05-01"
+	const APIVersion = "2020-06-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -687,5 +980,130 @@ func (client DeploymentOperationsClient) ListAtSubscriptionScopeComplete(ctx con
 		}()
 	}
 	result.page, err = client.ListAtSubscriptionScope(ctx, deploymentName, top)
+	return
+}
+
+// ListAtTenantScope gets all deployments operations for a deployment.
+// Parameters:
+// deploymentName - the name of the deployment.
+// top - the number of results to return.
+func (client DeploymentOperationsClient) ListAtTenantScope(ctx context.Context, deploymentName string, top *int32) (result DeploymentOperationsListResultPage, err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/DeploymentOperationsClient.ListAtTenantScope")
+		defer func() {
+			sc := -1
+			if result.dolr.Response.Response != nil {
+				sc = result.dolr.Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: deploymentName,
+			Constraints: []validation.Constraint{{Target: "deploymentName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "deploymentName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "deploymentName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("resources.DeploymentOperationsClient", "ListAtTenantScope", err.Error())
+	}
+
+	result.fn = client.listAtTenantScopeNextResults
+	req, err := client.ListAtTenantScopePreparer(ctx, deploymentName, top)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "ListAtTenantScope", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListAtTenantScopeSender(req)
+	if err != nil {
+		result.dolr.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "ListAtTenantScope", resp, "Failure sending request")
+		return
+	}
+
+	result.dolr, err = client.ListAtTenantScopeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "ListAtTenantScope", resp, "Failure responding to request")
+	}
+	if result.dolr.hasNextLink() && result.dolr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+	}
+
+	return
+}
+
+// ListAtTenantScopePreparer prepares the ListAtTenantScope request.
+func (client DeploymentOperationsClient) ListAtTenantScopePreparer(ctx context.Context, deploymentName string, top *int32) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"deploymentName": autorest.Encode("path", deploymentName),
+	}
+
+	const APIVersion = "2020-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if top != nil {
+		queryParameters["$top"] = autorest.Encode("query", *top)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/providers/Microsoft.Resources/deployments/{deploymentName}/operations", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListAtTenantScopeSender sends the ListAtTenantScope request. The method will close the
+// http.Response Body if it receives an error.
+func (client DeploymentOperationsClient) ListAtTenantScopeSender(req *http.Request) (*http.Response, error) {
+	return client.Send(req, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// ListAtTenantScopeResponder handles the response to the ListAtTenantScope request. The method always
+// closes the http.Response Body.
+func (client DeploymentOperationsClient) ListAtTenantScopeResponder(resp *http.Response) (result DeploymentOperationsListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// listAtTenantScopeNextResults retrieves the next set of results, if any.
+func (client DeploymentOperationsClient) listAtTenantScopeNextResults(ctx context.Context, lastResults DeploymentOperationsListResult) (result DeploymentOperationsListResult, err error) {
+	req, err := lastResults.deploymentOperationsListResultPreparer(ctx)
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "listAtTenantScopeNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.ListAtTenantScopeSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "listAtTenantScopeNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.ListAtTenantScopeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "resources.DeploymentOperationsClient", "listAtTenantScopeNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// ListAtTenantScopeComplete enumerates all values, automatically crossing page boundaries as required.
+func (client DeploymentOperationsClient) ListAtTenantScopeComplete(ctx context.Context, deploymentName string, top *int32) (result DeploymentOperationsListResultIterator, err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/DeploymentOperationsClient.ListAtTenantScope")
+		defer func() {
+			sc := -1
+			if result.Response().Response.Response != nil {
+				sc = result.page.Response().Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	result.page, err = client.ListAtTenantScope(ctx, deploymentName, top)
 	return
 }

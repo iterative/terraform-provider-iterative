@@ -9,7 +9,14 @@ terraform {
 
 provider "iterative" {}
 
-resource "iterative_machine" "machine" {
+/* resource "iterative_machine" "machine-aws" {
+  driver = "aws"
   region = "us-west"
-  instance_type = "m" //fallback to known instance type
+  instance_type = "t2.micro" //fallback to known instance type
+} */
+
+resource "iterative_machine" "machine-azure" {
+  driver = "azure"
+  region = "us-west"
+  instance_type = "m"
 }

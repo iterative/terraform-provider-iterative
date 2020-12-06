@@ -2,7 +2,9 @@ package iterative
 
 import (
 	"context"
+	"fmt"
 
+	"terraform-provider-iterative/iterative/aws"
 	"terraform-provider-iterative/iterative/azure"
 	"terraform-provider-iterative/iterative/utils"
 
@@ -18,6 +20,11 @@ func resourceMachine() *schema.Resource {
 		ReadContext:   resourceMachineRead,
 		UpdateContext: resourceMachineUpdate,
 		Schema: map[string]*schema.Schema{
+			"driver": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"region": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -99,6 +106,8 @@ func resourceMachine() *schema.Resource {
 }
 
 func resourceMachineCreate(ctx2 context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	ctx := context.Background()
 	keyPublic := d.Get("key_public").(string)
 	//keyPrivate := d.Get("key_private").(string)
@@ -119,13 +128,33 @@ func resourceMachineCreate(ctx2 context.Context, d *schema.ResourceData, m inter
 		d.Set("instance_name", instanceName)
 	}
 
-	return azure.ResourceMachineCreate(ctx, d, m)
-	//return aws.ResourceMachineCreate(ctx, d, m)
+	driver := d.Get("driver").(string)
+	if driver == "aws" {
+		return aws.ResourceMachineCreate(ctx, d, m)
+	}
+
+	if driver == "azure" {
+		return azure.ResourceMachineCreate(ctx, d, m)
+	}
+
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  fmt.Sprintf("Unknown provider: %s", driver),
+	})
+	return diags
 }
 
 func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return azure.ResourceMachineCreate(ctx, d, m)
-	//return aws.ResourceMachineDelete(ctx, d, m)
+	driver := d.Get("driver").(string)
+	if driver == "aws" {
+		return aws.ResourceMachineDelete(ctx, d, m)
+	}
+
+	if driver == "azure" {
+		return azure.ResourceMachineDelete(ctx, d, m)
+	}
+
+	return nil
 }
 
 func resourceMachineRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

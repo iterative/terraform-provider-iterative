@@ -7,7 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
+	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
 
@@ -30,6 +30,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	offer := "UbuntuServer"
 	sku := "18.04-LTS"
 	version := "latest"
+
+	//publisher := "NVIDIA-GPU"
+	//offer := "GPU"
+	//sku := "Cloud-Image"
+	//version := "2020.06.29"
 
 	gpName := vmName + "-sg"
 	nsgName := vmName + "-nsg"
@@ -267,10 +272,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	d.SetId(gpName)
-	d.Set("instance_id", gpName)
-	//d.Set("key_name", pairName)
-
-	//d.Set("instance_name", instanceName)
+	d.Set("instance_id", vmName)
 	d.Set("instance_ip", ip.IPAddress)
 	//d.Set("instance_launch_time", vm.)
 
@@ -282,26 +284,9 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
-
-	//vmName := ""
-	//ipName := ""
-
-	//getIPClient(subscriptionID).Delete(ctx, gpName, ipName)
-	//_, err = getNsgClient().Delete(ctx, gpName, nsgName)
-
-	/*
-		vmClient, _ := getVMClient(subscriptionID)
-		_, err := vmClient.Deallocate(ctx, gpName, vmName)
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("cannot deallocate vm: %v", err),
-			})
-		}
-	*/
-
 	groupsClient, err := getGroupsClient(subscriptionID)
-	_, err = groupsClient.Delete(ctx, d.Id())
+	_, err = groupsClient.Delete(context.Background(), d.Id())
+	//err = future.WaitForCompletionRef(ctx, groupsClient.Client)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,

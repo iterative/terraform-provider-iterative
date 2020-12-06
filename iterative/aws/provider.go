@@ -200,11 +200,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	d.SetId(instanceID)
 	d.Set("instance_id", instanceID)
-	d.Set("key_name", pairName)
-
-	d.Set("instance_name", instanceName)
 	d.Set("instance_ip", instanceDesc.PublicIpAddress)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
+
+	d.Set("key_name", pairName)
 
 	return diags
 }
