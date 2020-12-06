@@ -285,8 +285,8 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 	groupsClient, err := getGroupsClient(subscriptionID)
-	_, err = groupsClient.Delete(context.Background(), d.Id())
-	//err = future.WaitForCompletionRef(ctx, groupsClient.Client)
+	future, err := groupsClient.Delete(context.Background(), d.Id())
+	err = future.WaitForCompletionRef(ctx, groupsClient.Client)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,

@@ -19,4 +19,16 @@ resource "iterative_machine" "machine-azure" {
   driver = "azure"
   region = "us-west"
   instance_type = "m"
+
+  provisioner "remote-exec" {
+    inline = [
+      "ls",
+    ]
+
+    connection {
+      user     = "ubuntu"
+      private_key = "${self.key_private}"
+      host     = "${self.instance_ip}"
+    }
+  }
 }
