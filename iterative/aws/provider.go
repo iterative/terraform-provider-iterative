@@ -28,7 +28,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// Image
-	ami := ""
+	ami := d.Get("image").(string)
 	if ami == "" {
 		ami = "iterative-cml"
 	}

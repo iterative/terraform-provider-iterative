@@ -11,14 +11,14 @@ provider "iterative" {}
 
 
 resource "iterative_machine" "machine-aws" {
-  driver = "aws"
+  cloud = "aws"
   region = "us-west"
   instance_type = "t2.micro" //fallback to known instance type
 } 
 
 
-resource "iterative_machine" "machine-azure" {
-  driver = "azure"
+/* resource "iterative_machine" "machine-azure" {
+  cloud = "azure"
   region = "us-west"
   instance_type = "m"
 
@@ -33,11 +33,11 @@ resource "iterative_machine" "machine-azure" {
       host        = "${self.instance_ip}"
     }
   }
-}
+} */
 
 
 /* resource "iterative_machine" "machine-azure-gpu" {
-  driver = "azure"
+  cloud = "azure"
   region = "us-east"
   instance_type = "m"
   instance_gpu = "k80"

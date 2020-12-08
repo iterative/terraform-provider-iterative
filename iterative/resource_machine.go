@@ -20,7 +20,7 @@ func resourceMachine() *schema.Resource {
 		ReadContext:   resourceMachineRead,
 		UpdateContext: resourceMachineUpdate,
 		Schema: map[string]*schema.Schema{
-			"driver": &schema.Schema{
+			"cloud": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -31,7 +31,7 @@ func resourceMachine() *schema.Resource {
 				ForceNew: true,
 				Default:  "us-west",
 			},
-			"ami": &schema.Schema{
+			"image": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -61,7 +61,6 @@ func resourceMachine() *schema.Resource {
 				ForceNew: true,
 				Default:  "",
 			},
-
 			"instance_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -89,12 +88,12 @@ func resourceMachine() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
 			"key_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-
 			"aws_security_group": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -109,7 +108,6 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 
 	keyPublic := d.Get("key_public").(string)
-	//keyPrivate := d.Get("key_private").(string)
 
 	if len(keyPublic) == 0 {
 		public, private, _ := utils.SSHKeyPair()
@@ -127,30 +125,30 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		d.Set("instance_name", instanceName)
 	}
 
-	driver := d.Get("driver").(string)
+	cloud := d.Get("cloud").(string)
 
-	if driver == "aws" {
+	if cloud == "aws" {
 		return aws.ResourceMachineCreate(ctx, d, m)
 	}
 
-	if driver == "azure" {
+	if cloud == "azure" {
 		return azure.ResourceMachineCreate(ctx, d, m)
 	}
 
 	diags = append(diags, diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  fmt.Sprintf("Unknown provider: %s", driver),
+		Summary:  fmt.Sprintf("Unknown cloud: %s", cloud),
 	})
 	return diags
 }
 
 func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	driver := d.Get("driver").(string)
-	if driver == "aws" {
+	cloud := d.Get("cloud").(string)
+	if cloud == "aws" {
 		return aws.ResourceMachineDelete(ctx, d, m)
 	}
 
-	if driver == "azure" {
+	if cloud == "azure" {
 		return azure.ResourceMachineDelete(ctx, d, m)
 	}
 

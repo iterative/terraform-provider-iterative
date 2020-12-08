@@ -30,7 +30,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	vmName := d.Get("instance_name").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
 
-	image := d.Get("ami").(string)
+	image := d.Get("image").(string)
 	if image == "" {
 		image = "Canonical:UbuntuServer:18.04-LTS:latest"
 	}
