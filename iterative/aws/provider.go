@@ -2,37 +2,36 @@ package aws
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sort"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 //ResourceMachineCreate creates AWS instance
-func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	instanceName := d.Get("instance_name").(string)
 	hddSize := d.Get("instance_hdd_size").(int)
-	region := getRegion(d)
-	instanceType := getInstanceType(d)
-
-	svc, errClient := awsClient(region)
-	if errClient != nil {
-		return diag.FromErr(errClient)
-	}
-
-	// Image
+	region := getRegion(d.Get("region").(string))
+	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	ami := d.Get("image").(string)
+	keyPublic := d.Get("ssh_public").(string)
+	securityGroup := d.Get("aws_security_group").(string)
 	if ami == "" {
 		ami = "iterative-cml"
 	}
-	imagesRes, imagesErr := svc.DescribeImages(&ec2.DescribeImagesInput{
+
+	svc, err := awsClient(region)
+	if err != nil {
+		return err
+	}
+
+	// Image
+	imagesRes, err := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
@@ -44,16 +43,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	})
-	if imagesErr != nil {
-		return diag.FromErr(imagesErr)
+	if err != nil {
+		return err
 	}
 	if len(imagesRes.Images) == 0 {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  ami + " ami not found in region",
-		})
-
-		return diags
+		return errors.New(ami + " ami not found in region")
 	}
 
 	sort.Slice(imagesRes.Images, func(i, j int) bool {
@@ -66,7 +60,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	pairName := instanceName
 
 	// key-pair
-	keyPublic := d.Get("key_public").(string)
 	svc.ImportKeyPair(&ec2.ImportKeyPairInput{
 		KeyName:           aws.String(pairName),
 		PublicKeyMaterial: []byte(keyPublic),
@@ -74,21 +67,19 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	// securityGroup
 	var vpcID, sgID string
-
-	securityGroup := d.Get("aws_security_group").(string)
 	if len(securityGroup) == 0 {
 		securityGroup = "cml"
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 		vpcID = *vpcsDesc.Vpcs[0].VpcId
 
-		gpResult, ee := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
+		gpResult, err := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
 			Description: aws.String("CML security group"),
 			VpcId:       aws.String(vpcID),
 		})
 
-		if ee == nil {
+		if err == nil {
 			ipPermissions := []*ec2.IpPermission{
 				(&ec2.IpPermission{}).
 					SetIpProtocol("-1").
@@ -111,7 +102,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	sgDesc, sgDescErr := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
+	sgDesc, err := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("group-name"),
@@ -119,8 +110,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	})
-	if sgDescErr != nil {
-		return diag.FromErr(sgDescErr)
+	if err != nil {
+		return err
 	}
 
 	sgID = *sgDesc.SecurityGroups[0].GroupId
@@ -159,21 +150,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Unable to create instance",
-			Detail:   fmt.Sprintf("[ERROR] Instance %s of type %s at region %s", instanceName, instanceType, region),
-		})
-
-		diags = append(diags, diag.FromErr(err)[0])
-
-		return diags
+		return err
 	}
 
 	instanceID := *runResult.Instances[0].InstanceId
 
 	// Add name to the created instance
-	_, errTag := svc.CreateTags(&ec2.CreateTagsInput{
+	_, err = svc.CreateTags(&ec2.CreateTagsInput{
 		Resources: []*string{aws.String(instanceID)},
 		Tags: []*ec2.Tag{
 			{
@@ -182,8 +165,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	})
-	if errTag != nil {
-		return diag.FromErr(errTag)
+	if err != nil {
+		return err
 	}
 
 	statusInput := ec2.DescribeInstancesInput{
@@ -198,7 +181,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	svc.WaitUntilInstanceExistsWithContext(ctx, &statusInput)
 
-	descResult, _ := svc.DescribeInstancesWithContext(ctx, &statusInput)
+	descResult, err := svc.DescribeInstancesWithContext(ctx, &statusInput)
 	instanceDesc := descResult.Reservations[0].Instances[0]
 
 	d.SetId(instanceID)
@@ -208,21 +191,24 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	d.Set("key_name", pairName)
 
-	return diags
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //ResourceMachineDelete deletes AWS instance
-func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	svc, _ := awsClient(getRegion(d))
-
-	pairName := d.Get("key_name").(string)
+func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	svc, _ := awsClient(getRegion(d.Get("region").(string)))
 	instanceID := d.Get("instance_id").(string)
 
-	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
-		KeyName: aws.String(pairName),
-	})
+	/*
+		pairName := d.Get("key_name").(string)
+		svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+			KeyName: aws.String(pairName),
+		})
+	*/
 
 	input := &ec2.TerminateInstancesInput{
 		InstanceIds: []*string{
@@ -234,10 +220,10 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	_, err := svc.TerminateInstances(input)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
-	return diags
+	return nil
 }
 
 func awsClient(region string) (*ec2.EC2, error) {
@@ -250,22 +236,20 @@ func awsClient(region string) (*ec2.EC2, error) {
 	return svc, err
 }
 
-func getRegion(d *schema.ResourceData) string {
+func getRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "us-east-1"
 	instanceRegions["us-west"] = "us-west-1"
 	instanceRegions["eu-north"] = "eu-north-1"
 	instanceRegions["eu-west"] = "eu-west-1"
-
-	region := d.Get("region").(string)
 	if val, ok := instanceRegions[region]; ok {
-		region = val
+		return val
 	}
 
 	return region
 }
 
-func getInstanceType(d *schema.ResourceData) string {
+func getInstanceType(instanceType string, instanceGPU string) string {
 	instanceTypes := make(map[string]string)
 	instanceTypes["m"] = "m5.2xlarge"
 	instanceTypes["l"] = "m5.8xlarge"
@@ -277,10 +261,8 @@ func getInstanceType(d *schema.ResourceData) string {
 	instanceTypes["ltesla"] = "p3.8xlarge"
 	instanceTypes["xltesla"] = "p3.16xlarge"
 
-	instanceType := d.Get("instance_type").(string)
-	instanceGPU := d.Get("instance_gpu").(string)
 	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
-		instanceType = val
+		return val
 	}
 
 	return instanceType

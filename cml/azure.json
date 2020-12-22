@@ -1,0 +1,53 @@
+{
+    "variables": {
+        "rg": "IterativeCMLRG"
+    },
+
+    "builders": [{
+        "type": "azure-arm",
+
+        "client_id": "8c7fa34f-8cb7-4b32-b007-4cbd4e317371",
+        "client_secret": "L-17k_d.-tvWG2QeaWwi2-smVcmN7v9WBt",
+        "tenant_id": "7d111986-d84c-4bef-817e-c4ab3addf85b",
+        "subscription_id": "cee76754-ef49-49f7-b371-f6841fa82182",
+
+		"managed_image_resource_group_name": "IterativeCMLRG",
+        "managed_image_name": "iterative-cml",
+        "shared_image_gallery_destination": {
+            "resource_group": "{{user `rg`}}",
+            "gallery_name": "iterative",
+            "image_name": "iterative-cml",
+            "image_version": "1.0.0",
+            "replication_regions": ["US East"]
+        },
+        "shared_image_gallery_timeout": "2h5m2s",
+
+		"os_type": "Linux",
+		"image_publisher": "Canonical",
+		"image_offer": "UbuntuServer",
+		"image_sku": "18.04-LTS",
+
+		"azure_tags": {
+			"Author" : "iterative"
+		},
+
+		"location": "East US",
+		"vm_size": "Standard_DS2_v2"
+	}],
+	"provisioners": [
+        {
+            "type" : "shell",
+            "environment_vars": ["DEBIAN_FRONTEND=noninteractive"],
+            "script" : "./setup.sh"
+        },
+        {
+            "type": "shell",
+            "inline": [
+              "sudo shutdown -r now",
+              "sleep 60"
+            ],
+            "start_retry_timeout": "10m",
+            "expect_disconnect": true
+        }
+    ]
+}

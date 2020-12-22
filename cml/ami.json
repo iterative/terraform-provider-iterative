@@ -11,7 +11,7 @@
             },
             "region" : "us-west-1",
             "ami_name" : "iterative-cml",
-            "ami_description" : "CML (Continous Machine Learning)",
+            "ami_description" : "CML (Continous Machine Learning). Ubuntu 18.04",
             "ami_groups": ["all"],
             "force_deregister": "true",
             "force_delete_snapshot": "true",

@@ -2,10 +2,13 @@ package azure
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
 	"time"
+
+	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
@@ -14,28 +17,31 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 //ResourceMachineCreate creates AWS instance
-func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
+	maprefix := utils.MachinePrefix(d)
 
-	region := getRegion(d)
-	instanceType := getInstanceType(d)
-	keyPublic := d.Get("key_public").(string)
-	vmName := d.Get("instance_name").(string)
-	hddSize := int32(d.Get("instance_hdd_size").(int))
+	username := "ubuntu"
+	//username := d.Get("ssh_user").(string)
 
-	image := d.Get("image").(string)
+	customData := base64.StdEncoding.EncodeToString([]byte(d.Get(maprefix + "custom_data").(string)))
+	region := getRegion(d.Get(maprefix + "region").(string))
+	instanceType := getInstanceType(d.Get(maprefix+"instance_type").(string), d.Get(maprefix+"instance_gpu").(string))
+	keyPublic := d.Get(maprefix + "ssh_public").(string)
+	vmName := d.Get(maprefix + "instance_name").(string)
+	hddSize := int32(d.Get(maprefix + "instance_hdd_size").(int))
+
+	image := d.Get(maprefix + "image").(string)
 	if image == "" {
 		image = "Canonical:UbuntuServer:18.04-LTS:latest"
+		//image = "iterative:CML:v1.0.0:1.0.0"
 	}
-	imageParts := strings.Split(image, ":")
 
+	imageParts := strings.Split(image, ":")
 	publisher := imageParts[0]
 	offer := imageParts[1]
 	sku := imageParts[2]
@@ -49,10 +55,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	nicName := vmName + "-nic"
 	ipConfigName := vmName + "-ipc"
 
-	username := "ubuntu"
-
-	d.Set("instance_id", vmName)
-
 	groupsClient, err := getGroupsClient(subscriptionID)
 	_, err = groupsClient.CreateOrUpdate(
 		ctx,
@@ -61,13 +63,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			Location: to.StringPtr(region),
 		})
 	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error creating resource group: %v", err),
-		})
-
-		return diags
+		return err
 	}
+
+	d.SetId(gpName)
+	d.Set(maprefix+"instance_id", gpName)
 
 	// securityGroup
 	nsgClient, _ := getNsgClient(subscriptionID)
@@ -99,14 +99,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureNsg.WaitForCompletionRef(ctx, nsgClient.Client)
 	nsg, err := nsgClient.Get(ctx, gpName, nsgName, "")
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Security group is not ready: %v", err),
-		})
-
-		return diags
+		return err
 	}
 
 	//ip
@@ -127,13 +120,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureIP.WaitForCompletionRef(ctx, ipClient.Client)
 	ip, err := ipClient.Get(ctx, gpName, ipName, "")
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create pi: %v", err),
-		})
-
-		return diags
+		return err
 	}
 
 	vnetClient, err := getVnetClient(subscriptionID)
@@ -152,13 +139,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureVnet.WaitForCompletionRef(ctx, vnetClient.Client)
 	_, err = vnetClient.Get(ctx, gpName, vnetName, "")
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create vnet: %v", err),
-		})
-
-		return diags
+		return err
 	}
 
 	// subnet
@@ -176,23 +157,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	futureSubnet.WaitForCompletionRef(ctx, subnetsClient.Client)
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create subnet: %v", err),
-		})
-
-		return diags
+		return err
 	}
 	subnet, err := subnetsClient.Get(ctx, gpName, vnetName, subnetName, "")
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create subnet: %v", err),
-		})
-
-		return diags
+		return err
 	}
 
 	nicClient, _ := getNicClient(subscriptionID)
@@ -217,13 +186,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	futureNic.WaitForCompletionRef(ctx, nicClient.Client)
 	nic, err := nicClient.Get(ctx, gpName, nicName, "")
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create nic: %v", err),
-		})
-
-		return diags
+		return err
 	}
 
 	vmClient, _ := getVMClient(subscriptionID)
@@ -233,13 +196,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		vmName,
 		compute.VirtualMachine{
 			Location: to.StringPtr(region),
-			/*
-				Plan: &compute.Plan{
-					Name:      to.StringPtr(sku),
-					Publisher: to.StringPtr(publisher),
-					Product:   to.StringPtr(offer),
-				},
-			*/
 			VirtualMachineProperties: &compute.VirtualMachineProperties{
 				HardwareProfile: &compute.HardwareProfile{
 					VMSize: compute.VirtualMachineSizeTypes(instanceType),
@@ -262,10 +218,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 					},
 				},
 				OsProfile: &compute.OSProfile{
+					CustomData:    to.StringPtr(customData),
 					ComputerName:  to.StringPtr("iterative"),
 					AdminUsername: to.StringPtr(username),
 					LinuxConfiguration: &compute.LinuxConfiguration{
-						DisablePasswordAuthentication: to.BoolPtr(true),
 						SSH: &compute.SSHConfiguration{
 							PublicKeys: &[]compute.SSHPublicKey{
 								{
@@ -290,62 +246,33 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	)
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create vm: %v", err),
-		})
-
-		return diags
+		return err
 	}
 	err = futureVM.WaitForCompletionRef(ctx, vmClient.Client)
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create vm: %v", err),
-		})
-
-		return diags
+		return err
 	}
 	_, err = vmClient.Get(ctx, gpName, vmName, "")
 	if err != nil {
-		ResourceMachineDelete(ctx, d, m)
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("cannot create vm: %v", err),
-		})
-
-		return diags
+		return err
 	}
 
-	d.SetId(gpName)
-	d.Set("instance_ip", ip.IPAddress)
-	d.Set("instance_launch_time", time.Now().String())
+	d.Set(maprefix+"instance_ip", ip.IPAddress)
+	d.Set(maprefix+"instance_launch_time", time.Now().String())
 
-	return diags
+	return nil
 }
 
 //ResourceMachineDelete deletes Azure instance
-func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 	groupsClient, err := getGroupsClient(subscriptionID)
-	_, err = groupsClient.Delete(context.Background(), d.Get("instance_id").(string))
-	if err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Instance not removed: %v", err),
-		})
-	}
-
-	return diags
+	_, err = groupsClient.Delete(context.Background(), d.Id())
+	return err
 }
 
 func getGroupsClient(subscriptionID string) (resources.GroupsClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := resources.NewGroupsClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -355,7 +282,6 @@ func getGroupsClient(subscriptionID string) (resources.GroupsClient, error) {
 
 func getNsgClient(subscriptionID string) (network.SecurityGroupsClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := network.NewSecurityGroupsClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -365,7 +291,6 @@ func getNsgClient(subscriptionID string) (network.SecurityGroupsClient, error) {
 
 func getIPClient(subscriptionID string) (network.PublicIPAddressesClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := network.NewPublicIPAddressesClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -375,7 +300,6 @@ func getIPClient(subscriptionID string) (network.PublicIPAddressesClient, error)
 
 func getVnetClient(subscriptionID string) (network.VirtualNetworksClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := network.NewVirtualNetworksClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -385,7 +309,6 @@ func getVnetClient(subscriptionID string) (network.VirtualNetworksClient, error)
 
 func getSubnetsClient(subscriptionID string) (network.SubnetsClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := network.NewSubnetsClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -395,7 +318,6 @@ func getSubnetsClient(subscriptionID string) (network.SubnetsClient, error) {
 
 func getNicClient(subscriptionID string) (network.InterfacesClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := network.NewInterfacesClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -405,7 +327,6 @@ func getNicClient(subscriptionID string) (network.InterfacesClient, error) {
 
 func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
-
 	client := compute.NewVirtualMachinesClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -413,22 +334,21 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	return client, err
 }
 
-func getRegion(d *schema.ResourceData) string {
+func getRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "eastus"
 	instanceRegions["us-west"] = "westus2"
 	instanceRegions["eu-north"] = "northeurope"
 	instanceRegions["eu-west"] = "westeurope"
 
-	region := d.Get("region").(string)
 	if val, ok := instanceRegions[region]; ok {
-		region = val
+		return val
 	}
 
 	return region
 }
 
-func getInstanceType(d *schema.ResourceData) string {
+func getInstanceType(instanceType string, instanceGPU string) string {
 	instanceTypes := make(map[string]string)
 	instanceTypes["m"] = "Standard_F8s_v2"
 	instanceTypes["l"] = "Standard_F32s_v2"
@@ -440,10 +360,8 @@ func getInstanceType(d *schema.ResourceData) string {
 	instanceTypes["ltesla"] = "Standard_NC12s_v3"
 	instanceTypes["xltesla"] = "Standard_NC24s_v3"
 
-	instanceType := d.Get("instance_type").(string)
-	instanceGPU := d.Get("instance_gpu").(string)
 	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
-		instanceType = val
+		return val
 	}
 
 	return instanceType
