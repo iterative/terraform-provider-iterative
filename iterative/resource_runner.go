@@ -183,6 +183,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 				SchemaVersion: 0,
 				Attributes: AttributesType{
 					ID:                 d.Get("name").(string),
+					Cloud:              d.Get("cloud").(string),
 					Name:               "",
 					Labels:             "",
 					IdleTimeout:        d.Get("idle_timeout").(int),
@@ -190,7 +191,6 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 					Token:              "",
 					Driver:             "",
 					AwsSecurityGroup:   "",
-					Cloud:              "",
 					CustomData:         "",
 					Image:              "",
 					InstanceGpu:        "",
