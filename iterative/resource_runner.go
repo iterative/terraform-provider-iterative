@@ -3,11 +3,11 @@ package iterative
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -182,27 +182,27 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 			InstanceType{
 				SchemaVersion: 0,
 				Attributes: AttributesType{
-					Name:               d.Get("name").(string),
-					Labels:             d.Get("name").(string),
-					IdleTimeout:        d.Get("idle_timeout").(int),
-					Repo:               d.Get("name").(string),
-					Token:              d.Get("name").(string),
-					Driver:             d.Get("name").(string),
-					AwsSecurityGroup:   d.Get("name").(string),
-					Cloud:              d.Get("name").(string),
-					CustomData:         d.Get("name").(string),
 					ID:                 d.Get("name").(string),
-					Image:              d.Get("name").(string),
-					InstanceGpu:        d.Get("name").(string),
+					Name:               "",
+					Labels:             "",
+					IdleTimeout:        d.Get("idle_timeout").(int),
+					Repo:               "",
+					Token:              "",
+					Driver:             "",
+					AwsSecurityGroup:   "",
+					Cloud:              "",
+					CustomData:         "",
+					Image:              "",
+					InstanceGpu:        "",
 					InstanceHddSize:    d.Get("instance_hdd_size").(int),
-					InstanceID:         d.Get("name").(string),
-					InstanceIP:         d.Get("name").(string),
-					InstanceLaunchTime: d.Get("name").(string),
-					InstanceType:       d.Get("name").(string),
-					Region:             d.Get("name").(string),
-					SSHName:            d.Get("name").(string),
-					SSHPrivate:         d.Get("name").(string),
-					SSHPublic:          d.Get("name").(string),
+					InstanceID:         "",
+					InstanceIP:         "",
+					InstanceLaunchTime: "",
+					InstanceType:       "",
+					Region:             "",
+					SSHName:            "",
+					SSHPrivate:         "",
+					SSHPublic:          "",
 				},
 			},
 		},
@@ -212,8 +212,6 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
-	//return string(jsonResource), nil
-
 	data := make(map[string]string)
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
@@ -221,7 +219,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["labels"] = d.Get("labels").(string)
 	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
 	data["name"] = d.Get("name").(string)
-	data["tf_resource"] = string(jsonResource)
+	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 
 	tmpl, err := template.New("deploy").Parse(`#!/bin/bash
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
@@ -230,14 +228,14 @@ curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 sudo apt update && sudo apt-get install -y terraform nodejs
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
-nohup cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource='TF_RESOURCE'{{end}} < /dev/null > std.out 2> std.err &
+nohup cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} < /dev/null > std.out 2> std.err &
 sleep 10
 `)
 	var customDataBuffer bytes.Buffer
 	err = tmpl.Execute(&customDataBuffer, data)
 
 	if err == nil {
-		code = strings.Replace(customDataBuffer.String(), "TF_RESOURCE", string(jsonResource), 1)
+		code = customDataBuffer.String()
 	}
 
 	return code, nil

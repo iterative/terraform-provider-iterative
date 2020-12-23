@@ -1,14 +1,14 @@
 terraform {
   required_providers {
-    iterative = {
-      versions = ["0.6"]
-      source = "github.com/iterative/iterative"
-    }
-
     # iterative = {
-    #   source = "iterative/iterative"
-    #   version = "0.5.3"
+    #   versions = ["0.6"]
+    #   source = "github.com/iterative/iterative"
     # }
+
+    iterative = {
+      source = "iterative/iterative"
+      version = "0.5.4"
+    }
   }
 }
 
@@ -23,17 +23,17 @@ resource "iterative_machine" "machine-az" {
 */
 
 
-resource "iterative_runner" "runner-az" {
-    name = "holy-moly4"
-    token = "arszDpb3xtNdKaXmQ6vN"
-    repo = "https://gitlab.com/DavidGOrtega/3_tensorboard"
-    driver = "gitlab"
-    labels = "tf"
+# resource "iterative_runner" "runner-az" {
+#     name = "holy-moly5"
+#     token = "arszDpb3xtNdKaXmQ6vN"
+#     repo = "https://gitlab.com/DavidGOrtega/3_tensorboard"
+#     driver = "gitlab"
+#     labels = "tf"
 
-    cloud = "azure"
-    region = "us-west"
-    instance_type = "m"
-} 
+#     cloud = "azure"
+#     region = "us-west"
+#     instance_type = "m"
+# } 
 
 /*
  resource "iterative_machine" "machine-aws" {
