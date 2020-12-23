@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/teris-io/shortid"
 )
 
 func resourceMachine() *schema.Resource {
@@ -114,19 +113,14 @@ func machineSchema() *map[string]*schema.Schema {
 func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	utils.SetName(d)
+
 	keyPublic := d.Get("ssh_public").(string)
 	if len(keyPublic) == 0 {
 		public, private, _ := utils.SSHKeyPair()
 
 		d.Set("ssh_public", public)
 		d.Set("ssh_private", private)
-	}
-
-	name := d.Get("name").(string)
-	if len(name) == 0 {
-		sid, _ := shortid.New(1, shortid.DefaultABC, 2342)
-		id, _ := sid.Generate()
-		d.Set("name", "iterative-"+id)
 	}
 
 	cloud := d.Get("cloud").(string)

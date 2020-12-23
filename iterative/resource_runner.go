@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 
+	"terraform-provider-iterative/iterative/utils"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -133,6 +135,8 @@ func resourceRunner() *schema.Resource {
 
 func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	utils.SetName(d)
 
 	customData, err := provisionerCode(d)
 	if err != nil {
