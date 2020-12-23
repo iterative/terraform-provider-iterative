@@ -144,12 +144,14 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	d.Set("custom_data", customData)
 
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  d.Get("custom_data").(string),
-	})
+	/*
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  d.Get("custom_data").(string),
+		})
 
-	return diags
+		return diags
+	*/
 
 	cloud := d.Get("cloud").(string)
 	if len(cloud) == 0 {
