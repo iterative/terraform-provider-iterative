@@ -177,7 +177,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		Mode:     "managed",
 		Type:     "iterative_runner",
 		Name:     "runner",
-		Provider: "provider[\"github.com/iterative/iterative\"]",
+		Provider: "provider[\"registry.terraform.io/iterative/iterative\"]",
 		Instances: InstancesType{
 			InstanceType{
 				SchemaVersion: 0,
