@@ -17,16 +17,16 @@ resource "iterative_machine" "machine-az" {
 }
 */
 
+
 resource "iterative_runner" "runner-az" {
     token = "arszDpb3xtNdKaXmQ6vN"
     repo = "https://gitlab.com/DavidGOrtega/3_tensorboard"
     driver = "gitlab"
     labels = "tf"
-    machine {
-      cloud = "azure"
-      region = "us-west"
-      instance_type = "m"
-    }
+
+    cloud = "azure"
+    region = "us-west"
+    instance_type = "m"
 } 
 
 /*

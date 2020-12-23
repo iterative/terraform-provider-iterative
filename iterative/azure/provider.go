@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"terraform-provider-iterative/iterative/utils"
-
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
@@ -23,19 +21,18 @@ import (
 //ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
-	maprefix := utils.MachinePrefix(d)
 
 	username := "ubuntu"
 	//username := d.Get("ssh_user").(string)
 
-	customData := base64.StdEncoding.EncodeToString([]byte(d.Get(maprefix + "custom_data").(string)))
-	region := getRegion(d.Get(maprefix + "region").(string))
-	instanceType := getInstanceType(d.Get(maprefix+"instance_type").(string), d.Get(maprefix+"instance_gpu").(string))
-	keyPublic := d.Get(maprefix + "ssh_public").(string)
-	vmName := d.Get(maprefix + "instance_name").(string)
-	hddSize := int32(d.Get(maprefix + "instance_hdd_size").(int))
+	customData := base64.StdEncoding.EncodeToString([]byte(d.Get("custom_data").(string)))
+	region := getRegion(d.Get("region").(string))
+	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
+	keyPublic := d.Get("ssh_public").(string)
+	vmName := d.Get("name").(string)
+	hddSize := int32(d.Get("instance_hdd_size").(int))
 
-	image := d.Get(maprefix + "image").(string)
+	image := d.Get("image").(string)
 	if image == "" {
 		image = "Canonical:UbuntuServer:18.04-LTS:latest"
 		//image = "iterative:CML:v1.0.0:1.0.0"
@@ -67,7 +64,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	d.SetId(gpName)
-	d.Set(maprefix+"instance_id", gpName)
+	d.Set("instance_id", gpName)
 
 	// securityGroup
 	nsgClient, _ := getNsgClient(subscriptionID)
@@ -257,8 +254,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
-	d.Set(maprefix+"instance_ip", ip.IPAddress)
-	d.Set(maprefix+"instance_launch_time", time.Now().String())
+	d.Set("instance_ip", ip.IPAddress)
+	d.Set("instance_launch_time", time.Now().String())
 
 	return nil
 }

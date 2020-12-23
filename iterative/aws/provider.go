@@ -14,7 +14,7 @@ import (
 
 //ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	instanceName := d.Get("instance_name").(string)
+	instanceName := d.Get("name").(string)
 	hddSize := d.Get("instance_hdd_size").(int)
 	region := getRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
