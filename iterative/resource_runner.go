@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"os"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -143,14 +144,12 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	d.Set("custom_data", customData)
 
-	/*
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  d.Get("custom_data").(string),
-		})
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  d.Get("custom_data").(string),
+	})
 
-		return diags
-	*/
+	return diags
 
 	cloud := d.Get("cloud").(string)
 	if len(cloud) == 0 {
@@ -220,14 +219,28 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
 	data["name"] = d.Get("name").(string)
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
+	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
+	data["AZURE_CLIENT_ID"] = os.Getenv("AZURE_CLIENT_ID")
+	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
+	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
+	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 
 	tmpl, err := template.New("deploy").Parse(`#!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 sudo apt update && sudo apt-get install -y terraform nodejs
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
+
+export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
+export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
+export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
+export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
+export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
+export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
 nohup cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} < /dev/null > std.out 2> std.err &
 sleep 10
 `)
