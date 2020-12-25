@@ -15,11 +15,13 @@ func MachinePrefix(d *schema.ResourceData) string {
 	return prefix
 }
 
-func SetName(d *schema.ResourceData) {
-	name := d.Get("name").(string)
-	if len(name) == 0 {
-		sid, _ := shortid.New(1, shortid.DefaultABC, 2342)
-		id, _ := sid.Generate()
-		d.Set("name", "iterative-"+id)
+func SetId(d *schema.ResourceData) {
+	sid, _ := shortid.New(1, shortid.DefaultABC, 2342)
+	id, _ := sid.Generate()
+	name := "iterative-" + id
+	d.SetId(name)
+
+	if len(d.Get("name").(string)) == 0 {
+		d.Set("name", name)
 	}
 }

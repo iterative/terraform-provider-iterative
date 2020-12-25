@@ -89,10 +89,6 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
-			"instance_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"instance_ip": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -119,7 +115,7 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "ubuntu",
 			},
-			"custom_data": &schema.Schema{
+			"startup_script": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -136,17 +132,17 @@ func resourceRunner() *schema.Resource {
 func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	utils.SetName(d)
+	utils.SetId(d)
 
-	customData, err := provisionerCode(d)
+	startupScript, err := provisionerCode(d)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error generating provisioner code: %s", err),
+			Summary:  fmt.Sprintf("Error generating startup script: %s", err),
 		})
 		return diags
 	}
-	d.Set("custom_data", customData)
+	d.Set("startup_script", startupScript)
 
 	/*
 		diags = append(diags, diag.Diagnostic{
@@ -187,9 +183,10 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 			InstanceType{
 				SchemaVersion: 0,
 				Attributes: AttributesType{
-					ID:                 d.Get("name").(string),
+					ID:                 d.Id(),
 					Cloud:              d.Get("cloud").(string),
-					Name:               "",
+					Region:             d.Get("region").(string),
+					Name:               d.Get("name").(string),
 					Labels:             "",
 					IdleTimeout:        d.Get("idle_timeout").(int),
 					Repo:               "",
@@ -200,11 +197,9 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 					Image:              "",
 					InstanceGpu:        "",
 					InstanceHddSize:    d.Get("instance_hdd_size").(int),
-					InstanceID:         "",
 					InstanceIP:         "",
 					InstanceLaunchTime: "",
 					InstanceType:       "",
-					Region:             "",
 					SSHName:            "",
 					SSHPrivate:         "",
 					SSHPublic:          "",
@@ -267,14 +262,12 @@ type AttributesType struct {
 	Repo               string      `json:"repo"`
 	Token              string      `json:"token"`
 	Driver             string      `json:"driver"`
-	AwsSecurityGroup   interface{} `json:"aws_security_group"`
 	Cloud              string      `json:"cloud"`
 	CustomData         string      `json:"custom_data"`
 	ID                 string      `json:"id"`
 	Image              interface{} `json:"image"`
 	InstanceGpu        interface{} `json:"instance_gpu"`
 	InstanceHddSize    int         `json:"instance_hdd_size"`
-	InstanceID         string      `json:"instance_id"`
 	InstanceIP         string      `json:"instance_ip"`
 	InstanceLaunchTime string      `json:"instance_launch_time"`
 	InstanceType       string      `json:"instance_type"`
@@ -282,6 +275,7 @@ type AttributesType struct {
 	SSHName            string      `json:"ssh_name"`
 	SSHPrivate         string      `json:"ssh_private"`
 	SSHPublic          string      `json:"ssh_public"`
+	AwsSecurityGroup   interface{} `json:"aws_security_group"`
 }
 type InstanceType struct {
 	Private       string         `json:"private"`

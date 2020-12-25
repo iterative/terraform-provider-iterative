@@ -14,7 +14,9 @@ import (
 
 //ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	userData := d.Get("startup_script").(string)
 	instanceName := d.Get("name").(string)
+	pairName := d.Id()
 	hddSize := d.Get("instance_hdd_size").(int)
 	region := getRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
@@ -57,13 +59,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	})
 
 	instanceAmi := *imagesRes.Images[0].ImageId
-	pairName := instanceName
 
 	// key-pair
 	svc.ImportKeyPair(&ec2.ImportKeyPairInput{
 		KeyName:           aws.String(pairName),
 		PublicKeyMaterial: []byte(keyPublic),
 	})
+	//if err != nil {
+	//return err
+	//}
 
 	// securityGroup
 	var vpcID, sgID string
@@ -128,6 +132,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	//launch instance
 	runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
+		UserData:         aws.String(userData),
 		ImageId:          aws.String(instanceAmi),
 		KeyName:          aws.String(pairName),
 		InstanceType:     aws.String(instanceType),
@@ -163,6 +168,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Key:   aws.String("Name"),
 				Value: aws.String(instanceName),
 			},
+			{
+				Key:   aws.String("Id"),
+				Value: aws.String(d.Id()),
+			},
 		},
 	})
 	if err != nil {
@@ -182,43 +191,50 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	svc.WaitUntilInstanceExistsWithContext(ctx, &statusInput)
 
 	descResult, err := svc.DescribeInstancesWithContext(ctx, &statusInput)
-	instanceDesc := descResult.Reservations[0].Instances[0]
-
-	d.SetId(instanceID)
-	d.Set("instance_id", instanceID)
-	d.Set("instance_ip", instanceDesc.PublicIpAddress)
-	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
-
-	d.Set("key_name", pairName)
-
 	if err != nil {
 		return err
 	}
+
+	instanceDesc := descResult.Reservations[0].Instances[0]
+	d.Set("instance_ip", instanceDesc.PublicIpAddress)
+	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
 
 	return nil
 }
 
 //ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	svc, _ := awsClient(getRegion(d.Get("region").(string)))
-	instanceID := d.Get("instance_id").(string)
+	id := aws.String(d.Id())
+	region := getRegion(d.Get("region").(string))
 
-	/*
-		pairName := d.Get("key_name").(string)
-		svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
-			KeyName: aws.String(pairName),
-		})
-	*/
+	svc, err := awsClient(region)
+	if err != nil {
+		return err
+	}
 
-	input := &ec2.TerminateInstancesInput{
+	descResult, err := svc.DescribeInstancesWithContext(ctx, &ec2.DescribeInstancesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("tag:Id"),
+				Values: []*string{id},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+		KeyName: id,
+	})
+
+	instanceID := *descResult.Reservations[0].Instances[0].InstanceId
+	_, err = svc.TerminateInstances(&ec2.TerminateInstancesInput{
 		InstanceIds: []*string{
 			aws.String(instanceID),
 		},
 		DryRun: aws.Bool(false),
-	}
-
-	_, err := svc.TerminateInstances(input)
-
+	})
 	if err != nil {
 		return err
 	}

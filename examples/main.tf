@@ -1,28 +1,18 @@
 terraform {
   required_providers {
-    # iterative = {
-    #   versions = ["0.6"]
-    #   source = "github.com/iterative/iterative"
-    # }
-
     iterative = {
-      source = "iterative/iterative"
-      version = "0.5.7"
+      versions = ["0.6"]
+      source = "github.com/iterative/iterative"
     }
+
+    # iterative = {
+    #   source = "iterative/iterative"
+    #   version = "0.5.7"
+    # }
   }
 }
 
 provider "iterative" {}
-
-/*
-resource "iterative_machine" "machine-az" {
-  cloud = "azure"
-  region = "us-east"
-  instance_type = "m"
-}
-*/
-
-
 resource "iterative_runner" "runner-az" {
     name = "holy-moly56"
     token = "arszDpb3xtNdKaXmQ6vN"
@@ -34,14 +24,6 @@ resource "iterative_runner" "runner-az" {
     region = "us-west"
     instance_type = "m"
 } 
-
-/*
- resource "iterative_machine" "machine-aws" {
-    cloud = "aws"
-    region = "us-west"
-    instance_type = "t2.micro" //fallback to known instance type
-} 
-*/
 
 
 /*
@@ -83,4 +65,18 @@ resource "iterative_machine" "machine-az" {
       host        = "${self.instance_ip}"
     }
   }
+} */
+/* 
+resource "iterative_machine" "machine-aws" {
+  name = "cml-aws4"
+  cloud = "aws"
+  region = "us-west"
+  instance_type = "t2.micro" //fallback to known instance type
+}  */
+
+/* resource "iterative_machine" "machine-az" {
+  name = "cml-azure"
+  cloud = "azure"
+  region = "us-west"
+  instance_type = "m"
 } */

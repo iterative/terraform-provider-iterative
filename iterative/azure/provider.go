@@ -2,7 +2,6 @@ package azure
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
@@ -25,9 +24,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	username := "ubuntu"
 	//username := d.Get("ssh_user").(string)
 
-	vmName := d.Get("name").(string)
-
-	customData := base64.StdEncoding.EncodeToString([]byte(d.Get("custom_data").(string)))
+	customData := d.Get("startup_script").(string)
 	region := getRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	keyPublic := d.Get("ssh_public").(string)
@@ -45,13 +42,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sku := imageParts[2]
 	version := imageParts[3]
 
-	gpName := vmName
-	nsgName := vmName + "-nsg"
-	vnetName := vmName + "-vnet"
-	ipName := vmName + "-ip"
-	subnetName := vmName + "-sn"
-	nicName := vmName + "-nic"
-	ipConfigName := vmName + "-ipc"
+	vmName := d.Get("name").(string)
+	gpName := d.Id()
+	nsgName := gpName + "-nsg"
+	vnetName := gpName + "-vnet"
+	ipName := gpName + "-ip"
+	subnetName := gpName + "-sn"
+	nicName := gpName + "-nic"
+	ipConfigName := gpName + "-ipc"
 
 	groupsClient, err := getGroupsClient(subscriptionID)
 	_, err = groupsClient.CreateOrUpdate(
@@ -63,9 +61,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-
-	d.SetId(gpName)
-	d.Set("instance_id", gpName)
 
 	// securityGroup
 	nsgClient, _ := getNsgClient(subscriptionID)
@@ -268,14 +263,16 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	future, err := groupsClient.Delete(context.Background(), d.Id())
+	_, err = groupsClient.Delete(context.Background(), d.Id())
 	if err != nil {
 		return err
 	}
-	err = future.WaitForCompletionRef(ctx, groupsClient.Client)
-	if err != nil {
-		return err
-	}
+	/*
+		err = future.WaitForCompletionRef(ctx, groupsClient.Client)
+		if err != nil {
+			return err
+		}
+	*/
 	return err
 }
 

@@ -2,6 +2,7 @@ package iterative
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"terraform-provider-iterative/iterative/aws"
@@ -65,10 +66,6 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
-		"instance_id": &schema.Schema{
-			Type:     schema.TypeString,
-			Computed: true,
-		},
 		"instance_ip": &schema.Schema{
 			Type:     schema.TypeString,
 			Computed: true,
@@ -95,7 +92,7 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "ubuntu",
 		},
-		"custom_data": &schema.Schema{
+		"startup_script": &schema.Schema{
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
@@ -113,7 +110,10 @@ func machineSchema() *map[string]*schema.Schema {
 func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	utils.SetName(d)
+	utils.SetId(d)
+
+	script64 := base64.StdEncoding.EncodeToString([]byte(d.Get("startup_script").(string)))
+	d.Set("startup_script", script64)
 
 	keyPublic := d.Get("ssh_public").(string)
 	if len(keyPublic) == 0 {
