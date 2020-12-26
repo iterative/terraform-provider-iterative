@@ -13,6 +13,20 @@ terraform {
 }
 
 provider "iterative" {}
+resource "iterative_runner" "runner-aws" {
+    name = "holy-moly57"
+    token = "arszDpb3xtNdKaXmQ6vN"
+    repo = "https://gitlab.com/DavidGOrtega/3_tensorboard"
+    driver = "gitlab"
+    labels = "tf"
+
+    cloud = "aws"
+    region = "us-west"
+    instance_type = "t2.micro"
+} 
+
+/*
+provider "iterative" {}
 resource "iterative_runner" "runner-az" {
     name = "holy-moly56"
     token = "arszDpb3xtNdKaXmQ6vN"
@@ -24,6 +38,7 @@ resource "iterative_runner" "runner-az" {
     region = "us-west"
     instance_type = "m"
 } 
+*/
 
 
 /*
