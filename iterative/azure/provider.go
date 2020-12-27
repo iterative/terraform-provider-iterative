@@ -22,8 +22,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 
 	username := "ubuntu"
-	//username := d.Get("ssh_user").(string)
-
 	customData := d.Get("startup_script").(string)
 	region := getRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))

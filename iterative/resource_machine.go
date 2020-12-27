@@ -74,12 +74,6 @@ func machineSchema() *map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"ssh_public": &schema.Schema{
-			Type:     schema.TypeString,
-			ForceNew: true,
-			Optional: true,
-			Default:  "",
-		},
 		"ssh_private": &schema.Schema{
 			Type:     schema.TypeString,
 			ForceNew: true,
@@ -88,9 +82,7 @@ func machineSchema() *map[string]*schema.Schema {
 		},
 		"ssh_name": &schema.Schema{
 			Type:     schema.TypeString,
-			ForceNew: true,
-			Optional: true,
-			Default:  "ubuntu",
+			Computed: true,
 		},
 		"startup_script": &schema.Schema{
 			Type:     schema.TypeString,
@@ -112,16 +104,33 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	utils.SetId(d)
 
-	script64 := base64.StdEncoding.EncodeToString([]byte(d.Get("startup_script").(string)))
-	d.Set("startup_script", script64)
+	if len(d.Get("ssh_private").(string)) == 0 {
+		private, err := utils.PrivatePEM()
+		if err != nil {
+			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed creating the private PEM: %v", err),
+			})
 
-	keyPublic := d.Get("ssh_public").(string)
-	if len(keyPublic) == 0 {
-		public, private, _ := utils.SSHKeyPair()
+			return diags
+		}
 
-		d.Set("ssh_public", public)
 		d.Set("ssh_private", private)
 	}
+
+	public, err := utils.PublicFromPrivatePEM(d.Get("ssh_private").(string))
+	if err != nil {
+		diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Failed creating the public key: %v", err),
+		})
+
+		return diags
+	}
+	d.Set("ssh_public", public)
+
+	script64 := base64.StdEncoding.EncodeToString([]byte(d.Get("startup_script").(string)))
+	d.Set("startup_script", script64)
 
 	cloud := d.Get("cloud").(string)
 	if cloud == "aws" {

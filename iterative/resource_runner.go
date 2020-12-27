@@ -99,21 +99,13 @@ func resourceRunner() *schema.Resource {
 			},
 			"ssh_public": &schema.Schema{
 				Type:     schema.TypeString,
-				ForceNew: true,
-				Optional: true,
-				Default:  "",
+				Computed: true,
 			},
 			"ssh_private": &schema.Schema{
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
 				Default:  "",
-			},
-			"ssh_name": &schema.Schema{
-				Type:     schema.TypeString,
-				ForceNew: true,
-				Optional: true,
-				Default:  "ubuntu",
 			},
 			"startup_script": &schema.Schema{
 				Type:     schema.TypeString,
@@ -152,7 +144,6 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		})
 	} else {
 		diags = resourceMachineCreate(ctx, d, m)
-		//d.SetId("local")
 	}
 
 	return diags
@@ -204,6 +195,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	}
 
 	data := make(map[string]string)
+	data["cloud"] = d.Get("cloud").(string)
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
 	data["driver"] = d.Get("driver").(string)
@@ -219,40 +211,34 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 
 	tmpl, err := template.New("deploy").Parse(`#!/bin/bash
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 
-{{if .cloud eq "azure"}}
+{{if eq .cloud "azure"}}
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
-
 sudo apt update
-sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh && \
+sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
 sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
-
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 sudo apt update && sudo apt-get install -y terraform
-
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
-
 sudo apt install -y ubuntu-drivers-common git
 sudo ubuntu-drivers autoinstall 
 sudo rmmod nvidia && sudo nvidia-smi
-curl -s -L https://nvidia.GitHub.io/nvidia-docker/gpgkey | sudo apt-key add - && \
+curl -s -L https://nvidia.GitHub.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.GitHub.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-container-toolkit
 {{end}}
-
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
-
 export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
 export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
 export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
-nohup cml-runner{{if .name}} --name {{.name}}{{end}}c --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} < /dev/null > std.out 2> std.err &
+nohup cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} < /dev/null > std.out 2> std.err &
 sleep 10
 `)
 	var customDataBuffer bytes.Buffer
