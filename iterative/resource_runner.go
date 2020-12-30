@@ -29,8 +29,9 @@ func resourceRunner() *schema.Resource {
 			},
 			"token": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
+				Default:  "",
 			},
 			"driver": &schema.Schema{
 				Type:     schema.TypeString,
@@ -129,6 +130,14 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	token := os.Getenv("CML_TOKEN")
 	if len(d.Get("token").(string)) == 0 && len(token) != 0 {
 		d.Set("token", token)
+	}
+
+	if len(d.Get("token").(string)) == 0 {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Token not found nor in tf file nor in env CML_TOKEN"),
+		})
+		return diags
 	}
 
 	startupScript, err := provisionerCode(d)
