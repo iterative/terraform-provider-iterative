@@ -134,7 +134,7 @@ terraform apply --auto-approve
 | ```image``` | | ```iterative-cml``` in AWS ```Canonical:UbuntuServer:18.04-LTS:latest``` in Azure | Sets the image to be used.  On AWS the provider does a search in the cloud provider by image name not by id, taking the lastest version in case there are many with the same name. Defaults to [iterative-cml image](#iterative-cml-image). On Azure uses the form Publisher:Offer:SKU:Version|
 | ```name``` |  | iterative_{UID} | Sets the instance name and related resources based on that name. In Azure groups everything under a resource group with that name. |
 | ```instance_hdd_size``` | | 10 | Sets the instance hard disk size in gb |
-| ```instance_type``` | ```m```, ```l```, ```xl``` | ```m``` | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. ```t2.micro```. [See equivalences]((#AWS-instance-equivalences)) table below. |
+| ```instance_type``` | ```m```, ```l```, ```xl``` | ```m``` | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. ```t2.micro```. [See equivalences](#Supported-vendors) table below. |
 | ```instance_gpu``` | ``` ```, ```testla```, ```k80``` | ``` ``` | Sets the desired GPU  if the ```instance_type``` is one of our types. |
 | ```ssh_private``` | | | SSH private in PEM format. If not provided one private and public key wll be automatically generated and returned in terraform.tfstate  |
 
@@ -244,14 +244,14 @@ terraform apply --auto-approve
 | ```image``` | | ```iterative-cml``` in AWS ```Canonical:UbuntuServer:18.04-LTS:latest``` in Azure | Sets the image to be used.  On AWS the provider does a search in the cloud provider by image name not by id, taking the lastest version in case there are many with the same name. Defaults to [iterative-cml image](#iterative-cml-image). On Azure uses the form Publisher:Offer:SKU:Version|
 | ```name``` |  | iterative_{UID} | Sets the instance name and related resources based on that name. In Azure groups everything under a resource group with that name. |
 | ```instance_hdd_size``` | | 10 | Sets the instance hard disk size in gb |
-| ```instance_type``` | ```m```, ```l```, ```xl``` | ```m``` | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. ```t2.micro```. [See equivalences]((#AWS-instance-equivalences)) table below. |
+| ```instance_type``` | ```m```, ```l```, ```xl``` | ```m``` | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. ```t2.micro```. [See equivalences](#Supported-vendors) table below. |
 | ```instance_gpu``` | ``` ```, ```testla```, ```k80``` | ``` ``` | Sets the desired GPU  if the ```instance_type``` is one of our types. |
 | ```ssh_private``` | | | SSH private in PEM format. If not provided one private and public key wll be automatically generated and returned in terraform.tfstate  |
 | ```startup_script``` | | | Startup script also known as userData on AWS and customData in Azure. It can be expressed as multiline text using [TF heredoc syntax ](https://www.terraform.io/docs/configuration-0-11/variables.html)  |
 
 # Pitfalls
 
-To be able to use the ```instance_type``` and ```instance_gpu``` you will need also to be allowed to launch [such instances](#AWS-instance-equivalences) within you cloud provider. Normally all the GPU instances need to be approved prior to be used by your vendor.
+To be able to use the ```instance_type``` and ```instance_gpu``` you will need also to be allowed to launch [such instances](#Supported-vendors) within you cloud provider. Normally all the GPU instances need to be approved prior to be used by your vendor.
 You can always try with an already approved instance type by your vendor just setting it i.e. ```t2.micro```
 
 <details>
