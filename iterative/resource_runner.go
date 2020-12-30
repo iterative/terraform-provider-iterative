@@ -158,7 +158,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 
 	tfResource := ResourceType{
 		Mode:     "managed",
-		Type:     "iterative_runner",
+		Type:     "iterative_cml_runner",
 		Name:     "runner",
 		Provider: "provider[\"registry.terraform.io/iterative/iterative\"]",
 		Instances: InstancesType{
