@@ -1,5 +1,5 @@
 .DS_Store
-examples
+examples/.terraform
 bin
 
 # Local .terraform directories
