@@ -126,6 +126,11 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	utils.SetId(d)
 
+	token := os.Getenv("CML_TOKEN")
+	if len(d.Get("token").(string)) == 0 && len(token) != 0 {
+		d.Set("token", token)
+	}
+
 	startupScript, err := provisionerCode(d)
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
@@ -136,8 +141,7 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	d.Set("startup_script", startupScript)
 
-	cloud := d.Get("cloud").(string)
-	if len(cloud) == 0 {
+	if len(d.Get("cloud").(string)) == 0 {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Local runner not yet implemented"),
