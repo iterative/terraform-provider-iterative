@@ -228,6 +228,10 @@ export DEBIAN_FRONTEND=noninteractive
 
 {{if eq .cloud "azure"}}
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
+
+sudo apt remove unattended-upgrades
+systemctl disable apt-daily-upgrade.service 
+
 sudo apt update
 sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
