@@ -265,12 +265,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	/*
-		err = future.WaitForCompletionRef(ctx, groupsClient.Client)
-		if err != nil {
-			return err
-		}
-	*/
+
 	return err
 }
 
