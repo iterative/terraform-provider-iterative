@@ -48,6 +48,18 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
+		"spot": &schema.Schema{
+			Type:     schema.TypeBool,
+			ForceNew: true,
+			Optional: true,
+			Default:  false,
+		},
+		"spotPrice": &schema.Schema{
+			Type:     schema.TypeFloat,
+			ForceNew: true,
+			Optional: true,
+			Default:  -1,
+		},
 		"instance_type": &schema.Schema{
 			Type:     schema.TypeString,
 			ForceNew: true,

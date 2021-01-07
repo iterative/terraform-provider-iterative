@@ -27,6 +27,12 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
+	spot := d.Get("spot").(bool)
+	spotPrice := d.Get("spotPrice").(float64)
+	vmPriority := compute.Regular
+	if spot {
+		vmPriority = compute.Spot
+	}
 
 	image := d.Get("image").(string)
 	if image == "" {
@@ -186,8 +192,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		gpName,
 		vmName,
 		compute.VirtualMachine{
+
 			Location: to.StringPtr(region),
 			VirtualMachineProperties: &compute.VirtualMachineProperties{
+				EvictionPolicy: compute.Delete,
+				Priority:       vmPriority,
+				BillingProfile: &compute.BillingProfile{
+					MaxPrice: to.Float64Ptr(spotPrice),
+				},
 				HardwareProfile: &compute.HardwareProfile{
 					VMSize: compute.VirtualMachineSizeTypes(instanceType),
 				},
