@@ -25,7 +25,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	keyPublic := d.Get("ssh_public").(string)
 	securityGroup := d.Get("aws_security_group").(string)
 	spot := d.Get("spot").(bool)
-	spotPrice := d.Get("spotPrice").(float64)
+	spotPrice := d.Get("spot_price").(float64)
 	if ami == "" {
 		ami = "iterative-cml"
 	}

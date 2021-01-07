@@ -28,7 +28,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
 	spot := d.Get("spot").(bool)
-	spotPrice := d.Get("spotPrice").(float64)
+	spotPrice := d.Get("spot_price").(float64)
 	vmPriority := compute.Regular
 	if spot {
 		vmPriority = compute.Spot
@@ -273,11 +273,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	_, err = groupsClient.Delete(context.Background(), d.Id())
-	if err != nil {
-		return err
-	}
-
+	groupsClient.Delete(context.Background(), d.Id())
 	return err
 }
 

@@ -78,7 +78,7 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
-			"spotPrice": &schema.Schema{
+			"spot_price": &schema.Schema{
 				Type:     schema.TypeFloat,
 				ForceNew: true,
 				Optional: true,
