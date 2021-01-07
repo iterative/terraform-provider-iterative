@@ -65,9 +65,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		KeyName:           aws.String(pairName),
 		PublicKeyMaterial: []byte(keyPublic),
 	})
-	//if err != nil {
-	//return err
-	//}
 
 	// securityGroup
 	var vpcID, sgID string
@@ -75,11 +72,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		securityGroup = "cml"
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
+		if len(vpcsDesc.Vpcs) == 0 {
+			return errors.New("no VPCs found")
+		}
 		vpcID = *vpcsDesc.Vpcs[0].VpcId
 
 		gpResult, err := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
-			Description: aws.String("CML security group"),
+			Description: aws.String("Iterative security group"),
 			VpcId:       aws.String(vpcID),
 		})
 
@@ -117,11 +117,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
+	if len(sgDesc.SecurityGroups) == 0 {
+		return errors.New("no Security Groups found")
+	}
 
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	subDesc, _ := svc.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
+	subDesc, err := svc.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("vpc-id"),
@@ -129,6 +132,12 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	})
+	if err != nil {
+		return err
+	}
+	if len(subDesc.Subnets) == 0 {
+		return errors.New("no subnets found")
+	}
 
 	//launch instance
 	runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
@@ -212,6 +221,10 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
+	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+		KeyName: id,
+	})
+
 	descResult, err := svc.DescribeInstancesWithContext(ctx, &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -223,20 +236,16 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-
-	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
-		KeyName: id,
-	})
-
-	instanceID := *descResult.Reservations[0].Instances[0].InstanceId
-	_, err = svc.TerminateInstances(&ec2.TerminateInstancesInput{
-		InstanceIds: []*string{
-			aws.String(instanceID),
-		},
-		DryRun: aws.Bool(false),
-	})
-	if err != nil {
-		return err
+	if len(descResult.Reservations) > 0 && len(descResult.Reservations[0].Instances) > 0 {
+		instanceID := *descResult.Reservations[0].Instances[0].InstanceId
+		_, err = svc.TerminateInstances(&ec2.TerminateInstancesInput{
+			InstanceIds: []*string{
+				aws.String(instanceID),
+			},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
