@@ -1,7 +1,4 @@
 {
-    "variables" : {
-        "instance_type" : "{{env `AWS_INSTANCE_TYPE`}}"
-    },
     "builders" : [
         {
             "type" : "amazon-ebs", 
