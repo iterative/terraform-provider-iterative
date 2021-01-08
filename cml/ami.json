@@ -9,7 +9,9 @@
       "region": "us-west-1",
       "ami_name": "iterative-cml",
       "ami_description": "CML (Continous Machine Learning). Ubuntu 18.04",
-      "ami_groups": ["all"],
+      "ami_groups": [
+        "all"
+      ],
       "force_deregister": "true",
       "force_delete_snapshot": "true",
       "ssh_username": "ubuntu",
@@ -20,7 +22,9 @@
           "name": "ubuntu/images/*ubuntu-*-18.04-amd64-server-*",
           "root-device-type": "ebs"
         },
-        "owners": ["099720109477"],
+        "owners": [
+          "099720109477"
+        ],
         "most_recent": true
       },
       "run_tags": {
@@ -31,12 +35,17 @@
   "provisioners": [
     {
       "type": "shell",
-      "environment_vars": ["DEBIAN_FRONTEND=noninteractive"],
+      "environment_vars": [
+        "DEBIAN_FRONTEND=noninteractive"
+      ],
       "script": "./setup.sh"
     },
     {
       "type": "shell",
-      "inline": ["sudo shutdown -r now", "sleep 60"],
+      "inline": [
+        "sudo shutdown -r now",
+        "sleep 60"
+      ],
       "start_retry_timeout": "10m",
       "expect_disconnect": true
     }
