@@ -2,7 +2,7 @@ terraform {
   required_providers {
     iterative = {
       versions = ["0.6"]
-      source = "github.com/iterative/iterative"
+      source   = "github.com/iterative/iterative"
     }
 
     # iterative = {
@@ -16,18 +16,18 @@ provider "iterative" {}
 
 
 resource "iterative_cml_runner" "runner-gl-aws" {
-    name = "gitlabrunner2"
-    token = "arszDpb3xtNdKaXmQ6vN"
-    repo = "https://gitlab.com/DavidGOrtega/3_tensorboard"
-    driver = "gitlab"
-    labels = "tf"
+  name   = "gitlabrunner2"
+  token  = "arszDpb3xtNdKaXmQ6vN"
+  repo   = "https://gitlab.com/DavidGOrtega/3_tensorboard"
+  driver = "gitlab"
+  labels = "tf"
 
-    cloud = "azure"
-    region = "us-west"
-    instance_type = "m"
-    spot = true
-    #spot_price = 0.09
-} 
+  cloud         = "azure"
+  region        = "us-west"
+  instance_type = "m"
+  spot          = true
+  #spot_price = 0.09
+}
 
 # resource "iterative_cml_runner" "runner-gh-aws" {
 #     name = "githubrunner2"
