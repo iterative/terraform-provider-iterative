@@ -86,6 +86,10 @@ func machineSchema() *map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
+		"ssh_public": &schema.Schema{
+			Type:     schema.TypeString,
+			Computed: true,
+		},
 		"ssh_private": &schema.Schema{
 			Type:     schema.TypeString,
 			ForceNew: true,
@@ -139,6 +143,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 		return diags
 	}
+
 	d.Set("ssh_public", public)
 
 	script64 := base64.StdEncoding.EncodeToString([]byte(d.Get("startup_script").(string)))
@@ -160,7 +165,6 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
-
 		}
 	} else {
 		diags = append(diags, diag.Diagnostic{

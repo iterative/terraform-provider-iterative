@@ -157,7 +157,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	//launch instance
 	var instanceID string
 	if spot {
-		spotInstanceRequest, err := svc.RequestSpotInstances(&ec2.RequestSpotInstancesInput{
+		requestSpotInstancesInput := &ec2.RequestSpotInstancesInput{
 			LaunchSpecification: &ec2.RequestSpotLaunchSpecification{
 				UserData:            aws.String(userData),
 				ImageId:             aws.String(instanceAmi),
@@ -168,8 +168,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				BlockDeviceMappings: blockDeviceMappings,
 			},
 			InstanceCount: aws.Int64(1),
-			SpotPrice:     aws.String(strconv.FormatFloat(spotPrice, 'f', 5, 64)),
-		})
+		}
+
+		if spotPrice >= 0 {
+			requestSpotInstancesInput.SpotPrice = aws.String(strconv.FormatFloat(spotPrice, 'f', 5, 64))
+		}
+
+		spotInstanceRequest, err := svc.RequestSpotInstancesWithContext(ctx, requestSpotInstancesInput)
 		if err != nil {
 			return err
 		}
