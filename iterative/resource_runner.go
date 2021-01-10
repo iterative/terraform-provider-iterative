@@ -244,7 +244,8 @@ echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assume
 sudo apt remove unattended-upgrades
 systemctl disable apt-daily-upgrade.service
 
-sudo apt update
+sudo add-apt-repository ppa:git-core/ppa -y
+sudo apt update && sudo apt-get install -y git
 sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
 sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
