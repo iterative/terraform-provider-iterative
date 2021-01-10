@@ -74,6 +74,10 @@ func machineSchema() *map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
+		"ssh_public": &schema.Schema{
+			Type:     schema.TypeString,
+			Computed: true,
+		},
 		"ssh_private": &schema.Schema{
 			Type:     schema.TypeString,
 			ForceNew: true,
