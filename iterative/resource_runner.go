@@ -72,6 +72,18 @@ func resourceRunner() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"spot": &schema.Schema{
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				Default:  false,
+			},
+			"spot_price": &schema.Schema{
+				Type:     schema.TypeFloat,
+				ForceNew: true,
+				Optional: true,
+				Default:  -1,
+			},
 			"instance_type": &schema.Schema{
 				Type:     schema.TypeString,
 				ForceNew: true,
@@ -230,7 +242,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
 sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service 
+systemctl disable apt-daily-upgrade.service
 
 sudo add-apt-repository ppa:git-core/ppa -y
 sudo apt update && sudo apt-get install -y git
@@ -243,7 +255,7 @@ sudo apt update && sudo apt-get install -y terraform
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
 sudo apt install -y ubuntu-drivers-common git
-sudo ubuntu-drivers autoinstall 
+sudo ubuntu-drivers autoinstall
 sudo rmmod nvidia && sudo nvidia-smi
 curl -s -L https://nvidia.GitHub.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.GitHub.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list

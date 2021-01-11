@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,6 +24,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	ami := d.Get("image").(string)
 	keyPublic := d.Get("ssh_public").(string)
 	securityGroup := d.Get("aws_security_group").(string)
+	spot := d.Get("spot").(bool)
+	spotPrice := d.Get("spot_price").(float64)
 	if ami == "" {
 		ami = "iterative-cml"
 	}
@@ -139,35 +142,76 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return errors.New("no subnets found")
 	}
 
-	//launch instance
-	runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
-		UserData:         aws.String(userData),
-		ImageId:          aws.String(instanceAmi),
-		KeyName:          aws.String(pairName),
-		InstanceType:     aws.String(instanceType),
-		MinCount:         aws.Int64(1),
-		MaxCount:         aws.Int64(1),
-		SecurityGroupIds: []*string{aws.String(sgID)},
-		SubnetId:         aws.String(*subDesc.Subnets[0].SubnetId),
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-			{
-				//VirtualName: aws.String("Root"),
-				DeviceName: aws.String("/dev/sda1"),
-				Ebs: &ec2.EbsBlockDevice{
-					DeleteOnTermination: aws.Bool(true),
-					Encrypted:           aws.Bool(false),
-					//Iops:                aws.Int64(0),
-					VolumeSize: aws.Int64(int64(hddSize)),
-					VolumeType: aws.String("gp2"),
-				},
+	blockDeviceMappings := []*ec2.BlockDeviceMapping{
+		{
+			DeviceName: aws.String("/dev/sda1"),
+			Ebs: &ec2.EbsBlockDevice{
+				DeleteOnTermination: aws.Bool(true),
+				Encrypted:           aws.Bool(false),
+				VolumeSize:          aws.Int64(int64(hddSize)),
+				VolumeType:          aws.String("gp2"),
 			},
 		},
-	})
-	if err != nil {
-		return err
 	}
 
-	instanceID := *runResult.Instances[0].InstanceId
+	//launch instance
+	var instanceID string
+	if spot {
+		requestSpotInstancesInput := &ec2.RequestSpotInstancesInput{
+			LaunchSpecification: &ec2.RequestSpotLaunchSpecification{
+				UserData:            aws.String(userData),
+				ImageId:             aws.String(instanceAmi),
+				KeyName:             aws.String(pairName),
+				InstanceType:        aws.String(instanceType),
+				SecurityGroupIds:    []*string{aws.String(sgID)},
+				SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
+				BlockDeviceMappings: blockDeviceMappings,
+			},
+			InstanceCount: aws.Int64(1),
+		}
+
+		if spotPrice >= 0 {
+			requestSpotInstancesInput.SpotPrice = aws.String(strconv.FormatFloat(spotPrice, 'f', 5, 64))
+		}
+
+		spotInstanceRequest, err := svc.RequestSpotInstancesWithContext(ctx, requestSpotInstancesInput)
+		if err != nil {
+			return err
+		}
+
+		spotInstanceRequestID := *spotInstanceRequest.SpotInstanceRequests[0].SpotInstanceRequestId
+		err = svc.WaitUntilSpotInstanceRequestFulfilled(&ec2.DescribeSpotInstanceRequestsInput{
+			SpotInstanceRequestIds: []*string{aws.String(spotInstanceRequestID)},
+		})
+		if err != nil {
+			return err
+		}
+		resolvedSpotInstance, err := svc.DescribeSpotInstanceRequests(&ec2.DescribeSpotInstanceRequestsInput{
+			SpotInstanceRequestIds: []*string{aws.String(spotInstanceRequestID)},
+		})
+		if err != nil {
+			return err
+		}
+
+		instanceID = *resolvedSpotInstance.SpotInstanceRequests[0].InstanceId
+	} else {
+		runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
+			UserData:            aws.String(userData),
+			ImageId:             aws.String(instanceAmi),
+			KeyName:             aws.String(pairName),
+			InstanceType:        aws.String(instanceType),
+			MinCount:            aws.Int64(1),
+			MaxCount:            aws.Int64(1),
+			SecurityGroupIds:    []*string{aws.String(sgID)},
+			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
+			BlockDeviceMappings: blockDeviceMappings,
+		})
+		if err != nil {
+			return err
+		}
+
+		instanceID = *runResult.Instances[0].InstanceId
+	}
 
 	// Add name to the created instance
 	_, err = svc.CreateTags(&ec2.CreateTagsInput{

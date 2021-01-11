@@ -27,6 +27,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
+	spot := d.Get("spot").(bool)
+	spotPrice := d.Get("spot_price").(float64)
 
 	image := d.Get("image").(string)
 	if image == "" {
@@ -181,60 +183,70 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	vmClient, _ := getVMClient(subscriptionID)
-	futureVM, err := vmClient.CreateOrUpdate(
-		ctx,
-		gpName,
-		vmName,
-		compute.VirtualMachine{
-			Location: to.StringPtr(region),
-			VirtualMachineProperties: &compute.VirtualMachineProperties{
-				HardwareProfile: &compute.HardwareProfile{
-					VMSize: compute.VirtualMachineSizeTypes(instanceType),
+	vmSettings := compute.VirtualMachine{
+		Location: to.StringPtr(region),
+		VirtualMachineProperties: &compute.VirtualMachineProperties{
+			HardwareProfile: &compute.HardwareProfile{
+				VMSize: compute.VirtualMachineSizeTypes(instanceType),
+			},
+			StorageProfile: &compute.StorageProfile{
+				ImageReference: &compute.ImageReference{
+					Publisher: to.StringPtr(publisher),
+					Offer:     to.StringPtr(offer),
+					Sku:       to.StringPtr(sku),
+					Version:   to.StringPtr(version),
 				},
-				StorageProfile: &compute.StorageProfile{
-					ImageReference: &compute.ImageReference{
-						Publisher: to.StringPtr(publisher),
-						Offer:     to.StringPtr(offer),
-						Sku:       to.StringPtr(sku),
-						Version:   to.StringPtr(version),
-					},
-					OsDisk: &compute.OSDisk{
-						Name:         to.StringPtr(fmt.Sprintf(vmName + "-hdd")),
-						Caching:      compute.CachingTypesReadWrite,
-						CreateOption: compute.DiskCreateOptionTypesFromImage,
-						DiskSizeGB:   to.Int32Ptr(hddSize),
-						ManagedDisk: &compute.ManagedDiskParameters{
-							StorageAccountType: compute.StorageAccountTypesStandardLRS,
-						},
+				OsDisk: &compute.OSDisk{
+					Name:         to.StringPtr(fmt.Sprintf(vmName + "-hdd")),
+					Caching:      compute.CachingTypesReadWrite,
+					CreateOption: compute.DiskCreateOptionTypesFromImage,
+					DiskSizeGB:   to.Int32Ptr(hddSize),
+					ManagedDisk: &compute.ManagedDiskParameters{
+						StorageAccountType: compute.StorageAccountTypesStandardLRS,
 					},
 				},
-				OsProfile: &compute.OSProfile{
-					CustomData:    to.StringPtr(customData),
-					ComputerName:  to.StringPtr("iterative"),
-					AdminUsername: to.StringPtr(username),
-					LinuxConfiguration: &compute.LinuxConfiguration{
-						SSH: &compute.SSHConfiguration{
-							PublicKeys: &[]compute.SSHPublicKey{
-								{
-									Path:    to.StringPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", username)),
-									KeyData: to.StringPtr(keyPublic),
-								},
-							},
-						},
-					},
-				},
-				NetworkProfile: &compute.NetworkProfile{
-					NetworkInterfaces: &[]compute.NetworkInterfaceReference{
-						{
-							ID: nic.ID,
-							NetworkInterfaceReferenceProperties: &compute.NetworkInterfaceReferenceProperties{
-								Primary: to.BoolPtr(true),
+			},
+			OsProfile: &compute.OSProfile{
+				CustomData:    to.StringPtr(customData),
+				ComputerName:  to.StringPtr("iterative"),
+				AdminUsername: to.StringPtr(username),
+				LinuxConfiguration: &compute.LinuxConfiguration{
+					SSH: &compute.SSHConfiguration{
+						PublicKeys: &[]compute.SSHPublicKey{
+							{
+								Path:    to.StringPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", username)),
+								KeyData: to.StringPtr(keyPublic),
 							},
 						},
 					},
 				},
 			},
+			NetworkProfile: &compute.NetworkProfile{
+				NetworkInterfaces: &[]compute.NetworkInterfaceReference{
+					{
+						ID: nic.ID,
+						NetworkInterfaceReferenceProperties: &compute.NetworkInterfaceReferenceProperties{
+							Primary: to.BoolPtr(true),
+						},
+					},
+				},
+			},
 		},
+	}
+
+	if spot {
+		vmSettings.EvictionPolicy = compute.Delete
+		vmSettings.Priority = compute.Spot
+		vmSettings.BillingProfile = &compute.BillingProfile{
+			MaxPrice: to.Float64Ptr(spotPrice),
+		}
+	}
+
+	futureVM, err := vmClient.CreateOrUpdate(
+		ctx,
+		gpName,
+		vmName,
+		vmSettings,
 	)
 	if err != nil {
 		return err
@@ -261,11 +273,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	_, err = groupsClient.Delete(context.Background(), d.Id())
-	if err != nil {
-		return err
-	}
-
+	groupsClient.Delete(context.Background(), d.Id())
 	return err
 }
 
