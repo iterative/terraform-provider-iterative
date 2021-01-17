@@ -262,6 +262,7 @@ curl -s -L https://nvidia.GitHub.io/nvidia-docker/ubuntu18.04/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-container-toolkit
 {{end}}
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
+export HOME=/root
 export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
 export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
