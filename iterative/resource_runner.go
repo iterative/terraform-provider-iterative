@@ -261,15 +261,33 @@ curl -s -L https://nvidia.GitHub.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.GitHub.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-container-toolkit
 {{end}}
+
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
+
 export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
 export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
 export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
-nohup cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} < /dev/null > std.out 2> std.err &
-sleep 10
+
+sudo touch /etc/systemd/system/cml.service
+sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
+[Unit]
+  Description=ipres
+
+[Service]
+  RemainAfterExit=yes
+  ExecStart=/usr/bin/cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+  ExecStop=/usr/bin/pgrep -f "cml-runner" | /usr/bin/xargs kill -15
+
+[Install]
+  WantedBy=multi-user.target
+EOF'
+
+sudo chmod +x /etc/systemd/system/cml.service
+sudo systemctl daemon-reload
+sudo systemctl enable cml.service --now
 `)
 	var customDataBuffer bytes.Buffer
 	err = tmpl.Execute(&customDataBuffer, data)
