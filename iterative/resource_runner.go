@@ -254,12 +254,15 @@ sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(l
 sudo apt update && sudo apt-get install -y terraform
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
+
+{{if .instance_gpu}}
 sudo apt install -y ubuntu-drivers-common git
 sudo ubuntu-drivers autoinstall
 sudo rmmod nvidia && sudo nvidia-smi
 curl -s -L https://nvidia.GitHub.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.GitHub.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-container-toolkit
+{{end}}
 {{end}}
 
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
@@ -279,7 +282,7 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 [Service]
   RemainAfterExit=yes
   ExecStart=/usr/bin/cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
-  ExecStop=/usr/bin/pgrep -f "cml-runner" | /usr/bin/xargs kill -15
+  ExecStop=/usr/bin/pgrep -f "cml-runner" | sudo /usr/bin/xargs kill -15
 
 [Install]
   WantedBy=multi-user.target
