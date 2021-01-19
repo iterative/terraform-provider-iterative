@@ -160,6 +160,13 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		})
 		return diags
 	}
+
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  fmt.Sprintf(startupScript),
+	})
+	return diags
+
 	d.Set("startup_script", startupScript)
 
 	if len(d.Get("cloud").(string)) == 0 {
@@ -228,6 +235,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
 	data["name"] = d.Get("name").(string)
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
+	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
 	data["AZURE_CLIENT_ID"] = os.Getenv("AZURE_CLIENT_ID")
@@ -267,6 +275,9 @@ sudo apt update && sudo apt install -y nvidia-container-toolkit
 
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
 
+sudo bash -c 'cat << EOF > /usr/bin/cml.sh
+#!/bin/sh
+
 export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
 export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
@@ -274,21 +285,25 @@ export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
 
-sudo touch /etc/systemd/system/cml.service
+cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+EOF'
+sudo chmod +x /usr/bin/cml.sh
+
 sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 [Unit]
-  Description=ipres
+  Description=cml service
 
 [Service]
+  Type=oneshot
   RemainAfterExit=yes
-  ExecStart=/usr/bin/cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+  ExecStart=/usr/bin/cml.sh
   ExecStop=/usr/bin/pgrep -f "cml-runner" | sudo /usr/bin/xargs kill -15
 
 [Install]
   WantedBy=multi-user.target
 EOF'
-
 sudo chmod +x /etc/systemd/system/cml.service
+
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 `)
