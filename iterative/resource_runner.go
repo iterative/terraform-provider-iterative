@@ -297,7 +297,6 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
   Type=oneshot
   RemainAfterExit=yes
   ExecStart=/usr/bin/cml.sh
-  ExecStop=/usr/bin/pgrep -f "cml-runner" | sudo /usr/bin/xargs kill -15
 
 [Install]
   WantedBy=multi-user.target
