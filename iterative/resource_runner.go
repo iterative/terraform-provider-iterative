@@ -160,6 +160,7 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		})
 		return diags
 	}
+
 	d.Set("startup_script", startupScript)
 
 	if len(d.Get("cloud").(string)) == 0 {
@@ -243,7 +244,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
 sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service 
+systemctl disable apt-daily-upgrade.service
 
 sudo add-apt-repository universe -y
 sudo add-apt-repository ppa:git-core/ppa -y
@@ -260,9 +261,9 @@ curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
 
 sudo apt install -y ubuntu-drivers-common git
-sudo ubuntu-drivers autoinstall 
+sudo ubuntu-drivers autoinstall
 
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - 
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-docker2
 
@@ -273,15 +274,37 @@ sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 {{end}}
 
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
-export HOME=/root
+
+sudo bash -c 'cat << EOF > /usr/bin/cml.sh
+#!/bin/sh
+
 export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
 export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
 export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
-nohup cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{.instance_gpu}}{{end}} < /dev/null > std.out 2> std.err &
-sleep 10
+
+cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{.instance_gpu}}{{end}}
+EOF'
+sudo chmod +x /usr/bin/cml.sh
+
+sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
+[Unit]
+  Description=cml service
+
+[Service]
+  Type=oneshot
+  RemainAfterExit=yes
+  ExecStart=/usr/bin/cml.sh
+
+[Install]
+  WantedBy=multi-user.target
+EOF'
+sudo chmod +x /etc/systemd/system/cml.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable cml.service --now
 `)
 	var customDataBuffer bytes.Buffer
 	err = tmpl.Execute(&customDataBuffer, data)
