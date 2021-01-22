@@ -161,12 +161,6 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  fmt.Sprintf(startupScript),
-	})
-	return diags
-
 	d.Set("startup_script", startupScript)
 
 	if len(d.Get("cloud").(string)) == 0 {
@@ -243,34 +237,40 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 
-	tmpl, err := template.New("deploy").Parse(`#!/bin/bash
+	tmpl, err := template.New("deploy").Parse(`#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
 {{if eq .cloud "azure"}}
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
 sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service
+systemctl disable apt-daily-upgrade.service 
 
+sudo add-apt-repository universe -y
 sudo add-apt-repository ppa:git-core/ppa -y
 sudo apt update && sudo apt-get install -y git
 sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
 sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
+
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 sudo apt update && sudo apt-get install -y terraform
+
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
 
-{{if .instance_gpu}}
 sudo apt install -y ubuntu-drivers-common git
-sudo ubuntu-drivers autoinstall
-sudo rmmod nvidia && sudo nvidia-smi
-curl -s -L https://nvidia.GitHub.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.GitHub.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt update && sudo apt install -y nvidia-container-toolkit
-{{end}}
+sudo ubuntu-drivers autoinstall 
+
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - 
+curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt update && sudo apt install -y nvidia-docker2
+
+sudo systemctl restart docker
+
+sudo nvidia-smi
+sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 {{end}}
 
 sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
@@ -285,7 +285,7 @@ export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
 
-cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{.instance_gpu}}{{end}} 
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
