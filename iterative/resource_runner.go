@@ -244,7 +244,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
 sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service 
+systemctl disable apt-daily-upgrade.service
 
 sudo add-apt-repository universe -y
 sudo add-apt-repository ppa:git-core/ppa -y
@@ -261,9 +261,9 @@ curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
 
 sudo apt install -y ubuntu-drivers-common git
-sudo ubuntu-drivers autoinstall 
+sudo ubuntu-drivers autoinstall
 
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - 
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-docker2
 
@@ -285,7 +285,7 @@ export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
 
-cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{.instance_gpu}}{{end}} 
+cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{.instance_gpu}}{{end}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
