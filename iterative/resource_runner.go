@@ -273,7 +273,7 @@ sudo nvidia-smi
 sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 {{end}}
 
-sudo npm install -g git+https://github.com/iterative/cml.git#cml-runner
+sudo npm install -g git+https://github.com/iterative/cml.git
 
 sudo bash -c 'cat << EOF > /usr/bin/cml.sh
 #!/bin/sh
