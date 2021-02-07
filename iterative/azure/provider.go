@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -19,7 +20,10 @@ import (
 
 //ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
+	subscriptionID, err := subscriptionID()
+	if err != nil {
+		return err
+	}
 
 	username := "ubuntu"
 	customData := d.Get("startup_script").(string)
@@ -268,7 +272,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 //ResourceMachineDelete deletes Azure instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
+	subscriptionID, err := subscriptionID()
+	if err != nil {
+		return err
+	}
 	groupsClient, err := getGroupsClient(subscriptionID)
 	if err != nil {
 		return err
@@ -279,6 +286,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 func getGroupsClient(subscriptionID string) (resources.GroupsClient, error) {
 	authorizer, err := auth.NewAuthorizerFromEnvironment()
+
 	client := resources.NewGroupsClient(subscriptionID)
 	client.Authorizer = authorizer
 	client.AddToUserAgent("iterative-provider")
@@ -371,4 +379,13 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 	}
 
 	return instanceType
+}
+
+func subscriptionID() (string, error) {
+	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
+	if subscriptionID != "" {
+		return subscriptionID, nil
+	}
+
+	return "", errors.New("AZURE_SUBSCRIPTION_ID is not present")
 }
