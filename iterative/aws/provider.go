@@ -3,6 +3,8 @@ package aws
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -31,8 +34,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	svc, err := awsClient(region)
+
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 
 	// Image
@@ -49,7 +53,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 	if len(imagesRes.Images) == 0 {
 		return errors.New(ami + " ami not found in region")
@@ -118,7 +122,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 	if len(sgDesc.SecurityGroups) == 0 {
 		return errors.New("no Security Groups found")
@@ -136,7 +140,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 	if len(subDesc.Subnets) == 0 {
 		return errors.New("no subnets found")
@@ -176,7 +180,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 		spotInstanceRequest, err := svc.RequestSpotInstancesWithContext(ctx, requestSpotInstancesInput)
 		if err != nil {
-			return err
+			return decodeAWSError(region, err)
 		}
 
 		spotInstanceRequestID := *spotInstanceRequest.SpotInstanceRequests[0].SpotInstanceRequestId
@@ -184,13 +188,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			SpotInstanceRequestIds: []*string{aws.String(spotInstanceRequestID)},
 		})
 		if err != nil {
-			return err
+			return decodeAWSError(region, err)
 		}
 		resolvedSpotInstance, err := svc.DescribeSpotInstanceRequests(&ec2.DescribeSpotInstanceRequestsInput{
 			SpotInstanceRequestIds: []*string{aws.String(spotInstanceRequestID)},
 		})
 		if err != nil {
-			return err
+			return decodeAWSError(region, err)
 		}
 
 		instanceID = *resolvedSpotInstance.SpotInstanceRequests[0].InstanceId
@@ -207,7 +211,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			BlockDeviceMappings: blockDeviceMappings,
 		})
 		if err != nil {
-			return err
+			return decodeAWSError(region, err)
 		}
 
 		instanceID = *runResult.Instances[0].InstanceId
@@ -228,7 +232,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	})
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 
 	statusInput := ec2.DescribeInstancesInput{
@@ -245,7 +249,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	descResult, err := svc.DescribeInstancesWithContext(ctx, &statusInput)
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 
 	instanceDesc := descResult.Reservations[0].Instances[0]
@@ -262,7 +266,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	svc, err := awsClient(region)
 	if err != nil {
-		return err
+		return decodeAWSError(region, err)
 	}
 
 	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
@@ -285,7 +289,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		})
 		if err != nil {
-			return err
+			return decodeAWSError(region, err)
 		}
 	}
 
@@ -332,4 +336,27 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 	}
 
 	return instanceType
+}
+
+var encodedFailureMessagePattern = regexp.MustCompile(`(?i)(.*) Encoded authorization failure message: ([\w-]+) ?( .*)?`)
+
+func decodeAWSError(region string, err error) error {
+	sess, erro := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	})
+	if erro != nil {
+		return err
+	}
+
+	groups := encodedFailureMessagePattern.FindStringSubmatch(err.Error())
+	svc := sts.New(sess)
+	result, erro := svc.DecodeAuthorizationMessage(&sts.DecodeAuthorizationMessageInput{
+		EncodedMessage: aws.String(groups[2]),
+	})
+	if erro != nil {
+		return err
+	}
+
+	msg := aws.StringValue(result.DecodedMessage)
+	return fmt.Errorf("%s Authorization failure message: '%s'%s", groups[1], msg, groups[3])
 }

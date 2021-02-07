@@ -9,7 +9,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.3
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/aws/aws-sdk-go v1.34.13
-	github.com/hashicorp/terraform v0.14.2
+	github.com/hashicorp/terraform v0.14.2 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/zclconf/go-cty v1.7.0 // indirect
