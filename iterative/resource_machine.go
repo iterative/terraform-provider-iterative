@@ -7,6 +7,7 @@ import (
 
 	"terraform-provider-iterative/iterative/aws"
 	"terraform-provider-iterative/iterative/azure"
+	"terraform-provider-iterative/iterative/kubernetes"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -166,6 +167,14 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
+	} else if cloud == "kubernetes" {
+		err := kubernetes.ResourceMachineCreate(ctx, d, m)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
+			})
+		}
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -196,6 +205,11 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
 			})
 		}
+	} else if cloud == "kubernetes" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Kubernetes 'machines' are just jobs and are being automatically deleted after stopping.",
+		})
 	}
 
 	return diags

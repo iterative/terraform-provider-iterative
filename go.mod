@@ -14,4 +14,5 @@ require (
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/zclconf/go-cty v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	k8s.io/client-go v11.0.0+incompatible // indirect
 )
