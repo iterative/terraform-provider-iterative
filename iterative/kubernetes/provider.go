@@ -66,7 +66,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 		},
 	}
 
-
 	if jobGPUCount != "0" {
 		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
 		if jobAccelerator != "" {
@@ -86,9 +85,9 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 			Namespace: jobNamespace,
 		},
 		Spec: kubernetes_batch.JobSpec{
-			BackoffLimit: &jobBackoffLimit,
-			Completions: &jobCompletions,
-			Parallelism: &jobParallelism,
+			BackoffLimit:            &jobBackoffLimit,
+			Completions:             &jobCompletions,
+			Parallelism:             &jobParallelism,
 			TTLSecondsAfterFinished: &jobTTLSecondsAfterFinished,
 			Template: kubernetes_core.PodTemplateSpec{
 				Spec: kubernetes_core.PodSpec{
@@ -103,7 +102,7 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 								Limits: jobLimits,
 								Requests: kubernetes_core.ResourceList{
 									kubernetes_core.ResourceName("memory"): kubernetes_resource.MustParse("0"),
-									kubernetes_core.ResourceName("cpu"): kubernetes_resource.MustParse("0"),
+									kubernetes_core.ResourceName("cpu"):    kubernetes_resource.MustParse("0"),
 								},
 							},
 							ReadinessProbe: jobReadinessProbe,
@@ -270,7 +269,7 @@ func kubernetesClient() (kubernetes.Interface, error) {
 	return client, nil
 }
 
-func WaitForPods(client kubernetes.Interface, interval time.Duration, timeout time.Duration, namespace string, selector string,) error {
+func WaitForPods(client kubernetes.Interface, interval time.Duration, timeout time.Duration, namespace string, selector string) error {
 	pods, err := client.
 		CoreV1().Pods(namespace).
 		List(context.TODO(), kubernetes_meta.ListOptions{LabelSelector: selector})
