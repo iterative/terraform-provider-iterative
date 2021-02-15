@@ -349,14 +349,18 @@ func decodeAWSError(region string, err error) error {
 	}
 
 	groups := encodedFailureMessagePattern.FindStringSubmatch(err.Error())
-	svc := sts.New(sess)
-	result, erro := svc.DecodeAuthorizationMessage(&sts.DecodeAuthorizationMessageInput{
-		EncodedMessage: aws.String(groups[2]),
-	})
-	if erro != nil {
-		return err
+	if len(groups) > 2 {
+		svc := sts.New(sess)
+		result, erro := svc.DecodeAuthorizationMessage(&sts.DecodeAuthorizationMessageInput{
+			EncodedMessage: aws.String(groups[2]),
+		})
+		if erro != nil {
+			return err
+		}
+
+		msg := aws.StringValue(result.DecodedMessage)
+		return fmt.Errorf("%s Authorization failure message: '%s'%s", groups[1], msg, groups[3])
 	}
 
-	msg := aws.StringValue(result.DecodedMessage)
-	return fmt.Errorf("%s Authorization failure message: '%s'%s", groups[1], msg, groups[3])
+	return fmt.Errorf("Not able to deacode: %s", err.Error())
 }
