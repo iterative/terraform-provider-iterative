@@ -3,6 +3,7 @@ package iterative
 import (
 	"context"
 	"encoding/base64"
+	// "time"
 	"fmt"
 
 	"terraform-provider-iterative/iterative/aws"
@@ -16,102 +17,112 @@ import (
 
 func resourceMachine() *schema.Resource {
 	return &schema.Resource{
+		Schema:        *machineSchema(),
 		CreateContext: resourceMachineCreate,
 		DeleteContext: resourceMachineDelete,
 		ReadContext:   resourceMachineRead,
-		Schema:        *machineSchema(),
+		Timeouts:      &schema.ResourceTimeout{
+			// Create: schema.DefaultTimeout(10 * time.Minute), FIXME: CONFIGURE
+			// Delete: schema.DefaultTimeout(10 * time.Minute), FIXME: CONFIGURE
+		},
 	}
 }
 
 func machineSchema() *map[string]*schema.Schema {
 	return &map[string]*schema.Schema{
-		"name": &schema.Schema{
+		"name": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
 		},
-		"cloud": &schema.Schema{
+		"cloud": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
 		},
-		"region": &schema.Schema{
+		"region": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "us-west",
 		},
-		"image": &schema.Schema{
+		"image": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
 		},
-		"spot": &schema.Schema{
+		"spot": {
 			Type:     schema.TypeBool,
 			ForceNew: true,
 			Optional: true,
 			Default:  false,
 		},
-		"spot_price": &schema.Schema{
+		"spot_price": {
 			Type:     schema.TypeFloat,
 			ForceNew: true,
 			Optional: true,
 			Default:  -1,
 		},
-		"instance_type": &schema.Schema{
+		"instance_type": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "m",
 		},
-		"instance_hdd_size": &schema.Schema{
+		"instance_hdd_size": {
 			Type:     schema.TypeInt,
 			ForceNew: true,
 			Optional: true,
 			Default:  35,
 		},
-		"instance_gpu": &schema.Schema{
+		"instance_gpu": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
 		},
-		"instance_ip": &schema.Schema{
+		"instance_ip": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"instance_launch_time": &schema.Schema{
+		"instance_launch_time": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"ssh_public": &schema.Schema{
+		"ssh_public": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"ssh_private": &schema.Schema{
+		"ssh_private": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
 		},
-		"ssh_name": &schema.Schema{
+		"ssh_name": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"startup_script": &schema.Schema{
+		"startup_script": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "#!/bin/bash",
 		},
-		"aws_security_group": &schema.Schema{
+		"aws_security_group": {
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
+		},
+		"kubernetes_readiness_command": {
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Optional: true,
+			Default:  "true",
 		},
 	}
 }
@@ -170,7 +181,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	} else if cloud == "kubernetes" {
 		err := kubernetes.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
-			diags = append(diags, diag.Diagnostic{
+			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
@@ -178,7 +189,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Unknown cloud: %s", cloud),
+			Summary:  fmt.Sprintf("A Unknown cloud: %s", cloud),
 		})
 	}
 
@@ -206,9 +217,17 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 			})
 		}
 	} else if cloud == "kubernetes" {
+		err := kubernetes.ResourceMachineDelete(ctx, d, m)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
+			})
+		}
+	} else {
 		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Kubernetes 'machines' are just jobs and are being automatically deleted after stopping.",
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("B Unknown cloud: %s", cloud),
 		})
 	}
 

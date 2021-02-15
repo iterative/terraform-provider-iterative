@@ -58,6 +58,18 @@ export CML_TOKEN=YOUR_REPO_TOKEN
 </p>
 </details>
 
+<details>
+<summary>Kubernetes</summary>
+<p>
+
+```sh
+export KUBERNETES_CONFIGURATION=KUBECONFIG_CONTENTS
+export CML_TOKEN=YOUR_REPO_TOKEN
+```
+
+</p>
+</details>
+
 #### 2- Save your terraform file main.tf
 
 <details>
@@ -76,13 +88,13 @@ terraform {
 provider "iterative" {}
 
 resource "iterative_machine" "machine" {
-    repo = "https://github.com/iterative/cml"
-    driver = "github"
-    labels = "tf"
+    repo           = "https://github.com/iterative/cml"
+    driver         = "github"
+    labels         = "tf"
 
-    cloud = "aws"
-    region = "us-west"
-    instance_type = "m"
+    cloud          = "aws"
+    region         = "us-west"
+    instance_type  = "m"
     # Uncomment it if GPU is needed:
     # instance_gpu = "tesla"
 }
@@ -107,13 +119,43 @@ terraform {
 provider "iterative" {}
 
 resource "iterative_machine" "machine" {
-   repo = "https://github.com/iterative/cml"
-    driver = "github"
-    labels = "tf"
+    repo           = "https://github.com/iterative/cml"
+    driver         = "github"
+    labels         = "tf"
 
-    cloud = "azure"
-    region = "us-west"
-    instance_type = "m"
+    cloud          = "azure"
+    region         = "us-west"
+    instance_type  = "m"
+    # Uncomment it if GPU is needed:
+    # instance_gpu = "tesla"
+}
+```
+
+</p>
+</details>
+
+<details>
+<summary>Kubernetes</summary>
+<p>
+
+```tf
+terraform {
+  required_providers {
+    iterative = {
+      source = "iterative/iterative"
+    }
+  }
+}
+
+provider "iterative" {}
+
+resource "iterative_machine" "machine" {
+    repo           = "https://github.com/iterative/cml"
+    driver         = "github"
+    labels         = "tf"
+
+    cloud          = "kubernetes"
+    instance_type  = "m"
     # Uncomment it if GPU is needed:
     # instance_gpu = "tesla"
 }
@@ -179,6 +221,17 @@ export AZURE_TENANT_ID=YOUR_TENANT_ID
 </p>
 </details>
 
+<details>
+<summary>Kubernetes</summary>
+<p>
+
+```sh
+export KUBERNETES_CONFIGURATION="$(cat ~/.kube/config)"
+```
+
+</p>
+</details>
+
 #### 2- Save your terraform file main.tf
 
 <details>
@@ -197,13 +250,13 @@ terraform {
 provider "iterative" {}
 
 resource "iterative_machine" "machine" {
-  cloud = "aws"
-  region = "us-west"
-  name = "machine"
-  instance_hdd_size = "10"
-  instance_type = "m"
+  cloud             = "aws"
+  region            = "us-west"
+  name              = "machine"
+  instance_hdd_size = 10
+  instance_type     = "m"
   # Uncomment it if GPU is needed:
-  # instance_gpu = "tesla"
+  # instance_gpu    = "tesla"
 }
 ```
 
