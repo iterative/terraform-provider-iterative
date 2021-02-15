@@ -362,5 +362,5 @@ func decodeAWSError(region string, err error) error {
 		return fmt.Errorf("%s Authorization failure message: '%s'%s", groups[1], msg, groups[3])
 	}
 
-	return fmt.Errorf("Not able to deacode: %s", err.Error())
+	return fmt.Errorf("Not able to decode: %s", err.Error())
 }
