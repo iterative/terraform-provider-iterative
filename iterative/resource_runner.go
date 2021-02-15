@@ -287,7 +287,7 @@ export AZURE_CLIENT_SECRET={{escape .AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{escape .AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
 
-cml-runner{{if .name}} --name {{escape .name}}{{end}}{{if .labels}} --labels {{escape .labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}}{{if .driver}} --driver {{escape .driver}}{{end}}{{if .repo}} --repo {{escape .repo}}{{end}}{{if .token}} --token {{escape .token}}{{end}}{{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{escape .instance_gpu}}{{end}}
+cml-runner{{if .name}} --name {{escape .name}}{{end}}{{if .labels}} --labels {{escape .labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}}{{if .driver}} --driver {{escape .driver}}{{end}}{{if .repo}} --repo {{escape .repo}}{{end}}{{if .token}} --token {{escape .token}}{{end}}{{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
