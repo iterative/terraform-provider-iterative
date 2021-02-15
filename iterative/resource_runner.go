@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"text/template"
 
+	"gopkg.in/alessio/shellescape.v1"
+
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -237,7 +239,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 
-	tmpl, err := template.New("deploy").Parse(`#!/bin/sh
+	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(`#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
 {{if eq .cloud "azure"}}
@@ -278,14 +280,14 @@ sudo npm install -g git+https://github.com/iterative/cml.git
 sudo bash -c 'cat << EOF > /usr/bin/cml.sh
 #!/bin/sh
 
-export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
-export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
-export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
-export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
-export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
-export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
+export AWS_SECRET_ACCESS_KEY={{escape .AWS_SECRET_ACCESS_KEY}}
+export AWS_ACCESS_KEY_ID={{escape .AWS_ACCESS_KEY_ID}}
+export AZURE_CLIENT_ID={{escape .AZURE_CLIENT_ID}}
+export AZURE_CLIENT_SECRET={{escape .AZURE_CLIENT_SECRET}}
+export AZURE_SUBSCRIPTION_ID={{escape .AZURE_SUBSCRIPTION_ID}}
+export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
 
-cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+cml-runner{{if .name}} --name {{escape .name}}{{end}}{{if .labels}} --labels {{escape .labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}}{{if .driver}} --driver {{escape .driver}}{{end}}{{if .repo}} --repo {{escape .repo}}{{end}}{{if .token}} --token {{escape .token}}{{end}}{{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}} {{if .instance_gpu}} --cloud-gpu {{escape .instance_gpu}}{{end}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
