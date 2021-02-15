@@ -8,11 +8,38 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.13 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.3
 	github.com/Azure/go-autorest/autorest/to v0.4.0
+	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c // indirect
+	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
+	github.com/apparentlymart/go-cidr v1.1.0 // indirect
+	github.com/apparentlymart/go-userdirs v0.0.0-20200915174352-b0c018a67c13 // indirect
+	github.com/apparentlymart/go-versions v1.0.1 // indirect
 	github.com/aws/aws-sdk-go v1.34.13
-	github.com/hashicorp/terraform v0.14.2
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.0
+	github.com/gofrs/uuid v3.3.0+incompatible // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/hashicorp/aws-sdk-go-base v0.6.0 // indirect
+	github.com/hashicorp/go-getter v1.5.1 // indirect
+	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
+	github.com/hashicorp/terraform v0.13.0-beta1 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
+	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
+	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786 // indirect
+	github.com/masterzen/winrm v0.0.0-20200615185753-c42b5136ff88 // indirect
+	github.com/mitchellh/gox v1.0.1 // indirect
+	github.com/moby/spdystream v0.2.0 // indirect
+	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
+	github.com/tombuildsstuff/giovanni v0.12.0 // indirect
 	github.com/zclconf/go-cty v1.7.0 // indirect
+	github.com/zclconf/go-cty-yaml v1.0.2 // indirect
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
-	k8s.io/client-go v11.0.0+incompatible // indirect
+	google.golang.org/api v0.34.0 // indirect
+	gopkg.in/alessio/shellescape.v1 v1.0.0-20170105083845-52074bc9df61
+	k8s.io/api v0.20.2
+	k8s.io/apimachinery v0.20.2
+	k8s.io/cli-runtime v0.20.2 // indirect
+	k8s.io/client-go v0.20.2
+	k8s.io/klog v0.4.0 // indirect
+	k8s.io/klog/v2 v2.5.0 // indirect
+	k8s.io/kubectl v0.20.2 // indirect
+	sigs.k8s.io/structured-merge-diff v0.0.0-20190525122527-15d366b2352e // indirect
 )
