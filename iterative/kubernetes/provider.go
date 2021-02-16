@@ -59,7 +59,7 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	jobImageName := jobName
 	jobImage := d.Get("image").(string)
 	if jobImage == "" {
-		jobImage = "0x2b3bfa0/cml-py3" // FIXME: use "dvcorg/cml-py3"
+		jobImage = "dvcorg/cml-py3"
 	}
 
 	// Script to run on the container instead of the default entry point.
