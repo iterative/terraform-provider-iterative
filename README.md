@@ -25,7 +25,6 @@ cloud resource provisioning and management through various vendors.
 
 #### Configuring the vendor credentials
 
-
 This provider requires a repository token for registering and unregistering
 self-hosted runners during the cloud resource lifecycle. Depending on the
 platform you use, the instructions to get that token may vary; please refer to
@@ -34,8 +33,8 @@ your platform documentation:
 - [GitHub](https://docs.github.com/es/github-ae@latest/github/authenticating-to-github/creating-a-personal-access-token)
 - [GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
 
-This token can be passed to the provider through the `CML_TOKEN` or
-environment variable, like in the following example:
+This token can be passed to the provider through the `CML_TOKEN` or environment
+variable, like in the following example:
 
 ```sh
 export CML_TOKEN=···
@@ -83,10 +82,10 @@ export AZURE_TENANT_ID=···
 
 ### Cluster
 
-Authentication with the Kubernetes cluster can be configured through a
-narrowly scoped service account inside an ad-hoc namespace. Applying the
-following definitions will create a new namespace and an equally named service
-account, along with the required roles and role bindings:
+Authentication with the Kubernetes cluster can be configured through a narrowly
+scoped service account inside an ad-hoc namespace. Applying the following
+definitions will create a new namespace and an equally named service account,
+along with the required roles and role bindings:
 
 ```yaml
 apiVersion: v1
@@ -106,8 +105,7 @@ metadata:
   namespace: iterative
   name: iterative
 rules:
-  -
-    apiGroups:
+  - apiGroups:
       - ""
       - apps
       - batch
@@ -126,9 +124,9 @@ roleRef:
   kind: Role
   name: iterative
 subjects:
-- kind: ServiceAccount
-  namespace: iterative
-  name: iterative
+  - kind: ServiceAccount
+    namespace: iterative
+    name: iterative
 ```
 
 ### Kubeconfig
@@ -183,9 +181,9 @@ export KUBERNETES_CONFIGURATION="$(cat kubeconfig)"
 
 #### Declaring resources
 
-The following code examples illustrate how to declare cloud runners with
-the supported cloud vendors through a simple `main.tf` Terraform file. Click on
-the name of the vendor for specific instructions.
+The following code examples illustrate how to declare cloud runners with the
+supported cloud vendors through a simple `main.tf` Terraform file. Click on the
+name of the vendor for specific instructions.
 
 <details>
 <summary>AWS</summary>
@@ -288,24 +286,24 @@ terraform apply --auto-approve
 
 #### Argument reference
 
-| Variable                             | Values                                   | Default                                                                   |                                                                                                                                                                                                                                                                                               |
-| ------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `driver`                             | `gitlab` `github`                        |                                                                           | The kind of runner that you are setting                                                                                                                                                                                                                                                       |
-| `repo`                               |                                          |                                                                           | The repo to subscribe to.                                                                                                                                                                                                                                                                     |
-| `token`                              |                                          |                                                                           | The repository token. It must have Workflow permissions in Github. If not specified tries to read it from the env variable CML_REPO                                                                                                                                                           |
-| `labels`                             |                                          | `cml`                                                                     | The runner labels for your CI workflow to be waiting for                                                                                                                                                                                                                                      |
-| `idle-timeout`                       |                                          | 5min                                                                      | The max time for the runner to be waiting for jobs. If the timeout happens the runner will unregister automatically from the repo and cleanup all the cloud resources. If set to `0` it will wait forever.                                                                                    |
-| `cloud`                              | `aws` `azure`                            |                                                                           | Sets cloud vendor.                                                                                                                                                                                                                                                                            |
-| `region`                             | `us-west` `us-east` `eu-west` `eu-north` | `us-west`                                                                 | Sets the collocation region. AWS or Azure regions are also accepted.                                                                                                                                                                                                                          |
-| `image`                              |                                          | `iterative-cml` in AWS `Canonical:UbuntuServer:18.04-LTS:latest` in Azure | Sets the image to be used. On AWS the provider does a search in the cloud provider by image name not by id, taking the lastest version in case there are many with the same name. Defaults to [iterative-cml image](#iterative-cml-image). On Azure uses the form Publisher:Offer:SKU:Version |
-| `spot`                               | boolean                                  | false                                                                     | If true launch a spot instance                                                                                                                                                                                                                                                                |
-| `spot_price`                         | float with 5 decimals at most            | -1                                                                        | Sets the max price that you are willing to pay by the hour. If not specified it takes current spot bidding pricing                                                                                                                                                                            |
-| `name`                               |                                          | iterative\_{UID}                                                          | Sets the instance name and related resources based on that name. In Azure groups everything under a resource group with that name.                                                                                                                                                            |
-| `instance_hdd_size`                  |                                          | 10                                                                        | Sets the instance hard disk size in gb                                                                                                                                                                                                                                                        |
-| `instance_type`                      | `m`, `l`, `xl`                           | `m`                                                                       | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. `t2.micro`. [See equivalences](#Supported-vendors) table below.                                                                                                                                  |
-| `instance_gpu`                       | ``, `testla`, `k80`                      | ``                                                                        | Sets the desired GPU if the `instance_type` is one of our types.                                                                                                                                                                                                                              |
-| `ssh_private`                        |                                          |                                                                           | SSH private in PEM format. If not provided one private and public key will be automatically generated and returned in terraform.tfstate                                                                                                                                                       |
-| `kubernetes_readiness_command`       |                                          | `"true"`                                                                  | Command to run on Kubernetes clusters to check if the launched CML container is ready (i.e. the self-hosted runner was successfully registered)                                                                                                                                               |
+| Variable                       | Values                                   | Default                                                                   |                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `driver`                       | `gitlab` `github`                        |                                                                           | The kind of runner that you are setting                                                                                                                                                                                                                                                       |
+| `repo`                         |                                          |                                                                           | The repo to subscribe to.                                                                                                                                                                                                                                                                     |
+| `token`                        |                                          |                                                                           | The repository token. It must have Workflow permissions in Github. If not specified tries to read it from the env variable CML_REPO                                                                                                                                                           |
+| `labels`                       |                                          | `cml`                                                                     | The runner labels for your CI workflow to be waiting for                                                                                                                                                                                                                                      |
+| `idle-timeout`                 |                                          | 5min                                                                      | The max time for the runner to be waiting for jobs. If the timeout happens the runner will unregister automatically from the repo and cleanup all the cloud resources. If set to `0` it will wait forever.                                                                                    |
+| `cloud`                        | `aws` `azure`                            |                                                                           | Sets cloud vendor.                                                                                                                                                                                                                                                                            |
+| `region`                       | `us-west` `us-east` `eu-west` `eu-north` | `us-west`                                                                 | Sets the collocation region. AWS or Azure regions are also accepted.                                                                                                                                                                                                                          |
+| `image`                        |                                          | `iterative-cml` in AWS `Canonical:UbuntuServer:18.04-LTS:latest` in Azure | Sets the image to be used. On AWS the provider does a search in the cloud provider by image name not by id, taking the lastest version in case there are many with the same name. Defaults to [iterative-cml image](#iterative-cml-image). On Azure uses the form Publisher:Offer:SKU:Version |
+| `spot`                         | boolean                                  | false                                                                     | If true launch a spot instance                                                                                                                                                                                                                                                                |
+| `spot_price`                   | float with 5 decimals at most            | -1                                                                        | Sets the max price that you are willing to pay by the hour. If not specified it takes current spot bidding pricing                                                                                                                                                                            |
+| `name`                         |                                          | iterative\_{UID}                                                          | Sets the instance name and related resources based on that name. In Azure groups everything under a resource group with that name.                                                                                                                                                            |
+| `instance_hdd_size`            |                                          | 10                                                                        | Sets the instance hard disk size in gb                                                                                                                                                                                                                                                        |
+| `instance_type`                | `m`, `l`, `xl`                           | `m`                                                                       | Sets thee instance computing size. You can also specify vendor specific machines in AWS i.e. `t2.micro`. [See equivalences](#Supported-vendors) table below.                                                                                                                                  |
+| `instance_gpu`                 | ``, `testla`, `k80`                      | ``                                                                        | Sets the desired GPU if the `instance_type` is one of our types.                                                                                                                                                                                                                              |
+| `ssh_private`                  |                                          |                                                                           | SSH private in PEM format. If not provided one private and public key will be automatically generated and returned in terraform.tfstate                                                                                                                                                       |
+| `kubernetes_readiness_command` |                                          | `"true"`                                                                  | Command to run on Kubernetes clusters to check if the launched CML container is ready (i.e. the self-hosted runner was successfully registered)                                                                                                                                               |
 
 ### Machine
 
@@ -584,9 +582,9 @@ The instance type in Kubernetes is calculated joining the `instance_type` and
 | l    | tesla | 32        | 256 GiB |
 | xl   | tesla | 64        | 512 GiB |
 
-_Note: the resource limits specified are roughly equivalent to the ones from
-the equivalent AWS instances, but won't be allocated unless required by the
-running processes._
+_Note: the resource limits specified are roughly equivalent to the ones from the
+equivalent AWS instances, but won't be allocated unless required by the running
+processes._
 
 </p>
 </details>
