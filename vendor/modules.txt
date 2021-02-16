@@ -8,6 +8,8 @@ cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
 # cloud.google.com/go/storage v1.10.0
 cloud.google.com/go/storage
+# github.com/Azure-Samples/azure-sdk-for-go-samples v0.0.0-20201110054206-ffcdafe9818d
+## explicit
 # github.com/Azure/azure-sdk-for-go v49.0.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute
@@ -41,11 +43,8 @@ github.com/Azure/go-autorest/logger
 github.com/Azure/go-autorest/tracing
 # github.com/agext/levenshtein v1.2.2
 github.com/agext/levenshtein
-<<<<<<< HEAD
 # github.com/alessio/shellescape v1.4.1
 ## explicit
-=======
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 # github.com/apparentlymart/go-textseg/v12 v12.0.0
 github.com/apparentlymart/go-textseg/v12/textseg
 # github.com/aws/aws-sdk-go v1.34.13
@@ -95,13 +94,10 @@ github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
-<<<<<<< HEAD
 # github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 github.com/bgentry/go-netrc/netrc
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-=======
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 # github.com/dimchansky/utfbom v1.1.0
 github.com/dimchansky/utfbom
 # github.com/fatih/color v1.7.0
@@ -132,7 +128,6 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-<<<<<<< HEAD
 # github.com/google/gofuzz v1.1.0
 github.com/google/gofuzz
 # github.com/googleapis/gax-go/v2 v2.0.5
@@ -147,10 +142,6 @@ github.com/hashicorp/errwrap
 github.com/hashicorp/go-checkpoint
 # github.com/hashicorp/go-cleanhttp v0.5.1
 github.com/hashicorp/go-cleanhttp
-=======
-# github.com/hashicorp/errwrap v1.0.0
-github.com/hashicorp/errwrap
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 # github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 github.com/hashicorp/go-cty/cty
 github.com/hashicorp/go-cty/cty/convert
@@ -169,11 +160,8 @@ github.com/hashicorp/go-multierror
 # github.com/hashicorp/go-plugin v1.4.0
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
-<<<<<<< HEAD
 # github.com/hashicorp/go-safetemp v1.0.0
 github.com/hashicorp/go-safetemp
-=======
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 # github.com/hashicorp/go-uuid v1.0.1
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/go-version v1.2.1
@@ -183,7 +171,6 @@ github.com/hashicorp/go-version
 github.com/hashicorp/hcl/v2
 github.com/hashicorp/hcl/v2/ext/customdecode
 github.com/hashicorp/hcl/v2/hclsyntax
-<<<<<<< HEAD
 # github.com/hashicorp/logutils v1.0.0
 github.com/hashicorp/logutils
 # github.com/hashicorp/terraform-exec v0.13.0
@@ -193,11 +180,6 @@ github.com/hashicorp/terraform-exec/tfinstall
 # github.com/hashicorp/terraform-json v0.8.0
 github.com/hashicorp/terraform-json
 # github.com/hashicorp/terraform-plugin-go v0.2.1
-=======
-# github.com/hashicorp/terraform v0.14.2
-## explicit
-# github.com/hashicorp/terraform-plugin-go v0.1.0
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 github.com/hashicorp/terraform-plugin-go/tfprotov5
 github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/fromproto
 github.com/hashicorp/terraform-plugin-go/tfprotov5/internal/tfplugin5
@@ -255,11 +237,8 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/oklog/run v1.0.0
 github.com/oklog/run
-<<<<<<< HEAD
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-=======
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 ## explicit
 github.com/teris-io/shortid
@@ -280,7 +259,6 @@ github.com/zclconf/go-cty/cty/function/stdlib
 github.com/zclconf/go-cty/cty/gocty
 github.com/zclconf/go-cty/cty/json
 github.com/zclconf/go-cty/cty/set
-<<<<<<< HEAD
 # go.opencensus.io v0.22.4
 go.opencensus.io
 go.opencensus.io/internal
@@ -298,22 +276,26 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-=======
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 # golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 ## explicit
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/openpgp
+golang.org/x/crypto/openpgp/armor
+golang.org/x/crypto/openpgp/elgamal
+golang.org/x/crypto/openpgp/errors
+golang.org/x/crypto/openpgp/packet
+golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-<<<<<<< HEAD
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 golang.org/x/lint
@@ -322,17 +304,14 @@ golang.org/x/lint/golint
 golang.org/x/mod/module
 golang.org/x/mod/semver
 # golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
-=======
-# golang.org/x/net v0.0.0-20201021035429-f5854403a974
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-<<<<<<< HEAD
 # golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 golang.org/x/oauth2
 golang.org/x/oauth2/google
@@ -345,13 +324,6 @@ golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.4
-=======
-# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
-golang.org/x/sys/cpu
-golang.org/x/sys/internal/unsafeheader
-golang.org/x/sys/unix
-# golang.org/x/text v0.3.3
->>>>>>> 545c32361379b45371b1b2f5f807389766f4ebe4
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
@@ -402,6 +374,8 @@ google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
 # google.golang.org/genproto v0.0.0-20200904004341-0bd0a958aa1d
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/iam/v1
