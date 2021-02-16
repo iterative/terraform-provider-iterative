@@ -1,12 +1,10 @@
 package iterative
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"os"
 	"testing"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-
 
 const (
 	expectedProvisionerCodeCloudInvalid string = `#!/bin/sh
@@ -50,7 +48,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 
 `
-expectedProvisionerCodeCloudAWS string = `#!/bin/sh
+	expectedProvisionerCodeCloudAWS string = `#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
 
@@ -94,7 +92,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 
 `
-expectedProvisionerCodeCloudAzure string = `#!/bin/sh
+	expectedProvisionerCodeCloudAzure string = `#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
 
@@ -171,7 +169,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 
 `
-expectedProvisionerCodeCloudKubernetes string = `#!/bin/sh
+	expectedProvisionerCodeCloudKubernetes string = `#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
 
@@ -193,29 +191,29 @@ cml-runner --name '10 value with "quotes" and spaces' --labels '16 value with "q
 
 func environmentTestData(t *testing.T) map[string]string {
 	return map[string]string{
-		"AWS_SECRET_ACCESS_KEY": "1 value with \"quotes\" and spaces",
-	    "AWS_ACCESS_KEY_ID": "2 value with \"quotes\" and spaces",
-	    "AZURE_CLIENT_ID": "3 value with \"quotes\" and spaces",
-	    "AZURE_CLIENT_SECRET": "4 value with \"quotes\" and spaces",
-	    "AZURE_SUBSCRIPTION_ID": "5 value with \"quotes\" and spaces",
-	    "AZURE_TENANT_ID": "6 value with \"quotes\" and spaces",
-	    "KUBERNETES_CONFIGURATION": "7 value with \"quotes\" and spaces",
+		"AWS_SECRET_ACCESS_KEY":    "1 value with \"quotes\" and spaces",
+		"AWS_ACCESS_KEY_ID":        "2 value with \"quotes\" and spaces",
+		"AZURE_CLIENT_ID":          "3 value with \"quotes\" and spaces",
+		"AZURE_CLIENT_SECRET":      "4 value with \"quotes\" and spaces",
+		"AZURE_SUBSCRIPTION_ID":    "5 value with \"quotes\" and spaces",
+		"AZURE_TENANT_ID":          "6 value with \"quotes\" and spaces",
+		"KUBERNETES_CONFIGURATION": "7 value with \"quotes\" and spaces",
 	}
 }
 
 func schemaTestData(cloud string, t *testing.T) *schema.ResourceData {
 	return schema.TestResourceDataRaw(t, resourceRunner().Schema, map[string]interface{}{
-		"cloud": cloud,
-		"region": "9 value with \"quotes\" and spaces",
-		"name": "10 value with \"quotes\" and spaces",
-		"idle_timeout": 11,
+		"cloud":             cloud,
+		"region":            "9 value with \"quotes\" and spaces",
+		"name":              "10 value with \"quotes\" and spaces",
+		"idle_timeout":      11,
 		"instance_hdd_size": 12,
-		"token": "13 value with \"quotes\" and spaces",
-		"repo": "14 value with \"quotes\" and spaces",
-		"driver": "15 value with \"quotes\" and spaces",
-		"labels": "16 value with \"quotes\" and spaces",
-		"instance_gpu": "17 value with \"quotes\" and spaces",
-    })
+		"token":             "13 value with \"quotes\" and spaces",
+		"repo":              "14 value with \"quotes\" and spaces",
+		"driver":            "15 value with \"quotes\" and spaces",
+		"labels":            "16 value with \"quotes\" and spaces",
+		"instance_gpu":      "17 value with \"quotes\" and spaces",
+	})
 }
 
 func testProvisionerCodeCloud(t *testing.T, cloud string, expected string) {
@@ -223,8 +221,8 @@ func testProvisionerCodeCloud(t *testing.T, cloud string, expected string) {
 		os.Setenv(key, value)
 	}
 	val, err := provisionerCode(schemaTestData(cloud, t))
-    if err != nil {
-        t.Fail()
+	if err != nil {
+		t.Fail()
 	} else if val != expected {
 		t.Fail()
 	}
