@@ -330,7 +330,7 @@ sudo systemctl enable cml.service --now
 
 	if err == nil {
 		code = customDataBuffer.String()
-	} 
+	}
 
 	return code, err
 }
