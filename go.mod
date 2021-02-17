@@ -31,6 +31,8 @@ require (
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/go-testing-interface v1.0.4
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/sebdah/goldie v1.0.0 // indirect
+	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/zclconf/go-cty v1.7.0
