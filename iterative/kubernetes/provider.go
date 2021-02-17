@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	terraform_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -25,7 +24,7 @@ import (
 
 // Create a "machine" (actually a Kubernetes job) on the cluster.
 func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData, meta interface{}) error {
-	conn, err := kubernetesClient()
+	conn, namespace, err := kubernetesClient()
 	if err != nil {
 		return err
 	}
@@ -37,9 +36,9 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	}
 
 	// Define the job namespace and name.
-	jobNamespace := "iterative"
+	jobName := d.Id()
+	jobNamespace := namespace
 	jobReadinessCommand := d.Get("kubernetes_readiness_command").(string)
-	jobName := d.Get("name").(string) // FIXME: we aren't using the iterative-··· identifiers because they aren't valid DNS-1123 names.
 
 	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
@@ -149,9 +148,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	}
 	log.Printf("[INFO] Submitted new job: %#v", out)
 
-	// Set the resource identifier, in the form namespace/name.
-	d.SetId(out.ObjectMeta.Namespace + "/" + out.ObjectMeta.Name)
-
 	// Get the controller unique identifier for the job, so we can easily find the pods it creates.
 	waitSelector := fmt.Sprintf("controller-uid=%s", out.GetObjectMeta().GetLabels()["controller-uid"])
 
@@ -172,11 +168,7 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 
 // Delete a "machine" (actually a Kubernetes job) from the cluster.
 func ResourceMachineDelete(ctx context.Context, d *terraform_schema.ResourceData, meta interface{}) error {
-	conn, err := kubernetesClient()
-	if err != nil {
-		return err
-	}
-	namespace, name, err := idParts(d.Id())
+	conn, namespace, err := kubernetesClient()
 	if err != nil {
 		return err
 	}
@@ -186,8 +178,8 @@ func ResourceMachineDelete(ctx context.Context, d *terraform_schema.ResourceData
 	// ownerReference.blockOwnerDeletion=true.
 	propagationPolicy := kubernetes_meta.DeletePropagationForeground
 
-	log.Printf("[INFO] Deleting job: %#v", name)
-	err = conn.BatchV1().Jobs(namespace).Delete(ctx, name, kubernetes_meta.DeleteOptions{
+	log.Printf("[INFO] Deleting job: %#v", d.Id())
+	err = conn.BatchV1().Jobs(namespace).Delete(ctx, d.Id(), kubernetes_meta.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if err != nil {
@@ -195,7 +187,7 @@ func ResourceMachineDelete(ctx context.Context, d *terraform_schema.ResourceData
 	}
 
 	err = terraform_resource.RetryContext(ctx, d.Timeout(terraform_schema.TimeoutDelete), func() *terraform_resource.RetryError {
-		_, err := conn.BatchV1().Jobs(namespace).Get(ctx, name, kubernetes_meta.GetOptions{})
+		_, err := conn.BatchV1().Jobs(namespace).Get(ctx, d.Id(), kubernetes_meta.GetOptions{})
 		if err != nil {
 			if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 				return nil
@@ -203,14 +195,14 @@ func ResourceMachineDelete(ctx context.Context, d *terraform_schema.ResourceData
 			return terraform_resource.NonRetryableError(err)
 		}
 
-		e := fmt.Errorf("Job %s still exists", name)
+		e := fmt.Errorf("Job %s still exists", d.Id())
 		return terraform_resource.RetryableError(e)
 	})
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Job %s deleted", name)
+	log.Printf("[INFO] Job %s deleted", d.Id())
 
 	d.SetId("")
 	return nil
@@ -218,18 +210,13 @@ func ResourceMachineDelete(ctx context.Context, d *terraform_schema.ResourceData
 
 // Check if a "machine" (actually a Kubernetes job) exists on the cluster.
 func ResourceMachineCheck(ctx context.Context, d *terraform_schema.ResourceData, meta interface{}) error {
-	conn, err := kubernetesClient()
+	conn, namespace, err := kubernetesClient()
 	if err != nil {
 		return err
 	}
 
-	namespace, name, err := idParts(d.Id())
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[INFO] Checking job %s", name)
-	_, err = conn.BatchV1().Jobs(namespace).Get(ctx, name, kubernetes_meta.GetOptions{})
+	log.Printf("[INFO] Checking job %s", d.Id())
+	_, err = conn.BatchV1().Jobs(namespace).Get(ctx, d.Id(), kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return nil
@@ -239,20 +226,30 @@ func ResourceMachineCheck(ctx context.Context, d *terraform_schema.ResourceData,
 	return err
 }
 
-// Instantiate a Kubernetes client object from the kubeconfig contents specified through an environment variable.
-func kubernetesClient() (kubernetes.Interface, error) {
+// Return a Kubernetes clientset object and the default namespace from the contents of the KUBERNETES_CONFIGURATION environment variable.
+func kubernetesClient() (kubernetes.Interface, string, error) {
 	configurationBytes := []byte(os.Getenv("KUBERNETES_CONFIGURATION"))
-	configuration, err := kubernetes_clientcmd.RESTConfigFromKubeConfig(configurationBytes)
+	configuration, err := kubernetes_clientcmd.NewClientConfigFromBytes(configurationBytes)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	client, err := kubernetes.NewForConfig(configuration)
+	clientConfiguration, err := configuration.ClientConfig()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return client, nil
+	client, err := kubernetes.NewForConfig(clientConfiguration)
+	if err != nil {
+		return nil, "", err
+	}
+
+	namespace, _, err := configuration.Namespace()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return client, namespace, nil
 }
 
 // Wait for the pods matching the specified selector to pass their respective readiness probes.
@@ -400,15 +397,4 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	}
 
 	return nil, fmt.Errorf("invalid instance type")
-}
-
-// Split namespace/name identifiers into their components.
-func idParts(id string) (string, string, error) {
-	parts := strings.Split(id, "/")
-	if len(parts) != 2 {
-		err := fmt.Errorf("Unexpected ID format (%q), expected %q.", id, "namespace/name")
-		return "", "", err
-	}
-
-	return parts[0], parts[1], nil
 }
