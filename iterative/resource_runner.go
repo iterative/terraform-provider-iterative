@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"text/template"
 
+	"gopkg.in/alessio/shellescape.v1"
+
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -130,6 +132,10 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
+			"kubernetes_readiness_command": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -162,6 +168,7 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	d.Set("startup_script", startupScript)
+	d.Set("kubernetes_readiness_command", "stat /tmp/ready.flag") // FIXME: considered techical debt
 
 	if len(d.Get("cloud").(string)) == 0 {
 		diags = append(diags, diag.Diagnostic{
@@ -236,8 +243,9 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
+	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 
-	tmpl, err := template.New("deploy").Parse(`#!/bin/sh
+	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(`#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
 {{if eq .cloud "azure"}}
@@ -272,20 +280,32 @@ sudo systemctl restart docker
 sudo nvidia-smi
 sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 {{end}}
-
+{{if ne .cloud "kubernetes"}}
 sudo npm install -g git+https://github.com/iterative/cml.git
 
 sudo bash -c 'cat << EOF > /usr/bin/cml.sh
 #!/bin/sh
+{{end}}
 
-export AWS_SECRET_ACCESS_KEY={{.AWS_SECRET_ACCESS_KEY}}
-export AWS_ACCESS_KEY_ID={{.AWS_ACCESS_KEY_ID}}
-export AZURE_CLIENT_ID={{.AZURE_CLIENT_ID}}
-export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
-export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
-export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
+{{if eq .cloud "aws"}}
+export AWS_SECRET_ACCESS_KEY={{escape .AWS_SECRET_ACCESS_KEY}}
+export AWS_ACCESS_KEY_ID={{escape .AWS_ACCESS_KEY_ID}}
+{{end}}
 
-cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+{{if eq .cloud "azure"}}
+export AZURE_CLIENT_ID={{escape .AZURE_CLIENT_ID}}
+export AZURE_CLIENT_SECRET={{escape .AZURE_CLIENT_SECRET}}
+export AZURE_SUBSCRIPTION_ID={{escape .AZURE_SUBSCRIPTION_ID}}
+export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
+{{end}}
+
+{{if eq .cloud "kubernetes"}}
+export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
+{{end}}
+
+cml-runner{{if .name}} --name {{escape .name}}{{end}}{{if .labels}} --labels {{escape .labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}}{{if .driver}} --driver {{escape .driver}}{{end}}{{if .repo}} --repo {{escape .repo}}{{end}}{{if .token}} --token {{escape .token}}{{end}}{{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}}
+
+{{if ne .cloud "kubernetes"}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
@@ -305,6 +325,7 @@ sudo chmod +x /etc/systemd/system/cml.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
+{{end}}
 `)
 	var customDataBuffer bytes.Buffer
 	err = tmpl.Execute(&customDataBuffer, data)
@@ -313,7 +334,7 @@ sudo systemctl enable cml.service --now
 		code = customDataBuffer.String()
 	}
 
-	return code, nil
+	return code, err
 }
 
 type AttributesType struct {

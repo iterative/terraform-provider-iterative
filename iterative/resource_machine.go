@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"terraform-provider-iterative/iterative/aws"
 	"terraform-provider-iterative/iterative/azure"
+	"terraform-provider-iterative/iterative/kubernetes"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -15,10 +17,14 @@ import (
 
 func resourceMachine() *schema.Resource {
 	return &schema.Resource{
+		Schema:        *machineSchema(),
 		CreateContext: resourceMachineCreate,
 		DeleteContext: resourceMachineDelete,
 		ReadContext:   resourceMachineRead,
-		Schema:        *machineSchema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
+		},
 	}
 }
 
@@ -112,6 +118,12 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
+		"kubernetes_readiness_command": &schema.Schema{
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Optional: true,
+			Default:  "true",
+		},
 	}
 }
 
@@ -166,6 +178,14 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
+	} else if cloud == "kubernetes" {
+		err := kubernetes.ResourceMachineCreate(ctx, d, m)
+		if err != nil {
+			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
+			})
+		}
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -196,6 +216,19 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
 			})
 		}
+	} else if cloud == "kubernetes" {
+		err := kubernetes.ResourceMachineDelete(ctx, d, m)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
+			})
+		}
+	} else {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unknown cloud: %s", cloud),
+		})
 	}
 
 	return diags
