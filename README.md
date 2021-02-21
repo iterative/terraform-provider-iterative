@@ -3,7 +3,7 @@
 # Terraform Provider Iterative
 
 The Terraform Iterative provider is a plugin for Terraform that allows for the
-full lifecycle management of GPU and GPU cloud resources with your favourite
+full lifecycle management of CPU and GPU cloud resources with your favourite
 [vendor](#supported-vendors).
 
 There are two types of resources available:
