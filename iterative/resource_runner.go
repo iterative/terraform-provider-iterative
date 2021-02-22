@@ -285,7 +285,7 @@ export AZURE_CLIENT_SECRET={{.AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{.AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{.AZURE_TENANT_ID}}
 
-cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
+HOME="$(mktemp -d)" cml-runner{{if .name}} --name {{.name}}{{end}}{{if .labels}} --labels {{.labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{.idle_timeout}}{{end}}{{if .driver}} --driver {{.driver}}{{end}}{{if .repo}} --repo {{.repo}}{{end}}{{if .token}} --token {{.token}}{{end}}{{if .tf_resource}} --tf_resource={{.tf_resource}}{{end}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
