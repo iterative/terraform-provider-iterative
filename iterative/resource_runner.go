@@ -303,7 +303,7 @@ export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{end}}
 
-cml-runner{{if .name}} --name {{escape .name}}{{end}}{{if .labels}} --labels {{escape .labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}}{{if .driver}} --driver {{escape .driver}}{{end}}{{if .repo}} --repo {{escape .repo}}{{end}}{{if .token}} --token {{escape .token}}{{end}}{{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}}
+HOME="$(mktemp -d)" cml-runner{{if .name}} --name {{escape .name}}{{end}}{{if .labels}} --labels {{escape .labels}}{{end}}{{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}}{{if .driver}} --driver {{escape .driver}}{{end}}{{if .repo}} --repo {{escape .repo}}{{end}}{{if .token}} --token {{escape .token}}{{end}}{{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}}
 {{if ne .cloud "kubernetes"}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
