@@ -3,26 +3,52 @@
 # Terraform Iterative provider
 
 The Iterative Provider is a Terraform plugin that enables full lifecycle
-management of cloud computing resources, including GPUs, from
-[major vendors](#supported-vendors). Two types of resources are available:
+management of cloud computing resources, including GPUs, from your favorite
+[vendors](#supported-vendors). Two types of resources are available:
 
-- CML Runner (`iterative_cml_runner`)
+- Runner (`iterative_cml_runner`)
 - Machine (`iterative_machine`)
+
+The Provider is designed for benefits like:
+
+- Unified logging for workflows run in cloud resources
+- Automatic provision of cloud resources
+- Automatic unregister and removal of cloud resources (never forget to turn your GPU
+  off again)
+- Arguments inherited from the GitHub/GitLab runner for ease of integration
+  (`name`,`labels`,`idle-timeout`,`repo`,`token`, and `driver`)
+
 
 ## Usage
 
-### CML Runner
+### Runner
+A self hosted runner based on a thin wrapper over the GitLab and GitHub
+self-hosted [runners](https://github.com/actions/runner), abstracting their functionality to a common specification
+that allows adjusting the main runner settings, like idle timeouts, or custom
+runner labels.
 
-This is a CI self-hosted runner based on a thin wrapper over the GitLab and
-GitHub [runner](https://github.com/actions/runner). Benefits include:
+The runner resource also provides features like unified logging and automated
+cloud resource provisioning and management through various vendors.
 
-- Arguments inherited from the GitHub/GitLab runner
-  (`name`,`labels`,`idle-timeout`,`repo`,`token`, and `driver`)
-- Unified logging for workflows run in cloud resources
-- Easy to launch
-- Auto provision of cloud resources
-- Auto unregister and removal of cloud resources (never forget to turn your GPU
-  off again)
+#### Configuring the vendor credentials
+
+This provider requires a repository token for registering and unregistering
+self-hosted runners during the cloud resource lifecycle. Depending on the
+platform you use, the instructions to get that token may vary; please refer to
+your platform documentation:
+
+- [GitHub](https://docs.github.com/es/github-ae@latest/github/authenticating-to-github/creating-a-personal-access-token)
+- [GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
+
+This token can be passed to the provider through the `CML_TOKEN` or environment
+variable, like in the following example:
+
+```sh
+export CML_TOKEN=···
+```
+
+Additionally, you need to provide credentials for the cloud provider where the
+computing resources should be allocated. Follow the steps below to get started.
 
 #### Basic usage
 
