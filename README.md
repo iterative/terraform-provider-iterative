@@ -13,19 +13,19 @@ The Provider is designed for benefits like:
 
 - Unified logging for workflows run in cloud resources
 - Automatic provision of cloud resources
-- Automatic unregister and removal of cloud resources (never forget to turn your GPU
-  off again)
+- Automatic unregister and removal of cloud resources (never forget to turn your
+  GPU off again)
 - Arguments inherited from the GitHub/GitLab runner for ease of integration
   (`name`,`labels`,`idle-timeout`,`repo`,`token`, and `driver`)
-
 
 ## Usage
 
 ### Runner
+
 A self hosted runner based on a thin wrapper over the GitLab and GitHub
-self-hosted [runners](https://github.com/actions/runner), abstracting their functionality to a common specification
-that allows adjusting the main runner settings, like idle timeouts, or custom
-runner labels.
+self-hosted [runners](https://github.com/actions/runner), abstracting their
+functionality to a common specification that allows adjusting the main runner
+settings, like idle timeouts, or custom runner labels.
 
 The runner resource also provides features like unified logging and automated
 cloud resource provisioning and management through various vendors.
