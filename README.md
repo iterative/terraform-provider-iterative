@@ -2,9 +2,9 @@
 
 # Terraform Iterative provider
 
-The Iterative Provider is a Terraform plugin that enables
-full lifecycle management of cloud computing resources, including GPUs, from [major vendors](#supported-vendors).
-Two types of resources are available:
+The Iterative Provider is a Terraform plugin that enables full lifecycle
+management of cloud computing resources, including GPUs, from
+[major vendors](#supported-vendors). Two types of resources are available:
 
 - CML Runner (`iterative_cml_runner`)
 - Machine (`iterative_machine`)
@@ -13,15 +13,19 @@ Two types of resources are available:
 
 ### CML Runner
 
-This is a CI self-hosted runner based on a thin wrapper over the GitLab and GitHub [runner](https://github.com/actions/runner). Benefits include:
+This is a CI self-hosted runner based on a thin wrapper over the GitLab and
+GitHub [runner](https://github.com/actions/runner). Benefits include:
 
-- Arguments inherited from the GitHub/GitLab runner (`name`,`labels`,`idle-timeout`,`repo`,`token`, and `driver`)
+- Arguments inherited from the GitHub/GitLab runner
+  (`name`,`labels`,`idle-timeout`,`repo`,`token`, and `driver`)
 - Unified logging for workflows run in cloud resources
 - Easy to launch
 - Auto provision of cloud resources
-- Auto unregister and removal of cloud resources (never forget to turn your GPU off again)
+- Auto unregister and removal of cloud resources (never forget to turn your GPU
+  off again)
 
 #### Basic usage
+
 1. - Setup your provider credentials as ENV variables
 
 <details>
@@ -125,27 +129,28 @@ terraform apply --auto-approve
 
 #### Argument reference
 
-| Variable            | Values                                   | Default                                                                   |                                                                                                                                                                                                                                                                                               |
-| ------------------- | ---------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `driver`            | `gitlab` `github`                        |                                                                           | The kind of runner that you are setting                                                                                                                                                                                                                                                       |
-| `repo`              |                                          |                                                                           | The Git repository to subscribe to.                                                                                                                                                                                                                                                                     |
-| `token`             |                                          |                                                                           | A personal access token. In GitHub, your token must have Workflow and Repository permissions. If not specified, the Iterative Provider looks for the environmental variable CML_REPO                                                                                                                                                           |
-| `labels`            |                                          | `cml`                                                                     | Your runner will listen for workflows tagged with this label. Ideal for assigning workflows to select runners.                                                                                                |
-| `idle-timeout`      |                                          | 5min                                                                      | The maximum time for the runner to wait for jobs. After timeout, the runner will unregister automatically from the repository and clean up all cloud resources. If set to `0`, the runner will never time out (be warned if you've got a cloud GPU).                                                                             |
-| `cloud`             | `aws` `azure`                            |                                                                           | Sets cloud vendor.                                                                                                                                                                                                                                                                            |
-| `region`            | `us-west` `us-east` `eu-west` `eu-north` | `us-west`                                                                 | Sets the collocation region. AWS or Azure regions are also accepted.                                                                                                                                                                                                                          |
+| Variable            | Values                                   | Default                                                                   |                                                                                                                                                                                                                                                                                                  |
+| ------------------- | ---------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `driver`            | `gitlab` `github`                        |                                                                           | The kind of runner that you are setting                                                                                                                                                                                                                                                          |
+| `repo`              |                                          |                                                                           | The Git repository to subscribe to.                                                                                                                                                                                                                                                              |
+| `token`             |                                          |                                                                           | A personal access token. In GitHub, your token must have Workflow and Repository permissions. If not specified, the Iterative Provider looks for the environmental variable CML_REPO                                                                                                             |
+| `labels`            |                                          | `cml`                                                                     | Your runner will listen for workflows tagged with this label. Ideal for assigning workflows to select runners.                                                                                                                                                                                   |
+| `idle-timeout`      |                                          | 5min                                                                      | The maximum time for the runner to wait for jobs. After timeout, the runner will unregister automatically from the repository and clean up all cloud resources. If set to `0`, the runner will never time out (be warned if you've got a cloud GPU).                                             |
+| `cloud`             | `aws` `azure`                            |                                                                           | Sets cloud vendor.                                                                                                                                                                                                                                                                               |
+| `region`            | `us-west` `us-east` `eu-west` `eu-north` | `us-west`                                                                 | Sets the collocation region. AWS or Azure regions are also accepted.                                                                                                                                                                                                                             |
 | `image`             |                                          | `iterative-cml` in AWS `Canonical:UbuntuServer:18.04-LTS:latest` in Azure | Sets the image to be used. On AWS, the provider searches the cloud provider by image name (not by id), taking the lastest version if multiple images with the same name are found. Defaults to [iterative-cml image](#iterative-cml-image). On Azure uses the form `Publisher:Offer:SKU:Version` |
-| `spot`| boolean | false | If true, launch a spot instance  |
-| `spot_price`| float with 5 decimals at most | -1 | Sets the maximum price that you are willing to pay by the hour. If not specified, the current spot bidding pricing will be used|
-| `name`              |                                          | iterative\_{UID}                                                          | Sets the instance name and related resources based on that name. In Azure, groups everything under a resource group with that name.                                                                                                                                                            |
-| `instance_hdd_size` |                                          | 10                                                                        | Sets the instance hard disk size in GB                                                                                                                                                                                                                                                        |
-| `instance_type`     | `m`, `l`, `xl`                           | `m`                                                                       | Sets the instance CPU size. You can also specify vendor specific machines in AWS i.e. `t2.micro`. [See equivalences](#Supported-vendors) table below.                                                                                                                                  |
-| `instance_gpu`      | ``, `testla`, `k80`                      | ``                                                                        | Selects the desired GPU for supported `instance_types`.                                                                                                                                                                                                                         |
-| `ssh_private`       |                                          |                                                                           | An SSH private key in PEM format. If not provided, one private and public key wll be automatically generated and returned in `terraform.tfstate`                                                                                                                                                        |
+| `spot`              | boolean                                  | false                                                                     | If true, launch a spot instance                                                                                                                                                                                                                                                                  |
+| `spot_price`        | float with 5 decimals at most            | -1                                                                        | Sets the maximum price that you are willing to pay by the hour. If not specified, the current spot bidding pricing will be used                                                                                                                                                                  |
+| `name`              |                                          | iterative\_{UID}                                                          | Sets the instance name and related resources based on that name. In Azure, groups everything under a resource group with that name.                                                                                                                                                              |
+| `instance_hdd_size` |                                          | 10                                                                        | Sets the instance hard disk size in GB                                                                                                                                                                                                                                                           |
+| `instance_type`     | `m`, `l`, `xl`                           | `m`                                                                       | Sets the instance CPU size. You can also specify vendor specific machines in AWS i.e. `t2.micro`. [See equivalences](#Supported-vendors) table below.                                                                                                                                            |
+| `instance_gpu`      | ``, `testla`, `k80`                      | ``                                                                        | Selects the desired GPU for supported `instance_types`.                                                                                                                                                                                                                                          |
+| `ssh_private`       |                                          |                                                                           | An SSH private key in PEM format. If not provided, one private and public key wll be automatically generated and returned in `terraform.tfstate`                                                                                                                                                 |
 
 ### Machine
 
 Setup instructions:
+
 1. Setup your provider credentials as ENV variables
 
 <details>
@@ -256,20 +261,23 @@ terraform destroy --auto-approve
 | `cloud`             | `aws` `azure`                            |                                                                           | Sets cloud vendor.                                                                                                                                                                                                                                                                            |
 | `region`            | `us-west` `us-east` `eu-west` `eu-north` | `us-west`                                                                 | Sets the collocation region. AWS or Azure regions are also accepted.                                                                                                                                                                                                                          |
 | `image`             |                                          | `iterative-cml` in AWS `Canonical:UbuntuServer:18.04-LTS:latest` in Azure | Sets the image to be used. On AWS the provider does a search in the cloud provider by image name not by id, taking the lastest version in case there are many with the same name. Defaults to [iterative-cml image](#iterative-cml-image). On Azure uses the form Publisher:Offer:SKU:Version |
-| `name`              |                                          | iterative\_{UID}                                                          | Sets the instance name and related resources based on that name. In Azure, groups everything under a resource group with that name.                                                                                                                                                            |
-| `spot`| boolean | false | If true launch a spot instance  |
-| `spot_price`| float with 5 decimals at most | -1 | Sets the max price that you are willing to pay by the hour. If not specified, the current spot bidding price will be used. |
+| `name`              |                                          | iterative\_{UID}                                                          | Sets the instance name and related resources based on that name. In Azure, groups everything under a resource group with that name.                                                                                                                                                           |
+| `spot`              | boolean                                  | false                                                                     | If true launch a spot instance                                                                                                                                                                                                                                                                |
+| `spot_price`        | float with 5 decimals at most            | -1                                                                        | Sets the max price that you are willing to pay by the hour. If not specified, the current spot bidding price will be used.                                                                                                                                                                    |
 | `instance_hdd_size` |                                          | 10                                                                        | Sets the instance hard disk size in GB                                                                                                                                                                                                                                                        |
-| `instance_type`     | `m`, `l`, `xl`                           | `m`                                                                       | Sets the instance CPU size. You can also specify vendor specific machines in AWS i.e. `t2.micro`. [See equivalences](#Supported-vendors) table below.                                                                                                                                  |
-| `instance_gpu`      | ``, `testla`, `k80`                      | ``                                                                        | Sets the desired GPU for supported `instance_types`.                                                                                                                                                                                                                             |
-| `ssh_private`       |                                          |                                                                           | SSH private key in PEM format. If not provided, one private and public key wll be automatically generated and returned in terraform.tfstate                                                                                                                                                        |
+| `instance_type`     | `m`, `l`, `xl`                           | `m`                                                                       | Sets the instance CPU size. You can also specify vendor specific machines in AWS i.e. `t2.micro`. [See equivalences](#Supported-vendors) table below.                                                                                                                                         |
+| `instance_gpu`      | ``, `testla`, `k80`                      | ``                                                                        | Sets the desired GPU for supported `instance_types`.                                                                                                                                                                                                                                          |
+| `ssh_private`       |                                          |                                                                           | SSH private key in PEM format. If not provided, one private and public key wll be automatically generated and returned in terraform.tfstate                                                                                                                                                   |
 | `startup_script`    |                                          |                                                                           | Startup script also known as userData on AWS and customData in Azure. It can be expressed as multiline text using [TF heredoc syntax ](https://www.terraform.io/docs/configuration-0-11/variables.html)                                                                                       |
 
 ## Requirements
 
 To be able to use `instance_type` and `instance_gpu`, you'll need access to
-launch [instances from supported cloud vendors](#Supported-vendors). Please ensure that you have sufficient quotas with your cloud provider for the instances you intend to provision with Iterative Provider. If you're just starting out with a new account with a vendor, we recommend trying Iterative Provider with approved instances, such as the `t2.micro` instance for AWS. 
-
+launch [instances from supported cloud vendors](#Supported-vendors). Please
+ensure that you have sufficient quotas with your cloud provider for the
+instances you intend to provision with Iterative Provider. If you're just
+starting out with a new account with a vendor, we recommend trying Iterative
+Provider with approved instances, such as the `t2.micro` instance for AWS.
 
 <details>
 <summary>Example with native AWS instace type and region</summary>
@@ -300,7 +308,9 @@ resource "iterative_machine" "machine" {
 </details>
 
 ## Supported vendors
-The Iterative Provider currently supports AWS and Azure. Google Cloud Platform is not currently supported.
+
+The Iterative Provider currently supports AWS and Azure. Google Cloud Platform
+is not currently supported.
 
 <details>
 <summary>AWS instance equivalences</summary>
@@ -361,8 +371,9 @@ The instance type in Azure is calculated by joining the `instance_type` and
 </details>
 
 ## The iterative-cml image
-We've created a GPU-ready image based on Ubuntu 18.04. It comes with the following stack already
-installed:
+
+We've created a GPU-ready image based on Ubuntu 18.04. It comes with the
+following stack already installed:
 
 - Nvidia drivers
 - Docker
