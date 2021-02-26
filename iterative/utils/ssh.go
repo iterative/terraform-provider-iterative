@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -41,4 +43,42 @@ func PublicFromPrivatePEM(privateKey string) (string, error) {
 	pubKeyBuf.Write(ssh.MarshalAuthorizedKey(pub))
 
 	return pubKeyBuf.String(), nil
+}
+
+func RunCommand(command string, timeout time.Duration, hostAddress string, userName string, privateKey string) (string, error) {
+	parsedPrivateKey, err := ssh.ParsePrivateKey([]byte(privateKey))
+	if err != nil {
+		return "", err
+	}
+
+	configuration := &ssh.ClientConfig{
+		User: userName,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(parsedPrivateKey),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Doesn't matter for this use case, but isn't a good practice either.
+		Timeout:         timeout,
+	}
+
+	client, err := ssh.Dial("tcp", hostAddress, configuration)
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.Close()
+
+	var buffer bytes.Buffer
+	session.Stdout = &buffer
+	session.Stderr = &buffer
+
+	if err := session.Run(command); err == nil {
+		return buffer.String(), err
+	} else {
+		return "", err
+	}
 }
