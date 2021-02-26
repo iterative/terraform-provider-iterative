@@ -78,7 +78,7 @@ func RunCommand(command string, timeout time.Duration, hostAddress string, userN
 
 	if err := session.Run(command); err == nil {
 		return buffer.String(), err
-	} else {
-		return "", err
 	}
+	
+	return "", err
 }
