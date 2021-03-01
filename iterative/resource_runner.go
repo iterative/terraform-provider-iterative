@@ -27,6 +27,11 @@ func resourceRunner() *schema.Resource {
 		CreateContext: resourceRunnerCreate,
 		DeleteContext: resourceRunnerDelete,
 		ReadContext:   resourceMachineRead,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"repo": &schema.Schema{
 				Type:     schema.TypeString,
