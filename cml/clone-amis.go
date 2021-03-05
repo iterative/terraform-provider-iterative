@@ -15,7 +15,7 @@ import (
 func main() {
 	region := "us-west-1"
 	amiName := "iterative-cml"
-	regions := []string{"us-east-1", "us-east-2", "us-west-2", "eu-central-1", "eu-west-1"}
+	regions := []string{"us-east-1", "us-east-2", "us-west-2", "eu-central-1", "eu-west-1", "eu-west-2"}
 
 	sess, sessError := session.NewSession(&aws.Config{
 		Region: aws.String(region)},
