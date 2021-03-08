@@ -76,7 +76,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	// securityGroup
 	var vpcID, sgID string
 	if len(securityGroup) == 0 {
-		securityGroup = "cml"
+		securityGroup = "iterative"
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 		if len(vpcsDesc.Vpcs) == 0 {
