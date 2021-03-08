@@ -307,7 +307,7 @@ func awsClient(region string) (*ec2.EC2, error) {
 }
 
 //ImageRegions provider available image regions
-var ImageRegions = []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "eu-north-1", "eu-west-1"}
+var ImageRegions = []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "eu-north-1", "eu-west-1", "eu-west-2"}
 
 func getRegion(region string) string {
 	instanceRegions := make(map[string]string)
