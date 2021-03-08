@@ -211,7 +211,7 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	})
 
 	if logError != nil {
-		logEvents = logError.Error()
+		logEvents += "\n" + logError.Error()
 	}
 
 	if err != nil {
