@@ -348,6 +348,9 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	return client, err
 }
 
+//ImageRegions provider available image regions
+var ImageRegions = []string{}
+
 func getRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "eastus"

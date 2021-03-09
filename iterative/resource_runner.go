@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"text/template"
 
+	"terraform-provider-iterative/iterative/aws"
+	"terraform-provider-iterative/iterative/azure"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -179,69 +181,13 @@ func resourceRunnerDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceMachineDelete(ctx, d, m)
 }
 
-func provisionerCode(d *schema.ResourceData) (string, error) {
-	var code string
-
-	tfResource := ResourceType{
-		Mode:     "managed",
-		Type:     "iterative_cml_runner",
-		Name:     "runner",
-		Provider: "provider[\"registry.terraform.io/iterative/iterative\"]",
-		Instances: InstancesType{
-			InstanceType{
-				SchemaVersion: 0,
-				Attributes: AttributesType{
-					ID:                 d.Id(),
-					Cloud:              d.Get("cloud").(string),
-					Region:             d.Get("region").(string),
-					Name:               d.Get("name").(string),
-					Labels:             "",
-					IdleTimeout:        d.Get("idle_timeout").(int),
-					Repo:               "",
-					Token:              "",
-					Driver:             "",
-					AwsSecurityGroup:   "",
-					CustomData:         "",
-					Image:              "",
-					InstanceGpu:        "",
-					InstanceHddSize:    d.Get("instance_hdd_size").(int),
-					InstanceIP:         "",
-					InstanceLaunchTime: "",
-					InstanceType:       "",
-					SSHName:            "",
-					SSHPrivate:         "",
-					SSHPublic:          "",
-				},
-			},
-		},
-	}
-	jsonResource, err := json.Marshal(tfResource)
-	if err != nil {
-		return code, err
-	}
-
-	data := make(map[string]string)
-	data["cloud"] = d.Get("cloud").(string)
-	data["token"] = d.Get("token").(string)
-	data["repo"] = d.Get("repo").(string)
-	data["driver"] = d.Get("driver").(string)
-	data["labels"] = d.Get("labels").(string)
-	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
-	data["name"] = d.Get("name").(string)
-	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
-	data["instance_gpu"] = d.Get("instance_gpu").(string)
-	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
-	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
-	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")
-	data["AZURE_CLIENT_ID"] = os.Getenv("AZURE_CLIENT_ID")
-	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
-	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
-	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
+func renderScript(data map[string]interface{}) (string, error) {
+	var script string
 
 	tmpl, err := template.New("deploy").Parse(`#!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 
-{{if eq .cloud "azure"}}
+{{if not .ami }}
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
 sudo apt remove unattended-upgrades
@@ -312,10 +258,87 @@ sudo systemctl enable cml.service --now
 	err = tmpl.Execute(&customDataBuffer, data)
 
 	if err == nil {
-		code = customDataBuffer.String()
+		script = customDataBuffer.String()
 	}
 
-	return code, nil
+	return script, err
+}
+
+func provisionerCode(d *schema.ResourceData) (string, error) {
+	var code string
+
+	tfResource := ResourceType{
+		Mode:     "managed",
+		Type:     "iterative_cml_runner",
+		Name:     "runner",
+		Provider: "provider[\"registry.terraform.io/iterative/iterative\"]",
+		Instances: InstancesType{
+			InstanceType{
+				SchemaVersion: 0,
+				Attributes: AttributesType{
+					ID:                 d.Id(),
+					Cloud:              d.Get("cloud").(string),
+					Region:             d.Get("region").(string),
+					Name:               d.Get("name").(string),
+					Labels:             "",
+					IdleTimeout:        d.Get("idle_timeout").(int),
+					Repo:               "",
+					Token:              "",
+					Driver:             "",
+					AwsSecurityGroup:   "",
+					CustomData:         "",
+					Image:              "",
+					InstanceGpu:        "",
+					InstanceHddSize:    d.Get("instance_hdd_size").(int),
+					InstanceIP:         "",
+					InstanceLaunchTime: "",
+					InstanceType:       "",
+					SSHName:            "",
+					SSHPrivate:         "",
+					SSHPublic:          "",
+				},
+			},
+		},
+	}
+	jsonResource, err := json.Marshal(tfResource)
+	if err != nil {
+		return code, err
+	}
+
+	data := make(map[string]interface{})
+	data["token"] = d.Get("token").(string)
+	data["repo"] = d.Get("repo").(string)
+	data["driver"] = d.Get("driver").(string)
+	data["labels"] = d.Get("labels").(string)
+	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
+	data["name"] = d.Get("name").(string)
+	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
+	data["instance_gpu"] = d.Get("instance_gpu").(string)
+	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
+	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")
+	data["AZURE_CLIENT_ID"] = os.Getenv("AZURE_CLIENT_ID")
+	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
+	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
+	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
+	data["ami"] = isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
+
+	return renderScript(data)
+}
+
+func isAMIAvailable(cloud string, region string) bool {
+	regions := aws.ImageRegions
+	if cloud == "azure" {
+		regions = azure.ImageRegions
+	}
+
+	for _, item := range regions {
+		if item == region {
+			return true
+		}
+	}
+
+	return false
 }
 
 type AttributesType struct {
