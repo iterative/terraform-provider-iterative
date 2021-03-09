@@ -1,6 +1,7 @@
 package iterative
 
 import (
+	"encoding/base64"
 	"strings"
 	"testing"
 
@@ -38,5 +39,14 @@ func TestScript(t *testing.T) {
 
 		script, _ := renderScript(data)
 		assert.Equal(t, strings.Contains(script, "sudo ubuntu-drivers autoinstall"), true)
+	})
+
+	t.Run("Runner Startup Script", func(t *testing.T) {
+		data := make(map[string]interface{})
+		startupScript, _ := base64.StdEncoding.DecodeString("ZWNobyAiaGVsbG8gd29ybGQiCmVjaG8gImJ5ZSB3b3JsZCI=")
+		data["runner_startup_script"] = string(startupScript)
+
+		script, _ := renderScript(data)
+		assert.Equal(t, strings.Contains(script, "echo \"hello world\"\necho \"bye world\""), true)
 	})
 }
