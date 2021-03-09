@@ -91,7 +91,17 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		})
 
 		if err == nil {
-			ipPermissions := []*ec2.IpPermission{
+			ipIngressPermissions := []*ec2.IpPermission{
+				(&ec2.IpPermission{}).
+					SetIpProtocol("tcp").
+					SetFromPort(22).
+					SetToPort(22).
+					SetIpRanges([]*ec2.IpRange{
+						{CidrIp: aws.String("0.0.0.0/0")},
+					}),
+			}
+
+			ipEgressPermissions := []*ec2.IpPermission{
 				(&ec2.IpPermission{}).
 					SetIpProtocol("-1").
 					SetFromPort(-1).
@@ -103,12 +113,12 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 			svc.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
 				GroupId:       aws.String(*gpResult.GroupId),
-				IpPermissions: ipPermissions,
+				IpPermissions: ipIngressPermissions,
 			})
 
 			svc.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
 				GroupId:       aws.String(*gpResult.GroupId),
-				IpPermissions: ipPermissions,
+				IpPermissions: ipEgressPermissions,
 			})
 		}
 	}

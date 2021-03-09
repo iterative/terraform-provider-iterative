@@ -81,9 +81,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 						SecurityRulePropertiesFormat: &network.SecurityRulePropertiesFormat{
 							Protocol:                 network.SecurityRuleProtocolTCP,
 							SourceAddressPrefix:      to.StringPtr("0.0.0.0/0"),
-							SourcePortRange:          to.StringPtr("1-65535"),
+							SourcePortRange:          to.StringPtr("22"),
 							DestinationAddressPrefix: to.StringPtr("0.0.0.0/0"),
-							DestinationPortRange:     to.StringPtr("1-65535"),
+							DestinationPortRange:     to.StringPtr("22"),
 							Access:                   network.SecurityRuleAccessAllow,
 							Direction:                network.SecurityRuleDirectionInbound,
 							Priority:                 to.Int32Ptr(100),
