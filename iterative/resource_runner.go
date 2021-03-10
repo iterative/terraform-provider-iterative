@@ -124,7 +124,9 @@ func resourceRunner() *schema.Resource {
 			},
 			"startup_script": &schema.Schema{
 				Type:     schema.TypeString,
-				Computed: true,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
 			},
 			"aws_security_group": &schema.Schema{
 				Type:     schema.TypeString,
@@ -221,6 +223,10 @@ sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 {{end}}
 
 sudo npm install -g git+https://github.com/iterative/cml.git
+
+{{if .runner_startup_script}}
+{{.runner_startup_script}}
+{{end}}
 
 sudo bash -c 'cat << EOF > /usr/bin/cml.sh
 #!/bin/sh
@@ -322,6 +328,13 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 	data["ami"] = isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
+
+	script, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
+	if err != nil {
+		return "", err
+	}
+
+	data["runner_startup_script"] = string(script)
 
 	return renderScript(data)
 }
