@@ -22,8 +22,7 @@ func ParseLogEvent(logEvent string) (LogEvent, error) {
 	return result, err
 }
 
-// IsReady checks whether a runner is ready or not by
-// parsing the JSONL records from the logs it produces.
+// IsReady checks whether a runner is ready or not by parsing the JSONL records from the logs it produces.
 func IsReady(logs string) bool {
 	scanner := bufio.NewScanner(strings.NewReader(logs))
 	for scanner.Scan() {
