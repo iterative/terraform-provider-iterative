@@ -2,7 +2,6 @@ package iterative
 
 import (
 	"encoding/base64"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ func TestScript(t *testing.T) {
 		data["ami"] = isAMIAvailable("aws", "us-east-1")
 
 		script, _ := renderScript(data)
-		assert.Equal(t, strings.Contains(script, "sudo ubuntu-drivers autoinstall"), false)
+		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("AWS unknown region should add the NVIDA drivers", func(t *testing.T) {
@@ -22,7 +21,7 @@ func TestScript(t *testing.T) {
 		data["ami"] = isAMIAvailable("aws", "us-east-99")
 
 		script, _ := renderScript(data)
-		assert.Equal(t, strings.Contains(script, "sudo ubuntu-drivers autoinstall"), true)
+		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("Azure known region should add the NVIDA drivers", func(t *testing.T) {
@@ -30,7 +29,7 @@ func TestScript(t *testing.T) {
 		data["ami"] = isAMIAvailable("azure", "westus")
 
 		script, _ := renderScript(data)
-		assert.Equal(t, strings.Contains(script, "sudo ubuntu-drivers autoinstall"), true)
+		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("Azure unknown region should add the NVIDA drivers", func(t *testing.T) {
@@ -38,7 +37,7 @@ func TestScript(t *testing.T) {
 		data["ami"] = isAMIAvailable("azure", "us-east-99")
 
 		script, _ := renderScript(data)
-		assert.Equal(t, strings.Contains(script, "sudo ubuntu-drivers autoinstall"), true)
+		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("Runner Startup Script", func(t *testing.T) {
@@ -47,6 +46,6 @@ func TestScript(t *testing.T) {
 		data["runner_startup_script"] = string(startupScript)
 
 		script, _ := renderScript(data)
-		assert.Equal(t, strings.Contains(script, "echo \"hello world\"\necho \"bye world\""), true)
+		assert.Contains(t, script, "echo \"hello world\"\necho \"bye world\"")
 	})
 }
