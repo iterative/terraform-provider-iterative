@@ -56,7 +56,25 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	if len(imagesRes.Images) == 0 {
-		return errors.New(ami + " ami not found in region")
+		imagesRes, err = svc.DescribeImages(&ec2.DescribeImagesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("name"),
+					Values: []*string{aws.String("*ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*")},
+				},
+				{
+					Name:   aws.String("architecture"),
+					Values: []*string{aws.String("x86_64")},
+				},
+			},
+		})
+
+		if err != nil {
+			return decodeAWSError(region, err)
+		}
+		if len(imagesRes.Images) == 0 {
+			return errors.New("Nor " + ami + " nor Ubuntu Server 18.04 are available in your region")
+		}
 	}
 
 	sort.Slice(imagesRes.Images, func(i, j int) bool {
