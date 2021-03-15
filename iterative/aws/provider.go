@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -129,13 +130,23 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				IpPermissions: ipPermissions,
 			})
 		}
+
+		if err != nil {
+			decodedError := decodeAWSError(region, err)
+			if !strings.Contains(decodedError.Error(), "already exists for VPC") {
+				return decodedError
+			}
+		}
 	}
 
 	sgDesc, err := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("group-name"),
-				Values: []*string{aws.String(securityGroup)},
+				Name: aws.String("group-name"),
+				Values: []*string{
+					aws.String(securityGroup),
+					aws.String(strings.Title(securityGroup)),
+					aws.String(strings.ToUpper(securityGroup))},
 			},
 		},
 	})
