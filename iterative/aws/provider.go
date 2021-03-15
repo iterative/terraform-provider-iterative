@@ -142,8 +142,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgDesc, err := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("group-name"),
-				Values: []*string{aws.String(securityGroup), aws.String(strings.Title(securityGroup))},
+				Name: aws.String("group-name"),
+				Values: []*string{
+					aws.String(securityGroup),
+					aws.String(strings.Title(securityGroup)),
+					aws.String(strings.ToUpper(securityGroup))},
 			},
 		},
 	})
