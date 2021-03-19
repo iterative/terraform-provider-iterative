@@ -121,6 +121,7 @@ func resourceRunner() *schema.Resource {
 				ForceNew: true,
 				Optional: true,
 				Default:  "",
+				Sensitive: true,
 			},
 			"startup_script": &schema.Schema{
 				Type:     schema.TypeString,
