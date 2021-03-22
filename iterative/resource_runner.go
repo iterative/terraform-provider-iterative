@@ -209,7 +209,7 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		} else if utils.HasStatus(logEvents, "ready") {
 			return nil
 		}
-		
+
 		return resource.RetryableError(fmt.Errorf("Waiting for the runner to be ready..."))
 	})
 
