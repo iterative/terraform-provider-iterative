@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -56,7 +57,25 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	if len(imagesRes.Images) == 0 {
-		return errors.New(ami + " ami not found in region")
+		imagesRes, err = svc.DescribeImages(&ec2.DescribeImagesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("name"),
+					Values: []*string{aws.String("*ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*")},
+				},
+				{
+					Name:   aws.String("architecture"),
+					Values: []*string{aws.String("x86_64")},
+				},
+			},
+		})
+
+		if err != nil {
+			return decodeAWSError(region, err)
+		}
+		if len(imagesRes.Images) == 0 {
+			return errors.New("Nor " + ami + " nor Ubuntu Server 18.04 are available in your region")
+		}
 	}
 
 	sort.Slice(imagesRes.Images, func(i, j int) bool {
@@ -111,13 +130,23 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				IpPermissions: ipPermissions,
 			})
 		}
+
+		if err != nil {
+			decodedError := decodeAWSError(region, err)
+			if !strings.Contains(decodedError.Error(), "already exists for VPC") {
+				return decodedError
+			}
+		}
 	}
 
 	sgDesc, err := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("group-name"),
-				Values: []*string{aws.String(securityGroup)},
+				Name: aws.String("group-name"),
+				Values: []*string{
+					aws.String(securityGroup),
+					aws.String(strings.Title(securityGroup)),
+					aws.String(strings.ToUpper(securityGroup))},
 			},
 		},
 	})

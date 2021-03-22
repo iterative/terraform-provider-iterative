@@ -1,8 +1,6 @@
 on:
   push:
-    branches: "*"
   pull_request:
-    branches: "*"
   workflow_dispatch:
 
 jobs:
@@ -14,14 +12,11 @@ jobs:
     - name: Install
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.14
+        go-version: ^1.16
 
     - name: Checkout
       uses: actions/checkout@v2
       
-    - name: Vendor # FIXME: remove this step when migrating to pure Go modules.
-      run: go mod vendor
-
     - name: Build
       run: make build
 
