@@ -206,11 +206,11 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 			return resource.RetryableError(fmt.Errorf("Waiting for the machine to accept connections... %s", logError))
 		} else if utils.HasStatus(logEvents, "terminated") {
 			return resource.NonRetryableError(fmt.Errorf("Failed to launch the runner!"))
-		} else if !utils.HasStatus(logEvents, "ready") {
-			return resource.RetryableError(fmt.Errorf("Waiting for the runner to be ready..."))
+		} else if utils.HasStatus(logEvents, "ready") {
+			return nil
 		}
-
-		return nil // The runner is ready.
+		
+		return resource.RetryableError(fmt.Errorf("Waiting for the runner to be ready..."))
 	})
 
 	if logError != nil {
