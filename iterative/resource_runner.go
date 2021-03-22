@@ -6,15 +6,19 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"os"
 	"strconv"
 	"text/template"
+	"time"
 
 	"terraform-provider-iterative/iterative/aws"
 	"terraform-provider-iterative/iterative/azure"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -23,6 +27,11 @@ func resourceRunner() *schema.Resource {
 		CreateContext: resourceRunnerCreate,
 		DeleteContext: resourceRunnerDelete,
 		ReadContext:   resourceMachineRead,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"repo": &schema.Schema{
 				Type:     schema.TypeString,
@@ -175,6 +184,45 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		})
 	} else {
 		diags = resourceMachineCreate(ctx, d, m)
+	}
+
+	if diags.HasError() {
+		return diags
+	}
+
+	machineUser := "ubuntu"
+	machineKey := d.Get("ssh_private").(string)
+	machineAddress := net.JoinHostPort(d.Get("instance_ip").(string), "22")
+	machineLogCommand := "journalctl --unit cml"
+
+	var logError error
+	var logEvents string
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		logEvents, logError = utils.RunCommand(machineLogCommand, 10*time.Second, machineAddress, machineUser, machineKey)
+		log.Printf("[DEBUG] Collected log events: %#v", logEvents)
+		log.Printf("[DEBUG] Connection errors: %#v", logError)
+
+		if logError != nil {
+			return resource.RetryableError(fmt.Errorf("Waiting for the machine to accept connections... %s", logError))
+		} else if utils.HasStatus(logEvents, "terminated") {
+			return resource.NonRetryableError(fmt.Errorf("Failed to launch the runner!"))
+		} else if utils.HasStatus(logEvents, "ready") {
+			return nil
+		}
+
+		return resource.RetryableError(fmt.Errorf("Waiting for the runner to be ready..."))
+	})
+
+	if logError != nil {
+		logEvents += "\n" + logError.Error()
+	}
+
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Error checking the runner status"),
+			Detail:   logEvents,
+		})
 	}
 
 	return diags
