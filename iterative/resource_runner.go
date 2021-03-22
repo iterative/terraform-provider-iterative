@@ -117,10 +117,10 @@ func resourceRunner() *schema.Resource {
 				Computed: true,
 			},
 			"ssh_private": &schema.Schema{
-				Type:     schema.TypeString,
-				ForceNew: true,
-				Optional: true,
-				Default:  "",
+				Type:      schema.TypeString,
+				ForceNew:  true,
+				Optional:  true,
+				Default:   "",
 				Sensitive: true,
 			},
 			"startup_script": &schema.Schema{
