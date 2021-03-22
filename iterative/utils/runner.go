@@ -22,8 +22,8 @@ func ParseLogEvent(logEvent string) (LogEvent, error) {
 	return result, err
 }
 
-// IsReady checks whether a runner is ready or not by parsing the JSONL records from the logs it produces.
-func IsReady(logs string) bool {
+// HasStatus checks whether a runner is has reported the given status or not by parsing the JSONL records from the logs it produces
+func HasStatus(logs string, status string) bool {
 	scanner := bufio.NewScanner(strings.NewReader(logs))
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -31,7 +31,7 @@ func IsReady(logs string) bool {
 		record := regexp.MustCompile(`\{.+\}`).Find([]byte(line))
 		// Try to parse the retrieved JSON string into a LogEvent structure.
 		if event, err := ParseLogEvent(string(record)); err == nil {
-			if event.Status == "ready" {
+			if event.Status == status {
 				return true
 			}
 		}

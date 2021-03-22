@@ -12,7 +12,7 @@ func TestReadinessCheck(t *testing.T) {
 			-- Logs begin at Wed 2021-01-20 00:25:37 UTC, end at Fri 2021-02-26 15:37:56 UTC. --
 			Feb 26 15:37:20 ip-172-31-6-188 cml.sh[2203]: {"level":"info","time":"···","repo":"···","status":"ready"}
 		`
-		assert.True(t, IsReady(logString))
+		assert.True(t, HasStatus(logString, "ready"))
 	})
 
 	t.Run("Runner log not containing a readiness message should not be considered ready", func(t *testing.T) {
@@ -20,6 +20,6 @@ func TestReadinessCheck(t *testing.T) {
 			-- Logs begin at Wed 2021-01-20 00:25:37 UTC, end at Fri 2021-02-26 15:37:56 UTC. --
 			Feb 26 15:37:20 ip-172-31-6-188 cml.sh[2203]: {"level":"info","time":"···","repo":"···"}
 		`
-		assert.False(t, IsReady(logString))
+		assert.False(t, HasStatus(logString, "ready"))
 	})
 }
