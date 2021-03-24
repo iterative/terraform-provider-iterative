@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	awsprovider "terraform-provider-iterative/iterative/aws"
 
@@ -51,50 +52,62 @@ func main() {
 	}
 
 	ami := imagesRes.Images[0]
-	amiID := *ami.ImageId
-	amiDesc := *ami.Description
 
-	for _, value := range regions {
-		fmt.Println("Cloning", value)
-
-		sess, _ := session.NewSession(&aws.Config{
-			Region: aws.String(value)},
-		)
-
-		svc := ec2.New(sess)
-
-		copyResult, err := svc.CopyImage(&ec2.CopyImageInput{
-			SourceImageId: aws.String(amiID),
-			SourceRegion:  aws.String(region),
-			Name:          aws.String(amiName),
-			Description:   aws.String(amiDesc),
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		svc.WaitUntilImageExists(&ec2.DescribeImagesInput{
-			ImageIds: []*string{aws.String(*copyResult.ImageId)},
-			Filters: []*ec2.Filter{
-				{
-					Name:   aws.String("state"),
-					Values: []*string{aws.String("available")},
-				},
-			},
-		})
-
-		_, modifyErr := svc.ModifyImageAttribute(&ec2.ModifyImageAttributeInput{
-			ImageId: aws.String(*copyResult.ImageId),
-			LaunchPermission: &ec2.LaunchPermissionModifications{
-				Add: []*ec2.LaunchPermission{
-					{
-						Group: aws.String("all"),
-					},
-				},
-			},
-		})
-		if modifyErr != nil {
-			fmt.Println(modifyErr)
-		}
+	var wg sync.WaitGroup
+	for _, destination := range regions {
+		wg.Add(1)
+		go func(destinationRegion string) {
+			fmt.Printf("Cloning image to region %s...\n", destinationRegion)
+			if err := cloneImage(region, destinationRegion, *ami.ImageId, *ami.Name, *ami.Description); err != nil {
+				fmt.Printf("Error cloning image to region %s\n", destinationRegion)
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+			fmt.Printf("Image successfully cloned to region %s\n", destinationRegion)
+		}(destination)
 	}
+	wg.Wait()
+}
+
+func cloneImage(sourceRegion string, destinationRegion string, imageIdentifier string, imageName string, imageDescription string) error {
+	sess, _ := session.NewSession(&aws.Config{
+		Region: aws.String(destinationRegion)},
+	)
+
+	svc := ec2.New(sess)
+
+	copyResult, err := svc.CopyImage(&ec2.CopyImageInput{
+		SourceImageId: aws.String(imageIdentifier),
+		SourceRegion:  aws.String(sourceRegion),
+		Name:          aws.String(imageName),
+		Description:   aws.String(imageDescription),
+	})
+	if err != nil {
+		return err
+	}
+
+	svc.WaitUntilImageExists(&ec2.DescribeImagesInput{
+		ImageIds: []*string{aws.String(*copyResult.ImageId)},
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("state"),
+				Values: []*string{aws.String("available")},
+			},
+		},
+	})
+
+	_, modifyErr := svc.ModifyImageAttribute(&ec2.ModifyImageAttributeInput{
+		ImageId: aws.String(*copyResult.ImageId),
+		LaunchPermission: &ec2.LaunchPermissionModifications{
+			Add: []*ec2.LaunchPermission{
+				{
+					Group: aws.String("all"),
+				},
+			},
+		},
+	})
+	if modifyErr != nil {
+		return err
+	}
+	return nil
 }
