@@ -232,7 +232,7 @@ func renderScript(data map[string]interface{}) (string, error) {
 	var script string
 
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
-`#!/bin/sh
+		`#!/bin/sh
 {{if not (or .ami .container)}}
 export DEBIAN_FRONTEND=noninteractive
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes

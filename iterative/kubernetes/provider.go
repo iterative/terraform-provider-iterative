@@ -1,14 +1,14 @@
 package kubernetes
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 	"time"
-	"bytes"
-	"io"
 
 	terraform_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	terraform_schema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

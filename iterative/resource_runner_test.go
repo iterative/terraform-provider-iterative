@@ -1,11 +1,11 @@
 package iterative
 
 import (
+	"encoding/base64"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/sebdah/goldie/v2"
 	"os"
 	"testing"
-	"encoding/base64"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -54,12 +54,12 @@ func TestScript(t *testing.T) {
 }
 
 func TestProvisionerCode(t *testing.T) {
-    g := goldie.New(t, goldie.WithDiffEngine(goldie.ColoredDiff))
+	g := goldie.New(t, goldie.WithDiffEngine(goldie.ColoredDiff))
 
 	t.Run("AWS provisioner code should pass golden test", func(t *testing.T) {
 		val, err := renderProvisionerCode(t, "aws")
 		assert.Nil(t, err)
-	    g.Assert(t, "script_template_cloud_aws", []byte(val))
+		g.Assert(t, "script_template_cloud_aws", []byte(val))
 	})
 
 	t.Run("Azure provisioner code should pass golden test", func(t *testing.T) {
