@@ -1,0 +1,24 @@
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Install
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.16
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: Build
+      run: make build
+
+    - name: Test
+      run: make test
