@@ -17,10 +17,10 @@ import (
 
 func resourceMachine() *schema.Resource {
 	return &schema.Resource{
-		Schema:        *machineSchema(),
 		CreateContext: resourceMachineCreate,
 		DeleteContext: resourceMachineDelete,
 		ReadContext:   resourceMachineRead,
+		Schema:        *machineSchema(),
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
@@ -97,10 +97,11 @@ func machineSchema() *map[string]*schema.Schema {
 			Computed: true,
 		},
 		"ssh_private": &schema.Schema{
-			Type:     schema.TypeString,
-			ForceNew: true,
-			Optional: true,
-			Default:  "",
+			Type:      schema.TypeString,
+			ForceNew:  true,
+			Optional:  true,
+			Default:   "",
+			Sensitive: true,
 		},
 		"ssh_name": &schema.Schema{
 			Type:     schema.TypeString,
@@ -117,12 +118,6 @@ func machineSchema() *map[string]*schema.Schema {
 			ForceNew: true,
 			Optional: true,
 			Default:  "",
-		},
-		"kubernetes_readiness_command": &schema.Schema{
-			Type:     schema.TypeString,
-			ForceNew: true,
-			Optional: true,
-			Default:  "true",
 		},
 	}
 }
@@ -236,4 +231,17 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceMachineRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return nil
+}
+
+func resourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+	switch cloud := d.Get("cloud").(string); cloud {
+	case "aws":
+		return aws.ResourceMachineLogs(ctx, d, m)
+	case "azure":
+		return azure.ResourceMachineLogs(ctx, d, m)
+	case "kubernetes":
+		return kubernetes.ResourceMachineLogs(ctx, d, m)
+	default:
+		return "", fmt.Errorf("Unknown cloud: %s", cloud)
+	}
 }

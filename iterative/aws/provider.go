@@ -7,13 +7,17 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
+	"net"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"terraform-provider-iterative/iterative/utils"
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -56,7 +60,25 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	if len(imagesRes.Images) == 0 {
-		return errors.New(ami + " ami not found in region")
+		imagesRes, err = svc.DescribeImages(&ec2.DescribeImagesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("name"),
+					Values: []*string{aws.String("*ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*")},
+				},
+				{
+					Name:   aws.String("architecture"),
+					Values: []*string{aws.String("x86_64")},
+				},
+			},
+		})
+
+		if err != nil {
+			return decodeAWSError(region, err)
+		}
+		if len(imagesRes.Images) == 0 {
+			return errors.New("Nor " + ami + " nor Ubuntu Server 18.04 are available in your region")
+		}
 	}
 
 	sort.Slice(imagesRes.Images, func(i, j int) bool {
@@ -76,7 +98,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	// securityGroup
 	var vpcID, sgID string
 	if len(securityGroup) == 0 {
-		securityGroup = "cml"
+		securityGroup = "iterative"
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 		if len(vpcsDesc.Vpcs) == 0 {
@@ -111,13 +133,23 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				IpPermissions: ipPermissions,
 			})
 		}
+
+		if err != nil {
+			decodedError := decodeAWSError(region, err)
+			if !strings.Contains(decodedError.Error(), "already exists for VPC") {
+				return decodedError
+			}
+		}
 	}
 
 	sgDesc, err := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("group-name"),
-				Values: []*string{aws.String(securityGroup)},
+				Name: aws.String("group-name"),
+				Values: []*string{
+					aws.String(securityGroup),
+					aws.String(strings.Title(securityGroup)),
+					aws.String(strings.ToUpper(securityGroup))},
 			},
 		},
 	})
@@ -306,6 +338,27 @@ func awsClient(region string) (*ec2.EC2, error) {
 	return svc, err
 }
 
+//ImageRegions provider available image regions
+var ImageRegions = []string{
+	"us-east-2",
+	"us-east-1",
+	"us-west-1",
+	"us-west-2",
+	"ap-south-1",
+	"ap-northeast-3",
+	"ap-northeast-2",
+	"ap-southeast-1",
+	"ap-southeast-2",
+	"ap-northeast-1",
+	"ca-central-1",
+	"eu-central-1",
+	"eu-west-1",
+	"eu-west-2",
+	"eu-west-3",
+	"eu-north-1",
+	"sa-east-1",
+}
+
 func getRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "us-east-1"
@@ -363,4 +416,8 @@ func decodeAWSError(region string, err error) error {
 	}
 
 	return fmt.Errorf("Not able to decode: %s", err.Error())
+}
+
+func ResourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+	return utils.RunCommand("journalctl --no-pager", 10*time.Second, net.JoinHostPort(d.Get("instance_ip").(string), "22"), "ubuntu", d.Get("ssh_private").(string))
 }

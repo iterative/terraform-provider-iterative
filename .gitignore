@@ -37,3 +37,8 @@ override.tf.json
 .terraformrc
 terraform.rc
 terraform
+
+# Ignore the Go vendor directory, superseded by proxy.golang.org and go.{mod,sum}
+vendor
+
+./terraform-provider-iterative

@@ -1,7 +1,6 @@
 #!/bin/sh
+
 export DEBIAN_FRONTEND=noninteractive
-
-
 echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
 sudo apt remove unattended-upgrades
@@ -9,7 +8,8 @@ systemctl disable apt-daily-upgrade.service
 
 sudo add-apt-repository universe -y
 sudo add-apt-repository ppa:git-core/ppa -y
-sudo apt update && sudo apt-get install -y git
+sudo apt update && sudo apt install -y software-properties-common git
+
 sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
 sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
@@ -21,20 +21,21 @@ sudo apt update && sudo apt-get install -y terraform
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
 
-sudo apt install -y ubuntu-drivers-common git
 sudo ubuntu-drivers autoinstall
-
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 sudo apt update && sudo apt install -y nvidia-docker2
-
 sudo systemctl restart docker
-
 sudo nvidia-smi
 sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 
 
+
 sudo npm install -g git+https://github.com/iterative/cml.git
+
+
+
+
 
 sudo bash -c 'cat << EOF > /usr/bin/cml.sh
 #!/bin/sh
@@ -42,16 +43,23 @@ sudo bash -c 'cat << EOF > /usr/bin/cml.sh
 
 
 
-
-export AZURE_CLIENT_ID='3 value with "quotes" and spaces'
-export AZURE_CLIENT_SECRET='4 value with "quotes" and spaces'
-export AZURE_SUBSCRIPTION_ID='5 value with "quotes" and spaces'
-export AZURE_TENANT_ID='6 value with "quotes" and spaces'
+export AWS_SECRET_ACCESS_KEY='1 value with "quotes" and spaces'
+export AWS_ACCESS_KEY_ID='2 value with "quotes" and spaces'
+export AWS_SESSION_TOKEN=''
 
 
 
 
-cml-runner --name '10 value with "quotes" and spaces' --labels '16 value with "quotes" and spaces' --idle-timeout 11 --driver '15 value with "quotes" and spaces' --repo '14 value with "quotes" and spaces' --token '13 value with "quotes" and spaces' --tf_resource=eyJtb2RlIjoibWFuYWdlZCIsInR5cGUiOiJpdGVyYXRpdmVfY21sX3J1bm5lciIsIm5hbWUiOiJydW5uZXIiLCJwcm92aWRlciI6InByb3ZpZGVyW1wicmVnaXN0cnkudGVycmFmb3JtLmlvL2l0ZXJhdGl2ZS9pdGVyYXRpdmVcIl0iLCJpbnN0YW5jZXMiOlt7InByaXZhdGUiOiIiLCJzY2hlbWFfdmVyc2lvbiI6MCwiYXR0cmlidXRlcyI6eyJuYW1lIjoiMTAgdmFsdWUgd2l0aCBcInF1b3Rlc1wiIGFuZCBzcGFjZXMiLCJsYWJlbHMiOiIiLCJpZGxlX3RpbWVvdXQiOjExLCJyZXBvIjoiIiwidG9rZW4iOiIiLCJkcml2ZXIiOiIiLCJjbG91ZCI6ImF6dXJlIiwiY3VzdG9tX2RhdGEiOiIiLCJpZCI6IiIsImltYWdlIjoiIiwiaW5zdGFuY2VfZ3B1IjoiIiwiaW5zdGFuY2VfaGRkX3NpemUiOjEyLCJpbnN0YW5jZV9pcCI6IiIsImluc3RhbmNlX2xhdW5jaF90aW1lIjoiIiwiaW5zdGFuY2VfdHlwZSI6IiIsInJlZ2lvbiI6IjkgdmFsdWUgd2l0aCBcInF1b3Rlc1wiIGFuZCBzcGFjZXMiLCJzc2hfbmFtZSI6IiIsInNzaF9wcml2YXRlIjoiIiwic3NoX3B1YmxpYyI6IiIsImF3c19zZWN1cml0eV9ncm91cCI6IiJ9fV19
+
+HOME="$(mktemp -d)" cml-runner \
+   --name '10 value with "quotes" and spaces' \
+   --labels '16 value with "quotes" and spaces' \
+   --idle-timeout 11 \
+   --driver '15 value with "quotes" and spaces' \
+   --repo '14 value with "quotes" and spaces' \
+   --token '13 value with "quotes" and spaces' \
+   --tf_resource=eyJtb2RlIjoibWFuYWdlZCIsInR5cGUiOiJpdGVyYXRpdmVfY21sX3J1bm5lciIsIm5hbWUiOiJydW5uZXIiLCJwcm92aWRlciI6InByb3ZpZGVyW1wicmVnaXN0cnkudGVycmFmb3JtLmlvL2l0ZXJhdGl2ZS9pdGVyYXRpdmVcIl0iLCJpbnN0YW5jZXMiOlt7InByaXZhdGUiOiIiLCJzY2hlbWFfdmVyc2lvbiI6MCwiYXR0cmlidXRlcyI6eyJuYW1lIjoiMTAgdmFsdWUgd2l0aCBcInF1b3Rlc1wiIGFuZCBzcGFjZXMiLCJsYWJlbHMiOiIiLCJpZGxlX3RpbWVvdXQiOjExLCJyZXBvIjoiIiwidG9rZW4iOiIiLCJkcml2ZXIiOiIiLCJjbG91ZCI6ImF3cyIsImN1c3RvbV9kYXRhIjoiIiwiaWQiOiIiLCJpbWFnZSI6IiIsImluc3RhbmNlX2dwdSI6IiIsImluc3RhbmNlX2hkZF9zaXplIjoxMiwiaW5zdGFuY2VfaXAiOiIiLCJpbnN0YW5jZV9sYXVuY2hfdGltZSI6IiIsImluc3RhbmNlX3R5cGUiOiIiLCJyZWdpb24iOiI5IHZhbHVlIHdpdGggXCJxdW90ZXNcIiBhbmQgc3BhY2VzIiwic3NoX25hbWUiOiIiLCJzc2hfcHJpdmF0ZSI6IiIsInNzaF9wdWJsaWMiOiIiLCJhd3Nfc2VjdXJpdHlfZ3JvdXAiOiIifX1dfQ==
+
 
 EOF'
 sudo chmod +x /usr/bin/cml.sh
@@ -72,3 +80,4 @@ sudo chmod +x /etc/systemd/system/cml.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
+

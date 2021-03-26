@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"bytes"
+	"io"
 
 	terraform_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	terraform_schema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -38,7 +40,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	// Define the job namespace and name.
 	jobName := d.Id()
 	jobNamespace := namespace
-	jobReadinessCommand := d.Get("kubernetes_readiness_command").(string)
 
 	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
@@ -63,21 +64,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 
 	// Script to run on the container instead of the default entry point.
 	jobStartupScript := d.Get("startup_script").(string)
-
-	// Readiness probe for the container, configurable through kubernetes_readiness_command.
-	jobReadinessProbe := &kubernetes_core.Probe{
-		FailureThreshold: 5,
-		SuccessThreshold: 1,
-		TimeoutSeconds:   1,
-		PeriodSeconds:    10,
-		Handler: kubernetes_core.Handler{
-			Exec: &kubernetes_core.ExecAction{
-				Command: []string{
-					"sh", "-c", jobReadinessCommand,
-				},
-			},
-		},
-	}
 
 	// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
 	if jobGPUCount > "0" {
@@ -123,7 +109,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 									kubernetes_core.ResourceName("cpu"):    kubernetes_resource.MustParse("0"),
 								},
 							},
-							ReadinessProbe: jobReadinessProbe,
 							Env: []kubernetes_core.EnvVar{
 								{
 									Name:  "RUNNER_COMMAND",
@@ -397,4 +382,37 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	}
 
 	return nil, fmt.Errorf("invalid instance type")
+}
+
+func ResourceMachineLogs(ctx context.Context, d *terraform_schema.ResourceData, m interface{}) (string, error) {
+	conn, namespace, err := kubernetesClient()
+	if err != nil {
+		return "", err
+	}
+
+	job, err := conn.BatchV1().Jobs(namespace).Get(ctx, d.Id(), kubernetes_meta.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	pods, err := conn.CoreV1().Pods(namespace).List(ctx, kubernetes_meta.ListOptions{
+		LabelSelector: fmt.Sprintf("controller-uid=%s", job.GetObjectMeta().GetLabels()["controller-uid"]),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	logs, err := conn.CoreV1().Pods(namespace).GetLogs(pods.Items[0].Name, &kubernetes_core.PodLogOptions{}).Stream(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer logs.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, logs)
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

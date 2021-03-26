@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"net"
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
@@ -16,6 +17,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"terraform-provider-iterative/iterative/utils"
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -348,6 +351,9 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	return client, err
 }
 
+//ImageRegions provider available image regions
+var ImageRegions = []string{}
+
 func getRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "eastus"
@@ -388,4 +394,8 @@ func subscriptionID() (string, error) {
 	}
 
 	return "", errors.New("AZURE_SUBSCRIPTION_ID is not present")
+}
+
+func ResourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+	return utils.RunCommand("journalctl --no-pager", 10*time.Second, net.JoinHostPort(d.Get("instance_ip").(string), "22"), "ubuntu", d.Get("ssh_private").(string))
 }
