@@ -463,13 +463,14 @@ terraform destroy
 | `ssh_private`       |                                          |                                                                           | SSH private in PEM format. If not provided one private and public key will be automatically generated and returned in terraform.tfstate                                                                                                                                                       |
 | `startup_script`    |                                          |                                                                           | Startup script also known as userData on AWS and customData in Azure. It can be expressed as multiline text using [TF heredoc syntax ](https://www.terraform.io/docs/configuration-0-11/variables.html)                                                                                       |
 
-# Pitfalls
+## Requirements
 
-To be able to use the `instance_type` and `instance_gpu` you will need also to
-be allowed to launch [such instances](#Supported-vendors) within you cloud
-provider. Normally all the GPU instances need to be approved prior to be used by
-your vendor. You can always try with an already approved instance type by your
-vendor just setting it i.e. `t2.micro`
+To be able to use `instance_type` and `instance_gpu`, you'll need access to
+launch [instances from supported cloud vendors](#Supported-vendors). Please
+ensure that you have sufficient quotas with your cloud provider for the
+instances you intend to provision with Iterative Provider. If you're just
+starting out with a new account with a vendor, we recommend trying Iterative
+Provider with approved instances, such as the `t2.micro` instance for AWS.
 
 <details>
 <summary>Example with native AWS instance type and region</summary>
@@ -499,18 +500,17 @@ resource "iterative_machine" "machine" {
 </p>
 </details>
 
-# Supported vendors
+## Supported vendors
 
-- AWS
-- Azure
-- Kubernetes
+The Iterative Provider currently supports AWS, Azure and Kubernetes. Google Cloud Platform
+is not currently supported.
 
 <details>
 <summary>AWS instance equivalences</summary>
 <p>
 
-The instance type in AWS is calculated joining the `instance_type` and
-`instance_gpu`
+The instance type in AWS is calculated by joining the `instance_type` and
+`instance_gpu` values.
 
 | type | gpu   | aws         |
 | ---- | ----- | ----------- |
@@ -538,7 +538,7 @@ The instance type in AWS is calculated joining the `instance_type` and
 <summary>Azure instance equivalences</summary>
 <p>
 
-The instance type in Azure is calculated joining the `instance_type` and
+The instance type in Azure is calculated by joining the `instance_type` and
 `instance_gpu`
 
 | type | gpu   | azure             |
@@ -589,11 +589,11 @@ processes._
 </p>
 </details>
 
-# `iterative-cml` image
+## The iterative-cml image
 
-It's a GPU ready image based on Ubuntu 18.04. It has the following stack already
-installed:
+We've created a GPU-ready image based on Ubuntu 18.04. It comes with the
+following stack already installed:
 
-- nvidia drivers
-- docker
-- nvidia-docker
+- Nvidia drivers
+- Docker
+- Nvidia-docker
