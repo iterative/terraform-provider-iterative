@@ -158,12 +158,22 @@ func ResourceMachineDelete(ctx context.Context, d *terraform_schema.ResourceData
 		return err
 	}
 
+	log.Printf("[INFO] Deleting job: %#v", d.Id())
+	_, err = conn.BatchV1().Jobs(namespace).Get(ctx, d.Id(), kubernetes_meta.GetOptions{})
+	if err != nil {
+		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
+			log.Printf("[INFO] Job %#v doesn't exist; skipping deletion...", d.Id())
+			return nil
+		}
+		log.Printf("[DEBUG] Received error: %#v", err)
+		return err
+	}
+
 	// DeletePropagationForeground deletes the resources and causes the garbage
 	// collector to delete dependent resources and wait for all dependents whose
 	// ownerReference.blockOwnerDeletion=true.
 	propagationPolicy := kubernetes_meta.DeletePropagationForeground
 
-	log.Printf("[INFO] Deleting job: %#v", d.Id())
 	err = conn.BatchV1().Jobs(namespace).Delete(ctx, d.Id(), kubernetes_meta.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
