@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"encoding/base64"
 
 	terraform_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	terraform_schema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -63,7 +64,10 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	}
 
 	// Script to run on the container instead of the default entry point.
-	jobStartupScript := d.Get("startup_script").(string)
+	jobStartupScript, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
+	if err != nil {
+		return err
+	}
 
 	// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
 	if jobGPUCount > "0" {
@@ -109,14 +113,8 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 									kubernetes_core.ResourceName("cpu"):    kubernetes_resource.MustParse("0"),
 								},
 							},
-							Env: []kubernetes_core.EnvVar{
-								{
-									Name:  "RUNNER_COMMAND",
-									Value: jobStartupScript,
-								},
-							},
 							Command: []string{
-								"bash", "-c", "base64 -d <<< \"$RUNNER_COMMAND\" | bash",
+								"bash", "-c", string(jobStartupScript),
 							},
 						},
 					},

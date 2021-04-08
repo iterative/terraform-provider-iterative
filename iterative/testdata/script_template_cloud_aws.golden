@@ -51,7 +51,7 @@ export AWS_SESSION_TOKEN=''
 
 
 
-HOME="$(mktemp -d)" cml-runner \
+HOME="$(mktemp -d)" exec cml-runner \
    --name '10 value with "quotes" and spaces' \
    --labels '16 value with "quotes" and spaces' \
    --idle-timeout 11 \
