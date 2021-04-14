@@ -94,6 +94,7 @@ func generateSchemaTestData(cloud string, t *testing.T) *schema.ResourceData {
 		"cloud":                 cloud,
 		"region":                "9 value with \"quotes\" and spaces",
 		"name":                  "10 value with \"quotes\" and spaces",
+		"single":                true,
 		"idle_timeout":          11,
 		"instance_hdd_size":     12,
 		"token":                 "13 value with \"quotes\" and spaces",
