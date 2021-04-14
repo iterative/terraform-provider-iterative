@@ -306,7 +306,7 @@ starting out with a new account with a vendor, we recommend trying Iterative
 Provider with approved instances, such as the `t2.micro` instance for AWS.
 
 <details>
-<summary>Example with native AWS instance type and region</summary>
+<summary>Example with native AWS instace type and region</summary>
 <p>
 
 ```tf
@@ -335,7 +335,7 @@ resource "iterative_machine" "machine" {
 
 ## Supported vendors
 
-The Iterative Provider currently supports AWS, Azure and Kubernetes. Google Cloud Platform
+The Iterative Provider currently supports AWS and Azure. Google Cloud Platform
 is not currently supported.
 
 <details>
@@ -392,32 +392,6 @@ The instance type in Azure is calculated by joining the `instance_type` and
 | us-east  | eastus      |
 | eu-north | northeurope |
 | eu-west  | westeurope  |
-
-</p>
-</details>
-
-<details>
-<summary>Kubernetes instance equivalences</summary>
-<p>
-
-The instance type in Kubernetes is calculated joining the `instance_type` and
-`instance_gpu`
-
-| type | gpu   | cpu cores | ram     |
-| ---- | ----- | --------- | ------- |
-| m    |       | 8         | 32 GiB  |
-| l    |       | 32        | 128 GiB |
-| xl   |       | 64        | 256 GiB |
-| m    | k80   | 4         | 64 GiB  |
-| l    | k80   | 32        | 512 GiB |
-| xl   | k80   | 64        | 768 GiB |
-| m    | tesla | 8         | 64 GiB  |
-| l    | tesla | 32        | 256 GiB |
-| xl   | tesla | 64        | 512 GiB |
-
-_Note: the resource limits specified are roughly equivalent to the ones from the
-equivalent AWS instances, but won't be allocated unless required by the running
-processes._
 
 </p>
 </details>
