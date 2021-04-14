@@ -303,7 +303,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}}
 
-{{if not .container}}
+{{- if not .container}}
 EOF'
 sudo chmod +x /usr/bin/cml.sh
 
@@ -323,7 +323,7 @@ sudo chmod +x /etc/systemd/system/cml.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
-{{end}}
+{{- end}}
 `)
 	var customDataBuffer bytes.Buffer
 	err = tmpl.Execute(&customDataBuffer, data)

@@ -3,13 +3,13 @@ package kubernetes
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
 	"time"
-	"encoding/base64"
 
 	terraform_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	terraform_schema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
