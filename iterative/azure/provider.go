@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -16,6 +17,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"terraform-provider-iterative/iterative/utils"
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -391,4 +394,8 @@ func subscriptionID() (string, error) {
 	}
 
 	return "", errors.New("AZURE_SUBSCRIPTION_ID is not present")
+}
+
+func ResourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+	return utils.RunCommand("journalctl --no-pager", 10*time.Second, net.JoinHostPort(d.Get("instance_ip").(string), "22"), "ubuntu", d.Get("ssh_private").(string))
 }

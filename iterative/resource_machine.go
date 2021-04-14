@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"terraform-provider-iterative/iterative/aws"
 	"terraform-provider-iterative/iterative/azure"
+	"terraform-provider-iterative/iterative/kubernetes"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -19,6 +21,10 @@ func resourceMachine() *schema.Resource {
 		DeleteContext: resourceMachineDelete,
 		ReadContext:   resourceMachineRead,
 		Schema:        *machineSchema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
+		},
 	}
 }
 
@@ -167,6 +173,14 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
+	} else if cloud == "kubernetes" {
+		err := kubernetes.ResourceMachineCreate(ctx, d, m)
+		if err != nil {
+			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
+			})
+		}
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -197,6 +211,19 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
 			})
 		}
+	} else if cloud == "kubernetes" {
+		err := kubernetes.ResourceMachineDelete(ctx, d, m)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
+			})
+		}
+	} else {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unknown cloud: %s", cloud),
+		})
 	}
 
 	return diags
@@ -204,4 +231,17 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceMachineRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return nil
+}
+
+func resourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+	switch cloud := d.Get("cloud").(string); cloud {
+	case "aws":
+		return aws.ResourceMachineLogs(ctx, d, m)
+	case "azure":
+		return azure.ResourceMachineLogs(ctx, d, m)
+	case "kubernetes":
+		return kubernetes.ResourceMachineLogs(ctx, d, m)
+	default:
+		return "", fmt.Errorf("Unknown cloud: %s", cloud)
+	}
 }
