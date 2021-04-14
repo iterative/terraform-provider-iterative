@@ -2,6 +2,9 @@ package iterative
 
 import (
 	"encoding/base64"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/sebdah/goldie/v2"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,4 +51,68 @@ func TestScript(t *testing.T) {
 		script, _ := renderScript(data)
 		assert.Contains(t, script, "echo \"hello world\"\necho \"bye world\"")
 	})
+}
+
+func TestProvisionerCode(t *testing.T) {
+	g := goldie.New(t, goldie.WithDiffEngine(goldie.ColoredDiff))
+
+	t.Run("AWS provisioner code should pass golden test", func(t *testing.T) {
+		val, err := renderProvisionerCode(t, "aws")
+		assert.Nil(t, err)
+		g.Assert(t, "script_template_cloud_aws", []byte(val))
+	})
+
+	t.Run("Azure provisioner code should pass golden test", func(t *testing.T) {
+		val, err := renderProvisionerCode(t, "azure")
+		assert.Nil(t, err)
+		g.Assert(t, "script_template_cloud_azure", []byte(val))
+	})
+
+	t.Run("Kubernetes provisioner code should pass golden test", func(t *testing.T) {
+		val, err := renderProvisionerCode(t, "kubernetes")
+		assert.Nil(t, err)
+		g.Assert(t, "script_template_cloud_kubernetes", []byte(val))
+	})
+
+	t.Run("Invalid cloud provisioner code should pass golden test", func(t *testing.T) {
+		val, err := renderProvisionerCode(t, "invalid")
+		assert.Nil(t, err)
+		g.Assert(t, "script_template_cloud_invalid", []byte(val))
+	})
+}
+
+func renderProvisionerCode(t *testing.T, cloud string) (string, error) {
+	// Note for future tests: this code modifies process environment variables.
+	for key, value := range generateEnvironmentTestData(t) {
+		os.Setenv(key, value)
+	}
+	return provisionerCode(generateSchemaTestData(cloud, t))
+}
+
+func generateSchemaTestData(cloud string, t *testing.T) *schema.ResourceData {
+	return schema.TestResourceDataRaw(t, resourceRunner().Schema, map[string]interface{}{
+		"cloud":                 cloud,
+		"region":                "9 value with \"quotes\" and spaces",
+		"name":                  "10 value with \"quotes\" and spaces",
+		"idle_timeout":          11,
+		"instance_hdd_size":     12,
+		"token":                 "13 value with \"quotes\" and spaces",
+		"repo":                  "14 value with \"quotes\" and spaces",
+		"driver":                "15 value with \"quotes\" and spaces",
+		"labels":                "16 value with \"quotes\" and spaces",
+		"instance_gpu":          "17 value with \"quotes\" and spaces",
+		"runner_startup_script": "echo \"custom startup script\"",
+	})
+}
+
+func generateEnvironmentTestData(t *testing.T) map[string]string {
+	return map[string]string{
+		"AWS_SECRET_ACCESS_KEY":    "1 value with \"quotes\" and spaces",
+		"AWS_ACCESS_KEY_ID":        "2 value with \"quotes\" and spaces",
+		"AZURE_CLIENT_ID":          "3 value with \"quotes\" and spaces",
+		"AZURE_CLIENT_SECRET":      "4 value with \"quotes\" and spaces",
+		"AZURE_SUBSCRIPTION_ID":    "5 value with \"quotes\" and spaces",
+		"AZURE_TENANT_ID":          "6 value with \"quotes\" and spaces",
+		"KUBERNETES_CONFIGURATION": "7 value with \"quotes\" and spaces",
+	}
 }
