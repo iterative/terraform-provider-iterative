@@ -71,7 +71,6 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 [Install]
   WantedBy=multi-user.target
 EOF'
-sudo chmod +x /etc/systemd/system/cml.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
