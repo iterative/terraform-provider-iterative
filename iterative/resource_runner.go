@@ -68,6 +68,12 @@ func resourceRunner() *schema.Resource {
 				ForceNew: true,
 				Default:  "",
 			},
+			"single": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Default:  false,
+			},
 			"cloud": &schema.Schema{
 				Type:     schema.TypeString,
 				ForceNew: true,
@@ -302,6 +308,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .driver}} --driver {{escape .driver}}{{end}} \
   {{if .repo}} --repo {{escape .repo}}{{end}} \
   {{if .token}} --token {{escape .token}}{{end}} \
+  {{if .single}} --single{{end}} \
   {{if .tf_resource}} --tf_resource={{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
@@ -387,6 +394,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["cloud"] = d.Get("cloud").(string)
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
+	data["single"] = d.Get("single").(bool)
 	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
 	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")
