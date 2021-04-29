@@ -190,7 +190,8 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if diags.HasError() {
 		return diags
 	}
-
+	log.Printf("[DEBUG] Instance address: %#v", d.Get("instance_ip"))
+	
 	var logError error
 	var logEvents string
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
