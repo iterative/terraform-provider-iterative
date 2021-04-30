@@ -75,6 +75,6 @@ func RunCommand(command string, timeout time.Duration, hostAddress string, userN
 	if err != nil {
 		return "", err
 	}
-	
+
 	return string(output), nil
 }
