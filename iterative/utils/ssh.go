@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -72,10 +71,10 @@ func RunCommand(command string, timeout time.Duration, hostAddress string, userN
 	}
 	defer session.Close()
 
-	var buffer bytes.Buffer
-	session.Stdout = &buffer
-	session.Stderr = &buffer
+	output, err := session.CombinedOutput(command)
+	if err != nil {
+		return "", err
+	}
 
-	err = session.Run(command)
-	return buffer.String(), err
+	return string(output), nil
 }
