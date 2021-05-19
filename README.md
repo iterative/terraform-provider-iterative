@@ -345,14 +345,14 @@ is not currently supported.
 The instance type in AWS is calculated by joining the `instance_type` and
 `instance_gpu` values.
 
-| type | gpu   | aws         |
-| ---- | ----- | ----------- |
-| m    |       | m5.2xlarge  |
-| l    |       | m5.8xlarge  |
-| xl   |       | m5.16xlarge |
-| m    | k80   | p2.xlarge   |
-| l    | k80   | p2.8xlarge  |
-| xl   | k80   | p2.16xlarge |
+| type | gpu  | aws         |
+| ---- | ---- | ----------- |
+| m    |      | m5.2xlarge  |
+| l    |      | m5.8xlarge  |
+| xl   |      | m5.16xlarge |
+| m    | k80  | p2.xlarge   |
+| l    | k80  | p2.8xlarge  |
+| xl   | k80  | p2.16xlarge |
 | m    | v100 | p3.xlarge   |
 | l    | v100 | p3.8xlarge  |
 | xl   | v100 | p3.16xlarge |
@@ -374,14 +374,14 @@ The instance type in AWS is calculated by joining the `instance_type` and
 The instance type in Azure is calculated by joining the `instance_type` and
 `instance_gpu`
 
-| type | gpu   | azure             |
-| ---- | ----- | ----------------- |
-| m    |       | Standard_F8s_v2   |
-| l    |       | Standard_F32s_v2  |
-| xl   |       | Standard_F64s_v2  |
-| m    | k80   | Standard_NC6      |
-| l    | k80   | Standard_NC12     |
-| xl   | k80   | Standard_NC24     |
+| type | gpu  | azure             |
+| ---- | ---- | ----------------- |
+| m    |      | Standard_F8s_v2   |
+| l    |      | Standard_F32s_v2  |
+| xl   |      | Standard_F64s_v2  |
+| m    | k80  | Standard_NC6      |
+| l    | k80  | Standard_NC12     |
+| xl   | k80  | Standard_NC24     |
 | m    | v100 | Standard_NC6s_v3  |
 | l    | v100 | Standard_NC12s_v3 |
 | xl   | v100 | Standard_NC24s_v3 |
