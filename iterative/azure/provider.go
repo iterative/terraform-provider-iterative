@@ -376,9 +376,9 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 	instanceTypes["mk80"] = "Standard_NC6"
 	instanceTypes["lk80"] = "Standard_NC12"
 	instanceTypes["xlk80"] = "Standard_NC24"
-	instanceTypes["mtesla"] = "Standard_NC6s_v3"
-	instanceTypes["ltesla"] = "Standard_NC12s_v3"
-	instanceTypes["xltesla"] = "Standard_NC24s_v3"
+	instanceTypes["mv100"] = "Standard_NC6s_v3"
+	instanceTypes["lv100"] = "Standard_NC12s_v3"
+	instanceTypes["xlv100"] = "Standard_NC24s_v3"
 
 	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
 		return val

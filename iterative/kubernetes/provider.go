@@ -346,7 +346,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "64"},
 		"memory": {"amount": "768Gi"},
 	}
-	instanceTypes["mtesla"] = map[string]map[string]string{
+	instanceTypes["mv100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia.com/gpu",
@@ -355,7 +355,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "8"},
 		"memory": {"amount": "64Gi"},
 	}
-	instanceTypes["ltesla"] = map[string]map[string]string{
+	instanceTypes["lv100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
 			"type":  "nvidia.com/gpu",
@@ -364,7 +364,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "32"},
 		"memory": {"amount": "256Gi"},
 	}
-	instanceTypes["xltesla"] = map[string]map[string]string{
+	instanceTypes["xlv100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia.com/gpu",

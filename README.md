@@ -108,7 +108,7 @@ resource "iterative_machine" "machine" {
     region = "us-west"
     instance_type = "m"
     # Uncomment it if GPU is needed:
-    # instance_gpu = "tesla"
+    # instance_gpu = "v100"
 }
 ```
 
@@ -139,7 +139,7 @@ resource "iterative_machine" "machine" {
     region = "us-west"
     instance_type = "m"
     # Uncomment it if GPU is needed:
-    # instance_gpu = "tesla"
+    # instance_gpu = "v100"
 }
 ```
 
@@ -229,7 +229,7 @@ resource "iterative_machine" "machine" {
   instance_hdd_size = "10"
   instance_type = "m"
   # Uncomment it if GPU is needed:
-  # instance_gpu = "tesla"
+  # instance_gpu = "v100"
 }
 ```
 
@@ -258,7 +258,7 @@ resource "iterative_machine" "machine" {
   instance_hdd_size = "10"
   instance_type = "m"
   ## Uncomment it if GPU is needed:
-  # instance_gpu = "tesla"
+  # instance_gpu = "v100"
 }
 ```
 
@@ -353,9 +353,9 @@ The instance type in AWS is calculated by joining the `instance_type` and
 | m    | k80   | p2.xlarge   |
 | l    | k80   | p2.8xlarge  |
 | xl   | k80   | p2.16xlarge |
-| m    | tesla | p3.xlarge   |
-| l    | tesla | p3.8xlarge  |
-| xl   | tesla | p3.16xlarge |
+| m    | v100 | p3.xlarge   |
+| l    | v100 | p3.8xlarge  |
+| xl   | v100 | p3.16xlarge |
 
 | region   | aws        |
 | -------- | ---------- |
@@ -382,9 +382,9 @@ The instance type in Azure is calculated by joining the `instance_type` and
 | m    | k80   | Standard_NC6      |
 | l    | k80   | Standard_NC12     |
 | xl   | k80   | Standard_NC24     |
-| m    | tesla | Standard_NC6s_v3  |
-| l    | tesla | Standard_NC12s_v3 |
-| xl   | tesla | Standard_NC24s_v3 |
+| m    | v100 | Standard_NC6s_v3  |
+| l    | v100 | Standard_NC12s_v3 |
+| xl   | v100 | Standard_NC24s_v3 |
 
 | region   | azure       |
 | -------- | ----------- |
