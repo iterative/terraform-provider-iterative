@@ -272,7 +272,7 @@ sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 {{end}}
 
 {{if not .container}}
-sudo npm install -g git+https://github.com/iterative/cml.git
+sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
 {{end}}
 
 {{if .runner_startup_script}}
