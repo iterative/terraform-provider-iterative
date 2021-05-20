@@ -183,6 +183,13 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	d.Set("startup_script", startupScript)
+	if d.Get("instance_gpu") == "tesla" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  fmt.Sprintf("GPU model 'tesla' has been deprecated; please use 'v100' instead"),
+		})
+		d.Set("instance_gpu", "v100")
+	}
 
 	if len(d.Get("cloud").(string)) == 0 {
 		diags = append(diags, diag.Diagnostic{

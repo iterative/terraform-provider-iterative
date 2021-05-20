@@ -380,9 +380,9 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 	instanceTypes["mk80"] = "p2.xlarge"
 	instanceTypes["lk80"] = "p2.8xlarge"
 	instanceTypes["xlk80"] = "p2.16xlarge"
-	instanceTypes["mtesla"] = "p3.xlarge"
-	instanceTypes["ltesla"] = "p3.8xlarge"
-	instanceTypes["xltesla"] = "p3.16xlarge"
+	instanceTypes["mv100"] = "p3.xlarge"
+	instanceTypes["lv100"] = "p3.8xlarge"
+	instanceTypes["xlv100"] = "p3.16xlarge"
 
 	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
 		return val
