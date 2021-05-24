@@ -8,7 +8,7 @@ systemctl disable apt-daily-upgrade.service
 
 sudo add-apt-repository universe -y
 sudo add-apt-repository ppa:git-core/ppa -y
-sudo apt update && sudo apt install -y software-properties-common git
+sudo apt update && sudo apt install -y software-properties-common git build-essential
 
 sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
