@@ -44,6 +44,7 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Default:  "",
+				Sensitive: true,
 			},
 			"driver": &schema.Schema{
 				Type:     schema.TypeString,
