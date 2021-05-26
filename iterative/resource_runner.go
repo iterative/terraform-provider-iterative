@@ -40,10 +40,10 @@ func resourceRunner() *schema.Resource {
 				ForceNew: true,
 			},
 			"token": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "",
+				Type:      schema.TypeString,
+				Optional:  true,
+				ForceNew:  true,
+				Default:   "",
 				Sensitive: true,
 			},
 			"driver": &schema.Schema{
