@@ -1,4 +1,4 @@
-![Terraform Provider Iterative](https://user-images.githubusercontent.com/414967/98701372-7f60d700-2379-11eb-90d0-47b5eeb22658.png)
+![Terraform Provider Iterative](https://static.iterative.ai/img/cml/banner-terraform.png)
 
 # Terraform Iterative provider
 
