@@ -5,10 +5,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"strings"
 	"time"
-	"fmt"
-	
+
 	"golang.org/x/crypto/ssh"
 )
 
@@ -32,7 +32,7 @@ func PublicFromPrivatePEM(privateKey string) (string, error) {
 	if block == nil {
 		return "", fmt.Errorf("Invalid PEM on the SSH private key: %#v", rest)
 	}
-	
+
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return "", err
