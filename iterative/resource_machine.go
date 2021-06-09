@@ -108,10 +108,10 @@ func machineSchema() *map[string]*schema.Schema {
 			Computed: true,
 		},
 		"startup_script": &schema.Schema{
-			Type:     schema.TypeString,
-			ForceNew: true,
-			Optional: true,
-			Default:  "#!/bin/bash",
+			Type:      schema.TypeString,
+			ForceNew:  true,
+			Optional:  true,
+			Default:   "#!/bin/bash",
 			Sensitive: true,
 		},
 		"aws_security_group": &schema.Schema{
