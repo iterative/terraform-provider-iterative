@@ -112,6 +112,7 @@ func machineSchema() *map[string]*schema.Schema {
 			ForceNew: true,
 			Optional: true,
 			Default:  "#!/bin/bash",
+			Sensitive: true,
 		},
 		"aws_security_group": &schema.Schema{
 			Type:     schema.TypeString,

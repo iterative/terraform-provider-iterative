@@ -145,6 +145,7 @@ func resourceRunner() *schema.Resource {
 				ForceNew: true,
 				Optional: true,
 				Default:  "",
+				Sensitive: true,
 			},
 			"aws_security_group": &schema.Schema{
 				Type:     schema.TypeString,
