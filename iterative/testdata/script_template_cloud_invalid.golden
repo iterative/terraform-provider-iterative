@@ -77,4 +77,3 @@ EOF'
 
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
-
