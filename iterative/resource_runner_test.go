@@ -78,7 +78,9 @@ func renderProvisionerCode(t *testing.T, cloud string) (string, error) {
 	for key, value := range generateEnvironmentTestData() {
 		os.Setenv(key, value)
 	}
-	return provisionerCode(schema.TestResourceDataRaw(t, resourceRunner().Schema, generateTemplateTestData(cloud, "invalid-region", "echo \"script\"")))
+	startupScript := "echo \"custom startup script\""
+	templateTestData := generateTemplateTestData(cloud, "invalid-region", startupScript)
+	return provisionerCode(schema.TestResourceDataRaw(t, resourceRunner().Schema, templateTestData))
 }
 
 func generateTemplateTestData(cloud string, region string, script string) map[string]interface{} {
