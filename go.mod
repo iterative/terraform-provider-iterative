@@ -26,7 +26,7 @@ require (
 	github.com/masterzen/winrm v0.0.0-20200615185753-c42b5136ff88 // indirect
 	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
-	github.com/sebdah/goldie/v2 v2.5.3 // indirect
+	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/stretchr/testify v1.6.1
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/tombuildsstuff/giovanni v0.12.0 // indirect
@@ -35,7 +35,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/tools v0.0.0-20201028111035-eafbe7b904eb // indirect
 	google.golang.org/api v0.34.0 // indirect
-	gopkg.in/alessio/shellescape.v1 v1.0.0-20170105083845-52074bc9df61 // indirect
+	gopkg.in/alessio/shellescape.v1 v1.0.0-20170105083845-52074bc9df61
 	k8s.io/api v0.20.5
 	k8s.io/apimachinery v0.20.5
 	k8s.io/client-go v0.20.5
