@@ -345,7 +345,6 @@ sudo reboot
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 {{end}}
-
 {{- end}}
 `)
 	var customDataBuffer bytes.Buffer
