@@ -2,10 +2,12 @@ package iterative
 
 import (
 	"encoding/base64"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/sebdah/goldie/v2"
 	"os"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/sebdah/goldie/v2"
+
 	"github.com/stretchr/testify/assert"
 )
 
