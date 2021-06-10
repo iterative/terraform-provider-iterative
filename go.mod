@@ -26,7 +26,7 @@ require (
 	github.com/masterzen/winrm v0.0.0-20200615185753-c42b5136ff88 // indirect
 	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
-	github.com/sebdah/goldie/v2 v2.5.3 // indirect
+	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/stretchr/testify v1.6.1
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/tombuildsstuff/giovanni v0.12.0 // indirect

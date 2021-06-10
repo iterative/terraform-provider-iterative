@@ -341,8 +341,7 @@ EOF'
 {{if eq .cloud "azure"}}
 sudo systemctl enable cml.service
 sudo reboot
-{{end}}
-{{if eq .cloud "aws"}}
+{{else}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 {{end}}

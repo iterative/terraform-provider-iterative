@@ -75,4 +75,6 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 EOF'
 
 
+sudo systemctl daemon-reload
+sudo systemctl enable cml.service --now
 
