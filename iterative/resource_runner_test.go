@@ -13,25 +13,25 @@ import (
 
 func TestScript(t *testing.T) {
 	t.Run("AWS known region should not add the NVIDA drivers", func(t *testing.T) {
-		script, err :=  renderScript(generateTemplateTestData("aws", "us-east-1", ""))
+		script, err := renderScript(generateTemplateTestData("aws", "us-east-1", ""))
 		assert.Nil(t, err)
 		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("AWS unknown region should add the NVIDA drivers", func(t *testing.T) {
-		script, err :=  renderScript(generateTemplateTestData("aws", "us-east-99", ""))
+		script, err := renderScript(generateTemplateTestData("aws", "us-east-99", ""))
 		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("Azure known region should add the NVIDA drivers", func(t *testing.T) {
-		script, err :=  renderScript(generateTemplateTestData("azure", "westus", ""))
+		script, err := renderScript(generateTemplateTestData("azure", "westus", ""))
 		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
 	t.Run("Azure unknown region should add the NVIDA drivers", func(t *testing.T) {
-		script, err :=  renderScript(generateTemplateTestData("azure", "us-east-99", ""))
+		script, err := renderScript(generateTemplateTestData("azure", "us-east-99", ""))
 		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
@@ -97,10 +97,10 @@ func generateTemplateTestData(cloud string, region string, script string) map[st
 		"labels":                "16 value with \"quotes\" and spaces",
 		"instance_gpu":          "17 value with \"quotes\" and spaces",
 		"runner_startup_script": script,
-		"ami": isAMIAvailable(cloud, region),
+		"ami":                   isAMIAvailable(cloud, region),
 	}
 	for key, value := range generateEnvironmentTestData() {
-    	testData[key] = value
+		testData[key] = value
 	}
 	return testData
 }
