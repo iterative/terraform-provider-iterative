@@ -338,8 +338,15 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
   WantedBy=multi-user.target
 EOF'
 
+{{if eq .cloud "azure"}}
 sudo systemctl enable cml.service
 sudo reboot
+{{end}}
+{{if eq .cloud "aws"}}
+sudo systemctl daemon-reload
+sudo systemctl enable cml.service --now
+{{end}}
+
 {{- end}}
 `)
 	var customDataBuffer bytes.Buffer
