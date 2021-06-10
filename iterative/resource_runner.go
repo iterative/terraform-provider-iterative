@@ -342,7 +342,7 @@ EOF'
 {{if eq .cloud "azure"}}
 sudo systemctl enable cml.service
 sudo reboot
-{{else}}
+{{- else}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 {{- end}}
