@@ -338,12 +338,14 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
   WantedBy=multi-user.target
 EOF'
 
+{{if .cloud}}
 {{if eq .cloud "azure"}}
 sudo systemctl enable cml.service
 sudo reboot
 {{else}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
+{{end}}
 {{end}}
 {{- end}}
 `)
