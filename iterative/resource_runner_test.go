@@ -2,10 +2,11 @@ package iterative
 
 import (
 	"encoding/base64"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/sebdah/goldie/v2"
 	"os"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/sebdah/goldie/v2"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +15,6 @@ func TestScript(t *testing.T) {
 	t.Run("AWS known region should not add the NVIDA drivers", func(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("aws", "us-east-1")
-		data["cloud"] = "aws"
 
 		script, _ := renderScript(data)
 		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
@@ -23,7 +23,6 @@ func TestScript(t *testing.T) {
 	t.Run("AWS unknown region should add the NVIDA drivers", func(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("aws", "us-east-99")
-		data["cloud"] = "aws"
 
 		script, _ := renderScript(data)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
@@ -32,7 +31,6 @@ func TestScript(t *testing.T) {
 	t.Run("Azure known region should add the NVIDA drivers", func(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("azure", "westus")
-		data["cloud"] = "azure"
 
 		script, _ := renderScript(data)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
@@ -41,7 +39,6 @@ func TestScript(t *testing.T) {
 	t.Run("Azure unknown region should add the NVIDA drivers", func(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("azure", "us-east-99")
-		data["cloud"] = "azure"
 
 		script, _ := renderScript(data)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
