@@ -314,7 +314,6 @@ terraform {
   required_providers {
     iterative = {
       source = "iterative/iterative"
-      version = "0.5.1"
     }
   }
 }
@@ -323,8 +322,8 @@ provider "iterative" {}
 
 resource "iterative_machine" "machine" {
   region = "us-west-1"
-  ami = "iterative-cml"
-  instance_name = "machine"
+  image = "iterative-cml"
+  name = "machine"
   instance_hdd_size = "10"
   instance_type = "t2.micro"
 }
