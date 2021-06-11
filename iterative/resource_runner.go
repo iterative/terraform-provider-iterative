@@ -141,10 +141,11 @@ func resourceRunner() *schema.Resource {
 				Sensitive: true,
 			},
 			"startup_script": &schema.Schema{
-				Type:     schema.TypeString,
-				ForceNew: true,
-				Optional: true,
-				Default:  "",
+				Type:      schema.TypeString,
+				ForceNew:  true,
+				Optional:  true,
+				Default:   "",
+				Sensitive: true,
 			},
 			"aws_security_group": &schema.Schema{
 				Type:     schema.TypeString,
