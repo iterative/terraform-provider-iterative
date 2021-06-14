@@ -16,7 +16,8 @@ func TestScript(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("aws", "us-east-1")
 
-		script, _ := renderScript(data)
+		script, err := renderScript(data)
+		assert.Nil(t, err)
 		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
@@ -24,7 +25,8 @@ func TestScript(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("aws", "us-east-99")
 
-		script, _ := renderScript(data)
+		script, err := renderScript(data)
+		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
@@ -32,7 +34,8 @@ func TestScript(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("azure", "westus")
 
-		script, _ := renderScript(data)
+		script, err := renderScript(data)
+		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
@@ -40,7 +43,8 @@ func TestScript(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("azure", "us-east-99")
 
-		script, _ := renderScript(data)
+		script, err := renderScript(data)
+		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
 
@@ -49,7 +53,8 @@ func TestScript(t *testing.T) {
 		startupScript, _ := base64.StdEncoding.DecodeString("ZWNobyAiaGVsbG8gd29ybGQiCmVjaG8gImJ5ZSB3b3JsZCI=")
 		data["runner_startup_script"] = string(startupScript)
 
-		script, _ := renderScript(data)
+		script, err := renderScript(data)
+		assert.Nil(t, err)
 		assert.Contains(t, script, "echo \"hello world\"\necho \"bye world\"")
 	})
 }
