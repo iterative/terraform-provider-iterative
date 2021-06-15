@@ -438,8 +438,13 @@ func isAMIAvailable(cloud string, region string) bool {
 		regions = azure.ImageRegions
 	}
 
+	var regionCloud = aws.GetRegion(region)
+	if cloud == "azure" {
+		regionCloud = azure.GetRegion(region)
+	}
+
 	for _, item := range regions {
-		if item == region {
+		if item == regionCloud {
 			return true
 		}
 	}
