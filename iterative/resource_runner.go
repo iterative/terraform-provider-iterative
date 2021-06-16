@@ -271,7 +271,6 @@ sudo apt update && sudo apt-get install -y terraform
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
 sudo apt update && sudo apt-get install -y nodejs
 
-sudo add-apt-repository ppa:graphics-drivers/ppa -y
 sudo apt update && sudo apt install ubuntu-drivers-common
 sudo ubuntu-drivers autoinstall
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
