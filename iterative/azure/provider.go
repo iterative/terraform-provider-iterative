@@ -30,7 +30,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	username := "ubuntu"
 	customData := d.Get("startup_script").(string)
-	region := getRegion(d.Get("region").(string))
+	region := GetRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
@@ -354,7 +354,8 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 //ImageRegions provider available image regions
 var ImageRegions = []string{}
 
-func getRegion(region string) string {
+//GetRegion maps region to real cloud regions
+func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "eastus"
 	instanceRegions["us-west"] = "westus2"
