@@ -180,10 +180,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Name:   aws.String("vpc-id"),
 				Values: []*string{aws.String(vpcID)},
 			},
-			{
-				Name:   aws.String("available-ip-address-count"),
-				Values: []*string{aws.String(vpcID)},
-			},
 		},
 	})
 	if err != nil {
