@@ -20,7 +20,7 @@ func TestScript(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
-	
+
 	t.Run("AWS known generic region should not add the NVIDA drivers", func(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("aws", "us-west")
@@ -47,7 +47,7 @@ func TestScript(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
 	})
-	
+
 	t.Run("Azure known generic region should add the NVIDA drivers", func(t *testing.T) {
 		data := make(map[string]interface{})
 		data["ami"] = isAMIAvailable("azure", "us-west")
