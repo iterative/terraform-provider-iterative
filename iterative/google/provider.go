@@ -123,7 +123,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return err
 }
 
-//ResourceMachineDelete deletes Azure instance
+//ResourceMachineDelete deletes GCP instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	parts := strings.Split(d.Id(), "-")
 	project := parts[0]
