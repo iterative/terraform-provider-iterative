@@ -26,7 +26,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceName := d.Get("name").(string)
 	pairName := d.Id()
 	hddSize := d.Get("instance_hdd_size").(int)
-	region := getRegion(d.Get("region").(string))
+	region := GetRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	ami := d.Get("image").(string)
 	keyPublic := d.Get("ssh_public").(string)
@@ -38,7 +38,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	svc, err := awsClient(region)
-
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
@@ -69,6 +68,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				{
 					Name:   aws.String("architecture"),
 					Values: []*string{aws.String("x86_64")},
+				},
+				{
+					Name:   aws.String("owner-id"),
+					Values: []*string{aws.String("099720109477")},
 				},
 			},
 		})
@@ -101,10 +104,18 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		securityGroup = "iterative"
 
 		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
+
 		if len(vpcsDesc.Vpcs) == 0 {
 			return errors.New("no VPCs found")
 		}
 		vpcID = *vpcsDesc.Vpcs[0].VpcId
+
+		for _, vpc := range vpcsDesc.Vpcs {
+			if *vpc.IsDefault {
+				vpcID = *vpc.VpcId
+				break
+			}
+		}
 
 		gpResult, err := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
@@ -177,6 +188,16 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if len(subDesc.Subnets) == 0 {
 		return errors.New("no subnets found")
 	}
+	var subnetID string
+	for _, subnet := range subDesc.Subnets {
+		if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
+			subnetID = *subnet.SubnetId
+			break
+		}
+	}
+	if subnetID == "" {
+		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
+	}
 
 	blockDeviceMappings := []*ec2.BlockDeviceMapping{
 		{
@@ -200,7 +221,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				KeyName:             aws.String(pairName),
 				InstanceType:        aws.String(instanceType),
 				SecurityGroupIds:    []*string{aws.String(sgID)},
-				SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
+				SubnetId:            aws.String(subnetID),
 				BlockDeviceMappings: blockDeviceMappings,
 			},
 			InstanceCount: aws.Int64(1),
@@ -287,6 +308,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceDesc := descResult.Reservations[0].Instances[0]
 	d.Set("instance_ip", instanceDesc.PublicIpAddress)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
+	d.Set("image", *imagesRes.Images[0].Name)
 
 	return nil
 }
@@ -294,7 +316,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 //ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	id := aws.String(d.Id())
-	region := getRegion(d.Get("region").(string))
+	region := GetRegion(d.Get("region").(string))
 
 	svc, err := awsClient(region)
 	if err != nil {
@@ -359,7 +381,8 @@ var ImageRegions = []string{
 	"sa-east-1",
 }
 
-func getRegion(region string) string {
+//GetRegion maps region to real cloud regions
+func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "us-east-1"
 	instanceRegions["us-west"] = "us-west-1"
