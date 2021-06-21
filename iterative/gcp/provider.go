@@ -3,9 +3,9 @@ package google
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	gcp "google.golang.org/api/compute/v1"
 
