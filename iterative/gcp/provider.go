@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"os"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	gcp "google.golang.org/api/compute/v1"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -32,7 +32,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	region := getRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	keyPublic := d.Get("ssh_public").(string)
-	hddSize := int32(d.Get("instance_hdd_size").(int))
+	hddSize := int64(d.Get("instance_hdd_size").(int))
 	spot := d.Get("spot").(bool)
 
 	image := d.Get("image").(string)
@@ -71,8 +71,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 		ServiceAccounts: []*gcp.ServiceAccount{
 			{
-				Email:  d.ServiceAccount,
-				Scopes: strings.Split(d.Scopes, ","),
+				Email:  os.Getenv("SERVICE_ACCOUNT_EMAIL"),
+				Scopes: []string{"cloud-platform"},
 			},
 		},
 		Scheduling: &gcp.Scheduling{
