@@ -25,7 +25,9 @@ sudo ubuntu-drivers autoinstall
 
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - 
 curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt update && sudo apt install -y nvidia-docker2
+sudo apt update && sudo apt install -y nvidia-docker2 moreutils
+
+cat /etc/docker/daemon.json | jq '.+{"default-runtime": "nvidia"}' | sponge /etc/docker/daemon.json
 
 sudo systemctl restart docker
 
