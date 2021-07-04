@@ -33,8 +33,9 @@ require (
 	github.com/zclconf/go-cty v1.7.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.0.2 // indirect
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/tools v0.0.0-20201028111035-eafbe7b904eb // indirect
-	google.golang.org/api v0.34.0 // indirect
+	google.golang.org/api v0.34.0
 	gopkg.in/alessio/shellescape.v1 v1.0.0-20170105083845-52074bc9df61
 	k8s.io/api v0.20.5
 	k8s.io/apimachinery v0.20.5
