@@ -80,29 +80,13 @@ func TestScript(t *testing.T) {
 func TestProvisionerCode(t *testing.T) {
 	g := goldie.New(t, goldie.WithDiffEngine(goldie.ColoredDiff))
 
-	t.Run("AWS provisioner code should pass golden test", func(t *testing.T) {
-		val, err := renderProvisionerCode(t, "aws")
-		assert.Nil(t, err)
-		g.Assert(t, "script_template_cloud_aws", []byte(val))
-	})
-
-	t.Run("Azure provisioner code should pass golden test", func(t *testing.T) {
-		val, err := renderProvisionerCode(t, "azure")
-		assert.Nil(t, err)
-		g.Assert(t, "script_template_cloud_azure", []byte(val))
-	})
-
-	t.Run("Kubernetes provisioner code should pass golden test", func(t *testing.T) {
-		val, err := renderProvisionerCode(t, "kubernetes")
-		assert.Nil(t, err)
-		g.Assert(t, "script_template_cloud_kubernetes", []byte(val))
-	})
-
-	t.Run("Invalid cloud provisioner code should pass golden test", func(t *testing.T) {
-		val, err := renderProvisionerCode(t, "invalid")
-		assert.Nil(t, err)
-		g.Assert(t, "script_template_cloud_invalid", []byte(val))
-	})
+	for _, cloud := range []string{"aws", "azure", "gcp", "kubernetes", "invalid"} {
+		t.Run("Provisioner code for "+cloud+" should pass golden test", func(t *testing.T) {
+			val, err := renderProvisionerCode(t, cloud)
+			assert.Nil(t, err)
+			g.Assert(t, "script_template_cloud_"+cloud, []byte(val))
+		})
+	}
 }
 
 func renderProvisionerCode(t *testing.T, cloud string) (string, error) {
@@ -132,12 +116,14 @@ func generateSchemaTestData(cloud string, t *testing.T) *schema.ResourceData {
 
 func generateEnvironmentTestData(t *testing.T) map[string]string {
 	return map[string]string{
-		"AWS_SECRET_ACCESS_KEY":    "1 value with \"quotes\" and spaces",
-		"AWS_ACCESS_KEY_ID":        "2 value with \"quotes\" and spaces",
-		"AZURE_CLIENT_ID":          "3 value with \"quotes\" and spaces",
-		"AZURE_CLIENT_SECRET":      "4 value with \"quotes\" and spaces",
-		"AZURE_SUBSCRIPTION_ID":    "5 value with \"quotes\" and spaces",
-		"AZURE_TENANT_ID":          "6 value with \"quotes\" and spaces",
-		"KUBERNETES_CONFIGURATION": "7 value with \"quotes\" and spaces",
+		"AWS_SECRET_ACCESS_KEY":               "0 value with \"quotes\" and spaces",
+		"AWS_ACCESS_KEY_ID":                   "1 value with \"quotes\" and spaces",
+		"AWS_SESSION_TOKEN":                   "2 value with \"quotes\" and spaces",
+		"AZURE_CLIENT_ID":                     "3 value with \"quotes\" and spaces",
+		"AZURE_CLIENT_SECRET":                 "4 value with \"quotes\" and spaces",
+		"AZURE_SUBSCRIPTION_ID":               "5 value with \"quotes\" and spaces",
+		"AZURE_TENANT_ID":                     "6 value with \"quotes\" and spaces",
+		"GOOGLE_APPLICATION_CREDENTIALS_DATA": "7 value with \"quotes\" and spaces",
+		"KUBERNETES_CONFIGURATION":            "8 value with \"quotes\" and spaces",
 	}
 }
