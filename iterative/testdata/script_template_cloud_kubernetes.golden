@@ -11,7 +11,8 @@
 
 
 
-export KUBERNETES_CONFIGURATION='7 value with "quotes" and spaces'
+
+export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
 
 
 

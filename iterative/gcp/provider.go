@@ -2,21 +2,21 @@ package gcp
 
 import (
 	"context"
-	"encoding/base64"
-	"errors"
 	"fmt"
-	"log"
-	"net"
-	"os"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
+	"net"
+	"log"
+	"errors"
+	"encoding/base64"
+	"regexp"
+	"os"
+	"strconv"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	gcp_compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
+	gcp_compute "google.golang.org/api/compute/v1"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -95,7 +95,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		instanceAccelerators = []*gcp_compute.AcceleratorConfig{
 			{
 				AcceleratorCount: int64(acceleratorCount),
-				AcceleratorType:  acceleratorType.SelfLink,
+				AcceleratorType: acceleratorType.SelfLink,
 			},
 		}
 	}
@@ -103,11 +103,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	network, err := service.Networks.Get(project, networkName).Do()
 	if err != nil {
 		networkDefinition := &gcp_compute.Network{
-			Name:                  networkName,
+			Name: networkName,
 			AutoCreateSubnetworks: true,
 			RoutingConfig: &gcp_compute.NetworkRoutingConfig{
-				RoutingMode: "REGIONAL",
-			},
+		      RoutingMode: "REGIONAL",
+		    },
 		}
 
 		networkInsertOperation, err := service.Networks.Insert(project, networkDefinition).Do()
@@ -125,16 +125,16 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	firewallEgressDefinition := &gcp_compute.Firewall{
-		Name:       instanceName + "-egress",
-		Network:    network.SelfLink,
-		Direction:  "EGRESS",
-		Priority:   0,
+		Name: instanceName + "-egress",
+		Network: network.SelfLink,
+		Direction: "EGRESS",
+		Priority: 1,
 		TargetTags: []string{instanceName},
 		Allowed: []*gcp_compute.FirewallAllowed{
 			{
 				IPProtocol: "all",
 			},
-		},
+	    },
 		DestinationRanges: []string{
 			"0.0.0.0/0",
 		},
@@ -152,10 +152,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	firewallIngressDefinition := &gcp_compute.Firewall{
-		Name:       instanceName + "-ingress",
-		Network:    network.SelfLink,
-		Direction:  "INGRESS",
-		Priority:   0,
+		Name: instanceName + "-ingress",
+		Network: network.SelfLink,
+		Direction: "INGRESS",
+		Priority: 1,
 		TargetTags: []string{instanceName},
 		Allowed: []*gcp_compute.FirewallAllowed{
 			{
@@ -164,7 +164,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 					"22",
 				},
 			},
-		},
+	    },
 		SourceRanges: []string{
 			"0.0.0.0/0",
 		},
@@ -200,7 +200,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 		NetworkInterfaces: []*gcp_compute.NetworkInterface{
 			{
-				Network: network.SelfLink,
+				Network:    network.SelfLink,
 				AccessConfigs: []*gcp_compute.AccessConfig{
 					{
 						NetworkTier: "STANDARD",
@@ -213,16 +213,16 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 		Scheduling: &gcp_compute.Scheduling{
 			OnHostMaintenance: instanceHostMaintenanceBehavior,
-			Preemptible:       instanceIsPreemptible,
+			Preemptible: instanceIsPreemptible,
 		},
 		Metadata: &gcp_compute.Metadata{
 			Items: []*gcp_compute.MetadataItems{
 				{
-					Key:   "ssh-keys",
+					Key: "ssh-keys",
 					Value: &instancePublicSshKey,
 				},
 				{
-					Key:   "startup-script",
+					Key: "startup-script",
 					Value: &instanceStartupScript,
 				},
 			},
@@ -272,7 +272,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
-	firewallIngressDeleteOperation, err := service.Firewalls.Delete(project, instanceName+"-ingress").Do()
+	firewallIngressDeleteOperation, err := service.Firewalls.Delete(project, instanceName + "-ingress").Do()
 	if err != nil {
 		return err
 	}
@@ -283,7 +283,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
-	firewallEgressDeleteOperation, err := service.Firewalls.Delete(project, instanceName+"-egress").Do()
+	firewallEgressDeleteOperation, err := service.Firewalls.Delete(project, instanceName + "-egress").Do()
 	if err != nil {
 		return err
 	}
@@ -361,7 +361,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["m"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "0",
-			"type":  "",
+			"type": "",
 		},
 		"machine": {
 			"type": "e2-custom-8-32768",
@@ -370,7 +370,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["l"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "0",
-			"type":  "",
+			"type": "",
 		},
 		"machine": {
 			"type": "e2-custom-32-131072",
@@ -379,7 +379,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["xl"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "0",
-			"type":  "",
+			"type": "",
 		},
 		"machine": {
 			"type": "n2-custom-64-262144",
@@ -388,7 +388,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["mk80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
-			"type":  "nvidia-tesla-k80",
+			"type": "nvidia-tesla-k80",
 		},
 		"machine": {
 			"type": "custom-8-53248",
@@ -397,7 +397,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["lk80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
-			"type":  "nvidia-tesla-k80",
+			"type": "nvidia-tesla-k80",
 		},
 		"machine": {
 			"type": "custom-32-131072",
@@ -406,7 +406,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["xlk80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
-			"type":  "nvidia-tesla-k80",
+			"type": "nvidia-tesla-k80",
 		},
 		"machine": {
 			"type": "custom-64-212992-ext",
@@ -415,7 +415,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["mv100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
-			"type":  "nvidia-tesla-v100",
+			"type": "nvidia-tesla-v100",
 		},
 		"machine": {
 			"type": "custom-8-65536-ext",
@@ -424,7 +424,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["lv100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
-			"type":  "nvidia-tesla-v100",
+			"type": "nvidia-tesla-v100",
 		},
 		"machine": {
 			"type": "custom-32-262144-ext",
@@ -433,7 +433,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	instanceTypes["xlv100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
-			"type":  "nvidia-tesla-v100",
+			"type": "nvidia-tesla-v100",
 		},
 		"machine": {
 			"type": "custom-64-524288-ext",
@@ -448,7 +448,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		return map[string]map[string]string{
 			"accelerator": {
 				"count": val["accelerator"]["count"],
-				"type":  instanceGPU,
+				"type": instanceGPU,
 			},
 			"machine": {
 				"type": val["machine"]["type"],
@@ -467,7 +467,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		return map[string]map[string]string{
 			"accelerator": {
 				"count": "1",
-				"type":  instanceGPU,
+				"type": instanceGPU,
 			},
 			"machine": {
 				"type": instanceType,
@@ -478,7 +478,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	return map[string]map[string]string{
 		"accelerator": {
 			"count": "0",
-			"type":  "",
+			"type": "",
 		},
 		"machine": {
 			"type": instanceType,

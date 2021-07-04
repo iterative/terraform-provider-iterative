@@ -291,7 +291,7 @@ sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
 {{end}}
 
 {{if not .container}}
-sudo bash -c 'cat << EOF > /usr/bin/cml.sh
+sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
 {{end}}
 
@@ -306,6 +306,9 @@ export AZURE_CLIENT_ID={{escape .AZURE_CLIENT_ID}}
 export AZURE_CLIENT_SECRET={{escape .AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{escape .AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
+{{end}}
+{{if eq .cloud "gcp"}}
+export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTIALS_DATA}}
 {{end}}
 {{if eq .cloud "kubernetes"}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
@@ -323,7 +326,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
-EOF'
+EOF
 sudo chmod +x /usr/bin/cml.sh
 
 sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
@@ -419,6 +422,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
+	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["ami"] = isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
