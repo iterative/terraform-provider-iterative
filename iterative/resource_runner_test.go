@@ -63,10 +63,10 @@ func TestProvisionerCode(t *testing.T) {
 	g := goldie.New(t, goldie.WithDiffEngine(goldie.ColoredDiff))
 
 	for _, cloud := range []string{"aws", "azure", "gcp", "kubernetes", "invalid"} {
-		t.Run("Provisioner code for " + cloud + " should pass golden test", func(t *testing.T) {
+		t.Run("Provisioner code for "+cloud+" should pass golden test", func(t *testing.T) {
 			val, err := renderProvisionerCode(t, cloud)
 			assert.Nil(t, err)
-			g.Assert(t, "script_template_cloud_" + cloud, []byte(val))
+			g.Assert(t, "script_template_cloud_"+cloud, []byte(val))
 		})
 	}
 }
