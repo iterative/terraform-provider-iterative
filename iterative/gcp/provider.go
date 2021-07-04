@@ -52,7 +52,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		instanceImageString = "ubuntu-os-cloud/ubuntu-2004-lts"
 	}
 	projectRegex := "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))"
-	if result, err := regexp.MatchString("^" + projectRegex + "/[-_a-zA-Z0-9]+" + "$", instanceImageString); err != nil || !result {
+	if result, err := regexp.MatchString("^"+projectRegex+"/[-_a-zA-Z0-9]+"+"$", instanceImageString); err != nil || !result {
 		return errors.New("Malformed image name! Use project/family to select an image")
 	}
 	instanceImageComponents := strings.Split(instanceImageString, "/")
