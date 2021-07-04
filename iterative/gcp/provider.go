@@ -32,7 +32,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	networkName := "iterative"
 	instanceName := d.Get("name").(string)
-	instanceZone := d.Get("region").(string)
+	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
 
@@ -128,7 +128,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Name:       instanceName + "-egress",
 		Network:    network.SelfLink,
 		Direction:  "EGRESS",
-		Priority:   0,
+		Priority:   1,
 		TargetTags: []string{instanceName},
 		Allowed: []*gcp_compute.FirewallAllowed{
 			{
@@ -155,7 +155,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Name:       instanceName + "-ingress",
 		Network:    network.SelfLink,
 		Direction:  "INGRESS",
-		Priority:   0,
+		Priority:   1,
 		TargetTags: []string{instanceName},
 		Allowed: []*gcp_compute.FirewallAllowed{
 			{
@@ -354,6 +354,20 @@ func waitForOperation(ctx context.Context, timeout time.Duration, function func(
 	})
 
 	return result, err
+}
+
+func getRegion(region string) string {
+	instanceRegions := make(map[string]string)
+	instanceRegions["us-east"] = "us-east1-c"
+	instanceRegions["us-west"] = "us-west1-b"
+	instanceRegions["eu-north"] = "europe-north1-a"
+	instanceRegions["eu-west"] = "europe-west1-d"
+
+	if val, ok := instanceRegions[region]; ok {
+		return val
+	}
+
+	return region
 }
 
 func getInstanceType(instanceType string, instanceGPU string) (map[string]map[string]string, error) {
