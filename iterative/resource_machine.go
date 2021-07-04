@@ -8,6 +8,7 @@ import (
 
 	"terraform-provider-iterative/iterative/aws"
 	"terraform-provider-iterative/iterative/azure"
+	"terraform-provider-iterative/iterative/gcp"
 	"terraform-provider-iterative/iterative/kubernetes"
 	"terraform-provider-iterative/iterative/utils"
 
@@ -174,6 +175,14 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
+	} else if cloud == "gcp" {
+		err := gcp.ResourceMachineCreate(ctx, d, m)
+		if err != nil {
+			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
+			})
+		}
 	} else if cloud == "kubernetes" {
 		err := kubernetes.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
@@ -212,6 +221,14 @@ func resourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
 			})
 		}
+	} else if cloud == "gcp" {
+		err := gcp.ResourceMachineDelete(ctx, d, m)
+		if err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Failed disposing the machine: %v", err),
+			})
+		}
 	} else if cloud == "kubernetes" {
 		err := kubernetes.ResourceMachineDelete(ctx, d, m)
 		if err != nil {
@@ -240,6 +257,8 @@ func resourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interfac
 		return aws.ResourceMachineLogs(ctx, d, m)
 	case "azure":
 		return azure.ResourceMachineLogs(ctx, d, m)
+	case "gcp":
+		return gcp.ResourceMachineLogs(ctx, d, m)
 	case "kubernetes":
 		return kubernetes.ResourceMachineLogs(ctx, d, m)
 	default:
