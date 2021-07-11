@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"regexp"
 	"sort"
 	"strconv"
@@ -16,8 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"terraform-provider-iterative/iterative/utils"
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -439,8 +436,4 @@ func decodeAWSError(region string, err error) error {
 	}
 
 	return fmt.Errorf("Not able to decode: %s", err.Error())
-}
-
-func ResourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
-	return utils.RunCommand("journalctl --no-pager", 10*time.Second, net.JoinHostPort(d.Get("instance_ip").(string), "22"), "ubuntu", d.Get("ssh_private").(string))
 }
