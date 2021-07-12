@@ -259,7 +259,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
-	instanceZone := d.Get("region").(string)
+	instanceZone := getRegion(d.Get("region").(string))
 	instanceName := d.Id()
 
 	instanceDeleteOperation, err := service.Instances.Delete(project, instanceZone, instanceName).Do()
