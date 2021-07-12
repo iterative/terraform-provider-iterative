@@ -63,15 +63,14 @@ sudo chmod +x /usr/bin/cml.sh
 
 sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 [Unit]
-  Description=cml service
+  After=default.target
 
 [Service]
-  Type=oneshot
-  RemainAfterExit=yes
+  Type=simple
   ExecStart=/usr/bin/cml.sh
 
 [Install]
-  WantedBy=multi-user.target
+  WantedBy=default.target
 EOF'
 
 

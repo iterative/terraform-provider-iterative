@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net"
 	"time"
 
 	"terraform-provider-iterative/iterative/aws"
@@ -253,15 +254,13 @@ func resourceMachineRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 func resourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
 	switch cloud := d.Get("cloud").(string); cloud {
-	case "aws":
-		return aws.ResourceMachineLogs(ctx, d, m)
-	case "azure":
-		return azure.ResourceMachineLogs(ctx, d, m)
-	case "gcp":
-		return gcp.ResourceMachineLogs(ctx, d, m)
 	case "kubernetes":
 		return kubernetes.ResourceMachineLogs(ctx, d, m)
 	default:
-		return "", fmt.Errorf("Unknown cloud: %s", cloud)
+		return utils.RunCommand("journalctl --no-pager",
+			2*time.Second,
+			net.JoinHostPort(d.Get("instance_ip").(string), "22"),
+			"ubuntu",
+			d.Get("ssh_private").(string))
 	}
 }

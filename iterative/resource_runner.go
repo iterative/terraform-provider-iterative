@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"strconv"
 	"text/template"
@@ -210,7 +211,17 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	var logError error
 	var logEvents string
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		logEvents, logError = resourceMachineLogs(ctx, d, m)
+		switch cloud := d.Get("cloud").(string); cloud {
+		case "kubernetes":
+			logEvents, logError = resourceMachineLogs(ctx, d, m)
+		default:
+			logEvents, logError = utils.RunCommand("journalctl --unit cml --no-pager",
+				2*time.Second,
+				net.JoinHostPort(d.Get("instance_ip").(string), "22"),
+				"ubuntu",
+				d.Get("ssh_private").(string))
+		}
+
 		log.Printf("[DEBUG] Collected log events: %#v", logEvents)
 		log.Printf("[DEBUG] Connection errors: %#v", logError)
 
@@ -330,15 +341,14 @@ sudo chmod +x /usr/bin/cml.sh
 
 sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 [Unit]
-  Description=cml service
+  After=default.target
 
 [Service]
-  Type=oneshot
-  RemainAfterExit=yes
+  Type=simple
   ExecStart=/usr/bin/cml.sh
 
 [Install]
-  WantedBy=multi-user.target
+  WantedBy=default.target
 EOF'
 
 {{if .cloud}}

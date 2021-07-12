@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"regexp"
 	"strconv"
@@ -20,8 +19,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"terraform-provider-iterative/iterative/utils"
 )
 
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
@@ -299,10 +296,6 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	return err
-}
-
-func ResourceMachineLogs(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
-	return utils.RunCommand("journalctl --no-pager", 10*time.Second, net.JoinHostPort(d.Get("instance_ip").(string), "22"), "ubuntu", d.Get("ssh_private").(string))
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
