@@ -266,35 +266,20 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceName := d.Id()
 
-	instanceDeleteOperation, err := service.Instances.Delete(project, instanceZone, instanceName).Do()
+	instanceDeleteOperationCall := service.Instances.Delete(project, instanceZone, instanceName)
+	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), instanceDeleteOperationCall.Do)
 	if err != nil {
 		return err
 	}
 
-	instanceGetOperationCall := service.ZoneOperations.Get(project, instanceZone, instanceDeleteOperation.Name)
-	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), instanceGetOperationCall.Do)
+	firewallIngressDeleteOperationCall := service.Firewalls.Delete(project, instanceName+"-ingress")
+	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), firewallIngressDeleteOperationCall.Do)
 	if err != nil {
 		return err
 	}
 
-	firewallIngressDeleteOperation, err := service.Firewalls.Delete(project, instanceName+"-ingress").Do()
-	if err != nil {
-		return err
-	}
-
-	firewallIngressGetOperationCall := service.GlobalOperations.Get(project, firewallIngressDeleteOperation.Name)
-	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), firewallIngressGetOperationCall.Do)
-	if err != nil {
-		return err
-	}
-
-	firewallEgressDeleteOperation, err := service.Firewalls.Delete(project, instanceName+"-egress").Do()
-	if err != nil {
-		return err
-	}
-
-	firewallEgressGetOperationCall := service.GlobalOperations.Get(project, firewallEgressDeleteOperation.Name)
-	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), firewallEgressGetOperationCall.Do)
+	firewallEgressDeleteOperationCall := service.Firewalls.Delete(project, instanceName+"-egress")
+	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), firewallEgressDeleteOperationCall.Do)
 	if err != nil {
 		return err
 	}
