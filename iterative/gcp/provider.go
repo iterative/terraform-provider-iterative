@@ -266,25 +266,11 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceName := d.Id()
 
-	instanceDeleteOperationCall := service.Instances.Delete(project, instanceZone, instanceName)
-	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), instanceDeleteOperationCall.Do)
-	if err != nil {
-		return err
-	}
+	service.Instances.Delete(project, instanceZone, instanceName).Do()
+	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
+	service.Firewalls.Delete(project, instanceName+"-egress").Do()
 
-	firewallIngressDeleteOperationCall := service.Firewalls.Delete(project, instanceName+"-ingress")
-	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), firewallIngressDeleteOperationCall.Do)
-	if err != nil {
-		return err
-	}
-
-	firewallEgressDeleteOperationCall := service.Firewalls.Delete(project, instanceName+"-egress")
-	_, err = waitForOperation(ctx, d.Timeout(schema.TimeoutDelete), firewallEgressDeleteOperationCall.Do)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return nil
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
