@@ -281,7 +281,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 	groupsClient.Delete(context.Background(), d.Id())
-	return err
+	return nil
 }
 
 func getGroupsClient(subscriptionID string) (resources.GroupsClient, error) {
