@@ -296,6 +296,7 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 		return "", nil, errors.New("Couldn't extract the project identifier from the given credentials!")
 	}
 
+	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
 }
 
