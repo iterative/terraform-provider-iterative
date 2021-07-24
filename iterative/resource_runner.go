@@ -433,7 +433,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
-	data["ami"] = isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
+	data["ami"] = false //isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	script, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
 	if err != nil {
