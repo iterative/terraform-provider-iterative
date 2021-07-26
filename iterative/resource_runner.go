@@ -270,34 +270,32 @@ func renderScript(data map[string]interface{}) (string, error) {
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
 {{- end}}
 
-{{if .runner_startup_script}}
+{{- if .runner_startup_script}}
 {{.runner_startup_script}}
-{{end}}
+{{- end}}
 
-{{if not .container}}
+{{- if not .container}}
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
-{{end}}
+{{- end}}
 
-{{if .cloud}}
-{{if eq .cloud "aws"}}
+{{- if eq .cloud "aws"}}
 export AWS_SECRET_ACCESS_KEY={{escape .AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{escape .AWS_ACCESS_KEY_ID}}
 export AWS_SESSION_TOKEN={{escape .AWS_SESSION_TOKEN}}
-{{end}}
-{{if eq .cloud "azure"}}
+{{- end}}
+{{- if eq .cloud "azure"}}
 export AZURE_CLIENT_ID={{escape .AZURE_CLIENT_ID}}
 export AZURE_CLIENT_SECRET={{escape .AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{escape .AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
-{{end}}
-{{if eq .cloud "gcp"}}
+{{- end}}
+{{- if eq .cloud "gcp"}}
 export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTIALS_DATA}}
-{{end}}
-{{if eq .cloud "kubernetes"}}
+{{- end}}
+{{- if eq .cloud "kubernetes"}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
-{{end}}
-{{end}}
+{{- end}}
 
 HOME="$(mktemp -d)" exec cml-runner \
   {{if .name}} --name {{escape .name}}{{end}} \
@@ -325,14 +323,9 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
   WantedBy=default.target
 EOF'
 
-{{if .cloud}}
-{{if eq .cloud "azure"}}
-sudo systemctl enable cml.service
-sudo reboot
-{{- else}}
+{{- if .cloud}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
-{{- end}}
 {{- end}}
 {{- end}}
 `)
