@@ -10,13 +10,12 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
 	"gopkg.in/alessio/shellescape.v1"
 
-	"terraform-provider-iterative/iterative/aws"
-	"terraform-provider-iterative/iterative/azure"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -185,6 +184,12 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  startupScript,
+	})
+	return diags
+
 	d.Set("startup_script", startupScript)
 	if d.Get("instance_gpu") == "tesla" {
 		diags = append(diags, diag.Diagnostic{
@@ -260,41 +265,10 @@ func renderScript(data map[string]interface{}) (string, error) {
 
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
 		`#!/bin/sh
-{{if not (or .ami .container)}}
-export DEBIAN_FRONTEND=noninteractive
-echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
-
-sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service
-
-sudo add-apt-repository universe -y
-sudo add-apt-repository ppa:git-core/ppa -y
-sudo apt update && sudo apt install -y software-properties-common git build-essential
-
-sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-sudo usermod -aG docker ubuntu
-sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
-
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-sudo apt update && sudo apt-get install -y terraform
-
-curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
-sudo apt update && sudo apt-get install -y nodejs
-
-sudo apt update && sudo apt install ubuntu-drivers-common
-sudo ubuntu-drivers autoinstall
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt update && sudo apt install -y nvidia-docker2
-sudo systemctl restart docker
-sudo nvidia-smi
-sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-{{end}}
-
-{{if not .container}}
+{{- if not .container}}
+{{.setup }}
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
-{{end}}
+{{- end}}
 
 {{if .runner_startup_script}}
 {{.runner_startup_script}}
@@ -413,6 +387,11 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
+	setup, err := Asset("../cml/setup.sh")
+	if err != nil {
+		return code, err
+	}
+
 	data := make(map[string]interface{})
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
@@ -433,8 +412,8 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
-	data["ami"] = false //isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
+	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
 	script, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
 	if err != nil {
 		return "", err
@@ -443,29 +422,6 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["runner_startup_script"] = string(script)
 
 	return renderScript(data)
-}
-
-func isAMIAvailable(cloud string, region string) bool {
-	regions := aws.ImageRegions
-	if cloud == "azure" {
-		regions = azure.ImageRegions
-	}
-
-	var cloudRegion string
-	switch cloud {
-	case "aws":
-		cloudRegion = aws.GetRegion(region)
-	case "azure":
-		cloudRegion = azure.GetRegion(region)
-	}
-
-	for _, item := range regions {
-		if item == cloudRegion {
-			return true
-		}
-	}
-
-	return false
 }
 
 func isContainerAvailable(cloud string) bool {

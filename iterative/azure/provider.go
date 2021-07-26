@@ -348,9 +348,6 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	return client, err
 }
 
-//ImageRegions provider available image regions
-var ImageRegions = []string{}
-
 //GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
