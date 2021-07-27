@@ -1,55 +1,42 @@
 #!/bin/sh
+FILE=/var/log/cml_stack.log
+if [ ! -f "$FILE" ]; then
+    DEBIAN_FRONTEND=noninteractive
+    echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
-export DEBIAN_FRONTEND=noninteractive
-echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
+    sudo apt remove unattended-upgrades
+    systemctl disable apt-daily-upgrade.service 
 
-sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service
+    sudo add-apt-repository universe -y
+    sudo add-apt-repository ppa:git-core/ppa -y
+    sudo apt update && sudo apt-get install -y software-properties-common git build-essential git
 
-sudo add-apt-repository universe -y
-sudo add-apt-repository ppa:git-core/ppa -y
-sudo apt update && sudo apt install -y software-properties-common git build-essential
+    sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh && \
+    sudo usermod -aG docker ubuntu
+    sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
 
-sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-sudo usermod -aG docker ubuntu
-sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+    sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    sudo apt update && sudo apt-get install -y terraform
 
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-sudo apt update && sudo apt-get install -y terraform
+    curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
+    sudo apt update && sudo apt-get install -y nodejs
 
-curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
-sudo apt update && sudo apt-get install -y nodejs
+    sudo apt install -y ubuntu-drivers-common
+    sudo ubuntu-drivers autoinstall 
 
-sudo apt update && sudo apt install ubuntu-drivers-common
-sudo ubuntu-drivers autoinstall
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt update && sudo apt install -y nvidia-docker2
-sudo systemctl restart docker
-sudo nvidia-smi
-sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - 
+    curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+    sudo apt update && sudo apt install -y nvidia-docker2
+    sudo systemctl restart docker
 
-
+	sudo echo 'OK' > $FILE
+fi
 
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
-
-
-
-
-
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
-
-
-
-
-
-
 export GOOGLE_APPLICATION_CREDENTIALS_DATA='7 value with "quotes" and spaces'
-
-
-
 
 HOME="$(mktemp -d)" exec cml-runner \
    --name '10 value with "quotes" and spaces' \
@@ -74,8 +61,5 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 [Install]
   WantedBy=default.target
 EOF'
-
-
-
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now

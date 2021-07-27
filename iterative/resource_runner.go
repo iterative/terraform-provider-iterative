@@ -184,12 +184,6 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  startupScript,
-	})
-	return diags
-
 	d.Set("startup_script", startupScript)
 	if d.Get("instance_gpu") == "tesla" {
 		diags = append(diags, diag.Diagnostic{
@@ -263,10 +257,20 @@ func resourceRunnerDelete(ctx context.Context, d *schema.ResourceData, m interfa
 func renderScript(data map[string]interface{}) (string, error) {
 	var script string
 
+	startup_script, ok := data["startup_script"].(string)
+	if ok {
+		runnerStartupScript, err := base64.StdEncoding.DecodeString(startup_script)
+		if err != nil {
+			return script, err
+		}
+
+		data["runner_startup_script"] = string(runnerStartupScript)
+	}
+
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
 		`#!/bin/sh
 {{- if not .container}}
-{{.setup }}
+{{- if .setup}}{{.setup}}{{- end}}
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
 {{- end}}
 
@@ -279,6 +283,7 @@ sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
 {{- end}}
 
+{{- if .cloud}}
 {{- if eq .cloud "aws"}}
 export AWS_SECRET_ACCESS_KEY={{escape .AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{escape .AWS_ACCESS_KEY_ID}}
@@ -295,6 +300,7 @@ export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTI
 {{- end}}
 {{- if eq .cloud "kubernetes"}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
+{{- end}}
 {{- end}}
 
 HOME="$(mktemp -d)" exec cml-runner \
@@ -327,6 +333,7 @@ EOF'
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 {{- end}}
+
 {{- end}}
 `)
 	var customDataBuffer bytes.Buffer
@@ -393,6 +400,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
 	data["name"] = d.Get("name").(string)
 	data["cloud"] = d.Get("cloud").(string)
+	data["startup_script"] = d.Get("startup_script").(string)
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["single"] = d.Get("single").(bool)
@@ -407,12 +415,6 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
-	script, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
-	if err != nil {
-		return "", err
-	}
-
-	data["runner_startup_script"] = string(script)
 
 	return renderScript(data)
 }

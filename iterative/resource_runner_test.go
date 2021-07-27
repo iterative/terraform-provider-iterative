@@ -1,7 +1,6 @@
 package iterative
 
 import (
-	"encoding/base64"
 	"os"
 	"testing"
 
@@ -12,64 +11,9 @@ import (
 )
 
 func TestScript(t *testing.T) {
-	t.Run("AWS known region should not add the NVIDA drivers", func(t *testing.T) {
-		data := make(map[string]interface{})
-		data["ami"] = isAMIAvailable("aws", "us-east-1")
-
-		script, err := renderScript(data)
-		assert.Nil(t, err)
-		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
-	})
-
-	t.Run("AWS known generic region should not add the NVIDA drivers", func(t *testing.T) {
-		data := make(map[string]interface{})
-		data["ami"] = isAMIAvailable("aws", "us-west")
-
-		script, err := renderScript(data)
-		assert.Nil(t, err)
-		assert.NotContains(t, script, "sudo ubuntu-drivers autoinstall")
-	})
-
-	t.Run("AWS unknown region should add the NVIDA drivers", func(t *testing.T) {
-		data := make(map[string]interface{})
-		data["ami"] = isAMIAvailable("aws", "us-east-99")
-
-		script, err := renderScript(data)
-		assert.Nil(t, err)
-		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
-	})
-
-	t.Run("Azure known region should add the NVIDA drivers", func(t *testing.T) {
-		data := make(map[string]interface{})
-		data["ami"] = isAMIAvailable("azure", "westus")
-
-		script, err := renderScript(data)
-		assert.Nil(t, err)
-		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
-	})
-
-	t.Run("Azure known generic region should add the NVIDA drivers", func(t *testing.T) {
-		data := make(map[string]interface{})
-		data["ami"] = isAMIAvailable("azure", "us-west")
-
-		script, err := renderScript(data)
-		assert.Nil(t, err)
-		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
-	})
-
-	t.Run("Azure unknown region should add the NVIDA drivers", func(t *testing.T) {
-		data := make(map[string]interface{})
-		data["ami"] = isAMIAvailable("azure", "us-east-99")
-
-		script, err := renderScript(data)
-		assert.Nil(t, err)
-		assert.Contains(t, script, "sudo ubuntu-drivers autoinstall")
-	})
-
 	t.Run("Runner Startup Script", func(t *testing.T) {
 		data := make(map[string]interface{})
-		startupScript, _ := base64.StdEncoding.DecodeString("ZWNobyAiaGVsbG8gd29ybGQiCmVjaG8gImJ5ZSB3b3JsZCI=")
-		data["runner_startup_script"] = string(startupScript)
+		data["startup_script"] = string("ZWNobyAiaGVsbG8gd29ybGQiCmVjaG8gImJ5ZSB3b3JsZCI=")
 
 		script, err := renderScript(data)
 		assert.Nil(t, err)

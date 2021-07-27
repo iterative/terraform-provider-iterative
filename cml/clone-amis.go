@@ -19,7 +19,6 @@ func main() {
 	regions := []string{
 		"us-east-2",
 		"us-east-1",
-		"us-west-1",
 		"us-west-2",
 		"ap-south-1",
 		"ap-northeast-3",
