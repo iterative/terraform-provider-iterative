@@ -1,2 +1,2 @@
 exclude:
-  - "!**/*.golden"
+  - "**/*.golden"
