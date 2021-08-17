@@ -10,13 +10,12 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
 	"gopkg.in/alessio/shellescape.v1"
 
-	"terraform-provider-iterative/iterative/aws"
-	"terraform-provider-iterative/iterative/azure"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -258,72 +257,51 @@ func resourceRunnerDelete(ctx context.Context, d *schema.ResourceData, m interfa
 func renderScript(data map[string]interface{}) (string, error) {
 	var script string
 
+	startup_script, ok := data["startup_script"].(string)
+	if ok {
+		runnerStartupScript, err := base64.StdEncoding.DecodeString(startup_script)
+		if err != nil {
+			return script, err
+		}
+
+		data["runner_startup_script"] = string(runnerStartupScript)
+	}
+
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
 		`#!/bin/sh
-{{if not (or .ami .container)}}
-export DEBIAN_FRONTEND=noninteractive
-echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
-
-sudo apt remove unattended-upgrades
-systemctl disable apt-daily-upgrade.service
-
-sudo add-apt-repository universe -y
-sudo add-apt-repository ppa:git-core/ppa -y
-sudo apt update && sudo apt install -y software-properties-common git build-essential
-
-sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-sudo usermod -aG docker ubuntu
-sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
-
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-sudo apt update && sudo apt-get install -y terraform
-
-curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
-sudo apt update && sudo apt-get install -y nodejs
-
-sudo apt update && sudo apt install ubuntu-drivers-common
-sudo ubuntu-drivers autoinstall
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt update && sudo apt install -y nvidia-docker2
-sudo systemctl restart docker
-sudo nvidia-smi
-sudo docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-{{end}}
-
-{{if not .container}}
+{{- if not .container}}
+{{- if .setup}}{{.setup}}{{- end}}
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
-{{end}}
+{{- end}}
 
-{{if .runner_startup_script}}
+{{- if .runner_startup_script}}
 {{.runner_startup_script}}
-{{end}}
+{{- end}}
 
-{{if not .container}}
+{{- if not .container}}
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
-{{end}}
+{{- end}}
 
-{{if .cloud}}
-{{if eq .cloud "aws"}}
+{{- if .cloud}}
+{{- if eq .cloud "aws"}}
 export AWS_SECRET_ACCESS_KEY={{escape .AWS_SECRET_ACCESS_KEY}}
 export AWS_ACCESS_KEY_ID={{escape .AWS_ACCESS_KEY_ID}}
 export AWS_SESSION_TOKEN={{escape .AWS_SESSION_TOKEN}}
-{{end}}
-{{if eq .cloud "azure"}}
+{{- end}}
+{{- if eq .cloud "azure"}}
 export AZURE_CLIENT_ID={{escape .AZURE_CLIENT_ID}}
 export AZURE_CLIENT_SECRET={{escape .AZURE_CLIENT_SECRET}}
 export AZURE_SUBSCRIPTION_ID={{escape .AZURE_SUBSCRIPTION_ID}}
 export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
-{{end}}
-{{if eq .cloud "gcp"}}
+{{- end}}
+{{- if eq .cloud "gcp"}}
 export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTIALS_DATA}}
-{{end}}
-{{if eq .cloud "kubernetes"}}
+{{- end}}
+{{- if eq .cloud "kubernetes"}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 
 HOME="$(mktemp -d)" exec cml-runner \
   {{if .name}} --name {{escape .name}}{{end}} \
@@ -351,15 +329,11 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
   WantedBy=default.target
 EOF'
 
-{{if .cloud}}
-{{if eq .cloud "azure"}}
-sudo systemctl enable cml.service
-sudo reboot
-{{- else}}
+{{- if .cloud}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service --now
 {{- end}}
-{{- end}}
+
 {{- end}}
 `)
 	var customDataBuffer bytes.Buffer
@@ -413,6 +387,11 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
+	setup, err := Asset("../cml/setup.sh")
+	if err != nil {
+		return code, err
+	}
+
 	data := make(map[string]interface{})
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
@@ -421,6 +400,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
 	data["name"] = d.Get("name").(string)
 	data["cloud"] = d.Get("cloud").(string)
+	data["startup_script"] = d.Get("startup_script").(string)
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["single"] = d.Get("single").(bool)
@@ -433,39 +413,10 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
-	data["ami"] = false //isAMIAvailable(d.Get("cloud").(string), d.Get("region").(string))
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
-	script, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
-	if err != nil {
-		return "", err
-	}
-
-	data["runner_startup_script"] = string(script)
+	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
 
 	return renderScript(data)
-}
-
-func isAMIAvailable(cloud string, region string) bool {
-	regions := aws.ImageRegions
-	if cloud == "azure" {
-		regions = azure.ImageRegions
-	}
-
-	var cloudRegion string
-	switch cloud {
-	case "aws":
-		cloudRegion = aws.GetRegion(region)
-	case "azure":
-		cloudRegion = azure.GetRegion(region)
-	}
-
-	for _, item := range regions {
-		if item == cloudRegion {
-			return true
-		}
-	}
-
-	return false
 }
 
 func isContainerAvailable(cloud string) bool {

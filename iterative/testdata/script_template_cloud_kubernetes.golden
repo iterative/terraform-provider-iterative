@@ -1,20 +1,5 @@
 #!/bin/sh
-
-
-
-
-
-
-
-
-
-
-
-
-
 export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
-
-
 
 HOME="$(mktemp -d)" exec cml-runner \
    --name '10 value with "quotes" and spaces' \
