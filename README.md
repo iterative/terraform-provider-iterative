@@ -146,6 +146,8 @@ resource "iterative_machine" "machine" {
 </p>
 </details>
 
+💡 _Alternatively, you can use the [JSON Terraform Configuration Syntax](https://www.terraform.io/docs/language/syntax/json.html) instead of the default [HCL](https://www.terraform.io/docs/language/syntax/configuration.html) syntax.
+
 3. Launch it!
 
 ```sh
