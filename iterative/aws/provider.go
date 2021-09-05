@@ -22,7 +22,6 @@ import (
 //ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	userData := d.Get("startup_script").(string)
-	instanceName := d.Get("name").(string)
 	pairName := d.Id()
 	hddSize := d.Get("instance_hdd_size").(int)
 	region := GetRegion(d.Get("region").(string))
@@ -32,6 +31,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	securityGroup := d.Get("aws_security_group").(string)
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
+
+	metadata := map[string]string{
+		"Name": d.Get("name").(string),
+		"Id":   d.Id(),
+	}
+	for key, value := range d.Get("metadata").(map[string]interface{}) {
+		metadata[key] = value.(string)
+	}
+
 	if ami == "" {
 		ami = "iterative-cml"
 	}
@@ -96,6 +104,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	svc.ImportKeyPair(ctx, &ec2.ImportKeyPairInput{
 		KeyName:           aws.String(pairName),
 		PublicKeyMaterial: []byte(keyPublic),
+		TagSpecifications: resourceTagSpecifications(types.ResourceTypeKeyPair, metadata),
 	})
 
 	// securityGroup
@@ -118,9 +127,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 
 		gpResult, err := svc.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
-			GroupName:   aws.String(securityGroup),
-			Description: aws.String("Iterative security group"),
-			VpcId:       aws.String(vpcID),
+			GroupName:         aws.String(securityGroup),
+			Description:       aws.String("Iterative security group"),
+			VpcId:             aws.String(vpcID),
+			TagSpecifications: resourceTagSpecifications(types.ResourceTypeSecurityGroup, metadata),
 		})
 
 		if err == nil {
@@ -136,13 +146,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			}
 
 			svc.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
-				GroupId:       aws.String(*gpResult.GroupId),
-				IpPermissions: ipPermissions,
+				GroupId:           aws.String(*gpResult.GroupId),
+				IpPermissions:     ipPermissions,
+				TagSpecifications: resourceTagSpecifications(types.ResourceTypeSecurityGroupRule, metadata),
 			})
 
 			svc.AuthorizeSecurityGroupEgress(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
-				GroupId:       aws.String(*gpResult.GroupId),
-				IpPermissions: ipPermissions,
+				GroupId:           aws.String(*gpResult.GroupId),
+				IpPermissions:     ipPermissions,
+				TagSpecifications: resourceTagSpecifications(types.ResourceTypeSecurityGroupRule, metadata),
 			})
 		}
 
@@ -225,7 +237,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				SubnetId:            aws.String(subnetID),
 				BlockDeviceMappings: blockDeviceMappings,
 			},
-			InstanceCount: aws.Int32(1),
+			InstanceCount:     aws.Int32(1),
+			TagSpecifications: resourceTagSpecifications(types.ResourceTypeSpotInstancesRequest, metadata),
 		}
 
 		if spotPrice >= 0 {
@@ -265,30 +278,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			SecurityGroupIds:    []string{sgID},
 			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
 			BlockDeviceMappings: blockDeviceMappings,
+			TagSpecifications:   resourceTagSpecifications(types.ResourceTypeInstance, metadata),
 		})
 		if err != nil {
 			return decodeAWSError(region, err)
 		}
 
 		instanceID = *runResult.Instances[0].InstanceId
-	}
-
-	// Add name to the created instance
-	_, err = svc.CreateTags(ctx, &ec2.CreateTagsInput{
-		Resources: []string{instanceID},
-		Tags: []types.Tag{
-			{
-				Key:   aws.String("Name"),
-				Value: aws.String(instanceName),
-			},
-			{
-				Key:   aws.String("Id"),
-				Value: aws.String(d.Id()),
-			},
-		},
-	})
-	if err != nil {
-		return decodeAWSError(region, err)
 	}
 
 	statusInput := ec2.DescribeInstancesInput{
@@ -420,4 +416,20 @@ func decodeAWSError(region string, err error) error {
 	}
 
 	return fmt.Errorf("Not able to decode: %s", err.Error())
+}
+
+func resourceTagSpecifications(resourceType types.ResourceType, tags map[string]string) []types.TagSpecification {
+	var tagStructs []types.Tag
+	for key, value := range tags {
+		tagStructs = append(tagStructs, types.Tag{
+			Key:   aws.String(key),
+			Value: aws.String(value),
+		})
+	}
+	return []types.TagSpecification{
+		{
+			ResourceType: resourceType,
+			Tags:         tagStructs,
+		},
+	}
 }
