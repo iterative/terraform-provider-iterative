@@ -39,7 +39,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		stringValue := value.(string)
 		metadata[key] = &stringValue
 	}
-	
+
 	image := d.Get("image").(string)
 	if image == "" {
 		image = "Canonical:UbuntuServer:18.04-LTS:latest"
@@ -79,7 +79,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		gpName,
 		nsgName,
 		network.SecurityGroup{
-			Tags: metadata,
+			Tags:     metadata,
 			Location: to.StringPtr(region),
 			SecurityGroupPropertiesFormat: &network.SecurityGroupPropertiesFormat{
 				SecurityRules: &[]network.SecurityRule{
@@ -113,7 +113,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		gpName,
 		ipName,
 		network.PublicIPAddress{
-			Tags: metadata,
+			Tags:     metadata,
 			Name:     to.StringPtr(ipName),
 			Location: to.StringPtr(region),
 			PublicIPAddressPropertiesFormat: &network.PublicIPAddressPropertiesFormat{
@@ -134,7 +134,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		gpName,
 		vnetName,
 		network.VirtualNetwork{
-			Tags: metadata,
+			Tags:     metadata,
 			Location: to.StringPtr(region),
 			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
 				AddressSpace: &network.AddressSpace{
@@ -172,7 +172,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	nicClient, _ := getNicClient(subscriptionID)
 	nicParams := network.Interface{
-		Tags: metadata,
+		Tags:     metadata,
 		Name:     to.StringPtr(nicName),
 		Location: to.StringPtr(region),
 		InterfacePropertiesFormat: &network.InterfacePropertiesFormat{
@@ -198,7 +198,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	vmClient, _ := getVMClient(subscriptionID)
 	vmSettings := compute.VirtualMachine{
-		Tags: metadata,
+		Tags:     metadata,
 		Location: to.StringPtr(region),
 		VirtualMachineProperties: &compute.VirtualMachineProperties{
 			HardwareProfile: &compute.HardwareProfile{
