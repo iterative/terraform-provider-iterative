@@ -75,7 +75,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				},
 			},
 		})
-		
+
 		if err != nil {
 			return decodeAWSError(region, err)
 		}
@@ -118,9 +118,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 
 		gpResult, err := svc.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
-			GroupName:         aws.String(securityGroup),
-			Description:       aws.String("Iterative security group"),
-			VpcId:             aws.String(vpcID),
+			GroupName:   aws.String(securityGroup),
+			Description: aws.String("Iterative security group"),
+			VpcId:       aws.String(vpcID),
 		})
 
 		if err == nil {
@@ -136,13 +136,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			}
 
 			svc.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
-				GroupId:           aws.String(*gpResult.GroupId),
-				IpPermissions:     ipPermissions,
+				GroupId:       aws.String(*gpResult.GroupId),
+				IpPermissions: ipPermissions,
 			})
 
 			svc.AuthorizeSecurityGroupEgress(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
-				GroupId:           aws.String(*gpResult.GroupId),
-				IpPermissions:     ipPermissions,
+				GroupId:       aws.String(*gpResult.GroupId),
+				IpPermissions: ipPermissions,
 			})
 		}
 
@@ -225,7 +225,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				SubnetId:            aws.String(subnetID),
 				BlockDeviceMappings: blockDeviceMappings,
 			},
-			InstanceCount:     aws.Int32(1),
+			InstanceCount: aws.Int32(1),
 		}
 
 		if spotPrice >= 0 {
