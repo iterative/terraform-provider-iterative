@@ -158,8 +158,8 @@ func resourceRunner() *schema.Resource {
 				ForceNew: true,
 				Optional: true,
 				Elem: &schema.Schema{
-				  Type: schema.TypeString,
-				},  
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
