@@ -127,8 +127,8 @@ func machineSchema() *map[string]*schema.Schema {
 			ForceNew: true,
 			Optional: true,
 			Elem: &schema.Schema{
-			  Type: schema.TypeString,
-			},  
+				Type: schema.TypeString,
+			},
 		},
 	}
 }
