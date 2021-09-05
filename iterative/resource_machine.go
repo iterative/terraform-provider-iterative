@@ -122,6 +122,14 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
+		"metadata": &schema.Schema{
+			Type:     schema.TypeMap,
+			ForceNew: true,
+			Optional: true,
+			Elem: &schema.Schema{
+			  Type: schema.TypeString,
+			},  
+		},
 	}
 }
 
