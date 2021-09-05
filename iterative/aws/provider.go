@@ -34,7 +34,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
-		"Id": d.Id(),
+		"Id":   d.Id(),
 	}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
 		metadata[key] = value.(string)
@@ -127,9 +127,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 
 		gpResult, err := svc.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
-			GroupName:   aws.String(securityGroup),
-			Description: aws.String("Iterative security group"),
-			VpcId:       aws.String(vpcID),
+			GroupName:         aws.String(securityGroup),
+			Description:       aws.String("Iterative security group"),
+			VpcId:             aws.String(vpcID),
 			TagSpecifications: resourceTagSpecifications("security-group", metadata),
 		})
 
@@ -146,14 +146,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			}
 
 			svc.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
-				GroupId:       aws.String(*gpResult.GroupId),
-				IpPermissions: ipPermissions,
+				GroupId:           aws.String(*gpResult.GroupId),
+				IpPermissions:     ipPermissions,
 				TagSpecifications: resourceTagSpecifications("security-group-ingress", metadata),
 			})
 
 			svc.AuthorizeSecurityGroupEgress(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
-				GroupId:       aws.String(*gpResult.GroupId),
-				IpPermissions: ipPermissions,
+				GroupId:           aws.String(*gpResult.GroupId),
+				IpPermissions:     ipPermissions,
 				TagSpecifications: resourceTagSpecifications("security-group-egress", metadata),
 			})
 		}
@@ -237,7 +237,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				SubnetId:            aws.String(subnetID),
 				BlockDeviceMappings: blockDeviceMappings,
 			},
-			InstanceCount: aws.Int32(1),
+			InstanceCount:     aws.Int32(1),
 			TagSpecifications: resourceTagSpecifications("spot-instance-request", metadata),
 		}
 
@@ -278,7 +278,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			SecurityGroupIds:    []string{sgID},
 			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
 			BlockDeviceMappings: blockDeviceMappings,
-			TagSpecifications: resourceTagSpecifications("instance", metadata),
+			TagSpecifications:   resourceTagSpecifications("instance", metadata),
 		})
 		if err != nil {
 			return decodeAWSError(region, err)
