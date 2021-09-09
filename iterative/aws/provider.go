@@ -332,6 +332,10 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	})
+	if err != nil {
+		return err
+	}
+	
 	if len(descResult.Reservations) > 0 && len(descResult.Reservations[0].Instances) > 0 {
 		instanceID := *descResult.Reservations[0].Instances[0].InstanceId
 		_, err = svc.TerminateInstances(&ec2.TerminateInstancesInput{
