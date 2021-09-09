@@ -1,11 +1,17 @@
-on: pull_request
+name: Test
+on:
+  push:
+  pull_request:
+  schedule:
+  - cron: '0 9 * * 1'  # M H d m w (Mondays at 9:00)
 jobs:
-  build:
+  test:
+    if: startsWith(github.ref, 'refs/tags') || github.event_name == 'pull_request' || github.event_name == 'schedule' || github.repository_owner != 'iterative'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-      - uses: actions/checkout@v2
-      - run: make build
-      - run: make test
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.16
+    - uses: actions/checkout@v2
+    - run: make build
+    - run: make test
