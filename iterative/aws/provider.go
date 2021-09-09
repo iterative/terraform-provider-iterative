@@ -257,8 +257,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			SpotInstanceRequestIds: []string{spotInstanceRequestID},
 		}, 10*time.Minute)
 		if err != nil {
+			_, cancelError := svc.CancelSpotInstanceRequests(ctx, &ec2.CancelSpotInstanceRequestsInput{
+				SpotInstanceRequestIds: []string{spotInstanceRequestID},
+			})
+			if cancelError != nil {
+				err = cancelError
+			}
 			return decodeAWSError(region, err)
 		}
+
 		resolvedSpotInstance, err := svc.DescribeSpotInstanceRequests(ctx, &ec2.DescribeSpotInstanceRequestsInput{
 			SpotInstanceRequestIds: []string{spotInstanceRequestID},
 		})
@@ -267,6 +274,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 
 		instanceID = *resolvedSpotInstance.SpotInstanceRequests[0].InstanceId
+
+		// Add tags to the created instance
+		_, err = svc.CreateTags(ctx, &ec2.CreateTagsInput{
+			Resources: []string{instanceID},
+			Tags:      resourceTagSpecifications(types.ResourceTypeInstance, metadata)[0].Tags,
+		})
+		if err != nil {
+			return decodeAWSError(region, err)
+		}
 	} else {
 		runResult, err := svc.RunInstances(ctx, &ec2.RunInstancesInput{
 			UserData:            aws.String(userData),
