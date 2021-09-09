@@ -153,6 +153,14 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
+			"metadata": &schema.Schema{
+				Type:     schema.TypeMap,
+				ForceNew: true,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
