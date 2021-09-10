@@ -67,6 +67,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		gpName,
 		resources.Group{
 			Location: to.StringPtr(region),
+			Tags:     metadata,
 		})
 	if err != nil {
 		return err
