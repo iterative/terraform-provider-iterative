@@ -10,10 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -34,21 +36,22 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		ami = "iterative-cml"
 	}
 
-	svc, err := awsClient(region)
+	config, err := awsClient(region)
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
+	svc := ec2.NewFromConfig(config)
 
 	// Image
-	imagesRes, err := svc.DescribeImages(&ec2.DescribeImagesInput{
-		Filters: []*ec2.Filter{
+	imagesRes, err := svc.DescribeImages(ctx, &ec2.DescribeImagesInput{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: []*string{aws.String(ami)},
+				Values: []string{ami},
 			},
 			{
 				Name:   aws.String("architecture"),
-				Values: []*string{aws.String("x86_64")},
+				Values: []string{"x86_64"},
 			},
 		},
 	})
@@ -56,19 +59,19 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	if len(imagesRes.Images) == 0 {
-		imagesRes, err = svc.DescribeImages(&ec2.DescribeImagesInput{
-			Filters: []*ec2.Filter{
+		imagesRes, err = svc.DescribeImages(ctx, &ec2.DescribeImagesInput{
+			Filters: []types.Filter{
 				{
 					Name:   aws.String("name"),
-					Values: []*string{aws.String("*ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*")},
+					Values: []string{"*ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*"},
 				},
 				{
 					Name:   aws.String("architecture"),
-					Values: []*string{aws.String("x86_64")},
+					Values: []string{"x86_64"},
 				},
 				{
 					Name:   aws.String("owner-id"),
-					Values: []*string{aws.String("099720109477")},
+					Values: []string{"099720109477"},
 				},
 			},
 		})
@@ -82,15 +85,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	sort.Slice(imagesRes.Images, func(i, j int) bool {
-		itime, _ := time.Parse(time.RFC3339, aws.StringValue(imagesRes.Images[i].CreationDate))
-		jtime, _ := time.Parse(time.RFC3339, aws.StringValue(imagesRes.Images[j].CreationDate))
+		itime, _ := time.Parse(time.RFC3339, aws.ToString(imagesRes.Images[i].CreationDate))
+		jtime, _ := time.Parse(time.RFC3339, aws.ToString(imagesRes.Images[j].CreationDate))
 		return itime.Unix() > jtime.Unix()
 	})
 
 	instanceAmi := *imagesRes.Images[0].ImageId
 
 	// key-pair
-	svc.ImportKeyPair(&ec2.ImportKeyPairInput{
+	svc.ImportKeyPair(ctx, &ec2.ImportKeyPairInput{
 		KeyName:           aws.String(pairName),
 		PublicKeyMaterial: []byte(keyPublic),
 	})
@@ -100,7 +103,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if len(securityGroup) == 0 {
 		securityGroup = "iterative"
 
-		vpcsDesc, _ := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
+		vpcsDesc, _ := svc.DescribeVpcs(ctx, &ec2.DescribeVpcsInput{})
 
 		if len(vpcsDesc.Vpcs) == 0 {
 			return errors.New("no VPCs found")
@@ -114,29 +117,30 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			}
 		}
 
-		gpResult, err := svc.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
+		gpResult, err := svc.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
 			GroupName:   aws.String(securityGroup),
 			Description: aws.String("Iterative security group"),
 			VpcId:       aws.String(vpcID),
 		})
 
 		if err == nil {
-			ipPermissions := []*ec2.IpPermission{
-				(&ec2.IpPermission{}).
-					SetIpProtocol("-1").
-					SetFromPort(-1).
-					SetToPort(-1).
-					SetIpRanges([]*ec2.IpRange{
+			ipPermissions := []types.IpPermission{
+				{
+					IpProtocol: aws.String("-1"),
+					FromPort:   aws.Int32(-1),
+					ToPort:     aws.Int32(-1),
+					IpRanges: []types.IpRange{
 						{CidrIp: aws.String("0.0.0.0/0")},
-					}),
+					},
+				},
 			}
 
-			svc.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
+			svc.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
 				GroupId:       aws.String(*gpResult.GroupId),
 				IpPermissions: ipPermissions,
 			})
 
-			svc.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
+			svc.AuthorizeSecurityGroupEgress(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
 				GroupId:       aws.String(*gpResult.GroupId),
 				IpPermissions: ipPermissions,
 			})
@@ -150,14 +154,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	sgDesc, err := svc.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
-		Filters: []*ec2.Filter{
+	sgDesc, err := svc.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []types.Filter{
 			{
 				Name: aws.String("group-name"),
-				Values: []*string{
-					aws.String(securityGroup),
-					aws.String(strings.Title(securityGroup)),
-					aws.String(strings.ToUpper(securityGroup))},
+				Values: []string{
+					securityGroup,
+					strings.Title(securityGroup),
+					strings.ToUpper(securityGroup)},
 			},
 		},
 	})
@@ -171,11 +175,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	subDesc, err := svc.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
-		Filters: []*ec2.Filter{
+	subDesc, err := svc.DescribeSubnets(ctx, &ec2.DescribeSubnetsInput{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("vpc-id"),
-				Values: []*string{aws.String(vpcID)},
+				Values: []string{vpcID},
 			},
 		},
 	})
@@ -196,14 +200,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
 	}
 
-	blockDeviceMappings := []*ec2.BlockDeviceMapping{
+	blockDeviceMappings := []types.BlockDeviceMapping{
 		{
 			DeviceName: aws.String("/dev/sda1"),
-			Ebs: &ec2.EbsBlockDevice{
+			Ebs: &types.EbsBlockDevice{
 				DeleteOnTermination: aws.Bool(true),
 				Encrypted:           aws.Bool(false),
-				VolumeSize:          aws.Int64(int64(hddSize)),
-				VolumeType:          aws.String("gp2"),
+				VolumeSize:          aws.Int32(int32(hddSize)),
+				VolumeType:          types.VolumeType("gp2"),
 			},
 		},
 	}
@@ -212,36 +216,38 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	var instanceID string
 	if spot {
 		requestSpotInstancesInput := &ec2.RequestSpotInstancesInput{
-			LaunchSpecification: &ec2.RequestSpotLaunchSpecification{
+			LaunchSpecification: &types.RequestSpotLaunchSpecification{
 				UserData:            aws.String(userData),
 				ImageId:             aws.String(instanceAmi),
 				KeyName:             aws.String(pairName),
-				InstanceType:        aws.String(instanceType),
-				SecurityGroupIds:    []*string{aws.String(sgID)},
+				InstanceType:        types.InstanceType(instanceType),
+				SecurityGroupIds:    []string{sgID},
 				SubnetId:            aws.String(subnetID),
 				BlockDeviceMappings: blockDeviceMappings,
 			},
-			InstanceCount: aws.Int64(1),
+			InstanceCount: aws.Int32(1),
 		}
 
 		if spotPrice >= 0 {
 			requestSpotInstancesInput.SpotPrice = aws.String(strconv.FormatFloat(spotPrice, 'f', 5, 64))
 		}
 
-		spotInstanceRequest, err := svc.RequestSpotInstancesWithContext(ctx, requestSpotInstancesInput)
+		spotInstanceRequest, err := svc.RequestSpotInstances(ctx, requestSpotInstancesInput)
 		if err != nil {
 			return decodeAWSError(region, err)
 		}
 
 		spotInstanceRequestID := *spotInstanceRequest.SpotInstanceRequests[0].SpotInstanceRequestId
-		err = svc.WaitUntilSpotInstanceRequestFulfilled(&ec2.DescribeSpotInstanceRequestsInput{
-			SpotInstanceRequestIds: []*string{aws.String(spotInstanceRequestID)},
-		})
+		// 10 minutes as per https://github.com/aws/aws-sdk-go/blob/23db5a4/service/ec2/waiters.go#L426-L459
+		spotInstanceRequestFulfilledWaiter := ec2.NewSpotInstanceRequestFulfilledWaiter(svc)
+		err = spotInstanceRequestFulfilledWaiter.Wait(ctx, &ec2.DescribeSpotInstanceRequestsInput{
+			SpotInstanceRequestIds: []string{spotInstanceRequestID},
+		}, 10*time.Minute)
 		if err != nil {
 			return decodeAWSError(region, err)
 		}
-		resolvedSpotInstance, err := svc.DescribeSpotInstanceRequests(&ec2.DescribeSpotInstanceRequestsInput{
-			SpotInstanceRequestIds: []*string{aws.String(spotInstanceRequestID)},
+		resolvedSpotInstance, err := svc.DescribeSpotInstanceRequests(ctx, &ec2.DescribeSpotInstanceRequestsInput{
+			SpotInstanceRequestIds: []string{spotInstanceRequestID},
 		})
 		if err != nil {
 			return decodeAWSError(region, err)
@@ -249,14 +255,14 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 		instanceID = *resolvedSpotInstance.SpotInstanceRequests[0].InstanceId
 	} else {
-		runResult, err := svc.RunInstancesWithContext(ctx, &ec2.RunInstancesInput{
+		runResult, err := svc.RunInstances(ctx, &ec2.RunInstancesInput{
 			UserData:            aws.String(userData),
 			ImageId:             aws.String(instanceAmi),
 			KeyName:             aws.String(pairName),
-			InstanceType:        aws.String(instanceType),
-			MinCount:            aws.Int64(1),
-			MaxCount:            aws.Int64(1),
-			SecurityGroupIds:    []*string{aws.String(sgID)},
+			InstanceType:        types.InstanceType(instanceType),
+			MinCount:            aws.Int32(1),
+			MaxCount:            aws.Int32(1),
+			SecurityGroupIds:    []string{sgID},
 			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
 			BlockDeviceMappings: blockDeviceMappings,
 		})
@@ -268,9 +274,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// Add name to the created instance
-	_, err = svc.CreateTags(&ec2.CreateTagsInput{
-		Resources: []*string{aws.String(instanceID)},
-		Tags: []*ec2.Tag{
+	_, err = svc.CreateTags(ctx, &ec2.CreateTagsInput{
+		Resources: []string{instanceID},
+		Tags: []types.Tag{
 			{
 				Key:   aws.String("Name"),
 				Value: aws.String(instanceName),
@@ -286,18 +292,22 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	statusInput := ec2.DescribeInstancesInput{
-		InstanceIds: []*string{aws.String(instanceID)},
-		Filters: []*ec2.Filter{
+		InstanceIds: []string{instanceID},
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("instance-state-name"),
-				Values: []*string{aws.String("running")},
+				Values: []string{"running"},
 			},
 		},
 	}
 
-	svc.WaitUntilInstanceExistsWithContext(ctx, &statusInput)
+	instanceExistsWaiter := ec2.NewInstanceExistsWaiter(svc)
+	err = instanceExistsWaiter.Wait(ctx, &statusInput, 10*time.Minute)
+	if err != nil {
+		return decodeAWSError(region, err)
+	}
 
-	descResult, err := svc.DescribeInstancesWithContext(ctx, &statusInput)
+	descResult, err := svc.DescribeInstances(ctx, &statusInput)
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
@@ -315,28 +325,29 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	id := aws.String(d.Id())
 	region := GetRegion(d.Get("region").(string))
 
-	svc, err := awsClient(region)
+	config, err := awsClient(region)
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
+	svc := ec2.NewFromConfig(config)
 
-	svc.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+	svc.DeleteKeyPair(ctx, &ec2.DeleteKeyPairInput{
 		KeyName: id,
 	})
 
-	descResult, err := svc.DescribeInstancesWithContext(ctx, &ec2.DescribeInstancesInput{
-		Filters: []*ec2.Filter{
+	descResult, err := svc.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("tag:Id"),
-				Values: []*string{id},
+				Values: []string{d.Id()},
 			},
 		},
 	})
 	if len(descResult.Reservations) > 0 && len(descResult.Reservations[0].Instances) > 0 {
 		instanceID := *descResult.Reservations[0].Instances[0].InstanceId
-		_, err = svc.TerminateInstances(&ec2.TerminateInstancesInput{
-			InstanceIds: []*string{
-				aws.String(instanceID),
+		_, err = svc.TerminateInstances(ctx, &ec2.TerminateInstancesInput{
+			InstanceIds: []string{
+				instanceID,
 			},
 		})
 		if err != nil {
@@ -347,14 +358,10 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func awsClient(region string) (*ec2.EC2, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region),
-		//Credentials: credentials.NewStaticCredentials(conf.AWS_ACCESS_KEY_ID, conf.AWS_SECRET_ACCESS_KEY, ""),
-	})
-
-	svc := ec2.New(sess)
-	return svc, err
+func awsClient(region string) (aws.Config, error) {
+	return config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+	)
 }
 
 //GetRegion maps region to real cloud regions
@@ -393,24 +400,22 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 var encodedFailureMessagePattern = regexp.MustCompile(`(?i)(.*) Encoded authorization failure message: ([\w-]+) ?( .*)?`)
 
 func decodeAWSError(region string, err error) error {
-	sess, erro := session.NewSession(&aws.Config{
-		Region: aws.String(region),
-	})
+	config, erro := awsClient(region)
 	if erro != nil {
-		return err
+		return erro
 	}
+	svc := sts.NewFromConfig(config)
 
 	groups := encodedFailureMessagePattern.FindStringSubmatch(err.Error())
 	if len(groups) > 2 {
-		svc := sts.New(sess)
-		result, erro := svc.DecodeAuthorizationMessage(&sts.DecodeAuthorizationMessageInput{
+		result, erro := svc.DecodeAuthorizationMessage(context.TODO(), &sts.DecodeAuthorizationMessageInput{
 			EncodedMessage: aws.String(groups[2]),
 		})
 		if erro != nil {
 			return err
 		}
 
-		msg := aws.StringValue(result.DecodedMessage)
+		msg := aws.ToString(result.DecodedMessage)
 		return fmt.Errorf("%s Authorization failure message: '%s'%s", groups[1], msg, groups[3])
 	}
 
