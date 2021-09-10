@@ -33,6 +33,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
 
+	instanceMetadata := map[string]string{}
+	for key, value := range d.Get("metadata").(map[string]interface{}) {
+		instanceMetadata[key] = value.(string)
+	}
+
 	instanceIsPreemptible := d.Get("spot").(bool)
 	if d.Get("spot_price").(float64) != -1 {
 		return errors.New("Google Cloud preemptible instances don't have a bidding price!")
@@ -220,6 +225,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			OnHostMaintenance: instanceHostMaintenanceBehavior,
 			Preemptible:       instanceIsPreemptible,
 		},
+		Labels: instanceMetadata,
 		Metadata: &gcp_compute.Metadata{
 			Items: []*gcp_compute.MetadataItems{
 				{
