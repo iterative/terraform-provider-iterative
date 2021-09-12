@@ -30,5 +30,5 @@ if [ ! -f "$FILE" ]; then
   sudo apt update && sudo apt install -y nvidia-docker2
   sudo systemctl restart docker
 
-  sudo echo 'OK' >"$FILE"
+  echo OK | sudo tee "$FILE"
 fi

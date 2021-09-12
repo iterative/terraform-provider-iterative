@@ -1,0 +1,31 @@
+on:
+  release:
+    types:
+      - published
+      - edited
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - uses: azure/login@v1.1
+        with:
+          creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}"}'
+      - uses: google-github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - run: |
+          packer build -force images/packer
+        env:
+          PKR_VAR_enable_aws: true
+          PKR_VAR_enable_azure: true
+          PKR_VAR_enable_gcp: true
+
+          # PKR_VAR_test: true
+          # PKR_VAR_image_name: iterative-cml-${{ github.sha }}
