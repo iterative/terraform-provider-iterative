@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "name": "source",
+      "builder_type": "amazon-ebs",
+      "build_time": 1632485736,
+      "files": null,
+      "artifact_id": "af-south-1:ami-06b9ebfe8546a9e8d,ap-east-1:ami-077486a1d1a5dcfda,ap-northeast-1:ami-0a7df1bf9d4c21ee1,ap-northeast-2:ami-0efd0f5ad9cc03c39,ap-northeast-3:ami-0c80510aa2fc8e8d3,ap-south-1:ami-0b66e01751653a278,ap-southeast-1:ami-0bbb38003ad2f2711,ap-southeast-2:ami-00d122413a098f6e6,ca-central-1:ami-09e4357d3ff7c46e0,eu-central-1:ami-0fadc3a69fac6c8af,eu-north-1:ami-0b5053067c58d62a6,eu-south-1:ami-0a50c82e6b1ca5276,eu-west-1:ami-093456aa9499353b6,eu-west-2:ami-084a10a4dc1b1c0f9,eu-west-3:ami-09b97844e106f4c6d,me-south-1:ami-095173d531e5cc74e,sa-east-1:ami-04521374206994a9a,us-east-1:ami-07c8876c8aa2814d2,us-east-2:ami-0a4d60b884ff3da6d,us-west-1:ami-0a0234c921109a070,us-west-2:ami-084e6bce235df18b1",
+      "packer_run_uuid": "617453b3-448e-a902-c0c9-1b4f68989452",
+      "custom_data": null
+    }
+  ],
+  "last_run_uuid": "617453b3-448e-a902-c0c9-1b4f68989452"
+}
