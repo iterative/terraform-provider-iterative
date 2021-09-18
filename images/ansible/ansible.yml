@@ -4,14 +4,14 @@
     state: absent
 - name: ···
   service:
-    name:    apt-daily-upgrade
+    name: apt-daily-upgrade
     enabled: no
-    state:   stopped
+    state: stopped
 - name: ···
   apt_key:
     url:
       - https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-      - https://download.docker.com/linux/ubuntu/gpg 
+      - https://download.docker.com/linux/ubuntu/gpg
       - https://apt.releases.hashicorp.com/gpg
     state: present
 - name: ···
@@ -19,8 +19,8 @@
     repo:
       - deb https://deb.nodesource.com/node_12.x {{ ansible_distribution_release }} main
       - deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-      - deb https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main 
-      - 'ppa:git-core/ppa'    
+      - deb https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+      - "ppa:git-core/ppa"
     update_cache: yes
 - name: ···
   apt:
