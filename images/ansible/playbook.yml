@@ -3,7 +3,6 @@
   hosts: default
   become: true
   tasks:
-
     - name: Update APT packages
       become: true
       apt:
@@ -19,15 +18,15 @@
         name: apt-daily-upgrade
         enabled: no
         state: stopped
-        
+
     - name: Install build-essential
       apt:
         name: build-essential
         state: present
-    
+
     - name: Add Git core PPA
       apt_repository:
-        repo: 'ppa:git-core/ppa'
+        repo: "ppa:git-core/ppa"
 
     - name: Install Git
       apt:
