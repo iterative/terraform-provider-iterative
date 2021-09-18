@@ -1,7 +1,7 @@
 variables {
   azure_resource_group  = "cml-packer-resource-group"
   azure_storage_account = "iterative"
-  azure_storage_region = "eastus" # see [3]
+  azure_storage_region  = "eastus" # see [3]
 }
 
 locals {
