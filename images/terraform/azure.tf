@@ -21,7 +21,7 @@ resource "azurerm_storage_account" "account" {
   name                     = var.azure_storage_account
   resource_group_name      = azurerm_resource_group.group.name
   location                 = azurerm_resource_group.group.location
-  allow_blob_public_access = true # see [1] 
+  allow_blob_public_access = true # see [1]
   account_tier             = "Standard"
   account_replication_type = "GRS"
   tags                     = local.tags
