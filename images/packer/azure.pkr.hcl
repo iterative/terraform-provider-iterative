@@ -5,8 +5,8 @@ variables {
 }
 
 variables {
-  azure_resource_group = "cml-packer-resource-group"
-  azure_storage_account     = "iterative"
+  azure_resource_group  = "cml-packer-resource-group"
+  azure_storage_account = "iterative"
 }
 
 variables {
@@ -48,6 +48,3 @@ source "azure-arm" "source" {
 
   azure_tags = local.tags
 }
-
-# https://github.com/hashicorp/packer/issues/9647
-# https://www.spectrocloud.com/blog/custom-vm-images-on-azure/
