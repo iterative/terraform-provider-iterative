@@ -44,3 +44,5 @@ source "googlecompute" "source" {
 
   project_id = var.gcp_project
 }
+
+# https://cloud.google.com/compute/docs/images/managing-access-custom-images#share-images-publicly

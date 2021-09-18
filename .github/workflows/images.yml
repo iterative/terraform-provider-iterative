@@ -14,7 +14,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - uses: azure/login@v1.1
         with:
-          creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}"}'
+          creds: toJSON({"clientId": secrets.AZURE_CLIENT_ID, "clientSecret": secrets.AZURE_CLIENT_SECRET, "subscriptionId": secrets.AZURE_SUBSCRIPTION_ID})
       - uses: google-github-actions/setup-gcloud@master
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -22,10 +22,3 @@ jobs:
           export_default_credentials: true
       - run: |
           packer build -force images/packer
-        env:
-          PKR_VAR_enable_aws: true
-          PKR_VAR_enable_azure: true
-          PKR_VAR_enable_gcp: true
-
-          # PKR_VAR_test: true
-          # PKR_VAR_image_name: iterative-cml-${{ github.sha }}

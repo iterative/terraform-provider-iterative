@@ -21,24 +21,37 @@ variable "test" {
 }
 
 variables {
-  enable_aws   = false
-  enable_azure = false
-  enable_gcp   = false
-}
-
-variables {
   image_name        = "iterative-cml"
   image_description = "CML (Continuous Machine Learning) Ubuntu 18.04"
 }
 
+locals {
+  gcp_publish_script = <<-END
+    jq --raw-output '.builds | .[].artifact_id' | while read image; do
+      gcloud compute images add-iam-policy-binding "$image" \
+        --member='allAuthenticatedUsers' \
+        --role='roles/compute.imageUser'
+    done
+  END
+}
+
 build {
-  sources = concat([
-    var.enable_aws ? ["source.amazon-ebs.source"] : [],
-    var.enable_azure ? ["source.azure-arm.source"] : [],
-    var.enable_gcp ? ["sources.googlecompute.source"] : []
-  ])
+  sources = [
+    "source.amazon-ebs.source",
+    "source.azure-arm.source",
+    "sources.googlecompute.source"
+  ]
 
   provisioner "shell" {
-    script = "${dirname(path.module)}/../provisioner/setup.sh"
+    script = "${path.root}/../provisioner/setup.sh"
+  }
+
+  post-processor "manifest" {
+    output = "manifest.json"
+    strip_path = true
+  }
+
+  post-processor "shell-local" {
+    inline = [local.gcp_publish_script]
   }
 }
