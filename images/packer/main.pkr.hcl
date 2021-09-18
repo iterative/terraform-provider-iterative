@@ -54,7 +54,7 @@ build {
     playbook_file = "${path.root}/../ansible/playbook.yml"
     galaxy_file   = "${path.root}/../ansible/requirements.yml"
   }
-  
+
   post-processor "manifest" {
     output = "manifest.json"
     strip_path = true
