@@ -6,7 +6,9 @@ variables {
 
 variables {
   aws_role_session_name = "cml-packer-session"
-  aws_role_arn          = "arn:aws:iam::921906903364:role/cml-packer"
+  aws_role_arn          = "arn:aws:iam::260760892802:role/cml-packer"
+  aws_security_group_id = "sg-0b7df7d9f902ca7ec"
+  aws_subnet_id         = "subnet-09fca08419c2f0575"
 }
 
 locals {
@@ -66,8 +68,11 @@ source "amazon-ebs" "source" {
   region        = var.aws_build_region
   instance_type = var.aws_build_instance
 
-  source_ami   = data.amazon-ami.ubuntu.id
-  ssh_username = "ubuntu"
+  source_ami    = data.amazon-ami.ubuntu.id
+  ssh_username  = "ubuntu"
+
+  security_group_id = var.aws_security_group_id
+  subnet_id         = var.aws_subnet_id
 
   force_delete_snapshot = true
   force_deregister      = true
@@ -75,7 +80,7 @@ source "amazon-ebs" "source" {
   tags            = local.tags
   run_tags        = local.tags
   run_volume_tags = local.tags
-
+  
   assume_role {
     role_arn     = var.aws_role_arn
     session_name = var.aws_role_session_name

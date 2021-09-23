@@ -13,7 +13,7 @@
         name: unattended-upgrades
         state: absent
 
-    - name: Disable unattended upgrades
+    - name: Disable daily upgrade service
       service:
         name: apt-daily-upgrade
         enabled: no

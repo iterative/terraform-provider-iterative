@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=2.76.0"
     }
+    google = {
+      source  = "hashicorp/google"
+      version = "=3.84.0"
+    }
   }
 }
 
@@ -14,4 +18,10 @@ provider "azurerm" {
   #tenant_id = env("AZURE_TENANT_ID")
 
   features {}
+}
+
+provider "google-beta" {
+  credentials = "${file("account.json")}"
+  project     = "my-project-id"
+  region      = "us-central1"
 }
