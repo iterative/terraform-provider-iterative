@@ -302,21 +302,19 @@ export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTI
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
+
 pip install virtualenv;
 {{- if eq .dvc_ver "latest"}}
 pip install dvc;
 {{else}}
 pip install dvc=={{.dvc_ver}};
 {{- end}}
-
 git clone {{.repo}} repo;
 cd repo;
 virtualenv -p python .env;
 source .env/bin/activate;
 pip install -r requirements.txt;
 dvc exp run;
-
-
 {{- if not .container}}
 EOF
 sudo chmod +x /usr/bin/dvc_run.sh
@@ -337,13 +335,13 @@ EOF'
 sudo systemctl daemon-reload
 sudo systemctl enable dvc-run.service --now
 {{- end}}
-
 {{- end}}
 `)
 	var customDataBuffer bytes.Buffer
 	err = tmpl.Execute(&customDataBuffer, data)
 
 	if err == nil {
+		fmt.Println(">>>>>>>>>>", customDataBuffer.String())
 		script = customDataBuffer.String()
 	}
 

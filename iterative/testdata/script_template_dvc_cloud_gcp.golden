@@ -1,0 +1,29 @@
+#!/bin/sh
+sudo tee /usr/bin/dvc_run.sh << 'EOF'
+#!/bin/sh
+export GOOGLE_APPLICATION_CREDENTIALS_DATA='7 value with "quotes" and spaces'
+
+pip install virtualenv;
+pip install dvc==13 value with "quotes" and spaces;
+git clone 14 value with "quotes" and spaces repo;
+cd repo;
+virtualenv -p python .env;
+source .env/bin/activate;
+pip install -r requirements.txt;
+dvc exp run;
+EOF
+sudo chmod +x /usr/bin/dvc_run.sh
+
+sudo bash -c 'cat << EOF > /etc/systemd/system/dvc-run.service
+[Unit]
+  After=default.target
+
+[Service]
+  Type=simple
+  ExecStart=/usr/bin/dvc_run.sh
+
+[Install]
+  WantedBy=default.target
+EOF'
+sudo systemctl daemon-reload
+sudo systemctl enable dvc-run.service --now

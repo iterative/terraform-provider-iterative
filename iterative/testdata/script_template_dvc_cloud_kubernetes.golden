@@ -1,0 +1,11 @@
+#!/bin/sh
+export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
+
+pip install virtualenv;
+pip install dvc==13 value with "quotes" and spaces;
+git clone 14 value with "quotes" and spaces repo;
+cd repo;
+virtualenv -p python .env;
+source .env/bin/activate;
+pip install -r requirements.txt;
+dvc exp run;
