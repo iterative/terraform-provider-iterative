@@ -1,6 +1,7 @@
 #!/bin/sh
 sudo tee /usr/bin/dvc_run.sh << 'EOF'
 #!/bin/sh
+sudo apt-get install -y python3-pip;
 export AWS_SECRET_ACCESS_KEY='0 value with "quotes" and spaces'
 export AWS_ACCESS_KEY_ID='1 value with "quotes" and spaces'
 export AWS_SESSION_TOKEN='2 value with "quotes" and spaces'

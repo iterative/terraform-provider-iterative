@@ -281,6 +281,7 @@ func renderDVCScript(data map[string]interface{}) (string, error) {
 {{- if not .container}}
 sudo tee /usr/bin/dvc_run.sh << 'EOF'
 #!/bin/sh
+sudo apt-get install -y python3-pip;
 {{- end}}
 
 {{- if .cloud}}
@@ -341,7 +342,6 @@ sudo systemctl enable dvc-run.service --now
 	err = tmpl.Execute(&customDataBuffer, data)
 
 	if err == nil {
-		fmt.Println(">>>>>>>>>>", customDataBuffer.String())
 		script = customDataBuffer.String()
 	}
 
