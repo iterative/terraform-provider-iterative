@@ -1,18 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 sudo tee /usr/bin/dvc_run.sh << 'EOF'
-#!/bin/sh
-sudo apt-get install -y python3-pip;
+#!/bin/bash
+sudo apt-get update > /dev/null 2>&1;
+sudo apt-get install -y python3-pip python3-venv > /dev/null 2>&1;
 export AWS_SECRET_ACCESS_KEY='0 value with "quotes" and spaces'
 export AWS_ACCESS_KEY_ID='1 value with "quotes" and spaces'
 export AWS_SESSION_TOKEN='2 value with "quotes" and spaces'
 
-pip install virtualenv;
-pip install dvc==13 value with "quotes" and spaces;
-git clone 14 value with "quotes" and spaces repo;
+pip3 install -U pip > /dev/null 2>&1;
+pip install virtualenv > /dev/null 2>&1;
+pip install dvc==13 value with "quotes" and spaces > /dev/null 2>&1;
+git clone 14 value with "quotes" and spaces repo > /dev/null 2>&1;
 cd repo;
-virtualenv -p python .env;
-source .env/bin/activate;
-pip install -r requirements.txt;
+virtualenv -p python3 .env > /dev/null 2>&1;
+source .env/bin/activate > /dev/null 2>&1;
+pip install -r src/requirements.txt;
+dvc pull;
 dvc exp run;
 EOF
 sudo chmod +x /usr/bin/dvc_run.sh

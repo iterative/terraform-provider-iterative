@@ -273,16 +273,16 @@ func renderDVCScript(data map[string]interface{}) (string, error) {
 	}
 
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
-		`#!/bin/sh
+		`#!/bin/bash
 {{- if .runner_startup_script}}
 {{.runner_startup_script}}
 {{- end}}
 
 {{- if not .container}}
 sudo tee /usr/bin/dvc_run.sh << 'EOF'
-#!/bin/sh
-sudo apt-get update;
-sudo apt-get install -y python3-pip3;
+#!/bin/bash
+sudo apt-get update > /dev/null 2>&1;
+sudo apt-get install -y python3-pip python3-venv > /dev/null 2>&1;
 {{- end}}
 
 {{- if .cloud}}
@@ -305,17 +305,19 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
 
-pip3 install virtualenv;
+pip3 install -U pip > /dev/null 2>&1;
+pip install virtualenv > /dev/null 2>&1;
 {{- if eq .dvc_ver "latest"}}
-pip3 install dvc;
+pip install dvc > /dev/null 2>&1;
 {{else}}
-pip3 install dvc=={{.dvc_ver}};
+pip install dvc=={{.dvc_ver}} > /dev/null 2>&1;
 {{- end}}
-git clone {{.repo}} repo;
+git clone {{.repo}} repo > /dev/null 2>&1;
 cd repo;
-virtualenv -p python .env;
-source .env/bin/activate;
-pip3 install -r requirements.txt;
+virtualenv -p python3 .env > /dev/null 2>&1;
+source .env/bin/activate > /dev/null 2>&1;
+pip install -r src/requirements.txt;
+dvc pull;
 dvc exp run;
 {{- if not .container}}
 EOF
