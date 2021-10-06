@@ -37,7 +37,7 @@ func resourceDVCRun() *schema.Resource {
 			},
 			"dvc_ver": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 				Default:  "latest",
 			},
