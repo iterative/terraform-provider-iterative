@@ -281,7 +281,8 @@ func renderDVCScript(data map[string]interface{}) (string, error) {
 {{- if not .container}}
 sudo tee /usr/bin/dvc_run.sh << 'EOF'
 #!/bin/sh
-sudo apt-get install -y python3-pip;
+sudo apt-get update;
+sudo apt-get install -y python3-pip3;
 {{- end}}
 
 {{- if .cloud}}
@@ -304,17 +305,17 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
 
-pip install virtualenv;
+pip3 install virtualenv;
 {{- if eq .dvc_ver "latest"}}
-pip install dvc;
+pip3 install dvc;
 {{else}}
-pip install dvc=={{.dvc_ver}};
+pip3 install dvc=={{.dvc_ver}};
 {{- end}}
 git clone {{.repo}} repo;
 cd repo;
 virtualenv -p python .env;
 source .env/bin/activate;
-pip install -r requirements.txt;
+pip3 install -r requirements.txt;
 dvc exp run;
 {{- if not .container}}
 EOF
