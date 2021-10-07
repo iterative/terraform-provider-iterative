@@ -270,7 +270,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceZone := getRegion(d.Get("region").(string))
-	instanceName := d.Id()
+	instanceName := d.Get("name").(string)
 
 	service.Instances.Delete(project, instanceZone, instanceName).Do()
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
