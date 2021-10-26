@@ -31,7 +31,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	securityGroup := d.Get("aws_security_group").(string)
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
-	instanceProfile := d.Get("").(string)
+	instanceProfile := d.Get("instance_permission_set").(string)
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
