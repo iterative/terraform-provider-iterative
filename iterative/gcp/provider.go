@@ -32,6 +32,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
+	instanceServiceAccount := d.Get("instance_permission_set").(string)
 
 	instanceMetadata := map[string]string{}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
@@ -194,6 +195,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceDefinition := &gcp_compute.Instance{
 		Name:        instanceName,
 		MachineType: instanceMachineType.SelfLink,
+		ServiceAccounts: []*gcp_compute.ServiceAccount{
+			{
+				Email: instanceServiceAccount,
+			},
+		},
 		Disks: []*gcp_compute.AttachedDisk{
 			{
 				Boot:       true,
