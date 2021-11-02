@@ -31,6 +31,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	securityGroup := d.Get("aws_security_group").(string)
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
+	instanceProfile := d.Get("instance_permission_set").(string)
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -229,10 +230,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if spot {
 		requestSpotInstancesInput := &ec2.RequestSpotInstancesInput{
 			LaunchSpecification: &types.RequestSpotLaunchSpecification{
-				UserData:            aws.String(userData),
-				ImageId:             aws.String(instanceAmi),
-				KeyName:             aws.String(pairName),
-				InstanceType:        types.InstanceType(instanceType),
+				UserData:     aws.String(userData),
+				ImageId:      aws.String(instanceAmi),
+				KeyName:      aws.String(pairName),
+				InstanceType: types.InstanceType(instanceType),
+				IamInstanceProfile: &types.IamInstanceProfileSpecification{
+					Arn: aws.String(instanceProfile),
+				},
 				SecurityGroupIds:    []string{sgID},
 				SubnetId:            aws.String(subnetID),
 				BlockDeviceMappings: blockDeviceMappings,
@@ -285,10 +289,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	} else {
 		runResult, err := svc.RunInstances(ctx, &ec2.RunInstancesInput{
-			UserData:            aws.String(userData),
-			ImageId:             aws.String(instanceAmi),
-			KeyName:             aws.String(pairName),
-			InstanceType:        types.InstanceType(instanceType),
+			UserData:     aws.String(userData),
+			ImageId:      aws.String(instanceAmi),
+			KeyName:      aws.String(pairName),
+			InstanceType: types.InstanceType(instanceType),
+			IamInstanceProfile: &types.IamInstanceProfileSpecification{
+				Arn: aws.String(instanceProfile),
+			},
 			MinCount:            aws.Int32(1),
 			MaxCount:            aws.Int32(1),
 			SecurityGroupIds:    []string{sgID},
