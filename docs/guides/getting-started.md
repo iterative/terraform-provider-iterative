@@ -1,5 +1,5 @@
 ---
-page_title: "Getting Started"
+page_title: Getting Started
 ---
 
 # Getting Started
@@ -10,9 +10,9 @@ See [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli#ins
 
 ## Declaring a Task
 
-On an empty directory:
+In an empty directory:
 
-1. Create a directory named `directory` to save the task results.
+1. Create a directory named `results` to save the task `script`'s results.
 2. Create a file named `main.tf` with the following contents:
 
 ```hcl
@@ -30,7 +30,7 @@ resource "iterative_task" "example" {
   name  = "example"
   cloud = "aws" # or any of: gcp, az, k8s
 
-  directory = "${path.root}/directory"
+  directory = "${path.root}/results"
 
   script = <<-END
     #!/bin/bash
@@ -47,10 +47,10 @@ $ terraform init
 
 This command will:
 
-1. Download and install this provider.
-2. Initialize Terraform on the current directory.
+1. Download and install the Iterative Provider.
+2. Initialize Terraform in the current directory.
 
-~> **Note** None of the subsequent commands will work without setting first some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
+~> **Note** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ## Launching Tasks
 
@@ -62,8 +62,8 @@ $ terraform apply
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified `directory` to the cloud.
-3. Launch the task.
+2. Upload the specified results `directory` to the cloud.
+3. Launch the task `script`.
 
 ## Viewing Task Statuses
 
@@ -87,9 +87,9 @@ terraform destroy
 
 This command will:
 
-1. Download the specified `directory` from the cloud.
+1. Download the specified results `directory` from the cloud.
 2. Delete all the created cloud resources.
 
 ## Viewing Task Results
 
-The specified `directory` should contain a file named `greeting.txt` with the text `Hello, World!` inside.
+In the example above, the specified results `directory` should contain a file named `greeting.txt` containing the text `Hello, World!`

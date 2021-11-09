@@ -53,26 +53,26 @@ In addition to all arguments above, the following attributes are exported:
 
 ~> **Note** Status and events don't produce a stable output between cloud providers and are intended for human consumption only.
 
-## Machine Sizes
+## Machine Type
 
 ### Generic
 
-This provider offers some common machine sizes that are roughly the same for all
-the supported cloud providers.
+The Iterative Provider offers some common machine sizes which are roughly the same
+for all supported clouds.
 
-#### Without GPU
+#### No GPU
 
 - `m` - Medium, with roughly 8 CPU cores and 32 GB of RAM.
 - `l` - Large, with roughly 32 CPU cores and 128 GB of RAM.
 - `xl` - Extra large, with roughly 64 CPU cores and 256 GB of RAM.
 
-#### With NVIDIA Tesla K80 GPU
+#### NVIDIA Tesla K80 GPU
 
 - `m+k80` - Medium, with roughly 8 CPU cores, 32 GB of RAM and 1 GPU device.
 - `l+k80` - Large, with roughly 32 CPU cores, 128 GB of RAM and 8 GPU devices.
 - `xl+k80` - Extra large, with roughly 64 CPU cores, 512 GB of RAM and 16 GPU devices.
 
-#### With NVIDIA Tesla V100 GPU
+#### NVIDIA Tesla V100 GPU
 
 - `m+v100` - Medium, with roughly 8 CPU cores, 32 GB of RAM and 1 GPU device.
 - `l+v100` - Large, with roughly 32 CPU cores, 128 GB of RAM and 8 GPU devices.
@@ -80,7 +80,7 @@ the supported cloud providers.
 
 ### Cloud-specific
 
-In addition to generic sizes, it's possible to specify any machine type
+In addition to generic types, it's possible to specify any machine type
 supported by the underlying cloud provider.
 
 #### Amazon Web Services

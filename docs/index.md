@@ -1,6 +1,6 @@
 # Iterative Provider
 
-Use the Iterative provider to launch resource–intensive tasks in popular cloud
+Use the Iterative Provider to launch resource-intensive tasks in popular cloud
 providers with just a simple Terraform file.
 
 ## Example Usage
@@ -39,22 +39,20 @@ $ export GOOGLE_APPLICATION_CREDENTIALS_DATA="$(cat service_account.json)"
 $ terraform apply
 ```
 
-### Environment Variables
-
-#### Amazon Web Services
+### Amazon Web Services
 
 - `AWS_ACCESS_KEY_ID` - Access key identifier.
 - `AWS_SECRET_ACCESS_KEY` - Secret access key.
 - `AWS_SESSION_TOKEN` - (Optional) Session token.
 
-#### Google Cloud Platform
+### Google Cloud Platform
 
 - `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
 
 -> **Note** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the
 **contents** of the service account JSON key file.
 
-#### Microsoft Azure
+### Microsoft Azure
 
 - `AZURE_CLIENT_ID` - Client identifier.
 - `AZURE_CLIENT_SECRET` - Client secret.
