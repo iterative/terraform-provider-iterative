@@ -11,6 +11,7 @@ See [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli#ins
 ## Declaring a Task
 
 On an empty directory:
+
 1. Create a directory named `directory` to save the task results.
 2. Create a file named `main.tf` with the following contents:
 
@@ -45,6 +46,7 @@ $ terraform init
 ```
 
 This command will:
+
 1. Download and install this provider.
 2. Initialize Terraform on the current directory.
 
@@ -58,6 +60,7 @@ $ terraform apply
 ```
 
 This command will:
+
 1. Create all the required cloud resources.
 2. Upload the specified `directory` to the cloud.
 3. Launch the task.
@@ -72,6 +75,7 @@ resource "iterative_task" "example" {
 ```
 
 This command will:
+
 1. Query the task status from the cloud.
 2. Display the task status.
 
@@ -82,6 +86,7 @@ terraform destroy
 ```
 
 This command will:
+
 1. Download the specified `directory` from the cloud.
 2. Delete all the created cloud resources.
 
