@@ -85,31 +85,23 @@ supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
-- `{machine}` - Any cloud-specific machine type, like `p3.16xlarge`.
-
-See https://aws.amazon.com/ec2/instance-explorer for more information.
+- `{machine}` - Any [EC2 instance type](https://aws.amazon.com/ec2/instance-explorer) (e.g. `g4dn.xlarge`).
 
 #### Google Cloud Platform
 
-- `{machine}` - Any cloud-specific machine type, like `n2-custom-64-262144`.
-- `{machine}+{accelerator}*{count}` - Any machine and accelerator combination, like `custom-8-53248+nvidia-tesla-k80*1`.
-
-See https://cloud.google.com/compute/docs/machine-types for more information.
+- `{machine}` - Any [GCP machine type](https://cloud.google.com/compute/docs/machine-types) (e.g. `n2-custom-64-262144`).
+- `{machine}+{accelerator}*{count}` - Any machine and accelerator combination (e.g. `custom-8-53248+nvidia-tesla-k80*1`).
 
 #### Microsoft Azure
 
-- `{machine}` - Any cloud-specific machine type, like `Standard_F8s_v2`.
+- `{machine}` - Any [Azure VM](https://azure.microsoft.com/en-us/pricing/vm-selector) (e.g. `Standard_F8s_v2`).
 
-See https://azure.microsoft.com/en-us/pricing/vm-selector for more information.
+#### Kubernetes
 
-### Kubernetes
+- `{cpu}-{memory}` - Any [CPU & memory combination](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers) (e.g. `64-256000`).
+- `{cpu}-{memory}+{accelerator}*{count}` - Any CPU, memory, & [accelerator](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus) combination (e.g. `64-256000+nvidia-tesla-k80*1`).
 
-- `{cpu}-{memory}` - Any CPU + memory combination, like `64-256000`.
-- `{cpu}-{memory}+{accelerator}*{count}` - Any CPU + memory + accelerator combination, like `64-256000+nvidia-tesla-k80*1`.
-
-See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers and https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus for more information.
-
--> **Note** Specified resource amounts will be considered as **limits** and not as **requests**.
+-> **Note** Specified resource amounts are considered **limits** (rather than **requests**).
 
 -> **Note** `{accelerator}` will be transformed into a node selector requesting `accelerator={accelerator}` and `{count}` will be configured as the **limits** count for `kubernetes.io/gpu`.
 
@@ -117,8 +109,8 @@ See https://kubernetes.io/docs/concepts/configuration/manage-resources-container
 
 ### Generic
 
-This provider offers some common machine images that are roughly the same for
-all the supported cloud providers.
+The Iterative Provider offers some common machine images which are roughly the same
+for all supported clouds.
 
 - `ubuntu` - Official Ubuntu LTS image, currently 20.04.
 
@@ -134,7 +126,7 @@ supported by the underlying cloud provider.
 Fields:
 
 - `{user}` - User name; e.g. `ubuntu`.
-- `{architecture}` — Image architecture; e.g. `x86_64` or `*` for any.
+- `{architecture}` - Image architecture; e.g. `x86_64` or `*` for any.
 - `{owner}` - Account number of the image owner; e.g. `099720109477` or `*` for any.
 - `{name}` - Name of the image; e.g. `*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*`.
 
@@ -148,7 +140,7 @@ Fields:
 
 - `{user}` - User name; e.g. `ubuntu`.
 - `{project}` - Project name; e.g. `ubuntu-os-cloud`.
-- `{family}` — Image architecture; e.g. `ubuntu-2004-lts`.
+- `{family}` - Image architecture; e.g. `ubuntu-2004-lts`.
 
 See https://cloud.google.com/compute/docs/images/os-details for more information.
 
@@ -174,8 +166,8 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 ### Generic
 
-This provider offers some common cloud regions that are roughly the same for all
-the supported cloud providers.
+The Iterative Provider offers some common cloud regions which are roughly the same
+for all supported clouds.
 
 - `us-east` - United States of America, East.
 - `us-west` - United States of America, West.
@@ -184,38 +176,32 @@ the supported cloud providers.
 
 ### Cloud-specific
 
-In addition to generic sizes, it's possible to specify any cloud region
+In addition to generic regions, it's possible to specify any cloud region
 supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
-- `{region}` - Any cloud-specific region, like `us-east-1`.
-
-See https://aws.amazon.com/about-aws/global-infrastructure/regions_az for more information.
+- `{region}` - Any [AWS region](https://aws.amazon.com/about-aws/global-infrastructure/regions_az) (e.g. `us-east-1`).
 
 #### Google Cloud Platform
 
-- `{zone}` - Any cloud-specific **zone** — not region — like `us-east1-a`.
-
-See https://cloud.google.com/compute/docs/regions-zones for more information.
+- `{zone}` - Any [GCP **zone**](https://cloud.google.com/compute/docs/regions-zones) (not region) (e.g. `us-east1-a`).
 
 #### Microsoft Azure
 
-- `{region}` - Any cloud-specific region, like `eastus`.
-
-See https://azure.microsoft.com/en-us/global-infrastructure/geographies for more information.
+- `{region}` - Any [Azure region](https://azure.microsoft.com/en-us/global-infrastructure/geographies) (e.g. `eastus`).
 
 ### Kubernetes
 
-The `region` attribute will be ignored.
+The `region` attribute is ignored.
 
-## Quirks
+## Known Issues
 
 ### Kubernetes
 
 #### Region attribute
 
-Setting the `region` attribute is considered undefined behavior.
+Setting the `region` attribute results in undefined behaviour.
 
 #### Directory string format
 
