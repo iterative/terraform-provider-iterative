@@ -43,23 +43,23 @@ $ terraform apply
 
 #### Amazon Web Services
 
-* `AWS_ACCESS_KEY_ID` - Access key identifier.
-* `AWS_SECRET_ACCESS_KEY` - Secret access key.
-* `AWS_SESSION_TOKEN` - (Optional) Session token.
+- `AWS_ACCESS_KEY_ID` - Access key identifier.
+- `AWS_SECRET_ACCESS_KEY` - Secret access key.
+- `AWS_SESSION_TOKEN` - (Optional) Session token.
 
 #### Google Cloud Platform
 
-* `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
+- `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
 
 -> **Note** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the
 **contents** of the service account JSON key file.
 
 #### Microsoft Azure
 
-* `AZURE_CLIENT_ID` - Client identifier.
-* `AZURE_CLIENT_SECRET` - Client secret.
-* `AZURE_SUBSCRIPTION_ID` - Subscription identifier.
-* `AZURE_TENANT_ID` - Tenant identifier.
+- `AZURE_CLIENT_ID` - Client identifier.
+- `AZURE_CLIENT_SECRET` - Client secret.
+- `AZURE_SUBSCRIPTION_ID` - Subscription identifier.
+- `AZURE_TENANT_ID` - Tenant identifier.
 
 ## Argument Reference
 
