@@ -292,7 +292,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	groupsClient.Delete(context.Background(), d.Id())
+	groupsClient.Delete(context.Background(), d.Id(), "")
 	return nil
 }
 

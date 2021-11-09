@@ -1,16 +1,55 @@
 package main
 
 import (
-	"terraform-provider-iterative/iterative"
+	"context"
+	"log"
+	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+
+	"terraform-provider-iterative/iterative"
+	"terraform-provider-iterative/task"
+	"terraform-provider-iterative/task/universal"
 )
 
 func main() {
+	if identifier := os.Getenv("TPI_TASK_IDENTIFIER"); identifier != "" {
+		provider := os.Getenv("TPI_TASK_CLOUD_PROVIDER")
+		region := os.Getenv("TPI_TASK_CLOUD_REGION")
+		log.Printf("[INFO] Stopping task %s...\n", identifier)
+		if err := stop(context.TODO(), provider, region, identifier); err != nil {
+			log.Printf("[INFO] Failed to stop task: %s\n", err.Error())
+		} else {
+			log.Printf("[INFO] Done!\n")
+		}
+		return
+	}
+
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() *schema.Provider {
 			return iterative.Provider()
 		},
 	})
+}
+
+func stop(ctx context.Context, provider, region, identifier string) error {
+	c := universal.Cloud{
+		Provider: universal.Provider(provider),
+		Region:   universal.Region(region),
+		Timeouts: universal.Timeouts{
+			Create: 10 * time.Minute,
+			Read:   10 * time.Minute,
+			Update: 10 * time.Minute,
+			Delete: 10 * time.Minute,
+		},
+	}
+
+	t, err := task.NewTask(ctx, c, identifier, universal.Task{})
+	if err != nil {
+		return err
+	}
+
+	return t.Stop(ctx)
 }
