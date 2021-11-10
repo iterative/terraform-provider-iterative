@@ -31,10 +31,7 @@ type SecurityGroup struct {
 }
 
 func (s *SecurityGroup) Create(ctx context.Context) error {
-	switch err := s.Read(ctx); {
-	case err == nil:
-		return nil
-	case err != universal.NotFoundError:
+	if err := s.Read(ctx); err != universal.NotFoundError {
 		return err
 	}
 
