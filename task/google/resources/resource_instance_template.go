@@ -101,10 +101,10 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 		})
 	}
 
-if i.Attributes.Spot > 0 {
-	return errors.New("preemptible instances don't have bidding price")
-}
-isPreemptible := i.Attributes.Spot == 0
+	if i.Attributes.Spot > 0 {
+		return errors.New("preemptible instances don't have bidding price")
+	}
+	isPreemptible := i.Attributes.Spot == 0
 
 	hostMaintenanceBehavior := "MIGRATE"
 	if isPreemptible || len(accelerators) > 0 {
