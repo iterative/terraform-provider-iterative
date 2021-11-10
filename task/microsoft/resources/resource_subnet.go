@@ -76,10 +76,9 @@ func (s *Subnet) Update(ctx context.Context) error {
 func (s *Subnet) Delete(ctx context.Context) error {
 	subnetDeleteFuture, err := s.Client.Services.Subnets.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
-			return nil
+		if err.(autorest.DetailedError).StatusCode != 404 {
+			return err
 		}
-		return err
 	}
 
 	err = subnetDeleteFuture.WaitForCompletionRef(ctx, s.Client.Services.Subnets.Client)
