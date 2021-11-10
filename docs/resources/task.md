@@ -11,45 +11,45 @@ resource "iterative_task" "task" {
   cloud = "aws"
 
   environment = {GREETING = "Hello, world!"}
-  directory   = path.root
+  directory   = "${path.root}/results"
 
   script = <<-END
     #!/bin/bash
-    echo "$GREETING" | tee result-$(uuidgen)
+    echo "$GREETING" | tee $(uuidgen)
   END
 }
 ```
 
 ## Argument Reference
 
-The following arguments are required:
+### Required
 
-- `name` - (Required) Name of the task.
+- `name` - (Required) Task name.
 - `cloud` - (Required) Cloud provider to run the task on; valid values are `aws`, `gcp`, `az` and `k8s`.
-- `script` - (Required) Script to run; must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>).
+- `script` - (Required) Script to run; must begin with a valid [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)).
 
-The following arguments are optional:
+### Optional
 
-- `region` - (Optional) Cloud region / zone to run the task on.
-- `machine` - (Optional) Machine type; see the Machine Types section below.
+- `region` - (Optional) Cloud region/zone to run the task on.
+- `machine` - (Optional) See [Machine Types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage.
-- `spot` - (Optional) Spot configuration: `-1` means disabled, `0` means enabled with automatic price, and any other positive number sets a fixed price.
+- `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
 - `image` - (Optional) Machine image to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `directory` - (Optional) Local directory to synchronize.
-- `environment` - (Optional) Environment variables
-- `timeout` - (Optional) Timeout for the task, in seconds.
+- `environment` - (Optional) Environment variables to run the task with.
+- `timeout` - (Optional) Maximum number of seconds to run before termination.
 
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
-- `ssh_public_key` - SSH public key to access the created machines.
-- `ssh_private_key` - SSH private key to access the created machines.
+- `ssh_public_key` - Used to access the created machines.
+- `ssh_private_key` - Used to access the created machines.
 - `addresses` - IP addresses of the currently active machines.
 - `status` - Status of the machine orchestrator.
 - `events` - List of events for the machine orchestrator.
-- `logs` - List with task logs, one for each machine.
+- `logs` - List with task logs; one for each machine.
 
 ~> **Note** Status and events don't produce a stable output between cloud providers and are intended for human consumption only.
 
