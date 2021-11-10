@@ -26,7 +26,7 @@ resource "iterative_task" "task" {
 
 - `name` - (Required) Task name.
 - `cloud` - (Required) Cloud provider to run the task on; valid values are `aws`, `gcp`, `az` and `k8s`.
-- `script` - (Required) Script to run; must begin with a valid [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)).
+- `script` - (Required) Script to run; must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>).
 
 ### Optional
 
