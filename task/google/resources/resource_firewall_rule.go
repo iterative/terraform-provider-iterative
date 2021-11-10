@@ -151,11 +151,9 @@ func (f *FirewallRule) Delete(ctx context.Context) error {
 	_, err := waitForOperation(ctx, f.Client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
 	if err != nil {
 		var e *googleapi.Error
-		if errors.As(err, &e) && e.Code == 404 {
-			f.Resource = nil
-			return nil
+		if !errors.As(err, &e) || e.Code != 404 {
+			return err
 		}
-		return err
 	}
 
 	f.Resource = nil
