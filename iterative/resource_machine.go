@@ -191,7 +191,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
-	} else if cloud == "azure" {
+	} else if cloud == "azure" || cloud == "az" {
 		err := azure.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
 			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
@@ -207,7 +207,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
-	} else if cloud == "kubernetes" {
+	} else if cloud == "kubernetes" || cloud == "k8s" {
 		err := kubernetes.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
 			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
