@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/kubectl/pkg/cmd/cp"
+
 	"terraform-provider-iterative/task/kubernetes/client"
 	"terraform-provider-iterative/task/kubernetes/resources"
 	"terraform-provider-iterative/task/universal"
@@ -39,6 +42,11 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task
 	t.Identifier = identifier
 	t.Attributes.Task = task
 	t.Attributes.Directory = directory
+	t.Resources.ConfigMap = resources.NewConfigMap(
+		t.Client,
+		t.Identifier,
+		map[string]string{"script": t.Attributes.Task.Environment.Script},
+	)
 	t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
 		t.Client,
 		t.Identifier,
@@ -50,6 +58,7 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task
 		t.Client,
 		t.Identifier,
 		t.Resources.PersistentVolumeClaim,
+		t.Resources.ConfigMap,
 		t.Attributes.Task,
 	)
 	return t, nil
@@ -64,12 +73,17 @@ type Task struct {
 	}
 	DataSources struct{}
 	Resources   struct {
+		*resources.ConfigMap
 		*resources.PersistentVolumeClaim
 		*resources.Job
 	}
 }
 
 func (t *Task) Create(ctx context.Context) error {
+	log.Println("[INFO] Creating ConfigMap...")
+	if err := t.Resources.ConfigMap.Create(ctx); err != nil {
+		return err
+	}
 	log.Println("[INFO] Creating PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Create(ctx); err != nil {
 		return err
@@ -92,6 +106,10 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
+	log.Println("[INFO] Reading ConfigMap...")
+	if err := t.Resources.ConfigMap.Read(ctx); err != nil {
+		return err
+	}
 	log.Println("[INFO] Reading PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Read(ctx); err != nil {
 		return err
@@ -122,6 +140,10 @@ func (t *Task) Delete(ctx context.Context) error {
 			return err
 		}
 	}
+	log.Println("[INFO] Deleting ConfigMap...")
+	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
+		return err
+	}
 	log.Println("[INFO] Deleting Job...")
 	if err := t.Resources.Job.Delete(ctx); err != nil {
 		return err
@@ -135,23 +157,31 @@ func (t *Task) Delete(ctx context.Context) error {
 }
 
 func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
-	destination := "/task"
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.GetObjectMeta().GetLabels()["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Create, t.Client.Namespace, waitSelector)
 	if err != nil {
 		return err
 	}
-	return resources.CopyFile(t.Client, source+"/.", fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, destination), t.Resources.Job.Identifier)
+
+	ioStreams, _, _, _ := genericclioptions.NewTestIOStreams()
+	copyOptions := cp.NewCopyOptions(ioStreams)
+	copyOptions.Clientset = t.Client.ClientSet
+	copyOptions.ClientConfig = t.Client.ClientConfig
+	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory")})
 }
 
 func (t *Task) Pull(ctx context.Context, destination string) error {
-	source := "/task/."
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.GetObjectMeta().GetLabels()["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Delete, t.Client.Namespace, waitSelector)
 	if err != nil {
 		return err
 	}
-	return resources.CopyFile(t.Client, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, source), destination, t.Resources.Job.Identifier)
+
+	ioStreams, _, _, _ := genericclioptions.NewTestIOStreams()
+	copyOptions := cp.NewCopyOptions(ioStreams)
+	copyOptions.Clientset = t.Client.ClientSet
+	copyOptions.ClientConfig = t.Client.ClientConfig
+	return copyOptions.Run([]string{fmt.Sprintf("%s/%s:/directory", t.Client.Namespace, pod), destination})
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {

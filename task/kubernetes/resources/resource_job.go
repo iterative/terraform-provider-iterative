@@ -27,11 +27,12 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewJob(client *client.Client, identifier string, persistentVolumeClaim *PersistentVolumeClaim, task universal.Task) *Job {
+func NewJob(client *client.Client, identifier string, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, task universal.Task) *Job {
 	j := new(Job)
 	j.Client = client
 	j.Identifier = universal.NormalizeIdentifier(identifier, true)
 	j.Dependencies.PersistentVolumeClaim = persistentVolumeClaim
+	j.Dependencies.ConfigMap = configMap
 	j.Attributes.Task = task
 	j.Attributes.Parallelism = task.Parallelism
 	return j
@@ -49,6 +50,7 @@ type Job struct {
 	}
 	Dependencies struct {
 		*PersistentVolumeClaim
+		*ConfigMap
 	}
 	Resource *kubernetes_batch.Job
 }
@@ -84,10 +86,10 @@ func (j *Job) Create(ctx context.Context) error {
 
 	// Define the dynamic resource allocation limits for the job pods.
 	jobLimits := kubernetes_core.ResourceList{}
-	jobLimits[kubernetes_core.ResourceName("memory")] = kubernetes_resource.MustParse(match[2] + "M")
-	jobLimits[kubernetes_core.ResourceName("cpu")] = kubernetes_resource.MustParse(match[1])
+	jobLimits[kubernetes_core.ResourceMemory] = kubernetes_resource.MustParse(match[2] + "M")
+	jobLimits[kubernetes_core.ResourceCPU] = kubernetes_resource.MustParse(match[1])
 	if diskAmount := j.Attributes.Task.Size.Storage; diskAmount > 0 {
-		jobLimits[kubernetes_core.ResourceName("ephemeral-storage")] = kubernetes_resource.MustParse(strconv.Itoa(diskAmount) + "G")
+		jobLimits[kubernetes_core.ResourceEphemeralStorage] = kubernetes_resource.MustParse(strconv.Itoa(diskAmount) + "G")
 	}
 
 	// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
@@ -119,15 +121,36 @@ func (j *Job) Create(ctx context.Context) error {
 		})
 	}
 
-	jobVolumes := []kubernetes_core.Volume{}
-	jobVolumeMounts := []kubernetes_core.VolumeMount{}
+	readExecuteUserGroupOthers := int32(0555)
+
+	jobVolumes := []kubernetes_core.Volume{
+		{
+			Name: j.Identifier+"-cm",
+			VolumeSource: kubernetes_core.VolumeSource{
+				ConfigMap: &kubernetes_core.ConfigMapVolumeSource{
+					LocalObjectReference: kubernetes_core.LocalObjectReference{
+						Name: j.Dependencies.ConfigMap.Identifier,
+					},
+					DefaultMode: &readExecuteUserGroupOthers,
+				},
+			},
+		},
+	}
+
+	jobVolumeMounts := []kubernetes_core.VolumeMount{
+		{
+			Name:      j.Identifier+"-cm",
+			MountPath: "/script",
+		},
+	}
+
 	if j.Attributes.Task.Environment.Directory != "" {
 		jobVolumeMounts = append(jobVolumeMounts, kubernetes_core.VolumeMount{
-			Name:      j.Identifier,
-			MountPath: "/task",
+			Name:      j.Identifier+"-pvc",
+			MountPath: "/directory",
 		})
 		jobVolumes = append(jobVolumes, kubernetes_core.Volume{
-			Name: j.Identifier,
+			Name: j.Identifier+"-pvc",
 			VolumeSource: kubernetes_core.VolumeSource{
 				PersistentVolumeClaim: &kubernetes_core.PersistentVolumeClaimVolumeSource{
 					ClaimName: j.Dependencies.PersistentVolumeClaim.Identifier,
@@ -135,6 +158,25 @@ func (j *Job) Create(ctx context.Context) error {
 			},
 		})
 	}
+
+	// Running with /bin/sh -c as the ENTRYPOINT, this script will be in charge of allowing
+	// seamless data synchronization. The first branch of the conditional will run on destroy
+	// allowing the provider to manage the pod lifecycle without letting it exit on "completion".
+	// The second branch will run on apply, waiting for the file copy to complete before starting
+	// the script.
+	script := `
+	if test -d /directory/*; then
+	  while true; do
+	    sleep 86400
+	  done
+	else
+	  while ! test -d /directory/* || pkill -0 tar; do
+	    sleep 1
+	  done
+	  cd /directory/*
+	  /script/script
+	fi
+	`
 
 	job := kubernetes_batch.Job{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
@@ -154,9 +196,10 @@ func (j *Job) Create(ctx context.Context) error {
 			Template: kubernetes_core.PodTemplateSpec{
 				Spec: kubernetes_core.PodSpec{
 					TerminationGracePeriodSeconds: &jobTerminationGracePeriod,
+					ActiveDeadlineSeconds: &jobActiveDeadlineSeconds,
 					// We don't want pods to restart if the container exits with a non–zero status.
 					// Only when there is a pod failure.
-					RestartPolicy: "Never",
+					RestartPolicy: kubernetes_core.RestartPolicyNever,
 					NodeSelector:  jobNodeSelector,
 					Containers: []kubernetes_core.Container{
 						{
@@ -166,12 +209,12 @@ func (j *Job) Create(ctx context.Context) error {
 								Limits: jobLimits,
 								Requests: kubernetes_core.ResourceList{
 									// Don't allocate any resources statically and let the pod scale vertically when and if required.
-									kubernetes_core.ResourceName("memory"): kubernetes_resource.MustParse("0"),
-									kubernetes_core.ResourceName("cpu"):    kubernetes_resource.MustParse("0"),
+									kubernetes_core.ResourceMemory: kubernetes_resource.MustParse("0"),
+									kubernetes_core.ResourceCPU:    kubernetes_resource.MustParse("0"),
 								},
 							},
 							Command: []string{
-								"sh", "-c", j.Attributes.Task.Environment.Script,
+								"sh", "-c", script,
 							},
 							Env:          jobEnvironment,
 							VolumeMounts: jobVolumeMounts,
@@ -188,9 +231,9 @@ func (j *Job) Create(ctx context.Context) error {
 	out, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Create(ctx, &job, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
-			return nil
+			return j.Read(ctx)
 		}
-		return j.Read(ctx)
+		return err
 	}
 	log.Printf("[INFO] Submitted new job: %#v", out)
 

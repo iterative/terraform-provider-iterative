@@ -59,6 +59,12 @@ $ terraform apply
 - `AZURE_SUBSCRIPTION_ID` - Subscription identifier.
 - `AZURE_TENANT_ID` - Tenant identifier.
 
+### Kubernetes
+
+- `KUBECONFIG` - Path to a [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
+
+-> **Note** you can also use `KUBECONFIG_DATA` with the **contents** of the `kubeconfig` file.
+
 ## Argument Reference
 
 This module doesn't have any top-level arguments. See the [task resource](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for more information.

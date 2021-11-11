@@ -54,22 +54,21 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 			StorageClassName: &p.Attributes.StorageClass,
 			Resources: kubernetes_core.ResourceRequirements{
 				Requests: kubernetes_core.ResourceList{
-					kubernetes_core.ResourceName("storage"): kubernetes_resource.MustParse(strconv.Itoa(int(p.Attributes.Size)) + "G"),
+					kubernetes_core.ResourceStorage: kubernetes_resource.MustParse(strconv.Itoa(int(p.Attributes.Size)) + "G"),
 				},
 			},
 		},
 	}
 
-	persistentVolumeClaim, err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Create(ctx, &persistentVolumeClaimInput, kubernetes_meta.CreateOptions{})
+	_, err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Create(ctx, &persistentVolumeClaimInput, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
 			return nil
 		}
-		return p.Read(ctx)
+		return err
 	}
 
-	p.Resource = persistentVolumeClaim
-	return nil
+	return p.Read(ctx)
 }
 
 func (p *PersistentVolumeClaim) Read(ctx context.Context) error {

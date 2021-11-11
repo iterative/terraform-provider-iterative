@@ -9,14 +9,20 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"terraform-provider-iterative/task/universal"
 )
 
 func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*Client, error) {
-	config, err := clientcmd.NewClientConfigFromBytes(
-		[]byte(os.Getenv("KUBERNETES_CONFIGURATION")),
-	)
+	kubeconfig := os.Getenv("KUBERNETES_CONFIGURATION") // Legacy; deprecated.
+	if kubeconfig == "" {
+		kubeconfig = os.Getenv("KUBECONFIG_DATA")
+	}
+
+	config, err := clientcmd.NewClientConfigFromBytes([]byte(kubeconfig))
 	if err != nil {
 		config = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			clientcmd.NewDefaultClientConfigLoadingRules(),
@@ -28,6 +34,10 @@ func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*C
 	if err != nil {
 		return nil, err
 	}
+
+	clientConfig.APIPath = "/api"
+	clientConfig.GroupVersion = &schema.GroupVersion{Version: "v1"}
+	clientConfig.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 
 	client, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
