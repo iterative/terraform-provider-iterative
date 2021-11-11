@@ -1,7 +1,10 @@
 # Task Resource
 
-Task, consisting of one or more cloud machines that run a given `script` upon
-completion or `timeout`, sharing a common network and a storage `directory`.
+This resource will:
+1. Create cloud resources (storage, machines) for the task
+2. Upload the given `directory` to the cloud storage, if specified
+3. Run the given `script` upon completion or `timeout` in the cloud
+
 
 ## Example Usage
 
