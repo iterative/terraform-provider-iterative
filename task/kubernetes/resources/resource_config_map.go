@@ -21,9 +21,9 @@ func NewConfigMap(client *client.Client, identifier string, data map[string]stri
 }
 
 type ConfigMap struct {
-	Client     *client.Client
-	Identifier string
-	Attributes map[string]string
+	Client       *client.Client
+	Identifier   string
+	Attributes   map[string]string
 	Dependencies struct{}
 	Resource     *kubernetes_core.ConfigMap
 }

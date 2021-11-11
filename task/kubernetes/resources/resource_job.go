@@ -125,7 +125,7 @@ func (j *Job) Create(ctx context.Context) error {
 
 	jobVolumes := []kubernetes_core.Volume{
 		{
-			Name: j.Identifier+"-cm",
+			Name: j.Identifier + "-cm",
 			VolumeSource: kubernetes_core.VolumeSource{
 				ConfigMap: &kubernetes_core.ConfigMapVolumeSource{
 					LocalObjectReference: kubernetes_core.LocalObjectReference{
@@ -139,18 +139,18 @@ func (j *Job) Create(ctx context.Context) error {
 
 	jobVolumeMounts := []kubernetes_core.VolumeMount{
 		{
-			Name:      j.Identifier+"-cm",
+			Name:      j.Identifier + "-cm",
 			MountPath: "/script",
 		},
 	}
 
 	if j.Attributes.Task.Environment.Directory != "" {
 		jobVolumeMounts = append(jobVolumeMounts, kubernetes_core.VolumeMount{
-			Name:      j.Identifier+"-pvc",
+			Name:      j.Identifier + "-pvc",
 			MountPath: "/directory",
 		})
 		jobVolumes = append(jobVolumes, kubernetes_core.Volume{
-			Name: j.Identifier+"-pvc",
+			Name: j.Identifier + "-pvc",
 			VolumeSource: kubernetes_core.VolumeSource{
 				PersistentVolumeClaim: &kubernetes_core.PersistentVolumeClaimVolumeSource{
 					ClaimName: j.Dependencies.PersistentVolumeClaim.Identifier,
@@ -196,7 +196,7 @@ func (j *Job) Create(ctx context.Context) error {
 			Template: kubernetes_core.PodTemplateSpec{
 				Spec: kubernetes_core.PodSpec{
 					TerminationGracePeriodSeconds: &jobTerminationGracePeriod,
-					ActiveDeadlineSeconds: &jobActiveDeadlineSeconds,
+					ActiveDeadlineSeconds:         &jobActiveDeadlineSeconds,
 					// We don't want pods to restart if the container exits with a non–zero status.
 					// Only when there is a pod failure.
 					RestartPolicy: kubernetes_core.RestartPolicyNever,
