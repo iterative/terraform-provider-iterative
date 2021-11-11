@@ -11,7 +11,7 @@ resource "iterative_task" "task" {
   cloud = "aws"
 
   environment = {GREETING = "Hello, world!"}
-  directory   = "${path.root}/results"
+  directory   = "${path.root}/shared"
 
   script = <<-END
     #!/bin/bash

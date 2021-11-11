@@ -12,7 +12,7 @@ See [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli#ins
 
 In an empty directory:
 
-1. Create a directory named `results` to save the task `script`'s results.
+1. Create a directory named `shared` to store input data and output artifacts.
 2. Create a file named `main.tf` with the following contents:
 
 ```hcl
@@ -30,7 +30,7 @@ resource "iterative_task" "example" {
   name  = "example"
   cloud = "aws" # or any of: gcp, az, k8s
 
-  directory = "${path.root}/results"
+  directory = "${path.root}/shared"
 
   script = <<-END
     #!/bin/bash
@@ -62,7 +62,7 @@ $ terraform apply
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified results `directory` to the cloud.
+2. Upload the specified shared `directory` to the cloud.
 3. Launch the task `script`.
 
 ## Viewing Task Statuses
@@ -87,9 +87,9 @@ terraform destroy
 
 This command will:
 
-1. Download the specified results `directory` from the cloud.
+1. Download the specified shared `directory` from the cloud.
 2. Delete all the created cloud resources.
 
 ## Viewing Task Results
 
-In the example above, the specified results `directory` should contain a file named `greeting.txt` containing the text `Hello, World!`
+In the example above, the specified shared `directory` should contain a file named `greeting.txt` containing the text `Hello, World!`
