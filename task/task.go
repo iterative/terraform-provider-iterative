@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	"terraform-provider-iterative/task/amazon"
-	"terraform-provider-iterative/task/google"
-	"terraform-provider-iterative/task/kubernetes"
-	"terraform-provider-iterative/task/microsoft"
+	"terraform-provider-iterative/task/aws"
+	"terraform-provider-iterative/task/az"
+	"terraform-provider-iterative/task/gcp"
+	"terraform-provider-iterative/task/k8s"
 
 	"terraform-provider-iterative/task/universal"
 	"terraform-provider-iterative/task/universal/ssh"
@@ -16,14 +16,14 @@ import (
 
 func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task universal.Task) (Task, error) {
 	switch cloud.Provider {
-	case universal.ProviderAmazon:
-		return amazon.NewTask(ctx, cloud, identifier, task)
-	case universal.ProviderGoogle:
-		return google.NewTask(ctx, cloud, identifier, task)
-	case universal.ProviderMicrosoft:
-		return microsoft.NewTask(ctx, cloud, identifier, task)
-	case universal.ProviderKubernetes:
-		return kubernetes.NewTask(ctx, cloud, identifier, task)
+	case universal.ProviderAWS:
+		return aws.NewTask(ctx, cloud, identifier, task)
+	case universal.ProviderAZ:
+		return az.NewTask(ctx, cloud, identifier, task)
+	case universal.ProviderGCP:
+		return gcp.NewTask(ctx, cloud, identifier, task)
+	case universal.ProviderK8S:
+		return k8s.NewTask(ctx, cloud, identifier, task)
 	default:
 		return nil, fmt.Errorf("unknown provider: %#v", cloud.Provider)
 	}

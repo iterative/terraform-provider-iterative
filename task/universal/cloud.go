@@ -31,10 +31,10 @@ type Region string
 type Provider string
 
 const (
-	ProviderAmazon     Provider = "aws"
-	ProviderGoogle     Provider = "gcp"
-	ProviderMicrosoft  Provider = "az"
-	ProviderKubernetes Provider = "k8s"
+	ProviderAWS Provider = "aws"
+	ProviderGCP Provider = "gcp"
+	ProviderAZ  Provider = "az"
+	ProviderK8S Provider = "k8s"
 )
 
 func (c *Cloud) GetClosestRegion(regions map[string]Region) (string, error) {
