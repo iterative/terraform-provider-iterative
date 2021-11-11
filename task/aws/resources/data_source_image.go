@@ -33,7 +33,7 @@ type Image struct {
 func (i *Image) Read(ctx context.Context) error {
 	image := i.Identifier
 	images := map[string]string{
-		"ubuntu": "ubuntu@x86_64:099720109477:*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*",
+		"ubuntu": "ubuntu@:099720109477:x86_64:*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*",
 	}
 	if val, ok := images[image]; ok {
 		image = val
@@ -45,8 +45,8 @@ func (i *Image) Read(ctx context.Context) error {
 	}
 
 	i.Attributes.SSHUser = match[1]
-	architecture := match[2]
-	owner := match[3]
+	owner := match[2]
+	architecture := match[3]
 	name := match[4]
 
 	filters := []types.Filter{
