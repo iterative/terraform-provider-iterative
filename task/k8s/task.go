@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -133,6 +134,8 @@ func (t *Task) Delete(ctx context.Context) error {
 			return err
 		}
 		log.Println("[INFO] Creating ephemeral Job to retrieve directory...")
+		os.Setenv("TPI_PULL_MODE", "true")
+		defer os.Unsetenv("TPI_PULL_MODE")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
@@ -167,7 +170,7 @@ func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
 	copyOptions := cp.NewCopyOptions(ioStreams)
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
-	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory")})
+	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
 }
 
 func (t *Task) Pull(ctx context.Context, destination string) error {
@@ -181,7 +184,7 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 	copyOptions := cp.NewCopyOptions(ioStreams)
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
-	return copyOptions.Run([]string{fmt.Sprintf("%s/%s:/directory", t.Client.Namespace, pod), destination})
+	return copyOptions.Run([]string{fmt.Sprintf("%s/%s:/directory/directory", t.Client.Namespace, pod), destination})
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {

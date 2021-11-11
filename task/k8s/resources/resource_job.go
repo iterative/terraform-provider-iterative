@@ -120,6 +120,10 @@ func (j *Job) Create(ctx context.Context) error {
 			Value: *value,
 		})
 	}
+	jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
+		Name:  "TPI_PULL_MODE",
+		Value: os.Getenv("TPI_PULL_MODE"),
+	})
 
 	readExecuteUserGroupOthers := int32(0555)
 
@@ -165,16 +169,16 @@ func (j *Job) Create(ctx context.Context) error {
 	// The second branch will run on apply, waiting for the file copy to complete before starting
 	// the script.
 	script := `
-	if test -d /directory/*; then
+	if ! test -z "$TPI_PULL_MODE"; then
 	  while true; do
 	    sleep 86400
 	  done
 	else
-	  while ! test -d /directory/* || pkill -0 tar; do
+	  while ! test -d /directory/directory || pkill -0 tar 2>/dev/null; do
 	    sleep 1
 	  done
-	  cd /directory/*
-	  /script/script
+	  cd /directory/directory
+	  exec /script/script
 	fi
 	`
 
