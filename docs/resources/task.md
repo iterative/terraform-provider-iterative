@@ -65,21 +65,21 @@ for all supported clouds.
 
 #### No GPU
 
-- `m` - Medium, with roughly 8 CPU cores and 32 GB of RAM.
-- `l` - Large, with roughly 32 CPU cores and 128 GB of RAM.
-- `xl` - Extra large, with roughly 64 CPU cores and 256 GB of RAM.
+- `m` - Medium, with (at least), 8 CPU cores and 16 GB of RAM.
+- `l` - Large, with (at least) 32 CPU cores and 64 GB of RAM.
+- `xl` - Extra large, with (at least) 64 CPU cores and 128 GB of RAM.
 
 #### NVIDIA Tesla K80 GPU
 
-- `m+k80` - Medium, with roughly 8 CPU cores, 32 GB of RAM and 1 GPU device.
-- `l+k80` - Large, with roughly 32 CPU cores, 128 GB of RAM and 8 GPU devices.
-- `xl+k80` - Extra large, with roughly 64 CPU cores, 512 GB of RAM and 16 GPU devices.
+- `m+k80` - Medium, with (at least) 4 CPU cores, 53 GB of RAM and 1 GPU device.
+- `l+k80` - Large, with (at least) 12 CPU cores, 112 GB of RAM and 2 GPU devices.
+- `xl+k80` - Extra large, with (at least) 24 CPU cores, 212 GB of RAM and 4 GPU devices.
 
 #### NVIDIA Tesla V100 GPU
 
-- `m+v100` - Medium, with roughly 8 CPU cores, 32 GB of RAM and 1 GPU device.
-- `l+v100` - Large, with roughly 32 CPU cores, 128 GB of RAM and 8 GPU devices.
-- `xl+v100` - Extra large, with roughly 64 CPU cores, 512 GB of RAM and 16 GPU devices.
+- `m+v100` - Medium, with (at least) 4 CPU cores, 61 GB of RAM and 1 GPU device.
+- `l+v100` - Large, with (at least) 12 CPU cores, 224 GB of RAM and 2 GPU devices.
+- `xl+v100` - Extra large, with (at least) 24 CPU cores, 448 GB of RAM and 4 GPU devices.
 
 ### Cloud-specific
 
