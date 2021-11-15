@@ -49,15 +49,13 @@ type AutoScalingGroup struct {
 
 func (a *AutoScalingGroup) Create(ctx context.Context) error {
 	var spotPrice string
-	var onDemandPercentage int32
+	var onDemandPercentage int32 = 100
 	switch spot := a.Attributes.Spot; {
 	case spot > 0:
 		spotPrice = strconv.FormatFloat(float64(spot), 'f', 5, 64)
 		fallthrough
 	case spot == 0:
 		onDemandPercentage = 0
-	default:
-		onDemandPercentage = 100
 	}
 
 	input := autoscaling.CreateAutoScalingGroupInput{
