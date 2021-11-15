@@ -218,7 +218,6 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 		return diagnostic(diags, err, diag.Error)
 	}
 
-	d.SetId("")
 	return
 }
 
