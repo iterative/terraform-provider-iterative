@@ -29,7 +29,7 @@ resource "iterative_task" "task" {
 
 ## Authentication
 
-Environment variables are the only supported authentication method. They should
+[Environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication) are the only supported authentication method. They should
 be present when running any of the `terraform` commands.
 
 ### Example
