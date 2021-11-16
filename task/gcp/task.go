@@ -8,8 +8,8 @@ import (
 	"terraform-provider-iterative/task/gcp/client"
 	"terraform-provider-iterative/task/gcp/resources"
 	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/ssh"
 	"terraform-provider-iterative/task/universal/machine"
+	"terraform-provider-iterative/task/universal/ssh"
 )
 
 func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task universal.Task) (*Task, error) {
