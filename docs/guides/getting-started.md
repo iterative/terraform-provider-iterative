@@ -50,7 +50,7 @@ This command will:
 1. Download and install the Iterative Provider.
 2. Initialize Terraform in the current directory.
 
-~> **Note** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
+~> **Note:** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
 
 ## Launching Tasks
 
