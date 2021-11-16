@@ -13,6 +13,7 @@ import (
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/universal/machine"
 )
 
 func NewLaunchTemplate(client *client.Client, identifier string, securityGroup *SecurityGroup, image *Image, keyPair *KeyPair, credentials *Credentials, task universal.Task) *LaunchTemplate {
@@ -49,7 +50,8 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 		l.Attributes.Environment.Variables[name] = &valueCopy
 	}
 
-	userData := base64.StdEncoding.EncodeToString([]byte(l.Attributes.Environment.GenerateMachineScript()))
+	script := machine.Script(l.Attributes.Environment.Script, l.Attributes.Environment.Variables, l.Attributes.Environment.Timeout)
+	userData := base64.StdEncoding.EncodeToString([]byte(script))
 
 	size := l.Attributes.Size.Machine
 	sizes := map[string]string{

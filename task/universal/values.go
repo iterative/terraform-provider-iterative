@@ -52,3 +52,11 @@ type FirewallRule struct {
 	Nets  *[]net.IPNet
 	Ports *[]uint16
 }
+
+type Environment struct {
+	Image     string
+	Script    string
+	Variables map[string]*string
+	Timeout   time.Duration
+	Directory string
+}

@@ -1,21 +1,15 @@
 package az
 
 import (
-	"bytes"
 	"context"
-	"io"
 	"log"
 	"net"
-
-	_ "github.com/rclone/rclone/backend/azureblob"
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/sync"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/az/resources"
 	"terraform-provider-iterative/task/universal"
 	"terraform-provider-iterative/task/universal/ssh"
+	"terraform-provider-iterative/task/universal/machine"
 )
 
 func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task universal.Task) (*Task, error) {
@@ -228,35 +222,7 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 
-	remote, err := fs.NewFs(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"])
-	if err != nil {
-		return nil, err
-	}
-
-	entries, err := remote.List(ctx, "/log/task")
-	if err != nil {
-		return nil, err
-	}
-
-	var logs []string
-	for _, entry := range entries {
-		object, err := remote.NewObject(ctx, entry.Remote())
-		if err != nil {
-			return nil, err
-		}
-		reader, err := object.Open(ctx)
-		if err != nil {
-			return nil, err
-		}
-		buffer := new(bytes.Buffer)
-		if _, err := io.Copy(buffer, reader); err != nil {
-			return nil, err
-		}
-		logs = append(logs, buffer.String())
-		reader.Close()
-	}
-
-	return logs, nil
+	return machine.Logs(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"])
 }
 
 func (t *Task) Pull(ctx context.Context, destination string) error {
@@ -264,21 +230,7 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 		return err
 	}
 
-	remote, err := fs.NewFs(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
-	if err != nil {
-		return err
-	}
-
-	local, err := fs.NewFs(ctx, destination)
-	if err != nil {
-		return err
-	}
-
-	if err := sync.CopyDir(ctx, local, remote, true); err != nil {
-		return err
-	}
-
-	return nil
+	return machine.Transfer(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", destination)
 }
 
 func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
@@ -286,21 +238,7 @@ func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
 		return err
 	}
 
-	remote, err := fs.NewFs(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
-	if err != nil {
-		return err
-	}
-
-	local, err := fs.NewFs(ctx, source)
-	if err != nil {
-		return err
-	}
-
-	if err := sync.CopyDir(ctx, remote, local, true); err != nil {
-		return err
-	}
-
-	return nil
+	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
 }
 
 func (t *Task) Stop(ctx context.Context) error {

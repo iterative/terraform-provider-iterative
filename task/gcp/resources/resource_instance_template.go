@@ -14,6 +14,7 @@ import (
 
 	"terraform-provider-iterative/task/gcp/client"
 	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/universal/machine"
 )
 
 func NewInstanceTemplate(client *client.Client, identifier string, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task universal.Task) *InstanceTemplate {
@@ -62,7 +63,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 		i.Attributes.Environment.Variables[name] = &valueCopy
 	}
 
-	script := i.Attributes.Environment.GenerateMachineScript()
+	script := machine.Script(i.Attributes.Environment.Script, i.Attributes.Environment.Variables, i.Attributes.Environment.Timeout)
 
 	size := i.Attributes.Size.Machine
 	sizes := map[string]string{

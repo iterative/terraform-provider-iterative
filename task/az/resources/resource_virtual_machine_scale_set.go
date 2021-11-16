@@ -15,6 +15,7 @@ import (
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/universal/machine"
 )
 
 func NewVirtualMachineScaleSet(client *client.Client, identifier string, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task universal.Task) *VirtualMachineScaleSet {
@@ -76,7 +77,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		v.Attributes.Environment.Variables[name] = &valueCopy
 	}
 
-	script := v.Attributes.Environment.GenerateMachineScript()
+	script := machine.Script(v.Attributes.Environment.Script, v.Attributes.Environment.Variables, v.Attributes.Environment.Timeout)
 
 	image := v.Attributes.Environment.Image
 	images := map[string]string{

@@ -1,4 +1,4 @@
-package universal
+package machine
 
 import (
 	"encoding/base64"
@@ -8,26 +8,18 @@ import (
 	"time"
 )
 
-type Environment struct {
-	Image     string
-	Script    string
-	Variables map[string]*string
-	Timeout   time.Duration
-	Directory string
-}
-
-func (e *Environment) GenerateMachineScript() string {
-	var variables string
-	for name, value := range e.Variables {
+func Script(script string, variables map[string]*string, timeout time.Duration) string {
+	var environment string
+	for name, value := range variables {
 		if value == nil {
 			data := os.Getenv(name)
 			value = &data
 		}
 		escaped := strings.ReplaceAll(*value, `"`, `\"`) // FIXME: \" edge cases.
-		variables += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
 	}
 
-	script := fmt.Sprintf(
+	return fmt.Sprintf(
 		`#!/bin/bash
 sudo mkdir --parents /tmp/tpi-task
 chmod u=rwx,g=rwx,o=rwx /tmp/tpi-task
@@ -92,8 +84,7 @@ while sleep 10; do
   rclone copy /tmp/tpi-task "$RCLONE_REMOTE/data"
 done &
 `,
-		base64.StdEncoding.EncodeToString([]byte(e.Script)),
-		base64.StdEncoding.EncodeToString([]byte(variables)),
-		e.Timeout/time.Second)
-	return script
+		base64.StdEncoding.EncodeToString([]byte(script)),
+		base64.StdEncoding.EncodeToString([]byte(environment)),
+		timeout/time.Second)
 }
