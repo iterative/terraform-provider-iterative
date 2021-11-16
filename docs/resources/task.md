@@ -34,7 +34,7 @@ resource "iterative_task" "task" {
 ### Optional
 
 - `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
-- `machine` - (Optional) See [Machine Types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-types) below.
+- `machine` - (Optional) See [Machine Types](#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
