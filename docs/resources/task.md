@@ -104,9 +104,9 @@ supported by the underlying cloud provider.
 - `{cpu}-{memory}` - Any [CPU & memory combination](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers) (e.g. `64-256000`).
 - `{cpu}-{memory}+{accelerator}*{count}` - Any CPU, memory, & [accelerator](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus) combination (e.g. `64-256000+nvidia-tesla-k80*1`).
 
--> **Note** Specified resource amounts are considered **limits** (rather than **requests**).
+-> **Note**: Specified resource amounts are considered **limits** (rather than **requests**).
 
--> **Note** `{accelerator}` will be transformed into a node selector requesting `accelerator={accelerator}` and `{count}` will be configured as the **limits** count for `kubernetes.io/gpu`.
+-> **Note**: `{accelerator}` will be transformed into a node selector requesting `accelerator={accelerator}` and `{count}` will be configured as the **limits** count for `kubernetes.io/gpu`.
 
 ## Machine Images
 
