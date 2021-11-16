@@ -92,4 +92,4 @@ This command will:
 
 ## Viewing Task Results
 
-In the example above, the specified shared `directory` should contain a file named `greeting.txt` containing the text `Hello, World!`
+After running `terraform destroy`, the `shared/` directory should contain a file named `greeting.txt` with the text `Hello, World!`
