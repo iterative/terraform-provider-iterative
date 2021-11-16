@@ -27,6 +27,7 @@ resource "iterative_task" "task" {
 }
 ```
 
+-> **Note:** See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) for more information.
 ## Authentication
 
 [Environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication) are the only supported authentication method. They should
