@@ -63,7 +63,7 @@ $ terraform apply
 
 - `KUBECONFIG` - Path to a [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
 
--> **Note** you can also use `KUBECONFIG_DATA` with the **contents** of the `kubeconfig` file.
+-> **Note**: You can use `KUBECONFIG_DATA` instead, with the **contents** of the `kubeconfig` file.
 
 ## Argument Reference
 
