@@ -1,7 +1,7 @@
 # Iterative Provider
 
 Use the Iterative Provider to launch resource-intensive tasks in popular cloud
-providers with just a simple Terraform file.
+providers with a single Terraform file.
 
 ## Example Usage
 
