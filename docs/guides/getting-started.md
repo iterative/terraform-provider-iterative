@@ -4,9 +4,7 @@ page_title: Getting Started
 
 # Getting Started
 
-## Installing Terraform
-
-See [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) for more information.
+Begin by [installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) if needed.
 
 ## Defining a Task
 
