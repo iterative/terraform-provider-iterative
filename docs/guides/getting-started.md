@@ -8,7 +8,7 @@ page_title: Getting Started
 
 See [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) for more information.
 
-## Declaring a Task
+## Defining a Task
 
 In an empty directory:
 
