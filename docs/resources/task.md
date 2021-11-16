@@ -37,7 +37,7 @@ resource "iterative_task" "task" {
 - `machine` - (Optional) See [Machine Types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
-- `image` - (Optional) Machine image to run the task with.
+- `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `directory` - (Optional) Local directory to synchronize.
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values.
