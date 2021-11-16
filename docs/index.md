@@ -65,6 +65,3 @@ $ terraform apply
 
 -> **Note**: You can use `KUBECONFIG_DATA` instead, with the **contents** of the `kubeconfig` file.
 
-## Argument Reference
-
-This module doesn't have any top-level arguments. See the [task resource](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for more information.
