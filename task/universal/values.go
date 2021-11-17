@@ -3,7 +3,11 @@ package universal
 import (
 	"errors"
 	"net"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/gobwas/glob"
 )
 
 var NotFoundError error = errors.New("resource not found")
@@ -54,9 +58,33 @@ type FirewallRule struct {
 }
 
 type Environment struct {
-	Image     string
-	Script    string
-	Variables map[string]*string
+	Image  string
+	Script string
+	Variables
 	Timeout   time.Duration
 	Directory string
+}
+
+type Variables map[string]*string
+
+// Enrich takes a map[string]*string of environment variables and, when a map value
+// is <nil>, tries to get the value from the process environment variables. If
+// the map key is a valid glob and the value is <nil>, all the matching environment
+// variables will be set in the resulting map.
+func (v Variables) Enrich() map[string]string {
+	result := make(map[string]string)
+	for name, value := range map[string]*string(v) {
+		if value == nil {
+			// FIXME: remove Replace and QuoteMeta to enable extended glob.
+			g := glob.MustCompile(strings.ReplaceAll(glob.QuoteMeta(name), `\*`, `*`))
+			for _, variable := range os.Environ() {
+				if key := strings.Split(variable, "=")[0]; g.Match(key) {
+					result[key] = os.Getenv(key)
+				}
+			}
+		} else {
+			result[name] = *value
+		}
+	}
+	return result
 }

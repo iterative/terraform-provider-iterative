@@ -3,19 +3,16 @@ package machine
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 	"strings"
 	"time"
+
+	"terraform-provider-iterative/task/universal"
 )
 
-func Script(script string, variables map[string]*string, timeout time.Duration) string {
+func Script(script string, variables universal.Variables, timeout time.Duration) string {
 	var environment string
-	for name, value := range variables {
-		if value == nil {
-			data := os.Getenv(name)
-			value = &data
-		}
-		escaped := strings.ReplaceAll(*value, `"`, `\"`) // FIXME: \" edge cases.
+	for name, value := range variables.Enrich() {
+		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
 		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
 	}
 
@@ -69,15 +66,14 @@ rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
 
-TPI_IDENTITY="$(uuidgen)"
+TPI_MACHINE_IDENTITY="$(uuidgen)"
+TPI_LOG_DIRECTORY="$(mktemp --directory)"
 
 while sleep 5; do
-  directory="$(mktemp --directory)"
-  journalctl > "$directory/$TPI_IDENTITY"
-  rclone copy "$directory" "$RCLONE_REMOTE/log/machine"
-  journalctl --unit tpi-task > "$directory/$TPI_IDENTITY"
-  rclone copy "$directory" "$RCLONE_REMOTE/log/task"
-  rm --recursive "$directory"
+  journalctl > "$TPI_LOG_DIRECTORY/$TPI_MACHINE_IDENTITY"
+  rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log/machine"
+  journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/$TPI_MACHINE_IDENTITY"
+  rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log/task"
 done &
 
 while sleep 10; do

@@ -110,14 +110,10 @@ func (j *Job) Create(ctx context.Context) error {
 	jobActiveDeadlineSeconds := int64(j.Attributes.Task.Environment.Timeout / time.Second)
 
 	jobEnvironment := []kubernetes_core.EnvVar{}
-	for name, value := range j.Attributes.Task.Environment.Variables {
-		if value == nil {
-			data := os.Getenv(name)
-			value = &data
-		}
+	for name, value := range j.Attributes.Task.Environment.Variables.Enrich() {
 		jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
 			Name:  name,
-			Value: *value,
+			Value: value,
 		})
 	}
 	jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
