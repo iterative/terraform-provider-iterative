@@ -33,7 +33,7 @@ type Image struct {
 func (i *Image) Read(ctx context.Context) error {
 	image := i.Identifier
 	images := map[string]string{
-		"ubuntu": "ubuntu@:099720109477:x86_64:*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*",
+		"ubuntu": "ubuntu@099720109477:x86_64:*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*",
 	}
 	if val, ok := images[image]; ok {
 		image = val
