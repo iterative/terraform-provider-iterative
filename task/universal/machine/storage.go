@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"path/filepath"
+	"strings"
 
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
@@ -20,14 +22,19 @@ func Logs(ctx context.Context, remote string) ([]string, error) {
 		return nil, err
 	}
 
-	entries, err := remoteFileSystem.List(ctx, "/log/task")
+	entries, err := remoteFileSystem.List(ctx, "/log")
 	if err != nil {
 		return nil, err
 	}
 
 	var logs []string
 	for _, entry := range entries {
-		object, err := remoteFileSystem.NewObject(ctx, entry.Remote())
+		path := entry.Remote()
+		if base := filepath.Base(path); !strings.HasPrefix(base, "task-") {
+			continue
+		}
+
+		object, err := remoteFileSystem.NewObject(ctx, path)
 		if err != nil {
 			return nil, err
 		}

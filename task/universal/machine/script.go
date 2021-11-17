@@ -70,10 +70,9 @@ TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
 
 while sleep 5; do
-  journalctl > "$TPI_LOG_DIRECTORY/$TPI_MACHINE_IDENTITY"
-  rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log/machine"
-  journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/$TPI_MACHINE_IDENTITY"
-  rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log/task"
+  journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
+  journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
+  rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log"
 done &
 
 while sleep 10; do
