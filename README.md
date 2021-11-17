@@ -37,7 +37,7 @@ terraform {
 
 provider "iterative" {}
 
-resource "iterative_task" "task" {
+resource "iterative_task" "example" {
   name  = "example"
   cloud = "aws"
 
