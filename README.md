@@ -30,7 +30,7 @@ Iterative Provider can provision resources with the following cloud providers an
 terraform {
   required_providers {
     iterative = {
-      source  = "iterative/iterative"
+      source = "iterative/iterative"
     }
   }
 }
