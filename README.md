@@ -17,7 +17,7 @@ To use Iterative Provider you will need to:
 - [Install](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) Terraform 1.0+.
 - Make sure you have an account with a cloud vendor of choice, and have the respective authentication credentials set as environment variables. Check out cloud-specific authentication method details in the [docs](<(https://registry.terraform.io/providers/iterative/iterative/latest)>)
 
-Iterative Provider can provision resources with the following vendors and systems:
+Iterative Provider can provision resources with the following cloud providers and orchestrators:
 
 - Amazon Web Services
 - Google Cloud Platform
