@@ -39,6 +39,13 @@ resource "iterative_task" "example" {
 
 -> **Note**: The `script` argument can take anny string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
+The project layout should look similar to this:
+
+project/
+├─ shared/
+│  └─ ···
+└─ main.tf
+
 ## Initializing Terraform
 
 ```console
