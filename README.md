@@ -63,6 +63,7 @@ Iterative Provider is licensed under the [Apache 2.0 License](LICENSE).
 ## Development
 
 ### Install Go 1.17+
+
 Refer to the [official documentation](https://golang.org/doc/install) for specific instructions.
 
 ### Clone the repository
@@ -99,7 +100,7 @@ provider "iterative" {}
 # ... the documentation examples
 ```
 
-**Note:** specify `source = "github.com/iterative/iterative"` instead of `source = "iterative/iterative"` in order to use your local build, as opposed to downloading the latest stable release from the internet. 
+**Note:** specify `source = "github.com/iterative/iterative"` instead of `source = "iterative/iterative"` in order to use your local build, as opposed to downloading the latest stable release from the internet.
 
 ### Initialize the provider
 
