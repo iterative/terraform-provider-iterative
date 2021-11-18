@@ -59,3 +59,58 @@ Have you found any issues or missing features? Let us know via [GitHub issues](h
 ## License
 
 Iterative Provider is licensed under the [Apache 2.0 License](LICENSE).
+
+## Development
+
+### Install Go 1.17+
+Refer to the [official documentation](https://golang.org/doc/install) for specific instructions.
+
+### Clone the repository
+
+```console
+git clone https://github.com/iterative/terraform-provider-iterative
+cd terraform-provider-iterative
+```
+
+### Install the provider
+
+Build the provider and install the resulting binary to the [local mirror directory](https://www.terraform.io/docs/cli/config/config-file.html#implied-local-mirror-directories):
+
+```console
+make install
+```
+
+### Create a test file
+
+Create a file named `main.tf` on an empty directory with the follwing contents:
+
+```hcl
+terraform {
+  required_providers {
+    iterative = {
+      source = "github.com/iterative/iterative"
+    }
+  }
+}
+
+provider "iterative" {}
+
+# ... paste resource blocks from
+# ... the documentation examples
+```
+
+**Note:** specify `source = "github.com/iterative/iterative"` instead of `source = "iterative/iterative"` in order to use your local build, as opposed to downloading the latest stable release from the internet. 
+
+### Initialize the provider
+
+Run this command after every `make install` in order to use the new build:
+
+```console
+terraform init --upgrade
+```
+
+### Test the provider
+
+```console
+terraform apply
+```
