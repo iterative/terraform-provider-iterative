@@ -100,11 +100,11 @@ provider "iterative" {}
 # ... the documentation examples
 ```
 
-**Note:** specify `source = "github.com/iterative/iterative"` instead of `source = "iterative/iterative"` in order to use your local build, as opposed to downloading the latest stable release from the internet.
+**Note:** specify `source = "github.com/iterative/iterative"` instead of `source = "iterative/iterative"` in order to use your local build, as opposed to downloading the latest stable release.
 
 ### Initialize the provider
 
-Run this command after every `make install` in order to use the new build:
+Run this command after every `make install` to use the new build:
 
 ```console
 terraform init --upgrade
