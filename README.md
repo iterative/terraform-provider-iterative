@@ -83,7 +83,7 @@ make install
 
 ### Create a test file
 
-Create a file named `main.tf` on an empty directory with the follwing contents:
+Create a file named `main.tf` in an empty directory with the following contents:
 
 ```hcl
 terraform {
