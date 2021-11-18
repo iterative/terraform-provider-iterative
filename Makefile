@@ -1,7 +1,7 @@
 HOSTNAME=github.com
 NAMESPACE=iterative
 NAME=iterative
-VERSION=0.0.0+development
+VERSION=0.0.${shell date +%s}+development
 OS_ARCH=${shell go env GOOS}_${shell go env GOARCH}
 BINARY=terraform-provider-${NAME}
 INSTALL_PATH=~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
