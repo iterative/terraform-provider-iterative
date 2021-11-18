@@ -6,10 +6,11 @@ OS_ARCH=${shell go env GOOS}_${shell go env GOARCH}
 BINARY=terraform-provider-${NAME}
 INSTALL_PATH=~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
-default: install
+default: build
 
 build:
 	go build
+	echo "Note: run 'make install' to install the provider"
 
 install:
 	GOBIN=${INSTALL_PATH} go install
