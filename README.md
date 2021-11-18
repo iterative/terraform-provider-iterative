@@ -5,7 +5,7 @@ management of computing resources for machine learning pipelines, including GPUs
 
 The Iterative Provider makes it easy to:
 
-- Rapidly move local machine learning experiments to a cloud infrustructure
+- Rapidly move local machine learning experiments to a cloud infrastructure
 - Take advantage of training models on spot instances without losing any progress
 - Configure provisioning of compute resources from any of the supported vendors in a unified manner
 - Automatically unregister and remove cloud resources (never forget to turn your GPU off again)
