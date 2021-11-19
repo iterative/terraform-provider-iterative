@@ -46,7 +46,7 @@ func stop(ctx context.Context, provider, region, identifier string) error {
 		},
 	}
 
-	t, err := task.NewTask(ctx, c, identifier, common.Task{})
+	t, err := task.New(ctx, c, identifier, common.Task{})
 	if err != nil {
 		return err
 	}

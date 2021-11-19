@@ -12,7 +12,7 @@ import (
 	"terraform-provider-iterative/task/gcp/resources"
 )
 
-func NewTask(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
+func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
 	client, err := client.New(ctx, cloud, task.Tags)
 	if err != nil {
 		return nil, err
