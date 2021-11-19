@@ -11,11 +11,11 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/storage/v1"
 
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/ssh"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/ssh"
 )
 
-func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*Client, error) {
+func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {
 	scopes := []string{
 		compute.ComputeScope,
 		storage.DevstorageReadWriteScope,
@@ -74,7 +74,7 @@ func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*C
 }
 
 type Client struct {
-	Cloud       universal.Cloud
+	Cloud       common.Cloud
 	Region      string
 	Tags        map[string]string
 	Identifier  string

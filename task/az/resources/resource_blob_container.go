@@ -7,10 +7,10 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewBlobContainer(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount) *BlobContainer {
+func NewBlobContainer(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount) *BlobContainer {
 	b := new(BlobContainer)
 	b.Client = client
 	b.Identifier = identifier.Short()
@@ -48,7 +48,7 @@ func (b *BlobContainer) Read(ctx context.Context) error {
 	container, err := b.Client.Services.BlobContainers.Get(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -58,7 +58,7 @@ func (b *BlobContainer) Read(ctx context.Context) error {
 }
 
 func (b *BlobContainer) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (b *BlobContainer) Delete(ctx context.Context) error {

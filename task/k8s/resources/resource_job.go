@@ -23,11 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/k8s/client"
-	"terraform-provider-iterative/task/universal"
 )
 
-func NewJob(client *client.Client, identifier universal.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, task universal.Task) *Job {
+func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, task common.Task) *Job {
 	j := new(Job)
 	j.Client = client
 	j.Identifier = identifier.Long()
@@ -42,11 +42,11 @@ type Job struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Task        universal.Task
+		Task        common.Task
 		Parallelism uint16
 		Addresses   []net.IP
 		Status      map[string]int
-		Events      []universal.Event
+		Events      []common.Event
 	}
 	Dependencies struct {
 		*PersistentVolumeClaim
@@ -75,7 +75,7 @@ func (j *Job) Create(ctx context.Context) error {
 
 	match := regexp.MustCompile(`^(\d+)-(\d+)(?:\+([^*]+)\*([1-9]\d*))?$`).FindStringSubmatch(size)
 	if match == nil {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	// Define the accelerator settings (i.e. GPU type, model, ...)
@@ -245,7 +245,7 @@ func (j *Job) Read(ctx context.Context) error {
 	job, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -255,7 +255,7 @@ func (j *Job) Read(ctx context.Context) error {
 		return err
 	}
 	for _, event := range events.Items {
-		j.Attributes.Events = append(j.Attributes.Events, universal.Event{
+		j.Attributes.Events = append(j.Attributes.Events, common.Event{
 			Time: event.FirstTimestamp.Time,
 			Code: event.Message,
 			Description: []string{

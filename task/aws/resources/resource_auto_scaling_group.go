@@ -16,10 +16,10 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewAutoScalingGroup(client *client.Client, identifier universal.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot float64) *AutoScalingGroup {
+func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot float64) *AutoScalingGroup {
 	a := new(AutoScalingGroup)
 	a.Client = client
 	a.Identifier = identifier.Long()
@@ -38,7 +38,7 @@ type AutoScalingGroup struct {
 		Spot        float64
 		Addresses   []net.IP
 		Status      map[string]int
-		Events      []universal.Event
+		Events      []common.Event
 	}
 	Dependencies struct {
 		*DefaultVPCSubnet
@@ -110,7 +110,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 	}
 
 	if len(groups.AutoScalingGroups) == 0 {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	var instancesInput ec2.DescribeInstancesInput
@@ -142,7 +142,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 		AutoScalingGroupName: aws.String(a.Identifier),
 	}
 
-	a.Attributes.Events = []universal.Event{}
+	a.Attributes.Events = []common.Event{}
 	for activitiesPaginator := autoscaling.NewDescribeScalingActivitiesPaginator(a.Client.Services.AutoScaling, &activitiesInput); activitiesPaginator.HasMorePages(); {
 		page, err := activitiesPaginator.NextPage(ctx)
 		if err != nil {
@@ -155,7 +155,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 				timeStamp = *activity.StartTime
 			}
 
-			a.Attributes.Events = append(a.Attributes.Events, universal.Event{
+			a.Attributes.Events = append(a.Attributes.Events, common.Event{
 				Time: timeStamp,
 				Code: string(activity.StatusCode),
 				Description: []string{

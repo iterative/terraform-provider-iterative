@@ -12,11 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/ssh"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/ssh"
 )
 
-func NewKeyPair(client *client.Client, identifier universal.Identifier) *KeyPair {
+func NewKeyPair(client *client.Client, identifier common.Identifier) *KeyPair {
 	k := new(KeyPair)
 	k.Client = client
 	k.Identifier = identifier.Long()
@@ -88,7 +88,7 @@ func (k *KeyPair) Read(ctx context.Context) error {
 	if err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "InvalidKeyPair.NotFound" {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 	}
 
@@ -97,7 +97,7 @@ func (k *KeyPair) Read(ctx context.Context) error {
 }
 
 func (k *KeyPair) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (k *KeyPair) Delete(ctx context.Context) error {

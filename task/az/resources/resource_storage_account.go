@@ -10,10 +10,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewStorageAccount(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup) *StorageAccount {
+func NewStorageAccount(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup) *StorageAccount {
 	s := new(StorageAccount)
 	s.Client = client
 	s.Identifier = identifier.Short()
@@ -62,7 +62,7 @@ func (s *StorageAccount) Read(ctx context.Context) error {
 	account, err := s.Client.Services.StorageAccounts.GetProperties(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -93,7 +93,7 @@ func (s *StorageAccount) Read(ctx context.Context) error {
 }
 
 func (s *StorageAccount) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (s *StorageAccount) Delete(ctx context.Context) error {

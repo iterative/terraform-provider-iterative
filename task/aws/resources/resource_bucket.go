@@ -11,10 +11,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewBucket(client *client.Client, identifier universal.Identifier) *Bucket {
+func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
 	b := new(Bucket)
 	b.Client = client
 	b.Identifier = identifier.Long()
@@ -62,7 +62,7 @@ func (b *Bucket) Read(ctx context.Context) error {
 	if _, err := b.Client.Services.S3.HeadBucket(ctx, &input); err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "NotFound" {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -72,7 +72,7 @@ func (b *Bucket) Read(ctx context.Context) error {
 }
 
 func (b *Bucket) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (b *Bucket) Delete(ctx context.Context) error {

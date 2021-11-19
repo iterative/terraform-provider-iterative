@@ -8,10 +8,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewResourceGroup(client *client.Client, identifier universal.Identifier) *ResourceGroup {
+func NewResourceGroup(client *client.Client, identifier common.Identifier) *ResourceGroup {
 	r := new(ResourceGroup)
 	r.Client = client
 	r.Identifier = identifier.Long()
@@ -44,7 +44,7 @@ func (r *ResourceGroup) Read(ctx context.Context) error {
 	resourceGroup, err := r.Client.Services.Groups.Get(ctx, r.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -54,7 +54,7 @@ func (r *ResourceGroup) Read(ctx context.Context) error {
 }
 
 func (r *ResourceGroup) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (r *ResourceGroup) Delete(ctx context.Context) error {

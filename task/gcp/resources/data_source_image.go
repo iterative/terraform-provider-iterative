@@ -8,8 +8,8 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/universal"
 )
 
 func NewImage(client *client.Client, identifier string) *Image {
@@ -39,7 +39,7 @@ func (i *Image) Read(ctx context.Context) error {
 
 	match := regexp.MustCompile(`^([^@]+)@([^/]+)/([^/]+)$`).FindStringSubmatch(image)
 	if match == nil {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	i.Attributes.SSHUser = match[1]
@@ -50,7 +50,7 @@ func (i *Image) Read(ctx context.Context) error {
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}

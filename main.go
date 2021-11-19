@@ -11,7 +11,7 @@ import (
 
 	"terraform-provider-iterative/iterative"
 	"terraform-provider-iterative/task"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
 func main() {
@@ -35,10 +35,10 @@ func main() {
 }
 
 func stop(ctx context.Context, provider, region, identifier string) error {
-	c := universal.Cloud{
-		Provider: universal.Provider(provider),
-		Region:   universal.Region(region),
-		Timeouts: universal.Timeouts{
+	c := common.Cloud{
+		Provider: common.Provider(provider),
+		Region:   common.Region(region),
+		Timeouts: common.Timeouts{
 			Create: 10 * time.Minute,
 			Read:   10 * time.Minute,
 			Update: 10 * time.Minute,
@@ -46,7 +46,7 @@ func stop(ctx context.Context, provider, region, identifier string) error {
 		},
 	}
 
-	t, err := task.NewTask(ctx, c, identifier, universal.Task{})
+	t, err := task.NewTask(ctx, c, identifier, common.Task{})
 	if err != nil {
 		return err
 	}

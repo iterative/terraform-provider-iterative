@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func Script(script string, variables universal.Variables, timeout time.Duration) string {
+func Script(script string, variables common.Variables, timeout time.Duration) string {
 	var environment string
 	for name, value := range variables.Enrich() {
 		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.

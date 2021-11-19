@@ -10,10 +10,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewSecurityGroup(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, firewall universal.Firewall) *SecurityGroup {
+func NewSecurityGroup(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, firewall common.Firewall) *SecurityGroup {
 	s := new(SecurityGroup)
 	s.Client = client
 	s.Identifier = identifier.Long()
@@ -25,7 +25,7 @@ func NewSecurityGroup(client *client.Client, identifier universal.Identifier, re
 type SecurityGroup struct {
 	Client       *client.Client
 	Identifier   string
-	Attributes   universal.Firewall
+	Attributes   common.Firewall
 	Dependencies struct {
 		*ResourceGroup
 	}
@@ -100,7 +100,7 @@ func (s *SecurityGroup) Read(ctx context.Context) error {
 	securityGroup, err := s.Client.Services.SecurityGroups.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -110,7 +110,7 @@ func (s *SecurityGroup) Read(ctx context.Context) error {
 }
 
 func (s *SecurityGroup) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (s *SecurityGroup) Delete(ctx context.Context) error {

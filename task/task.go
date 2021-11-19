@@ -11,24 +11,24 @@ import (
 	"terraform-provider-iterative/task/gcp"
 	"terraform-provider-iterative/task/k8s"
 
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/ssh"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/ssh"
 )
 
-func NewTask(ctx context.Context, cloud universal.Cloud, name string, task universal.Task) (Task, error) {
-	if len(name) < 1 {
+func NewTask(ctx context.Context, cloud common.Cloud, name string, task common.Task) (Task, error) {
+	if name == "" {
 		return nil, errors.New("name must not be empty")
 	}
-	identifier := universal.Identifier(name)
+	identifier := common.Identifier(name)
 
 	switch cloud.Provider {
-	case universal.ProviderAWS:
+	case common.ProviderAWS:
 		return aws.NewTask(ctx, cloud, identifier, task)
-	case universal.ProviderAZ:
+	case common.ProviderAZ:
 		return az.NewTask(ctx, cloud, identifier, task)
-	case universal.ProviderGCP:
+	case common.ProviderGCP:
 		return gcp.NewTask(ctx, cloud, identifier, task)
-	case universal.ProviderK8S:
+	case common.ProviderK8S:
 		return k8s.NewTask(ctx, cloud, identifier, task)
 	default:
 		return nil, fmt.Errorf("unknown provider: %#v", cloud.Provider)
@@ -51,7 +51,7 @@ type Task interface {
 
 	// To be refactored.
 	GetAddresses(ctx context.Context) []net.IP
-	GetEvents(ctx context.Context) []universal.Event
+	GetEvents(ctx context.Context) []common.Event
 	GetStatus(ctx context.Context) map[string]int
 	GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error)
 	GetIdentifier(ctx context.Context) string

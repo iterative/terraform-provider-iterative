@@ -8,11 +8,11 @@ import (
 	kubernetes_meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/k8s/client"
-	"terraform-provider-iterative/task/universal"
 )
 
-func NewConfigMap(client *client.Client, identifier universal.Identifier, data map[string]string) *ConfigMap {
+func NewConfigMap(client *client.Client, identifier common.Identifier, data map[string]string) *ConfigMap {
 	c := new(ConfigMap)
 	c.Client = client
 	c.Identifier = identifier.Long()
@@ -54,7 +54,7 @@ func (c *ConfigMap) Read(ctx context.Context) error {
 	configMap, err := c.Client.Services.Core.ConfigMaps(c.Client.Namespace).Get(ctx, c.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}

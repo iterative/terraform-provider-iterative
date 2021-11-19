@@ -8,10 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewSecurityGroup(client *client.Client, identifier universal.Identifier, defaultVPC *DefaultVPC, firewall universal.Firewall) *SecurityGroup {
+func NewSecurityGroup(client *client.Client, identifier common.Identifier, defaultVPC *DefaultVPC, firewall common.Firewall) *SecurityGroup {
 	s := new(SecurityGroup)
 	s.Client = client
 	s.Identifier = identifier.Long()
@@ -23,7 +23,7 @@ func NewSecurityGroup(client *client.Client, identifier universal.Identifier, de
 type SecurityGroup struct {
 	Client       *client.Client
 	Identifier   string
-	Attributes   universal.Firewall
+	Attributes   common.Firewall
 	Dependencies struct {
 		*DefaultVPC
 	}
@@ -31,7 +31,7 @@ type SecurityGroup struct {
 }
 
 func (s *SecurityGroup) Create(ctx context.Context) error {
-	if err := s.Read(ctx); err != universal.NotFoundError {
+	if err := s.Read(ctx); err != common.NotFoundError {
 		return err
 	}
 
@@ -67,7 +67,7 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 	// Revoke default full egress rule created for every new security group
 	revokeEgressInput := ec2.RevokeSecurityGroupEgressInput{
 		GroupId:       s.Resource.GroupId,
-		IpPermissions: s.generatePermissions(universal.FirewallRule{}),
+		IpPermissions: s.generatePermissions(common.FirewallRule{}),
 	}
 
 	if _, err := s.Client.Services.EC2.RevokeSecurityGroupEgress(ctx, &revokeEgressInput); err != nil {
@@ -123,7 +123,7 @@ func (s *SecurityGroup) Read(ctx context.Context) error {
 	}
 
 	if len(securityGroups.SecurityGroups) < 1 {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	s.Resource = &securityGroups.SecurityGroups[0]
@@ -131,12 +131,12 @@ func (s *SecurityGroup) Read(ctx context.Context) error {
 }
 
 func (s *SecurityGroup) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (s *SecurityGroup) Delete(ctx context.Context) error {
 	switch err := s.Read(ctx); {
-	case err == universal.NotFoundError:
+	case err == common.NotFoundError:
 		return nil
 	case err != nil:
 		return err
@@ -154,7 +154,7 @@ func (s *SecurityGroup) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (s *SecurityGroup) generatePermissions(rule universal.FirewallRule) []types.IpPermission {
+func (s *SecurityGroup) generatePermissions(rule common.FirewallRule) []types.IpPermission {
 	var ranges []types.IpRange
 	if rule.Nets == nil {
 		ranges = append(ranges, types.IpRange{

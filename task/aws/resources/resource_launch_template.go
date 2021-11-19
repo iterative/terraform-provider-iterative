@@ -12,11 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/machine"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
 )
 
-func NewLaunchTemplate(client *client.Client, identifier universal.Identifier, securityGroup *SecurityGroup, image *Image, keyPair *KeyPair, credentials *Credentials, task universal.Task) *LaunchTemplate {
+func NewLaunchTemplate(client *client.Client, identifier common.Identifier, securityGroup *SecurityGroup, image *Image, keyPair *KeyPair, credentials *Credentials, task common.Task) *LaunchTemplate {
 	l := new(LaunchTemplate)
 	l.Client = client
 	l.Identifier = identifier.Long()
@@ -31,7 +31,7 @@ func NewLaunchTemplate(client *client.Client, identifier universal.Identifier, s
 type LaunchTemplate struct {
 	Client       *client.Client
 	Identifier   string
-	Attributes   universal.Task
+	Attributes   common.Task
 	Dependencies struct {
 		*KeyPair
 		*SecurityGroup
@@ -130,7 +130,7 @@ func (l *LaunchTemplate) Read(ctx context.Context) error {
 	}
 
 	if len(templates.LaunchTemplates) == 0 {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	l.Resource = &templates.LaunchTemplates[0]
@@ -138,7 +138,7 @@ func (l *LaunchTemplate) Read(ctx context.Context) error {
 }
 
 func (l *LaunchTemplate) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (l *LaunchTemplate) Delete(ctx context.Context) error {

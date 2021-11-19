@@ -10,8 +10,8 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/universal"
 )
 
 type FirewallRuleDirection string
@@ -28,7 +28,7 @@ const (
 	FirewallRuleActionAllow FirewallRuleAction = "ALLOW"
 )
 
-func NewFirewallRule(client *client.Client, identifier universal.Identifier, defaultNetwork *DefaultNetwork, rule universal.FirewallRule, direction FirewallRuleDirection, action FirewallRuleAction, priority uint16) *FirewallRule {
+func NewFirewallRule(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, rule common.FirewallRule, direction FirewallRuleDirection, action FirewallRuleAction, priority uint16) *FirewallRule {
 	f := new(FirewallRule)
 	f.Client = client
 	f.Identifier = identifier.Long()
@@ -44,7 +44,7 @@ type FirewallRule struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Rule      universal.FirewallRule
+		Rule      common.FirewallRule
 		Direction FirewallRuleDirection
 		Action    FirewallRuleAction
 		Priority  uint16
@@ -133,7 +133,7 @@ func (f *FirewallRule) Read(ctx context.Context) error {
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -143,7 +143,7 @@ func (f *FirewallRule) Read(ctx context.Context) error {
 }
 
 func (f *FirewallRule) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (f *FirewallRule) Delete(ctx context.Context) error {

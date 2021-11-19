@@ -12,11 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/ssh"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/ssh"
 )
 
-func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*Client, error) {
+func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {
 	region := string(cloud.Region)
 	regions := map[string]string{
 		"us-east":  "us-east-1",
@@ -49,7 +49,7 @@ func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*C
 }
 
 type Client struct {
-	Cloud  universal.Cloud
+	Cloud  common.Cloud
 	Region string
 	Tags   map[string]string
 

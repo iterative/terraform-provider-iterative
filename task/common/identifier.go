@@ -1,10 +1,10 @@
-package universal
+package common
 
 import (
-	"fmt"
 	"bytes"
-	"strings"
+	"fmt"
 	"regexp"
+	"strings"
 
 	"crypto/sha256"
 
@@ -15,14 +15,14 @@ type Identifier string
 
 func (i Identifier) Long() string {
 	re := regexp.MustCompile(`(?s)^tpi-([a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)-([a-z0-9]+)-([a-z0-9]+)$`)
-	
-	if match := re.FindStringSubmatch(string(i)); len(match) > 0 && hash(match[1]+match[2], 4) == match[3] {	
+
+	if match := re.FindStringSubmatch(string(i)); len(match) > 0 && hash(match[1]+match[2], 4) == match[3] {
 		return match[0]
 	}
 
 	name := normalize(string(i), 50)
 	digest := hash(string(i), 4)
-		
+
 	return fmt.Sprintf("tpi-%s-%s-%s", name, digest, hash(name+digest, 4))
 }
 
@@ -38,7 +38,7 @@ func hash(identifier string, size uint32) string {
 	random := uid.NewRandCustom(bytes.NewReader(digest[:]))
 	encoder := uid.NewEncoderBase36()
 	provider := uid.NewProviderCustom(size, random, encoder)
-	
+
 	return provider.MustGenerate().String()
 }
 
@@ -46,17 +46,15 @@ func hash(identifier string, size uint32) string {
 // RFC1123-like names truncated to the specified length.
 func normalize(identifier string, truncate uint32) string {
 	lowercase := strings.ToLower(identifier)
-	
+
 	normalized := regexp.MustCompile("[^a-z0-9]+").ReplaceAllString(lowercase, "-")
 	normalized = regexp.MustCompile("(^-)|(-$)").ReplaceAllString(normalized, "")
-	
+
 	if len(normalized) > int(truncate) {
 		normalized = normalized[:truncate]
 	}
-	
+
 	return normalized
 }
 
-
-
-// func NormalizeIdentifier(identifier universal.Identifier, long bool) string {
+// func NormalizeIdentifier(identifier common.Identifier, long bool) string {

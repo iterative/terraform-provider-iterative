@@ -7,12 +7,12 @@ import (
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/aws/resources"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/machine"
-	"terraform-provider-iterative/task/universal/ssh"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
+	"terraform-provider-iterative/task/common/ssh"
 )
 
-func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Identifier, task universal.Task) (*Task, error) {
+func NewTask(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
 	client, err := client.New(ctx, cloud, task.Tags)
 	if err != nil {
 		return nil, err
@@ -74,8 +74,8 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 
 type Task struct {
 	Client      *client.Client
-	Identifier  universal.Identifier
-	Attributes  universal.Task
+	Identifier  common.Identifier
+	Attributes  common.Task
 	DataSources struct {
 		*resources.DefaultVPC
 		*resources.DefaultVPCSubnet
@@ -192,7 +192,7 @@ func (t *Task) Read(ctx context.Context) error {
 func (t *Task) Delete(ctx context.Context) error {
 	log.Println("[INFO] Downloading Directory...")
 	if t.Attributes.Environment.Directory != "" && t.Read(ctx) == nil {
-		if err := t.Pull(ctx, t.Attributes.Environment.Directory); err != nil && err != universal.NotFoundError {
+		if err := t.Pull(ctx, t.Attributes.Environment.Directory); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
@@ -257,7 +257,7 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []universal.Event {
+func (t *Task) GetEvents(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 

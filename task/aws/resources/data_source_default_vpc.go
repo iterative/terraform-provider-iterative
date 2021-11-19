@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
 func NewDefaultVPC(client *client.Client) *DefaultVPC {
@@ -38,7 +38,7 @@ func (d *DefaultVPC) Read(ctx context.Context) error {
 	}
 
 	if len(vpcs.Vpcs) < 1 {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	d.Resource = &vpcs.Vpcs[0]

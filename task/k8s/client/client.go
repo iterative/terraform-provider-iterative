@@ -13,10 +13,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*Client, error) {
+func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {
 	kubeconfig := os.Getenv("KUBERNETES_CONFIGURATION") // Legacy; deprecated.
 	if kubeconfig == "" {
 		kubeconfig = os.Getenv("KUBECONFIG_DATA")
@@ -62,7 +62,7 @@ func New(ctx context.Context, cloud universal.Cloud, tags map[string]string) (*C
 }
 
 type Client struct {
-	Cloud        universal.Cloud
+	Cloud        common.Cloud
 	Namespace    string
 	Tags         map[string]string
 	Config       *clientcmd.ClientConfig

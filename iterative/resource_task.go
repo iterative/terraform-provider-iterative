@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"terraform-provider-iterative/task"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
 func resourceTask() *schema.Resource {
@@ -230,10 +230,10 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 	}
 
-	c := universal.Cloud{
-		Provider: universal.Provider(d.Get("cloud").(string)),
-		Region:   universal.Region(d.Get("region").(string)),
-		Timeouts: universal.Timeouts{
+	c := common.Cloud{
+		Provider: common.Provider(d.Get("cloud").(string)),
+		Region:   common.Region(d.Get("region").(string)),
+		Timeouts: common.Timeouts{
 			Create: d.Timeout(schema.TimeoutCreate),
 			Read:   d.Timeout(schema.TimeoutRead),
 			Update: d.Timeout(schema.TimeoutUpdate),
@@ -241,20 +241,20 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		},
 	}
 
-	t := universal.Task{
-		Size: universal.Size{
+	t := common.Task{
+		Size: common.Size{
 			Machine: d.Get("machine").(string),
 			Storage: d.Get("disk_size").(int),
 		},
-		Environment: universal.Environment{
+		Environment: common.Environment{
 			Image:     d.Get("image").(string),
 			Script:    d.Get("script").(string),
 			Variables: v,
 			Directory: d.Get("directory").(string),
 			Timeout:   time.Duration(d.Get("timeout").(int)) * time.Second,
 		},
-		Firewall: universal.Firewall{
-			Ingress: universal.FirewallRule{
+		Firewall: common.Firewall{
+			Ingress: common.FirewallRule{
 				Ports: &[]uint16{22, 80}, // FIXME: just for testing Jupyter
 			},
 			// Egress is open on every port

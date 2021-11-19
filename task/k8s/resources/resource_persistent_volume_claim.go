@@ -10,11 +10,11 @@ import (
 	kubernetes_meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/k8s/client"
-	"terraform-provider-iterative/task/universal"
 )
 
-func NewPersistentVolumeClaim(client *client.Client, identifier universal.Identifier, storageClass string, size uint64, many bool) *PersistentVolumeClaim {
+func NewPersistentVolumeClaim(client *client.Client, identifier common.Identifier, storageClass string, size uint64, many bool) *PersistentVolumeClaim {
 	p := new(PersistentVolumeClaim)
 	p.Client = client
 	p.Identifier = identifier.Long()
@@ -75,7 +75,7 @@ func (p *PersistentVolumeClaim) Read(ctx context.Context) error {
 	persistentVolumeClaim, err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Get(ctx, p.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}

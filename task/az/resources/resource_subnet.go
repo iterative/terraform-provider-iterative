@@ -8,10 +8,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewSubnet(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, virtualNetwork *VirtualNetwork, securityGroup *SecurityGroup) *Subnet {
+func NewSubnet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, virtualNetwork *VirtualNetwork, securityGroup *SecurityGroup) *Subnet {
 	s := new(Subnet)
 	s.Client = client
 	s.Identifier = identifier.Long()
@@ -60,7 +60,7 @@ func (s *Subnet) Read(ctx context.Context) error {
 	subnet, err := s.Client.Services.Subnets.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -70,7 +70,7 @@ func (s *Subnet) Read(ctx context.Context) error {
 }
 
 func (s *Subnet) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (s *Subnet) Delete(ctx context.Context) error {

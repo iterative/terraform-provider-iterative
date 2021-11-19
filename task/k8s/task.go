@@ -14,13 +14,13 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/kubectl/pkg/cmd/cp"
 
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/ssh"
 	"terraform-provider-iterative/task/k8s/client"
 	"terraform-provider-iterative/task/k8s/resources"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/ssh"
 )
 
-func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Identifier, task universal.Task) (*Task, error) {
+func NewTask(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
 	client, err := client.New(ctx, cloud, task.Tags)
 	if err != nil {
 		return nil, err
@@ -67,9 +67,9 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 
 type Task struct {
 	Client     *client.Client
-	Identifier universal.Identifier
+	Identifier common.Identifier
 	Attributes struct {
-		universal.Task
+		common.Task
 		Directory string
 	}
 	DataSources struct{}
@@ -199,7 +199,7 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []universal.Event {
+func (t *Task) GetEvents(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
@@ -208,7 +208,7 @@ func (t *Task) GetStatus(ctx context.Context) map[string]int {
 }
 
 func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {
-	return nil, universal.NotFoundError
+	return nil, common.NotFoundError
 }
 
 func (t *Task) GetIdentifier(ctx context.Context) string {

@@ -12,12 +12,12 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
 	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/machine"
 )
 
-func NewInstanceTemplate(client *client.Client, identifier universal.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task universal.Task) *InstanceTemplate {
+func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {
 	i := new(InstanceTemplate)
 	i.Client = client
 	i.Identifier = identifier.Long()
@@ -32,7 +32,7 @@ func NewInstanceTemplate(client *client.Client, identifier universal.Identifier,
 type InstanceTemplate struct {
 	Client       *client.Client
 	Identifier   string
-	Attributes   universal.Task
+	Attributes   common.Task
 	Dependencies struct {
 		*DefaultNetwork
 		FirewallRules []*FirewallRule
@@ -192,7 +192,7 @@ func (i *InstanceTemplate) Read(ctx context.Context) error {
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -202,7 +202,7 @@ func (i *InstanceTemplate) Read(ctx context.Context) error {
 }
 
 func (i *InstanceTemplate) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (i *InstanceTemplate) Delete(ctx context.Context) error {

@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
 func NewDefaultVPCSubnet(client *client.Client, defaultVpc *DefaultVPC) *DefaultVPCSubnet {
@@ -42,7 +42,7 @@ func (d *DefaultVPCSubnet) Read(ctx context.Context) error {
 	}
 
 	if len(subnets.Subnets) < 1 {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	for _, subnet := range subnets.Subnets {
@@ -52,5 +52,5 @@ func (d *DefaultVPCSubnet) Read(ctx context.Context) error {
 		}
 	}
 
-	return universal.NotFoundError
+	return common.NotFoundError
 }

@@ -11,11 +11,11 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/universal"
 )
 
-func NewInstanceGroupManager(client *client.Client, identifier universal.Identifier, instanceTemplate *InstanceTemplate, parallelism uint16) *InstanceGroupManager {
+func NewInstanceGroupManager(client *client.Client, identifier common.Identifier, instanceTemplate *InstanceTemplate, parallelism uint16) *InstanceGroupManager {
 	i := new(InstanceGroupManager)
 	i.Client = client
 	i.Identifier = identifier.Long()
@@ -31,7 +31,7 @@ type InstanceGroupManager struct {
 		Parallelism uint16
 		Addresses   []net.IP
 		Status      map[string]int
-		Events      []universal.Event
+		Events      []common.Event
 	}
 	Dependencies struct {
 		*InstanceTemplate
@@ -44,12 +44,12 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
 
-	i.Attributes.Events = []universal.Event{}
+	i.Attributes.Events = []common.Event{}
 	errors, err := i.Client.Services.Compute.InstanceGroupManagers.ListErrors(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier).Do()
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 		if err != nil {
 			timeStamp = time.Time{}
 		}
-		i.Attributes.Events = append(i.Attributes.Events, universal.Event{
+		i.Attributes.Events = append(i.Attributes.Events, common.Event{
 			Time: timeStamp,
 			Code: error.Error.Code,
 			Description: []string{

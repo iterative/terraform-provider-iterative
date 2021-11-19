@@ -5,12 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/universal"
-
 )
 
-func NewCredentials(client *client.Client, identifier universal.Identifier, bucket *Bucket) *Credentials {
+func NewCredentials(client *client.Client, identifier common.Identifier, bucket *Bucket) *Credentials {
 	c := new(Credentials)
 	c.Client = client
 	c.Identifier = identifier.Long()

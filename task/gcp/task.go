@@ -5,14 +5,14 @@ import (
 	"log"
 	"net"
 
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
+	"terraform-provider-iterative/task/common/ssh"
 	"terraform-provider-iterative/task/gcp/client"
 	"terraform-provider-iterative/task/gcp/resources"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/machine"
-	"terraform-provider-iterative/task/universal/ssh"
 )
 
-func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Identifier, task universal.Task) (*Task, error) {
+func NewTask(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
 	client, err := client.New(ctx, cloud, task.Tags)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 		t.Client,
 		t.Identifier+"1e",
 		t.DataSources.DefaultNetwork,
-		universal.FirewallRule{Nets: &[]net.IPNet{{IP: net.IP{10, 128, 0, 0}, Mask: net.IPMask{255, 128, 0, 0}}}},
+		common.FirewallRule{Nets: &[]net.IPNet{{IP: net.IP{10, 128, 0, 0}, Mask: net.IPMask{255, 128, 0, 0}}}},
 		resources.FirewallRuleDirectionEgress,
 		resources.FirewallRuleActionAllow,
 		1,
@@ -47,7 +47,7 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 		t.Client,
 		t.Identifier+"1i",
 		t.DataSources.DefaultNetwork,
-		universal.FirewallRule{Nets: &[]net.IPNet{{IP: net.IP{10, 128, 0, 0}, Mask: net.IPMask{255, 128, 0, 0}}}},
+		common.FirewallRule{Nets: &[]net.IPNet{{IP: net.IP{10, 128, 0, 0}, Mask: net.IPMask{255, 128, 0, 0}}}},
 		resources.FirewallRuleDirectionIngress,
 		resources.FirewallRuleActionAllow,
 		1,
@@ -74,7 +74,7 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 		t.Client,
 		t.Identifier+"3e",
 		t.DataSources.DefaultNetwork,
-		universal.FirewallRule{},
+		common.FirewallRule{},
 		resources.FirewallRuleDirectionEgress,
 		resources.FirewallRuleActionDeny,
 		3,
@@ -83,7 +83,7 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 		t.Client,
 		t.Identifier+"3i",
 		t.DataSources.DefaultNetwork,
-		universal.FirewallRule{},
+		common.FirewallRule{},
 		resources.FirewallRuleDirectionIngress,
 		resources.FirewallRuleActionDeny,
 		3,
@@ -119,8 +119,8 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Id
 
 type Task struct {
 	Client      *client.Client
-	Identifier  universal.Identifier
-	Attributes  universal.Task
+	Identifier  common.Identifier
+	Attributes  common.Task
 	DataSources struct {
 		*resources.DefaultNetwork
 		*resources.Credentials
@@ -260,7 +260,7 @@ func (t *Task) Read(ctx context.Context) error {
 func (t *Task) Delete(ctx context.Context) error {
 	log.Println("[INFO] Downloading Directory...")
 	if t.Attributes.Environment.Directory != "" && t.Read(ctx) == nil {
-		if err := t.Pull(ctx, t.Attributes.Environment.Directory); err != nil && err != universal.NotFoundError {
+		if err := t.Pull(ctx, t.Attributes.Environment.Directory); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
@@ -337,7 +337,7 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []universal.Event {
+func (t *Task) GetEvents(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 

@@ -14,11 +14,11 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
-	"terraform-provider-iterative/task/universal/machine"
+	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
 )
 
-func NewVirtualMachineScaleSet(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task universal.Task) *VirtualMachineScaleSet {
+func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task common.Task) *VirtualMachineScaleSet {
 	v := new(VirtualMachineScaleSet)
 	v.Client = client
 	v.Identifier = identifier.Long()
@@ -39,15 +39,15 @@ type VirtualMachineScaleSet struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Size        universal.Size
-		Environment universal.Environment
-		Firewall    universal.Firewall
+		Size        common.Size
+		Environment common.Environment
+		Firewall    common.Firewall
 		Tags        map[string]string
 		Parallelism uint16
 		Spot        float64
 		Addresses   []net.IP
 		Status      map[string]int
-		Events      []universal.Event
+		Events      []common.Event
 	}
 	Dependencies struct {
 		*ResourceGroup
@@ -218,12 +218,12 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	scaleSet, err := v.Client.Services.VirtualMachineScaleSets.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
 
-	v.Attributes.Events = []universal.Event{}
+	v.Attributes.Events = []common.Event{}
 	v.Attributes.Status = make(map[string]int)
 	scaleSetView, err := v.Client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
@@ -236,7 +236,7 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	}
 	if scaleSetView.Statuses != nil {
 		for _, status := range *scaleSetView.Statuses {
-			v.Attributes.Events = append(v.Attributes.Events, universal.Event{
+			v.Attributes.Events = append(v.Attributes.Events, common.Event{
 				Time: status.Time.Time,
 				Code: to.String(status.Code),
 				Description: []string{

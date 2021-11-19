@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
 func NewImage(client *client.Client, identifier string) *Image {
@@ -41,7 +41,7 @@ func (i *Image) Read(ctx context.Context) error {
 
 	match := regexp.MustCompile(`^([^@]+)@([^:]+):([^:]+):([^:]+)$`).FindStringSubmatch(image)
 	if match == nil {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	i.Attributes.SSHUser = match[1]
@@ -90,7 +90,7 @@ func (i *Image) Read(ctx context.Context) error {
 	})
 
 	if len(result.Images) == 0 {
-		return universal.NotFoundError
+		return common.NotFoundError
 	}
 
 	i.Resource = &result.Images[0]

@@ -7,11 +7,11 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
 
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/universal"
 )
 
-func NewBucket(client *client.Client, identifier universal.Identifier) *Bucket {
+func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
 	b := new(Bucket)
 	b.Client = client
 	b.Identifier = identifier.Long()
@@ -47,7 +47,7 @@ func (b *Bucket) Read(ctx context.Context) error {
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -57,11 +57,11 @@ func (b *Bucket) Read(ctx context.Context) error {
 }
 
 func (b *Bucket) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (b *Bucket) Delete(ctx context.Context) error {
-	if b.Read(ctx) == universal.NotFoundError {
+	if b.Read(ctx) == common.NotFoundError {
 		return nil
 	}
 

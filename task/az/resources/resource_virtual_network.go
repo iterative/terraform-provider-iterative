@@ -8,10 +8,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/universal"
+	"terraform-provider-iterative/task/common"
 )
 
-func NewVirtualNetwork(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup) *VirtualNetwork {
+func NewVirtualNetwork(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup) *VirtualNetwork {
 	v := new(VirtualNetwork)
 	v.Client = client
 	v.Identifier = identifier.Long()
@@ -61,7 +61,7 @@ func (v *VirtualNetwork) Read(ctx context.Context) error {
 	virtualNetwork, err := v.Client.Services.VirtualNetworks.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
-			return universal.NotFoundError
+			return common.NotFoundError
 		}
 		return err
 	}
@@ -71,7 +71,7 @@ func (v *VirtualNetwork) Read(ctx context.Context) error {
 }
 
 func (v *VirtualNetwork) Update(ctx context.Context) error {
-	return universal.NotImplementedError
+	return common.NotImplementedError
 }
 
 func (v *VirtualNetwork) Delete(ctx context.Context) error {
