@@ -17,10 +17,10 @@ import (
 	"terraform-provider-iterative/task/universal/machine"
 )
 
-func NewInstanceTemplate(client *client.Client, identifier string, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task universal.Task) *InstanceTemplate {
+func NewInstanceTemplate(client *client.Client, identifier universal.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task universal.Task) *InstanceTemplate {
 	i := new(InstanceTemplate)
 	i.Client = client
-	i.Identifier = universal.NormalizeIdentifier(identifier, true)
+	i.Identifier = identifier.Long()
 	i.Attributes = task
 	i.Dependencies.Credentials = credentials
 	i.Dependencies.DefaultNetwork = defaultNetwork

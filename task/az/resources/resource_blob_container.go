@@ -10,10 +10,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewBlobContainer(client *client.Client, identifier string, resourceGroup *ResourceGroup, storageAccount *StorageAccount) *BlobContainer {
+func NewBlobContainer(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount) *BlobContainer {
 	b := new(BlobContainer)
 	b.Client = client
-	b.Identifier = universal.NormalizeIdentifier(identifier, false)
+	b.Identifier = identifier.Short()
 	b.Dependencies.ResourceGroup = resourceGroup
 	b.Dependencies.StorageAccount = storageAccount
 	return b

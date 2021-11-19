@@ -28,10 +28,10 @@ const (
 	FirewallRuleActionAllow FirewallRuleAction = "ALLOW"
 )
 
-func NewFirewallRule(client *client.Client, identifier string, defaultNetwork *DefaultNetwork, rule universal.FirewallRule, direction FirewallRuleDirection, action FirewallRuleAction, priority uint16) *FirewallRule {
+func NewFirewallRule(client *client.Client, identifier universal.Identifier, defaultNetwork *DefaultNetwork, rule universal.FirewallRule, direction FirewallRuleDirection, action FirewallRuleAction, priority uint16) *FirewallRule {
 	f := new(FirewallRule)
 	f.Client = client
-	f.Identifier = universal.NormalizeIdentifier(identifier, true)
+	f.Identifier = identifier.Long()
 	f.Attributes.Rule = rule
 	f.Attributes.Direction = direction
 	f.Attributes.Action = action

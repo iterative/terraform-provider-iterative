@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 
@@ -14,7 +15,12 @@ import (
 	"terraform-provider-iterative/task/universal/ssh"
 )
 
-func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task universal.Task) (Task, error) {
+func NewTask(ctx context.Context, cloud universal.Cloud, name string, task universal.Task) (Task, error) {
+	if len(name) < 1 {
+		return nil, errors.New("name must not be empty")
+	}
+	identifier := universal.Identifier(name)
+
 	switch cloud.Provider {
 	case universal.ProviderAWS:
 		return aws.NewTask(ctx, cloud, identifier, task)

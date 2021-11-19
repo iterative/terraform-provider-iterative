@@ -11,10 +11,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewResourceGroup(client *client.Client, identifier string) *ResourceGroup {
+func NewResourceGroup(client *client.Client, identifier universal.Identifier) *ResourceGroup {
 	r := new(ResourceGroup)
 	r.Client = client
-	r.Identifier = universal.NormalizeIdentifier(identifier, true)
+	r.Identifier = identifier.Long()
 	return r
 }
 

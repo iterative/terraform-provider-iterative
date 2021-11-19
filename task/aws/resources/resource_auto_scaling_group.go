@@ -19,10 +19,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewAutoScalingGroup(client *client.Client, identifier string, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot float64) *AutoScalingGroup {
+func NewAutoScalingGroup(client *client.Client, identifier universal.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot float64) *AutoScalingGroup {
 	a := new(AutoScalingGroup)
 	a.Client = client
-	a.Identifier = universal.NormalizeIdentifier(identifier, true)
+	a.Identifier = identifier.Long()
 	a.Attributes.Parallelism = parallelism
 	a.Attributes.Spot = spot
 	a.Dependencies.DefaultVPCSubnet = subnet

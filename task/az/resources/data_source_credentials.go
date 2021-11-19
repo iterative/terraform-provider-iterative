@@ -8,12 +8,13 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
+	"terraform-provider-iterative/task/universal"
 )
 
-func NewCredentials(client *client.Client, identifier string, resourceGroup *ResourceGroup, storageAccount *StorageAccount, blobContainer *BlobContainer) *Credentials {
+func NewCredentials(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount, blobContainer *BlobContainer) *Credentials {
 	c := new(Credentials)
 	c.Client = client
-	c.Identifier = identifier
+	c.Identifier = identifier.Long()
 	c.Dependencies.ResourceGroup = resourceGroup
 	c.Dependencies.StorageAccount = storageAccount
 	c.Dependencies.BlobContainer = blobContainer

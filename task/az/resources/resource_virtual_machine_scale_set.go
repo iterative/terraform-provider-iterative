@@ -18,10 +18,10 @@ import (
 	"terraform-provider-iterative/task/universal/machine"
 )
 
-func NewVirtualMachineScaleSet(client *client.Client, identifier string, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task universal.Task) *VirtualMachineScaleSet {
+func NewVirtualMachineScaleSet(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task universal.Task) *VirtualMachineScaleSet {
 	v := new(VirtualMachineScaleSet)
 	v.Client = client
-	v.Identifier = universal.NormalizeIdentifier(identifier, true)
+	v.Identifier = identifier.Long()
 	v.Attributes.Size = task.Size
 	v.Attributes.Environment = task.Environment
 	v.Attributes.Firewall = task.Firewall

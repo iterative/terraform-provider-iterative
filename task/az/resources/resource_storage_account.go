@@ -13,10 +13,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewStorageAccount(client *client.Client, identifier string, resourceGroup *ResourceGroup) *StorageAccount {
+func NewStorageAccount(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup) *StorageAccount {
 	s := new(StorageAccount)
 	s.Client = client
-	s.Identifier = universal.NormalizeIdentifier(identifier, false)
+	s.Identifier = identifier.Short()
 	s.Dependencies.ResourceGroup = resourceGroup
 	return s
 }

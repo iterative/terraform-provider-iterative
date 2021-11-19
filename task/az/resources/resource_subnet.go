@@ -11,10 +11,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewSubnet(client *client.Client, identifier string, resourceGroup *ResourceGroup, virtualNetwork *VirtualNetwork, securityGroup *SecurityGroup) *Subnet {
+func NewSubnet(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, virtualNetwork *VirtualNetwork, securityGroup *SecurityGroup) *Subnet {
 	s := new(Subnet)
 	s.Client = client
-	s.Identifier = universal.NormalizeIdentifier(identifier, true)
+	s.Identifier = identifier.Long()
 	s.Dependencies.ResourceGroup = resourceGroup
 	s.Dependencies.VirtualNetwork = virtualNetwork
 	s.Dependencies.SecurityGroup = securityGroup

@@ -13,10 +13,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewSecurityGroup(client *client.Client, identifier string, resourceGroup *ResourceGroup, firewall universal.Firewall) *SecurityGroup {
+func NewSecurityGroup(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup, firewall universal.Firewall) *SecurityGroup {
 	s := new(SecurityGroup)
 	s.Client = client
-	s.Identifier = universal.NormalizeIdentifier(identifier, true)
+	s.Identifier = identifier.Long()
 	s.Attributes = firewall
 	s.Dependencies.ResourceGroup = resourceGroup
 	return s

@@ -27,10 +27,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewJob(client *client.Client, identifier string, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, task universal.Task) *Job {
+func NewJob(client *client.Client, identifier universal.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, task universal.Task) *Job {
 	j := new(Job)
 	j.Client = client
-	j.Identifier = universal.NormalizeIdentifier(identifier, true)
+	j.Identifier = identifier.Long()
 	j.Dependencies.PersistentVolumeClaim = persistentVolumeClaim
 	j.Dependencies.ConfigMap = configMap
 	j.Attributes.Task = task

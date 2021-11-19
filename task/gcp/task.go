@@ -12,7 +12,7 @@ import (
 	"terraform-provider-iterative/task/universal/ssh"
 )
 
-func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task universal.Task) (*Task, error) {
+func NewTask(ctx context.Context, cloud universal.Cloud, identifier universal.Identifier, task universal.Task) (*Task, error) {
 	client, err := client.New(ctx, cloud, task.Tags)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func NewTask(ctx context.Context, cloud universal.Cloud, identifier string, task
 
 type Task struct {
 	Client      *client.Client
-	Identifier  string
+	Identifier  universal.Identifier
 	Attributes  universal.Task
 	DataSources struct {
 		*resources.DefaultNetwork
@@ -350,5 +350,5 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 }
 
 func (t *Task) GetIdentifier(ctx context.Context) string {
-	return t.Identifier
+	return t.Identifier.Long()
 }

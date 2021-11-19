@@ -14,10 +14,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewBucket(client *client.Client, identifier string) *Bucket {
+func NewBucket(client *client.Client, identifier universal.Identifier) *Bucket {
 	b := new(Bucket)
 	b.Client = client
-	b.Identifier = universal.NormalizeIdentifier(identifier, true)
+	b.Identifier = identifier.Long()
 	return b
 }
 

@@ -14,10 +14,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewPersistentVolumeClaim(client *client.Client, identifier, storageClass string, size uint64, many bool) *PersistentVolumeClaim {
+func NewPersistentVolumeClaim(client *client.Client, identifier universal.Identifier, storageClass string, size uint64, many bool) *PersistentVolumeClaim {
 	p := new(PersistentVolumeClaim)
 	p.Client = client
-	p.Identifier = universal.NormalizeIdentifier(identifier, true)
+	p.Identifier = identifier.Long()
 	p.Attributes.StorageClass = storageClass
 	p.Attributes.Size = size
 	p.Attributes.Many = many

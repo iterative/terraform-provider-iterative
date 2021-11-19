@@ -15,10 +15,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewInstanceGroupManager(client *client.Client, identifier string, instanceTemplate *InstanceTemplate, parallelism uint16) *InstanceGroupManager {
+func NewInstanceGroupManager(client *client.Client, identifier universal.Identifier, instanceTemplate *InstanceTemplate, parallelism uint16) *InstanceGroupManager {
 	i := new(InstanceGroupManager)
 	i.Client = client
-	i.Identifier = universal.NormalizeIdentifier(identifier, true)
+	i.Identifier = identifier.Long()
 	i.Attributes.Parallelism = parallelism
 	i.Dependencies.InstanceTemplate = instanceTemplate
 	return i

@@ -6,12 +6,14 @@ import (
 	"fmt"
 
 	"terraform-provider-iterative/task/gcp/client"
+	"terraform-provider-iterative/task/universal"
+
 )
 
-func NewCredentials(client *client.Client, identifier string, bucket *Bucket) *Credentials {
+func NewCredentials(client *client.Client, identifier universal.Identifier, bucket *Bucket) *Credentials {
 	c := new(Credentials)
 	c.Client = client
-	c.Identifier = identifier
+	c.Identifier = identifier.Long()
 	c.Dependencies.Bucket = bucket
 	return c
 }

@@ -12,10 +12,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewConfigMap(client *client.Client, identifier string, data map[string]string) *ConfigMap {
+func NewConfigMap(client *client.Client, identifier universal.Identifier, data map[string]string) *ConfigMap {
 	c := new(ConfigMap)
 	c.Client = client
-	c.Identifier = universal.NormalizeIdentifier(identifier, true)
+	c.Identifier = identifier.Long()
 	c.Attributes = data
 	return c
 }

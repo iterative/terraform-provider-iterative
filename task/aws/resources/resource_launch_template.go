@@ -16,10 +16,10 @@ import (
 	"terraform-provider-iterative/task/universal/machine"
 )
 
-func NewLaunchTemplate(client *client.Client, identifier string, securityGroup *SecurityGroup, image *Image, keyPair *KeyPair, credentials *Credentials, task universal.Task) *LaunchTemplate {
+func NewLaunchTemplate(client *client.Client, identifier universal.Identifier, securityGroup *SecurityGroup, image *Image, keyPair *KeyPair, credentials *Credentials, task universal.Task) *LaunchTemplate {
 	l := new(LaunchTemplate)
 	l.Client = client
-	l.Identifier = universal.NormalizeIdentifier(identifier, true)
+	l.Identifier = identifier.Long()
 	l.Attributes = task
 	l.Dependencies.SecurityGroup = securityGroup
 	l.Dependencies.Image = image

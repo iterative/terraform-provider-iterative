@@ -16,10 +16,10 @@ import (
 	"terraform-provider-iterative/task/universal/ssh"
 )
 
-func NewKeyPair(client *client.Client, identifier string) *KeyPair {
+func NewKeyPair(client *client.Client, identifier universal.Identifier) *KeyPair {
 	k := new(KeyPair)
 	k.Client = client
-	k.Identifier = universal.NormalizeIdentifier(identifier, true)
+	k.Identifier = identifier.Long()
 	return k
 }
 

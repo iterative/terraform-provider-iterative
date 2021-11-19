@@ -11,10 +11,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewSecurityGroup(client *client.Client, identifier string, defaultVPC *DefaultVPC, firewall universal.Firewall) *SecurityGroup {
+func NewSecurityGroup(client *client.Client, identifier universal.Identifier, defaultVPC *DefaultVPC, firewall universal.Firewall) *SecurityGroup {
 	s := new(SecurityGroup)
 	s.Client = client
-	s.Identifier = universal.NormalizeIdentifier(identifier, true)
+	s.Identifier = identifier.Long()
 	s.Attributes = firewall
 	s.Dependencies.DefaultVPC = defaultVPC
 	return s

@@ -11,10 +11,10 @@ import (
 	"terraform-provider-iterative/task/universal"
 )
 
-func NewVirtualNetwork(client *client.Client, identifier string, resourceGroup *ResourceGroup) *VirtualNetwork {
+func NewVirtualNetwork(client *client.Client, identifier universal.Identifier, resourceGroup *ResourceGroup) *VirtualNetwork {
 	v := new(VirtualNetwork)
 	v.Client = client
-	v.Identifier = universal.NormalizeIdentifier(identifier, true)
+	v.Identifier = identifier.Long()
 	v.Dependencies.ResourceGroup = resourceGroup
 	return v
 }
