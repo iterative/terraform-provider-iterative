@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -17,15 +16,10 @@ func waitForOperation(ctx context.Context, timeout time.Duration, minimum time.D
 		switch operation, err := function(arguments...); {
 		case err == nil && operation.Status == "DONE":
 			return operation, nil
-
 		case err == nil && operation.Error != nil:
 			return nil, fmt.Errorf("operation error: %#v", *operation.Error.Errors[0])
-
 		case err != nil && !strings.HasSuffix(err.Error(), "resourceNotReady"):
 			return nil, err
-
-		default:
-			log.Printf("waiting for operation: (%#v, %#v)", operation, err)
 		}
 
 		if delay < maximum {

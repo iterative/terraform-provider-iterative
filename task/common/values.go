@@ -13,6 +13,14 @@ import (
 var NotFoundError error = errors.New("resource not found")
 var NotImplementedError error = errors.New("resource method not implemented")
 
+// <0=disabled, 0=auto, >0=fixed
+type Spot float64
+
+const (
+	SpotDisabled Spot = -1
+	SpotEnabled  Spot = 0
+)
+
 type Size struct {
 	Storage int
 	Machine string
@@ -34,7 +42,7 @@ type Task struct {
 	Size
 	Environment
 	Firewall
-	Spot        float64 // <0=disabled, 0=auto, >0=fixed
+	Spot
 	Parallelism uint16
 	Tags        map[string]string // Deprecated
 

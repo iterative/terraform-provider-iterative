@@ -41,18 +41,20 @@ type Task interface {
 	Create(ctx context.Context) error
 	Delete(ctx context.Context) error
 
+	Start(ctx context.Context) error
+	Stop(ctx context.Context) error
+
 	Push(ctx context.Context, source string, unsafe bool) error
 	Pull(ctx context.Context, destination string) error
 
+	Status(ctx context.Context) map[string]int
+	Events(ctx context.Context) []common.Event
 	Logs(ctx context.Context) ([]string, error)
 
-	// Not useful for Kubernetes.
-	Stop(ctx context.Context) error
-
 	// To be refactored.
+	GetIdentifier(ctx context.Context) common.Identifier
+
 	GetAddresses(ctx context.Context) []net.IP
-	GetEvents(ctx context.Context) []common.Event
-	GetStatus(ctx context.Context) map[string]int
+
 	GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error)
-	GetIdentifier(ctx context.Context) string
 }

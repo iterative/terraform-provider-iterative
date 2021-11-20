@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,7 @@ const (
 func NewFirewallRule(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, rule common.FirewallRule, direction FirewallRuleDirection, action FirewallRuleAction, priority uint16) *FirewallRule {
 	f := new(FirewallRule)
 	f.Client = client
-	f.Identifier = identifier.Long()
+	f.Identifier = fmt.Sprintf("%s-%s%d", identifier.Long(), strings.ToLower(string(direction[0:1])), priority)
 	f.Attributes.Rule = rule
 	f.Attributes.Direction = direction
 	f.Attributes.Action = action

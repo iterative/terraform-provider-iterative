@@ -92,45 +92,45 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating/Importing DefaultVPC...")
+	log.Println("[INFO] Creating DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing DefaultVPCSubnet...")
+	log.Println("[INFO] Creating DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing Image...")
+	log.Println("[INFO] Creating Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing Bucket...")
+	log.Println("[INFO] Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing SecurityGroup...")
+	log.Println("[INFO] Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing KeyPair...")
+	log.Println("[INFO] Creating KeyPair...")
 	if err := t.Resources.KeyPair.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing Credentials...")
+	log.Println("[INFO] Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating/Importing LaunchTemplate...")
+	log.Println("[INFO] Creating LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Uploading/Refreshing Directory...")
+	log.Println("[INFO] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory, true); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Creating/Importing AutoScalingGroup...")
+	log.Println("[INFO] Creating AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Create(ctx); err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	if err := t.Resources.Bucket.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting ")
+	log.Println("[INFO] Done!")
 	return nil
 }
 
@@ -248,7 +248,14 @@ func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
 	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
 }
 
+func (t *Task) Start(ctx context.Context) error {
+	return t.Resources.AutoScalingGroup.Update(ctx)
+}
+
 func (t *Task) Stop(ctx context.Context) error {
+	original := t.Attributes.Parallelism
+	defer func() { t.Attributes.Parallelism = original }()
+
 	t.Attributes.Parallelism = 0
 	return t.Resources.AutoScalingGroup.Update(ctx)
 }
@@ -257,11 +264,11 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []common.Event {
+func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) GetStatus(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) map[string]int {
 	return t.Attributes.Status
 }
 
@@ -269,6 +276,6 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 	return t.Client.GetKeyPair(ctx)
 }
 
-func (t *Task) GetIdentifier(ctx context.Context) string {
-	return t.Identifier.Long()
+func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
+	return t.Identifier
 }

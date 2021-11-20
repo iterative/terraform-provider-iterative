@@ -241,7 +241,14 @@ func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
 	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
 }
 
+func (t *Task) Start(ctx context.Context) error {
+	return t.Resources.VirtualMachineScaleSet.Update(ctx)
+}
+
 func (t *Task) Stop(ctx context.Context) error {
+	original := t.Attributes.Parallelism
+	defer func() { t.Attributes.Parallelism = original }()
+
 	t.Attributes.Parallelism = 0
 	return t.Resources.VirtualMachineScaleSet.Update(ctx)
 }
@@ -250,11 +257,11 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []common.Event {
+func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) GetStatus(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) map[string]int {
 	return t.Attributes.Status
 }
 
@@ -262,6 +269,6 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 	return t.Client.GetKeyPair(ctx)
 }
 
-func (t *Task) GetIdentifier(ctx context.Context) string {
-	return t.Identifier.Long()
+func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
+	return t.Identifier
 }

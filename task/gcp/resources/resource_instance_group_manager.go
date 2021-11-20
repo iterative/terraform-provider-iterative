@@ -83,7 +83,9 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			i.Attributes.Addresses = append(i.Attributes.Addresses, net.ParseIP(instance.NetworkInterfaces[0].AccessConfigs[0].NatIP))
+			if address := net.ParseIP(instance.NetworkInterfaces[0].AccessConfigs[0].NatIP); address != nil {
+				i.Attributes.Addresses = append(i.Attributes.Addresses, address)
+			}
 		}
 	}
 

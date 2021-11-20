@@ -191,19 +191,25 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 	return t.Resources.Job.Logs(ctx)
 }
 
+func (t *Task) Start(ctx context.Context) error {
+	// https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
+	return errors.New("unsupported operation: resuming suspended k8s jobs still not supported")
+}
+
 func (t *Task) Stop(ctx context.Context) error {
-	return errors.New("unsupported operation: Stop is intended for VM orchestrators")
+	// https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
+	return errors.New("unsupported operation: suspending k8s jobs still not supported")
 }
 
 func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []common.Event {
+func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) GetStatus(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) map[string]int {
 	return t.Attributes.Status
 }
 
@@ -211,6 +217,6 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 	return nil, common.NotFoundError
 }
 
-func (t *Task) GetIdentifier(ctx context.Context) string {
-	return t.Identifier.Long()
+func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
+	return t.Identifier
 }

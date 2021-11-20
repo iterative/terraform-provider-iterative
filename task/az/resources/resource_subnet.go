@@ -33,7 +33,6 @@ type Subnet struct {
 }
 
 func (s *Subnet) Create(ctx context.Context) error {
-
 	subnetCreateFuture, err := s.Client.Services.Subnets.CreateOrUpdate(
 		ctx,
 		s.Dependencies.ResourceGroup.Identifier,
@@ -76,9 +75,10 @@ func (s *Subnet) Update(ctx context.Context) error {
 func (s *Subnet) Delete(ctx context.Context) error {
 	subnetDeleteFuture, err := s.Client.Services.Subnets.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode != 404 {
-			return err
+		if err.(autorest.DetailedError).StatusCode == 404 {
+			return nil
 		}
+		return err
 	}
 
 	err = subnetDeleteFuture.WaitForCompletionRef(ctx, s.Client.Services.Subnets.Client)

@@ -36,7 +36,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	t.Resources.FirewallInternalEgress = resources.NewFirewallRule(
 		t.Client,
-		t.Identifier+"1e",
+		t.Identifier,
 		t.DataSources.DefaultNetwork,
 		common.FirewallRule{Nets: &[]net.IPNet{{IP: net.IP{10, 128, 0, 0}, Mask: net.IPMask{255, 128, 0, 0}}}},
 		resources.FirewallRuleDirectionEgress,
@@ -45,7 +45,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	t.Resources.FirewallInternalIngress = resources.NewFirewallRule(
 		t.Client,
-		t.Identifier+"1i",
+		t.Identifier,
 		t.DataSources.DefaultNetwork,
 		common.FirewallRule{Nets: &[]net.IPNet{{IP: net.IP{10, 128, 0, 0}, Mask: net.IPMask{255, 128, 0, 0}}}},
 		resources.FirewallRuleDirectionIngress,
@@ -54,7 +54,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	t.Resources.FirewallExternalEgress = resources.NewFirewallRule(
 		t.Client,
-		t.Identifier+"2e",
+		t.Identifier,
 		t.DataSources.DefaultNetwork,
 		t.Attributes.Firewall.Egress,
 		resources.FirewallRuleDirectionEgress,
@@ -63,7 +63,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	t.Resources.FirewallExternalIngress = resources.NewFirewallRule(
 		t.Client,
-		t.Identifier+"2i",
+		t.Identifier,
 		t.DataSources.DefaultNetwork,
 		t.Attributes.Firewall.Ingress,
 		resources.FirewallRuleDirectionIngress,
@@ -72,7 +72,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	t.Resources.FirewallDenyEgress = resources.NewFirewallRule(
 		t.Client,
-		t.Identifier+"3e",
+		t.Identifier,
 		t.DataSources.DefaultNetwork,
 		common.FirewallRule{},
 		resources.FirewallRuleDirectionEgress,
@@ -81,7 +81,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	t.Resources.FirewallDenyIngress = resources.NewFirewallRule(
 		t.Client,
-		t.Identifier+"3i",
+		t.Identifier,
 		t.DataSources.DefaultNetwork,
 		common.FirewallRule{},
 		resources.FirewallRuleDirectionIngress,
@@ -328,7 +328,14 @@ func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
 	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
 }
 
+func (t *Task) Start(ctx context.Context) error {
+	return t.Resources.InstanceGroupManager.Update(ctx)
+}
+
 func (t *Task) Stop(ctx context.Context) error {
+	original := t.Attributes.Parallelism
+	defer func() { t.Attributes.Parallelism = original }()
+
 	t.Attributes.Parallelism = 0
 	return t.Resources.InstanceGroupManager.Update(ctx)
 }
@@ -337,11 +344,11 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
 }
 
-func (t *Task) GetEvents(ctx context.Context) []common.Event {
+func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) GetStatus(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) map[string]int {
 	return t.Attributes.Status
 }
 
@@ -349,6 +356,6 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 	return t.Client.GetKeyPair(ctx)
 }
 
-func (t *Task) GetIdentifier(ctx context.Context) string {
-	return t.Identifier.Long()
+func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
+	return t.Identifier
 }

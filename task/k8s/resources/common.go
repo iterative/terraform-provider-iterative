@@ -34,7 +34,6 @@ func WaitForPods(ctx context.Context, client *client.Client, interval time.Durat
 			if err != nil {
 				return false, err
 			}
-			fmt.Printf("%s\n", selector)
 
 			for _, condition := range pod.Status.Conditions {
 				if condition.Type == "Ready" {

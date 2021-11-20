@@ -27,7 +27,7 @@ func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifi
 	v.Attributes.Firewall = task.Firewall
 	v.Attributes.Tags = task.Tags
 	v.Attributes.Parallelism = task.Parallelism
-	v.Attributes.Spot = task.Spot
+	v.Attributes.Spot = float64(task.Spot)
 	v.Dependencies.ResourceGroup = resourceGroup
 	v.Dependencies.Subnet = subnet
 	v.Dependencies.SecurityGroup = securityGroup
@@ -256,7 +256,9 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 
 	for machineListPages.NotDone() {
 		for _, machine := range machineListPages.Values() {
-			v.Attributes.Addresses = append(v.Attributes.Addresses, net.ParseIP(to.String(machine.PublicIPAddressPropertiesFormat.IPAddress)))
+			if address := net.ParseIP(to.String(machine.PublicIPAddressPropertiesFormat.IPAddress)); address != nil {
+				v.Attributes.Addresses = append(v.Attributes.Addresses, address)
+			}
 		}
 		if err := machineListPages.NextWithContext(ctx); err != nil {
 			return err

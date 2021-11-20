@@ -19,12 +19,12 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot float64) *AutoScalingGroup {
+func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot common.Spot) *AutoScalingGroup {
 	a := new(AutoScalingGroup)
 	a.Client = client
 	a.Identifier = identifier.Long()
 	a.Attributes.Parallelism = parallelism
-	a.Attributes.Spot = spot
+	a.Attributes.Spot = float64(spot)
 	a.Dependencies.DefaultVPCSubnet = subnet
 	a.Dependencies.LaunchTemplate = launchTemplate
 	return a
@@ -133,7 +133,9 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 					status += " " + aws.ToString(instance.StateReason.Message)
 				}
 				a.Attributes.Status[status]++
-				a.Attributes.Addresses = append(a.Attributes.Addresses, net.ParseIP(aws.ToString(instance.PublicIpAddress)))
+				if address := net.ParseIP(aws.ToString(instance.PublicIpAddress)); address != nil {
+					a.Attributes.Addresses = append(a.Attributes.Addresses, address)
+				}
 			}
 		}
 	}

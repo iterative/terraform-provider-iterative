@@ -148,7 +148,7 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		return diagnostic(diags, err, diag.Error)
 	}
 
-	d.SetId(task.GetIdentifier(ctx))
+	d.SetId(task.GetIdentifier(ctx).Long())
 	return
 }
 
@@ -186,7 +186,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("addresses", addresses)
 
 	var events []string
-	for _, event := range task.GetEvents(ctx) {
+	for _, event := range task.Events(ctx) {
 		events = append(events, fmt.Sprintf(
 			"%s: %s\n%s",
 			event.Time.Format("2006-01-02 15:04:05"),
@@ -196,7 +196,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	d.Set("events", events)
 
-	d.Set("status", task.GetStatus(ctx))
+	d.Set("status", task.Status(ctx))
 
 	logs, err := task.Logs(ctx)
 	if err != nil {
@@ -204,7 +204,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	d.Set("logs", logs)
 
-	d.SetId(task.GetIdentifier(ctx))
+	d.SetId(task.GetIdentifier(ctx).Long())
 	return diags
 }
 
@@ -259,7 +259,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			},
 			// Egress is open on every port
 		},
-		Spot:        d.Get("spot").(float64),
+		Spot:        common.Spot(d.Get("spot").(float64)),
 		Parallelism: uint16(d.Get("parallelism").(int)),
 	}
 
