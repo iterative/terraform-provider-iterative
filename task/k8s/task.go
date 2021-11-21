@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"regexp"
+	"strconv"
 	"time"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -31,12 +33,26 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 
 	persistentVolumeClaimStorageClass := ""
 	persistentVolumeClaimSize := uint64(task.Size.Storage)
+	persistentVolumeDirectory := task.Environment.Directory
+
+	match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
+	if match != nil {
+		persistentVolumeClaimStorageClass = match[1]
+		if match[2] != "" {
+			number, err := strconv.Atoi(match[2])
+			if err != nil {
+				return nil, err
+			}
+			persistentVolumeClaimSize = uint64(number)
+		}
+		persistentVolumeDirectory = match[3]
+	}
 
 	t := new(Task)
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes.Task = task
-	t.Attributes.Directory = task.Environment.Directory
+	t.Attributes.Directory = persistentVolumeDirectory
 	t.Resources.ConfigMap = resources.NewConfigMap(
 		t.Client,
 		t.Identifier,
