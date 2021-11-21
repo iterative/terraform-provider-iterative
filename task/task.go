@@ -15,11 +15,10 @@ import (
 	"terraform-provider-iterative/task/common/ssh"
 )
 
-func New(ctx context.Context, cloud common.Cloud, name string, task common.Task) (Task, error) {
-	if name == "" {
-		return nil, errors.New("name must not be empty")
+func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (Task, error) {
+	if identifier == "" {
+		return nil, errors.New("identifier must not be empty")
 	}
-	identifier := common.Identifier(name)
 
 	switch cloud.Provider {
 	case common.ProviderAWS:
@@ -53,8 +52,6 @@ type Task interface {
 
 	// To be refactored.
 	GetIdentifier(ctx context.Context) common.Identifier
-
 	GetAddresses(ctx context.Context) []net.IP
-
 	GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error)
 }

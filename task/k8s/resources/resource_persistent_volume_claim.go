@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	kubernetes_core "k8s.io/api/core/v1"
@@ -50,14 +51,17 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 			Annotations: p.Client.Tags,
 		},
 		Spec: kubernetes_core.PersistentVolumeClaimSpec{
-			AccessModes:      []kubernetes_core.PersistentVolumeAccessMode{accessMode},
-			StorageClassName: &p.Attributes.StorageClass,
+			AccessModes: []kubernetes_core.PersistentVolumeAccessMode{accessMode},
 			Resources: kubernetes_core.ResourceRequirements{
 				Requests: kubernetes_core.ResourceList{
 					kubernetes_core.ResourceStorage: kubernetes_resource.MustParse(strconv.Itoa(int(p.Attributes.Size)) + "G"),
 				},
 			},
 		},
+	}
+
+	if p.Attributes.StorageClass != "" {
+		persistentVolumeClaimInput.Spec.StorageClassName = &p.Attributes.StorageClass
 	}
 
 	_, err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Create(ctx, &persistentVolumeClaimInput, kubernetes_meta.CreateOptions{})
@@ -88,6 +92,7 @@ func (p *PersistentVolumeClaim) Delete(ctx context.Context) error {
 	err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Delete(ctx, p.Identifier, kubernetes_meta.DeleteOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
+			log.Println(statusErr)
 			return nil
 		}
 		return err

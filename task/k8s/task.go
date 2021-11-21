@@ -2,17 +2,20 @@ package k8s
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
-	"regexp"
-	"strconv"
 	"time"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/kubectl/pkg/cmd/cp"
+
+	_ "github.com/rclone/rclone/backend/local"
+
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/sync"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/ssh"
@@ -26,23 +29,14 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		return nil, err
 	}
 
-	match := regexp.MustCompile(`^([^:]+):(\d+)(?::(.+))?$`).FindStringSubmatch(task.Environment.Directory)
-	if match == nil {
-		return nil, errors.New("directory specification for k8s is a bit different; see the documentation for more information")
-	}
-
-	storageClass := match[1]
-	directory := match[3]
-	size, err := strconv.Atoi(match[2])
-	if err != nil {
-		return nil, err
-	}
+	persistentVolumeClaimStorageClass := ""
+	persistentVolumeClaimSize := uint64(task.Size.Storage)
 
 	t := new(Task)
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes.Task = task
-	t.Attributes.Directory = directory
+	t.Attributes.Directory = task.Environment.Directory
 	t.Resources.ConfigMap = resources.NewConfigMap(
 		t.Client,
 		t.Identifier,
@@ -51,8 +45,8 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
 		t.Client,
 		t.Identifier,
-		storageClass,
-		uint64(size),
+		persistentVolumeClaimStorageClass,
+		persistentVolumeClaimSize,
 		t.Attributes.Task.Parallelism > 1,
 	)
 	t.Resources.Job = resources.NewJob(
@@ -89,15 +83,34 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := t.Resources.PersistentVolumeClaim.Create(ctx); err != nil {
 		return err
 	}
+
+	if t.Attributes.Directory != "" {
+		os.Setenv("TPI_TRANSFER_MODE", "true")
+		defer os.Unsetenv("TPI_TRANSFER_MODE")
+
+		log.Println("[INFO] Deleting Job...")
+		if err := t.Resources.Job.Delete(ctx); err != nil {
+			return err
+		}
+		log.Println("[INFO] Creating ephemeral Job to upload directory...")
+		if err := t.Resources.Job.Create(ctx); err != nil {
+			return err
+		}
+		log.Println("[INFO] Uploading Directory...")
+		if err := t.Push(ctx, t.Attributes.Directory, true); err != nil {
+			return err
+		}
+		log.Println("[INFO] Deleting ephemeral Job to upload directory...")
+		if err := t.Resources.Job.Delete(ctx); err != nil {
+			return err
+		}
+
+		os.Unsetenv("TPI_TRANSFER_MODE")
+	}
+
 	log.Println("[INFO] Creating Job...")
 	if err := t.Resources.Job.Create(ctx); err != nil {
 		return err
-	}
-	log.Println("[INFO] Uploading Directory...")
-	if t.Attributes.Directory != "" {
-		if err := t.Push(ctx, t.Attributes.Directory, false); err != nil {
-			return err
-		}
 	}
 	log.Println("[INFO] Done!")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
@@ -127,32 +140,44 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[INFO] Downloading Directory...")
 	if t.Attributes.Directory != "" && t.Read(ctx) == nil {
-		log.Println("[INFO] Deleting completed Job...")
+		os.Setenv("TPI_TRANSFER_MODE", "true")
+		os.Setenv("TPI_PULL_MODE", "true")
+		defer os.Unsetenv("TPI_TRANSFER_MODE")
+		defer os.Unsetenv("TPI_PULL_MODE")
+
+		log.Println("[INFO] Deleting Job...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
 		log.Println("[INFO] Creating ephemeral Job to retrieve directory...")
-		os.Setenv("TPI_PULL_MODE", "true")
-		defer os.Unsetenv("TPI_PULL_MODE")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
+		log.Println("[INFO] Downloading Directory...")
 		if err := t.Pull(ctx, t.Attributes.Directory); err != nil {
 			return err
 		}
+
+		log.Println("[INFO] Deleting ephemeral Job to retrieve directory...")
+		if err := t.Resources.Job.Create(ctx); err != nil {
+			return err
+		}
+
+		os.Unsetenv("TPI_TRANSFER_MODE")
+		os.Unsetenv("TPI_PULL_MODE")
 	}
-	log.Println("[INFO] Deleting ConfigMap...")
-	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
-		return err
-	}
+
 	log.Println("[INFO] Deleting Job...")
 	if err := t.Resources.Job.Delete(ctx); err != nil {
 		return err
 	}
 	log.Println("[INFO] Deleting PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Delete(ctx); err != nil {
+		return err
+	}
+	log.Println("[INFO] Deleting ConfigMap...")
+	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
 		return err
 	}
 	log.Println("[INFO] Done!")
@@ -170,6 +195,7 @@ func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
 	copyOptions := cp.NewCopyOptions(ioStreams)
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
+
 	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
 }
 
@@ -184,7 +210,41 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 	copyOptions := cp.NewCopyOptions(ioStreams)
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
-	return copyOptions.Run([]string{fmt.Sprintf("%s/%s:/directory/directory", t.Client.Namespace, pod), destination})
+
+	dir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+
+	err = copyOptions.Run([]string{fmt.Sprintf("%s/%s:/directory/directory", t.Client.Namespace, pod), dir})
+	if err != nil {
+		return err
+	}
+
+	sourceFileSystem, err := fs.NewFs(ctx, dir)
+	if err != nil {
+		return err
+	}
+
+	destinationFileSystem, err := fs.NewFs(ctx, destination)
+	if err != nil {
+		return err
+	}
+
+	if err := sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *Task) Status(ctx context.Context) map[string]int {
+	return t.Attributes.Status
+}
+
+func (t *Task) Events(ctx context.Context) []common.Event {
+	return t.Attributes.Events
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {
@@ -192,25 +252,19 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 }
 
 func (t *Task) Start(ctx context.Context) error {
-	// https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
-	return errors.New("unsupported operation: resuming suspended k8s jobs still not supported")
+	// FIXME: try experimental https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
+	log.Println("[WARN] Resuming suspended k8s jobs still not supported")
+	return nil
 }
 
 func (t *Task) Stop(ctx context.Context) error {
-	// https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
-	return errors.New("unsupported operation: suspending k8s jobs still not supported")
+	// FIXME: try experimental https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
+	log.Println("[WARN] Suspending k8s jobs still not supported")
+	return nil
 }
 
 func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 	return t.Attributes.Addresses
-}
-
-func (t *Task) Events(ctx context.Context) []common.Event {
-	return t.Attributes.Events
-}
-
-func (t *Task) Status(ctx context.Context) map[string]int {
-	return t.Attributes.Status
 }
 
 func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {

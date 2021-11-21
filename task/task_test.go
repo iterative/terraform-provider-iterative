@@ -25,7 +25,7 @@ func TestTask(t *testing.T) {
 		common.ProviderAWS,
 		common.ProviderAZ,
 		common.ProviderGCP,
-		// common.ProviderK8S,
+		common.ProviderK8S,
 	}
 
 	for _, provider := range providers {
@@ -35,12 +35,6 @@ func TestTask(t *testing.T) {
 
 			dataDirectory := t.TempDir()
 			dataFile := filepath.Join(dataDirectory, "data")
-
-			file, err := os.Create(dataFile)
-			require.Nil(t, err)
-			_, err = file.WriteString(oldData)
-			require.Nil(t, err)
-			require.Nil(t, file.Close())
 
 			cloud := common.Cloud{
 				Provider: provider,
@@ -82,11 +76,17 @@ func TestTask(t *testing.T) {
 
 			ctx := context.TODO()
 
-			newTask, err := New(ctx, cloud, "smoke test", task)
+			newTask, err := New(ctx, cloud, common.Identifier("smoke test"), task)
 			require.Nil(t, err)
 
 			require.Nil(t, newTask.Delete(ctx))
-			require.Nil(t, newTask.Delete(ctx))
+
+			file, err := os.Create(dataFile)
+			require.Nil(t, err)
+			_, err = file.WriteString(oldData)
+			require.Nil(t, err)
+			require.Nil(t, file.Close())
+
 			require.Nil(t, newTask.Create(ctx))
 			require.Nil(t, newTask.Create(ctx))
 
@@ -104,9 +104,11 @@ func TestTask(t *testing.T) {
 
 			require.Nil(t, newTask.Stop(ctx))
 			require.Nil(t, newTask.Stop(ctx))
+
 			require.Nil(t, newTask.Start(ctx))
 			require.Nil(t, newTask.Start(ctx))
 
+			require.Nil(t, newTask.Delete(ctx))
 			require.Nil(t, newTask.Delete(ctx))
 
 			require.FileExists(t, dataFile)

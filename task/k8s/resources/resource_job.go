@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"net"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	terraform_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -117,6 +117,10 @@ func (j *Job) Create(ctx context.Context) error {
 		})
 	}
 	jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
+		Name:  "TPI_TRANSFER_MODE",
+		Value: os.Getenv("TPI_TRANSFER_MODE"),
+	})
+	jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
 		Name:  "TPI_PULL_MODE",
 		Value: os.Getenv("TPI_PULL_MODE"),
 	})
@@ -165,14 +169,12 @@ func (j *Job) Create(ctx context.Context) error {
 	// The second branch will run on apply, waiting for the file copy to complete before starting
 	// the script.
 	script := `
-	if ! test -z "$TPI_PULL_MODE"; then
+	if ! test -z "$TPI_TRANSFER_MODE"; then
+	  test -z "$TPI_PULL_MODE" && rm -r /directory/directory
 	  while true; do
 	    sleep 86400
 	  done
 	else
-	  while ! test -d /directory/directory || pkill -0 tar 2>/dev/null; do
-	    sleep 1
-	  done
 	  cd /directory/directory
 	  exec /script/script
 	fi
@@ -227,7 +229,6 @@ func (j *Job) Create(ctx context.Context) error {
 	}
 
 	// Ask Kubernetes to create the job.
-	log.Printf("[INFO] Creating new Job: %#v", job)
 	out, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Create(ctx, &job, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
@@ -235,7 +236,6 @@ func (j *Job) Create(ctx context.Context) error {
 		}
 		return err
 	}
-	log.Printf("[INFO] Submitted new job: %#v", out)
 
 	j.Resource = out
 	return nil
@@ -326,6 +326,9 @@ func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	for _, pod := range pods.Items {
 		logs, err := j.Client.Services.Core.Pods(j.Client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{}).Stream(ctx)
 		if err != nil {
+			if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && strings.HasSuffix(statusErr.ErrStatus.Message, "ContainerCreating") {
+				continue
+			}
 			return nil, err
 		}
 		defer logs.Close()

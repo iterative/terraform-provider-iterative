@@ -23,7 +23,7 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 	}
 
 	config, err := clientcmd.NewClientConfigFromBytes([]byte(kubeconfig))
-	if err != nil {
+	if err != nil || kubeconfig == "" {
 		config = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},

@@ -206,18 +206,9 @@ The `region` attribute is ignored.
 
 Setting the `region` attribute results in undefined behaviour.
 
-#### Directory string format
+#### Directory storage
 
-Unlike public cloud providers, Kubernetes does not offer any portable way of persisting and sharing storage between pods. When specified, the `directory` attribute will create a `PersistentVolumeClaim` with the same lifecycle as the task.
-
-- `{storage_class}:{size}` or
-- `{storage_class}:{size}:{path}`
-
-Fields:
-
-- `{storage_class}` - Name of the storage class; e.g. `local-path`.
-- `{size}` - Size in gigabytes.
-- `{path}` - Local path to synchronize; equivalent to the whole `directory` attribute on public cloud providers. When unspecified, persistent volumes will just be used as a cache and local file synchronization will be disabled.
+Unlike public cloud providers, Kubernetes does not offer any portable way of persisting and sharing storage between pods. When specified, the `directory` attribute will create a `PersistentVolumeClaim` of the default `StorageClass`, with the same lifecycle as the task and the specified `disk_size`.
 
 ~> **Warning**: Access mode will be `ReadWriteOnce` for `parallelism` equal to 1 or `ReadWriteMany` otherwise.
 

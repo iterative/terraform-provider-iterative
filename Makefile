@@ -18,7 +18,7 @@ test:
 	go test ./... ${TESTARGS} -timeout=30s -parallel=4 -short
 
 smoke:
-	go test ./task -v ${TESTARGS} -timeout 30m
+	go test ./task -v ${TESTARGS} -timeout=30m -count=1
 
 testacc:
 	TF_ACC=1 go test ./... -v ${TESTARGS} -timeout 120m

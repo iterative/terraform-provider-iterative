@@ -263,7 +263,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		Parallelism: uint16(d.Get("parallelism").(int)),
 	}
 
-	return task.New(ctx, c, d.Get("name").(string), t)
+	return task.New(ctx, c, common.Identifier(d.Get("name").(string)), t)
 }
 
 func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.Diagnostics {
