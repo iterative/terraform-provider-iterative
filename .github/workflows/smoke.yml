@@ -67,7 +67,7 @@ jobs:
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
         KUBECONFIG_DATA: ${{ needs.setup.outputs.kubeconfig }}
-        SMOKE_TEST_IDENITIFIER: tpi task smoke test ${{ github.run_id }}
+        SMOKE_TEST_IDENTIFIER: tpi task smoke test ${{ github.run_id }}
   sweep:
     if: failure()
     needs: setup
@@ -90,7 +90,7 @@ jobs:
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
         KUBECONFIG_DATA: ${{ needs.setup.outputs.kubeconfig }}
-        SMOKE_TEST_IDENITIFIER: tpi task smoke test ${{ github.run_id }}
+        SMOKE_TEST_IDENTIFIER: tpi task smoke test ${{ github.run_id }}
   teardown:
     if: always()
     needs: sweep
