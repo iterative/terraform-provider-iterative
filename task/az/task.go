@@ -69,7 +69,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Resources.Subnet,
 		t.Resources.SecurityGroup,
 		t.DataSources.Credentials,
-		t.Attributes,
+		&t.Attributes,
 	)
 	return t, nil
 }
@@ -93,6 +93,10 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
+	original := t.Attributes.Parallelism
+	defer func() { t.Attributes.Parallelism = original }()
+	t.Attributes.Parallelism = 0
+
 	log.Println("[INFO] Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
@@ -121,14 +125,19 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := t.Resources.Subnet.Create(ctx); err != nil {
 		return err
 	}
+	log.Println("[INFO] Creating VirtualMachineScaleSet...")
+	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
+		return err
+	}
 	log.Println("[INFO] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
-		if err := t.Push(ctx, t.Attributes.Environment.Directory, true); err != nil {
+		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Creating VirtualMachineScaleSet...")
-	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
+	log.Println("[INFO] Starting task...")
+	t.Attributes.Parallelism = original
+	if err := t.Start(ctx); err != nil {
 		return err
 	}
 	log.Println("[INFO] Done!")
@@ -233,8 +242,8 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 	return machine.Transfer(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", destination)
 }
 
-func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
-	if err := t.Read(ctx); err != nil && !unsafe {
+func (t *Task) Push(ctx context.Context, source string) error {
+	if err := t.Read(ctx); err != nil {
 		return err
 	}
 

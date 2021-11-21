@@ -113,7 +113,7 @@ func (t *Task) Create(ctx context.Context) error {
 			return err
 		}
 		log.Println("[INFO] Uploading Directory...")
-		if err := t.Push(ctx, t.Attributes.Directory, true); err != nil {
+		if err := t.Push(ctx, t.Attributes.Directory); err != nil {
 			return err
 		}
 		log.Println("[INFO] Deleting ephemeral Job to upload directory...")
@@ -200,7 +200,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (t *Task) Push(ctx context.Context, source string, unsafe bool) error {
+func (t *Task) Push(ctx context.Context, source string) error {
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.GetObjectMeta().GetLabels()["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Create, t.Client.Namespace, waitSelector)
 	if err != nil {

@@ -195,6 +195,7 @@ func (a *AutoScalingGroup) Delete(ctx context.Context) error {
 
 	if _, err := a.Client.Services.AutoScaling.DeleteAutoScalingGroup(ctx, &input); err != nil {
 		var e smithy.APIError
+		errors.As(err, &e)
 		if errors.As(err, &e) && e.ErrorCode() == "ValidationError" {
 			a.Resource = nil
 			return nil

@@ -43,7 +43,7 @@ type Task interface {
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 
-	Push(ctx context.Context, source string, unsafe bool) error
+	Push(ctx context.Context, source string) error
 	Pull(ctx context.Context, destination string) error
 
 	Status(ctx context.Context) map[string]int

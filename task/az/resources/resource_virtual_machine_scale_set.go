@@ -18,7 +18,7 @@ import (
 	"terraform-provider-iterative/task/common/machine"
 )
 
-func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task common.Task) *VirtualMachineScaleSet {
+func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task *common.Task) *VirtualMachineScaleSet {
 	v := new(VirtualMachineScaleSet)
 	v.Client = client
 	v.Identifier = identifier.Long()
@@ -26,7 +26,7 @@ func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifi
 	v.Attributes.Environment = task.Environment
 	v.Attributes.Firewall = task.Firewall
 	v.Attributes.Tags = task.Tags
-	v.Attributes.Parallelism = task.Parallelism
+	v.Attributes.Parallelism = &task.Parallelism
 	v.Attributes.Spot = float64(task.Spot)
 	v.Dependencies.ResourceGroup = resourceGroup
 	v.Dependencies.Subnet = subnet
@@ -43,7 +43,7 @@ type VirtualMachineScaleSet struct {
 		Environment common.Environment
 		Firewall    common.Firewall
 		Tags        map[string]string
-		Parallelism uint16
+		Parallelism *uint16
 		Spot        float64
 		Addresses   []net.IP
 		Status      map[string]int
@@ -121,7 +121,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		Sku: &compute.Sku{
 			Name:     to.StringPtr(size),
 			Tier:     to.StringPtr("Standard"),
-			Capacity: to.Int64Ptr(int64(v.Attributes.Parallelism)),
+			Capacity: to.Int64Ptr(int64(*v.Attributes.Parallelism)),
 		},
 		VirtualMachineScaleSetProperties: &compute.VirtualMachineScaleSetProperties{
 			UpgradePolicy: &compute.UpgradePolicy{
@@ -274,7 +274,7 @@ func (v *VirtualMachineScaleSet) Update(ctx context.Context) error {
 		return err
 	}
 
-	v.Resource.Sku.Capacity = to.Int64Ptr(int64(v.Attributes.Parallelism))
+	v.Resource.Sku.Capacity = to.Int64Ptr(int64(*v.Attributes.Parallelism))
 	future, err := v.Client.Services.VirtualMachineScaleSets.CreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
