@@ -19,102 +19,102 @@ func resourceTask() *schema.Resource {
 		DeleteContext: resourceTaskDelete,
 		ReadContext:   resourceTaskRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Required: true,
 			},
-			"cloud": &schema.Schema{
+			"cloud": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Required: true,
 			},
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
 				Default:  "us-west",
 			},
-			"machine": &schema.Schema{
+			"machine": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
 				Default:  "m",
 			},
-			"disk_size": &schema.Schema{
+			"disk_size": {
 				Type:     schema.TypeInt,
 				ForceNew: true,
 				Optional: true,
 				Default:  30,
 			},
-			"spot": &schema.Schema{
+			"spot": {
 				Type:     schema.TypeFloat,
 				ForceNew: true,
 				Optional: true,
 				Default:  -1,
 			},
-			"image": &schema.Schema{
+			"image": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
 				Default:  "ubuntu",
 			},
-			"ssh_public_key": &schema.Schema{
+			"ssh_public_key": {
 				Type:      schema.TypeString,
 				Computed:  true,
 				Sensitive: true,
 			},
-			"ssh_private_key": &schema.Schema{
+			"ssh_private_key": {
 				Type:      schema.TypeString,
 				Computed:  true,
 				Sensitive: true,
 			},
-			"addresses": &schema.Schema{
+			"addresses": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeMap,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeInt,
 				},
 			},
-			"events": &schema.Schema{
+			"events": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"logs": &schema.Schema{
+			"logs": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
-			"script": &schema.Schema{
+			"script": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Required: true,
 			},
-			"directory": &schema.Schema{
+			"directory": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
 				Default:  "",
 			},
-			"parallelism": &schema.Schema{
+			"parallelism": {
 				Type:     schema.TypeInt,
 				ForceNew: true,
 				Optional: true,
 				Default:  1,
 			},
-			"environment": &schema.Schema{
+			"environment": {
 				Type:     schema.TypeMap,
 				ForceNew: true,
 				Optional: true,
@@ -122,7 +122,7 @@ func resourceTask() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"timeout": &schema.Schema{
+			"timeout": {
 				Type:     schema.TypeInt,
 				ForceNew: true,
 				Optional: true,
