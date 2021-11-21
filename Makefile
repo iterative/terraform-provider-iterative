@@ -20,5 +20,8 @@ test:
 smoke:
 	go test ./task -v ${TESTARGS} -timeout=30m -count=1
 
+sweep:
+	SMOKE_TEST_SWEEP=true go test ./task -v ${TESTARGS} -timeout=30m -count=1
+
 testacc:
 	TF_ACC=1 go test ./... -v ${TESTARGS} -timeout 120m

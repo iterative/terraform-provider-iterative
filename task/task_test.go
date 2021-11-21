@@ -18,7 +18,7 @@ import (
 
 func TestTask(t *testing.T) {
 	if testing.Short() {
-		t.Skip("go test -short detected, skipping acceptance tests")
+		t.Skip("go test -short detected, skipping smoke tests")
 	}
 
 	providers := []common.Provider{
@@ -45,6 +45,11 @@ func TestTask(t *testing.T) {
 					Update: 10 * time.Minute,
 					Delete: 10 * time.Minute,
 				},
+			}
+
+			identifier := common.Identifier("smoke test")
+			if custom := os.Getenv("SMOKE_TEST_IDENTIFIER"); custom != "" {
+				identifier = common.Identifier(custom)
 			}
 
 			task := common.Task{
@@ -76,10 +81,13 @@ func TestTask(t *testing.T) {
 
 			ctx := context.TODO()
 
-			newTask, err := New(ctx, cloud, common.Identifier("smoke test"), task)
+			newTask, err := New(ctx, cloud, identifier, task)
 			require.Nil(t, err)
 
 			require.Nil(t, newTask.Delete(ctx))
+			if os.Getenv("SMOKE_TEST_SWEEP") != "" {
+				return
+			}
 
 			file, err := os.Create(dataFile)
 			require.Nil(t, err)

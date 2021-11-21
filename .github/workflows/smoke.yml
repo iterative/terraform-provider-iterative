@@ -1,0 +1,108 @@
+name: Smoke Test
+on:
+  pull_request_target:
+  schedule:
+  - cron: '0 9 * * 1'
+jobs:
+  authorize:
+    environment:
+      ${{ (github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name != github.repository) &&
+      'external' || 'internal' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ✓
+  setup:
+    needs: authorization
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      kubeconfig: ${{ steps.cluster.outputs.kubeconfig }}
+    steps:
+    - id: cluster
+      run: |
+        az extension add \
+          --name aks-preview
+        az provider register \
+          --namespace Microsoft.ContainerService
+        az feature register \
+          --namespace Microsoft.ContainerService \
+          --name GPUDedicatedVHDPreview
+        az group create \
+          --name tpiSmokeTestKubernetesCluster$GITHUB_RUN_ID \
+          --location eastus
+        az aks create \
+          --resource-group tpiSmokeTestKubernetesCluster$GITHUB_RUN_ID \
+          --name testKubernetesCluster \
+          --node-vm-size Standard_NC6 \
+          --node-count 1 \
+          --aks-custom-headers UseGPUDedicatedVHD=true
+        az aks get-credentials \
+          --resource-group tpiSmokeTestKubernetesCluster$GITHUB_RUN_ID \
+          --name testKubernetesCluster \
+          --file - |
+        perl -p -e 's/%/%25/g;' -e 's/\n/%0A/g;' -e 's/\r/%0D/g;' |
+        xargs -0 printf "::set-output name=kubeconfig::%s\n"
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  smoke:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+    - run: make smoke
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
+        KUBECONFIG_DATA: ${{ needs.setup.outputs.kubeconfig }}
+        SMOKE_TEST_IDENITIFIER: tpi task smoke test ${{ github.run_id }}
+  sweep:
+    if: failure()
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: master
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+    - run: make sweep
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
+        KUBECONFIG_DATA: ${{ needs.setup.outputs.kubeconfig }}
+        SMOKE_TEST_IDENITIFIER: tpi task smoke test ${{ github.run_id }}
+  teardown:
+    if: always()
+    needs: sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - run: |
+        az group delete \
+          --name tpiSmokeTestKubernetesCluster$GITHUB_RUN_ID \
+          --yes
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
