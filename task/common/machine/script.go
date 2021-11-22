@@ -3,6 +3,7 @@ package machine
 import (
 	"encoding/base64"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,11 @@ func Script(script string, variables common.Variables, timeout time.Duration) st
 	for name, value := range variables.Enrich() {
 		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
 		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+	}
+
+	timeoutString := strconv.Itoa(int(timeout / time.Second))
+	if timeout <= 0 {
+		timeoutString = "infinity"
 	}
 
 	return fmt.Sprintf(
@@ -44,7 +50,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
   EnvironmentFile=/tmp/tpi-environment
   WorkingDirectory=/tmp/tpi-task
-  TimeoutStartSec=%d
+  TimeoutStartSec=%s
 [Install]
   WantedBy=default.target
 END
@@ -81,5 +87,5 @@ done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),
 		base64.StdEncoding.EncodeToString([]byte(environment)),
-		timeout/time.Second)
+		timeoutString)
 }
