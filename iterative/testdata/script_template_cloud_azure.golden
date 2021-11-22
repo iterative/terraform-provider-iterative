@@ -37,7 +37,7 @@ if [ ! -f "$FILE" ]; then
   echo OK | sudo tee "$FILE"
 fi
 
-sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
+sudo npm config set user 0 && sudo npm install --global @dvcorg/cml@v0.0.0
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
 export AZURE_CLIENT_ID='3 value with "quotes" and spaces'
@@ -45,7 +45,7 @@ export AZURE_CLIENT_SECRET='4 value with "quotes" and spaces'
 export AZURE_SUBSCRIPTION_ID='5 value with "quotes" and spaces'
 export AZURE_TENANT_ID='6 value with "quotes" and spaces'
 
-HOME="$(mktemp -d)" exec cml-runner \
+HOME="$(mktemp -d)" exec $(which cml-runner || echo "cml runner") \
    --name '10 value with "quotes" and spaces' \
    --labels '16 value with "quotes" and spaces' \
    --idle-timeout 11 \

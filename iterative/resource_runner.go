@@ -51,6 +51,12 @@ func resourceRunner() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"cml_version": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "",
+			},
 			"labels": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -303,7 +309,7 @@ sudo systemctl is-enabled cml.service && return 0
 
 {{- if not .container}}
 {{- if .setup}}{{.setup}}{{- end}}
-sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
+{{.setupCML}}
 {{- end}}
 
 {{- if not .container}}
@@ -335,7 +341,7 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{.runner_startup_script}}
 {{- end}}
 
-HOME="$(mktemp -d)" exec cml-runner \
+HOME="$(mktemp -d)" exec $(which cml-runner || echo "cml runner") \
   {{if .name}} --name {{escape .name}}{{end}} \
   {{if .labels}} --labels {{escape .labels}}{{end}} \
   {{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}} \
@@ -453,6 +459,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
+	data["setupCML"] = utils.GetCML(d.Get("cml_version").(string))
 
 	return renderScript(data)
 }
