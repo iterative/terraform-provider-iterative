@@ -42,8 +42,8 @@ func TestTask(t *testing.T) {
 		testIdentifier = "smoke test"
 	}
 
-	for provider, test := range providers {
-		if !test {
+	for provider, enabled := range providers {
+		if !enabled {
 			continue
 		}
 
