@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"errors"
+	"log"
 	"net"
 	"strconv"
 	"time"
@@ -19,7 +20,7 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism uint16, spot common.Spot) *AutoScalingGroup {
+func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism *uint16, spot common.Spot) *AutoScalingGroup {
 	a := new(AutoScalingGroup)
 	a.Client = client
 	a.Identifier = identifier.Long()
@@ -34,10 +35,10 @@ type AutoScalingGroup struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Parallelism uint16
+		Parallelism *uint16
 		Spot        float64
 		Addresses   []net.IP
-		Status      map[string]int
+		Status      common.Status
 		Events      []common.Event
 	}
 	Dependencies struct {
@@ -60,8 +61,8 @@ func (a *AutoScalingGroup) Create(ctx context.Context) error {
 
 	input := autoscaling.CreateAutoScalingGroupInput{
 		AutoScalingGroupName: aws.String(a.Identifier),
-		DesiredCapacity:      aws.Int32(int32(a.Attributes.Parallelism)),
-		MaxSize:              aws.Int32(int32(a.Attributes.Parallelism)),
+		DesiredCapacity:      aws.Int32(0),
+		MaxSize:              aws.Int32(int32(*a.Attributes.Parallelism)),
 		MinSize:              aws.Int32(0),
 		MixedInstancesPolicy: &types.MixedInstancesPolicy{
 			InstancesDistribution: &types.InstancesDistribution{
@@ -119,7 +120,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 	}
 
 	a.Attributes.Addresses = []net.IP{}
-	a.Attributes.Status = make(map[string]int)
+	a.Attributes.Status = common.Status{common.StatusCodeRunning: 0}
 	for instancesPaginator := ec2.NewDescribeInstancesPaginator(a.Client.Services.EC2, &instancesInput); instancesPaginator.HasMorePages(); {
 		page, err := instancesPaginator.NextPage(ctx)
 		if err != nil {
@@ -132,7 +133,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 				if instance.StateReason != nil {
 					status += " " + aws.ToString(instance.StateReason.Message)
 				}
-				a.Attributes.Status[status]++
+				a.Attributes.Status[common.StatusCode(status)]++
 				if address := net.ParseIP(aws.ToString(instance.PublicIpAddress)); address != nil {
 					a.Attributes.Addresses = append(a.Attributes.Addresses, address)
 				}
@@ -177,10 +178,13 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 func (a *AutoScalingGroup) Update(ctx context.Context) error {
 	input := autoscaling.UpdateAutoScalingGroupInput{
 		AutoScalingGroupName: aws.String(a.Identifier),
-		DesiredCapacity:      aws.Int32(int32(a.Attributes.Parallelism)),
+		DesiredCapacity:      aws.Int32(int32(*a.Attributes.Parallelism)),
 	}
 
 	if _, err := a.Client.Services.AutoScaling.UpdateAutoScalingGroup(ctx, &input); err != nil {
+		var e smithy.APIError
+		errors.As(err, &e)
+		log.Println(e)
 		return err
 	}
 

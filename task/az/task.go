@@ -93,10 +93,6 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	original := t.Attributes.Parallelism
-	defer func() { t.Attributes.Parallelism = original }()
-	t.Attributes.Parallelism = 0
-
 	log.Println("[INFO] Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
@@ -136,7 +132,6 @@ func (t *Task) Create(ctx context.Context) error {
 		}
 	}
 	log.Println("[INFO] Starting task...")
-	t.Attributes.Parallelism = original
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
@@ -270,7 +265,7 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) Status(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) common.Status {
 	return t.Attributes.Status
 }
 

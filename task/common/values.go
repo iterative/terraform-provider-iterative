@@ -21,14 +21,17 @@ const (
 	SpotEnabled  Spot = 0
 )
 
+type Status map[StatusCode]int
+
+type StatusCode string
+
+const (
+	StatusCodeRunning StatusCode = "running"
+)
+
 type Size struct {
 	Storage int
 	Machine string
-}
-
-type Status struct {
-	Address net.IP
-	Active  bool
 }
 
 type Event struct {
@@ -47,7 +50,7 @@ type Task struct {
 	Tags        map[string]string // Deprecated
 
 	Addresses []net.IP
-	Status    map[string]int
+	Status    Status
 	Events    []Event
 }
 

@@ -46,7 +46,7 @@ type VirtualMachineScaleSet struct {
 		Parallelism *uint16
 		Spot        float64
 		Addresses   []net.IP
-		Status      map[string]int
+		Status      common.Status
 		Events      []common.Event
 	}
 	Dependencies struct {
@@ -121,7 +121,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		Sku: &compute.Sku{
 			Name:     to.StringPtr(size),
 			Tier:     to.StringPtr("Standard"),
-			Capacity: to.Int64Ptr(int64(*v.Attributes.Parallelism)),
+			Capacity: to.Int64Ptr(0),
 		},
 		VirtualMachineScaleSetProperties: &compute.VirtualMachineScaleSetProperties{
 			UpgradePolicy: &compute.UpgradePolicy{
@@ -224,14 +224,18 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	}
 
 	v.Attributes.Events = []common.Event{}
-	v.Attributes.Status = make(map[string]int)
+	v.Attributes.Status = common.Status{common.StatusCodeRunning: 0}
 	scaleSetView, err := v.Client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		return err
 	}
 	if scaleSetView.VirtualMachine.StatusesSummary != nil {
 		for _, status := range *scaleSetView.VirtualMachine.StatusesSummary {
-			v.Attributes.Status[to.String(status.Code)] = int(to.Int32(status.Count))
+			code := to.String(status.Code)
+			v.Attributes.Status[common.StatusCode(code)] = int(to.Int32(status.Count))
+			if code == "ProvisioningState/succeeded" {
+				v.Attributes.Status[common.StatusCodeRunning] = int(to.Int32(status.Count))
+			}
 		}
 	}
 	if scaleSetView.Statuses != nil {

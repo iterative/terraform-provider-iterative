@@ -45,7 +45,7 @@ type Job struct {
 		Task        common.Task
 		Parallelism uint16
 		Addresses   []net.IP
-		Status      map[string]int
+		Status      common.Status
 		Events      []common.Event
 	}
 	Dependencies struct {
@@ -264,10 +264,11 @@ func (j *Job) Read(ctx context.Context) error {
 			},
 		})
 	}
-	j.Attributes.Status = map[string]int{
-		"active":    int(job.Status.Active),
-		"succeeded": int(job.Status.Succeeded),
-		"failed":    int(job.Status.Failed),
+	j.Attributes.Status = common.Status{
+		common.StatusCodeRunning:       int(job.Status.Active),
+		common.StatusCode("active"):    int(job.Status.Active),
+		common.StatusCode("succeeded"): int(job.Status.Succeeded),
+		common.StatusCode("failed"):    int(job.Status.Failed),
 	}
 	j.Resource = job
 	return nil

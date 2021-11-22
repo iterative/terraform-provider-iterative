@@ -255,7 +255,7 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 	return nil
 }
 
-func (t *Task) Status(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) common.Status {
 	return t.Attributes.Status
 }
 
@@ -269,14 +269,12 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 
 func (t *Task) Start(ctx context.Context) error {
 	// FIXME: try experimental https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
-	log.Println("[WARN] Resuming suspended k8s jobs still not supported")
-	return nil
+	return common.NotImplementedError
 }
 
 func (t *Task) Stop(ctx context.Context) error {
 	// FIXME: try experimental https://kubernetes.io/docs/concepts/workloads/controllers/job/#suspending-a-job
-	log.Println("[WARN] Suspending k8s jobs still not supported")
-	return nil
+	return common.NotImplementedError
 }
 
 func (t *Task) GetAddresses(ctx context.Context) []net.IP {

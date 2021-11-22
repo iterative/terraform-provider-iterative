@@ -21,6 +21,12 @@ func TestTask(t *testing.T) {
 		t.Skip("go test -short detected, skipping smoke tests")
 	}
 
+	testIdentifier := "smoke test"
+	if custom := os.Getenv("SMOKE_TEST_IDENTIFIER"); custom != "" {
+		testIdentifier = custom
+	}
+	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
+
 	providers := []common.Provider{
 		common.ProviderAWS,
 		common.ProviderAZ,
@@ -47,10 +53,7 @@ func TestTask(t *testing.T) {
 				},
 			}
 
-			identifier := common.Identifier("smoke test")
-			if custom := os.Getenv("SMOKE_TEST_IDENTIFIER"); custom != "" {
-				identifier = common.Identifier(custom)
-			}
+			identifier := common.Identifier(testIdentifier)
 
 			task := common.Task{
 				Size: common.Size{
@@ -85,12 +88,13 @@ func TestTask(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Nil(t, newTask.Delete(ctx))
-			if os.Getenv("SMOKE_TEST_SWEEP") != "" {
+			if sweepOnly {
 				return
 			}
 
 			file, err := os.Create(dataFile)
 			require.Nil(t, err)
+
 			_, err = file.WriteString(oldData)
 			require.Nil(t, err)
 			require.Nil(t, file.Close())
@@ -110,11 +114,26 @@ func TestTask(t *testing.T) {
 				}
 			}
 
-			require.Nil(t, newTask.Stop(ctx))
-			require.Nil(t, newTask.Stop(ctx))
+			if provider == common.ProviderK8S {
+				require.Equal(t, newTask.Start(ctx), common.NotImplementedError)
+				require.Equal(t, newTask.Stop(ctx), common.NotImplementedError)
+			} else {
+				require.Nil(t, newTask.Stop(ctx))
+				require.Nil(t, newTask.Stop(ctx))
 
-			require.Nil(t, newTask.Start(ctx))
-			require.Nil(t, newTask.Start(ctx))
+				for assert.Nil(t, newTask.Read(ctx)) &&
+					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
+					continue
+				}
+
+				require.Nil(t, newTask.Start(ctx))
+				require.Nil(t, newTask.Start(ctx))
+
+				for assert.Nil(t, newTask.Read(ctx)) &&
+					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
+					continue
+				}
+			}
 
 			require.Nil(t, newTask.Delete(ctx))
 			require.Nil(t, newTask.Delete(ctx))

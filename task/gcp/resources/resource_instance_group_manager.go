@@ -15,7 +15,7 @@ import (
 	"terraform-provider-iterative/task/gcp/client"
 )
 
-func NewInstanceGroupManager(client *client.Client, identifier common.Identifier, instanceTemplate *InstanceTemplate, parallelism uint16) *InstanceGroupManager {
+func NewInstanceGroupManager(client *client.Client, identifier common.Identifier, instanceTemplate *InstanceTemplate, parallelism *uint16) *InstanceGroupManager {
 	i := new(InstanceGroupManager)
 	i.Client = client
 	i.Identifier = identifier.Long()
@@ -28,9 +28,9 @@ type InstanceGroupManager struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Parallelism uint16
+		Parallelism *uint16
 		Addresses   []net.IP
-		Status      map[string]int
+		Status      common.Status
 		Events      []common.Event
 	}
 	Dependencies struct {
@@ -75,9 +75,9 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	}
 
 	i.Attributes.Addresses = []net.IP{}
-	i.Attributes.Status = make(map[string]int)
+	i.Attributes.Status = common.Status{common.StatusCodeRunning: 0}
 	for _, groupInstance := range groupInstances.Items {
-		i.Attributes.Status[groupInstance.Status]++
+		i.Attributes.Status[common.StatusCode(groupInstance.Status)]++
 		if groupInstance.Status == "RUNNING" {
 			instance, err := i.Client.Services.Compute.Instances.Get(i.Client.Credentials.ProjectID, i.Client.Region, filepath.Base(groupInstance.Instance)).Do()
 			if err != nil {
@@ -86,6 +86,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 			if address := net.ParseIP(instance.NetworkInterfaces[0].AccessConfigs[0].NatIP); address != nil {
 				i.Attributes.Addresses = append(i.Attributes.Addresses, address)
 			}
+			i.Attributes.Status[common.StatusCodeRunning]++
 		}
 	}
 
@@ -98,15 +99,16 @@ func (i *InstanceGroupManager) Create(ctx context.Context) error {
 		Name:             i.Identifier,
 		BaseInstanceName: i.Identifier,
 		InstanceTemplate: i.Dependencies.InstanceTemplate.Resource.SelfLink,
-		TargetSize:       int64(i.Attributes.Parallelism),
+		TargetSize:       0,
 		UpdatePolicy: &compute.InstanceGroupManagerUpdatePolicy{
 			MaxSurge: &compute.FixedOrPercent{
 				Fixed: 0,
 			},
 			MaxUnavailable: &compute.FixedOrPercent{
-				Fixed: int64(i.Attributes.Parallelism),
+				Fixed: int64(*i.Attributes.Parallelism),
 			},
 		},
+		ForceSendFields: []string{"TargetSize"},
 	}
 
 	insertOperation, err := i.Client.Services.Compute.InstanceGroupManagers.Insert(i.Client.Credentials.ProjectID, i.Client.Region, definition).Do()
@@ -127,7 +129,7 @@ func (i *InstanceGroupManager) Create(ctx context.Context) error {
 }
 
 func (i *InstanceGroupManager) Update(ctx context.Context) error {
-	insertOperation, err := i.Client.Services.Compute.InstanceGroupManagers.Resize(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier, int64(i.Attributes.Parallelism)).Do()
+	insertOperation, err := i.Client.Services.Compute.InstanceGroupManagers.Resize(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier, int64(*i.Attributes.Parallelism)).Do()
 	if err != nil {
 		return err
 	}

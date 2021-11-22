@@ -46,7 +46,7 @@ type Task interface {
 	Push(ctx context.Context, source string) error
 	Pull(ctx context.Context, destination string) error
 
-	Status(ctx context.Context) map[string]int
+	Status(ctx context.Context) common.Status
 	Events(ctx context.Context) []common.Event
 	Logs(ctx context.Context) ([]string, error)
 

@@ -66,7 +66,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Identifier,
 		t.DataSources.DefaultVPCSubnet,
 		t.Resources.LaunchTemplate,
-		t.Attributes.Parallelism,
+		&t.Attributes.Parallelism,
 		t.Attributes.Spot,
 	)
 	return t, nil
@@ -92,10 +92,6 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	original := t.Attributes.Parallelism
-	defer func() { t.Attributes.Parallelism = original }()
-	t.Attributes.Parallelism = 0
-
 	log.Println("[INFO] Creating DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
@@ -139,7 +135,6 @@ func (t *Task) Create(ctx context.Context) error {
 		}
 	}
 	log.Println("[INFO] Starting task...")
-	t.Attributes.Parallelism = original
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
@@ -277,7 +272,7 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) Status(ctx context.Context) map[string]int {
+func (t *Task) Status(ctx context.Context) common.Status {
 	return t.Attributes.Status
 }
 
