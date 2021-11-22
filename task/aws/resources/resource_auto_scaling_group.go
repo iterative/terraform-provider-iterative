@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"errors"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -182,9 +181,6 @@ func (a *AutoScalingGroup) Update(ctx context.Context) error {
 	}
 
 	if _, err := a.Client.Services.AutoScaling.UpdateAutoScalingGroup(ctx, &input); err != nil {
-		var e smithy.APIError
-		errors.As(err, &e)
-		log.Println(e)
 		return err
 	}
 

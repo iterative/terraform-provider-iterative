@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"log"
 	"strconv"
 
 	kubernetes_core "k8s.io/api/core/v1"
@@ -92,7 +91,6 @@ func (p *PersistentVolumeClaim) Delete(ctx context.Context) error {
 	err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Delete(ctx, p.Identifier, kubernetes_meta.DeleteOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
-			log.Println(statusErr)
 			return nil
 		}
 		return err

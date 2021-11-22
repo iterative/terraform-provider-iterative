@@ -108,7 +108,8 @@ func TestTask(t *testing.T) {
 				require.Nil(t, err)
 
 				for _, log := range logs {
-					if assert.Contains(t, log, oldData) {
+					if assert.Contains(t, log, oldData) &&
+						assert.Contains(t, log, newData) {
 						break loop
 					}
 				}
