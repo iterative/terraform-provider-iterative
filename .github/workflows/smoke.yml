@@ -85,7 +85,9 @@ jobs:
       with:
         ref: master
     - if: always()
-      run: SMOKE_TEST_SWEEP=true go test ./task -v -timeout=30m -count=1
+      run: go test ./task -v -timeout=30m -count=1
+      env:
+        SMOKE_TEST_SWEEP: true
   stop:
     if: always()
     needs: test
