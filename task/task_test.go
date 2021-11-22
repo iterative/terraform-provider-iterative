@@ -33,11 +33,11 @@ func TestTask(t *testing.T) {
 
 	providers := map[common.Provider]bool{
 		common.ProviderAWS: enableAWS || enableALL,
-		common.ProviderAZ: enableAZ || enableALL,
+		common.ProviderAZ:  enableAZ || enableALL,
 		common.ProviderGCP: enableGCP || enableALL,
 		common.ProviderK8S: enableK8S || enableALL,
 	}
-	
+
 	if testIdentifier == "" {
 		testIdentifier = "smoke test"
 	}
