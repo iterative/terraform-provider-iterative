@@ -21,20 +21,32 @@ func TestTask(t *testing.T) {
 		t.Skip("go test -short detected, skipping smoke tests")
 	}
 
-	testIdentifier := "smoke test"
-	if custom := os.Getenv("SMOKE_TEST_IDENTIFIER"); custom != "" {
-		testIdentifier = custom
-	}
+	testIdentifier := os.Getenv("SMOKE_TEST_IDENTIFIER")
 	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
 
-	providers := []common.Provider{
-		common.ProviderAWS,
-		common.ProviderAZ,
-		common.ProviderGCP,
-		common.ProviderK8S,
+	enableAWS := os.Getenv("SMOKE_TEST_ENABLE_AWS") != ""
+	enableAZ := os.Getenv("SMOKE_TEST_ENABLE_AZ") != ""
+	enableGCP := os.Getenv("SMOKE_TEST_ENABLE_GCP") != ""
+	enableK8S := os.Getenv("SMOKE_TEST_ENABLE_K8S") != ""
+
+	enableALL := !enableAWS && !enableAZ && !enableGCP && !enableK8S
+
+	providers := map[common.Provider]bool{
+		common.ProviderAWS: enableAWS || enableALL,
+		common.ProviderAZ: enableAZ || enableALL,
+		common.ProviderGCP: enableGCP || enableALL,
+		common.ProviderK8S: enableK8S || enableALL,
+	}
+	
+	if testIdentifier == "" {
+		testIdentifier = "smoke test"
 	}
 
-	for _, provider := range providers {
+	for provider, test := range providers {
+		if !test {
+			continue
+		}
+
 		t.Run(string(provider), func(t *testing.T) {
 			oldData := gofakeit.Phrase()
 			newData := gofakeit.Phrase()
