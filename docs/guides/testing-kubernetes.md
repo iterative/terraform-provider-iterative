@@ -53,6 +53,7 @@ az aks create \
   --node-vm-size Standard_A2_v2 \
   --node-count 1
 ```
+
 </details>
 
 ## Retrieving the credentials
