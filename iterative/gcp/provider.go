@@ -384,7 +384,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "n2-custom-64-262144",
 		},
 	}
-	instanceTypes["mk80"] = map[string]map[string]string{
+	instanceTypes["m+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia-tesla-k80",
@@ -393,7 +393,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-8-53248",
 		},
 	}
-	instanceTypes["lk80"] = map[string]map[string]string{
+	instanceTypes["l+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
 			"type":  "nvidia-tesla-k80",
@@ -402,7 +402,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-32-131072",
 		},
 	}
-	instanceTypes["xlk80"] = map[string]map[string]string{
+	instanceTypes["xl+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia-tesla-k80",
@@ -411,7 +411,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-64-212992-ext",
 		},
 	}
-	instanceTypes["mv100"] = map[string]map[string]string{
+	instanceTypes["m+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia-tesla-v100",
@@ -420,7 +420,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-8-65536-ext",
 		},
 	}
-	instanceTypes["lv100"] = map[string]map[string]string{
+	instanceTypes["l+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
 			"type":  "nvidia-tesla-v100",
@@ -429,7 +429,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-32-262144-ext",
 		},
 	}
-	instanceTypes["xlv100"] = map[string]map[string]string{
+	instanceTypes["xl+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia-tesla-v100",
@@ -439,7 +439,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		},
 	}
 
-	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
+	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val, nil
 	}
 
