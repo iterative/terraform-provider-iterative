@@ -41,10 +41,12 @@ resource "iterative_task" "example" {
 
 The project layout should look similar to this:
 
+```
 project/
 ├─ shared/
 │ └─ ···
 └─ main.tf
+```
 
 ## Initializing Terraform
 
