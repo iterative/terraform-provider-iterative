@@ -1,6 +1,6 @@
 ---
 page_title: Setting up Azure Kubernetes Service
-subcategory: Development and Testing
+subcategory: Development
 ---
 
 # Setting up Azure Kubernetes Service
