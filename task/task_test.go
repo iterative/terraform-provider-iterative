@@ -131,9 +131,6 @@ func TestTask(t *testing.T) {
 				require.Equal(t, newTask.Start(ctx), common.NotImplementedError)
 				require.Equal(t, newTask.Stop(ctx), common.NotImplementedError)
 			} else {
-				require.Nil(t, newTask.Stop(ctx))
-				require.Nil(t, newTask.Stop(ctx))
-
 				for assert.Nil(t, newTask.Read(ctx)) &&
 					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
 					continue
@@ -144,6 +141,14 @@ func TestTask(t *testing.T) {
 
 				for assert.Nil(t, newTask.Read(ctx)) &&
 					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
+					continue
+				}
+				
+				require.Nil(t, newTask.Stop(ctx))
+				require.Nil(t, newTask.Stop(ctx))
+
+				for assert.Nil(t, newTask.Read(ctx)) &&
+					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
 					continue
 				}
 			}
