@@ -14,7 +14,7 @@ The Iterative Provider makes it easy to:
 
 ## Prerequisites
 
-To use Iterative Provider you will need to:
+To use the Iterative Provider you will need to:
 
 - [Install Terraform 1.0+](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
 - Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
