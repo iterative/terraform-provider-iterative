@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -48,8 +49,8 @@ func TestTask(t *testing.T) {
 		}
 
 		t.Run(string(provider), func(t *testing.T) {
-			oldData := gofakeit.Phrase()
-			newData := gofakeit.Phrase()
+			oldData := gofakeit.UUID()
+			newData := gofakeit.UUID()
 
 			dataDirectory := t.TempDir()
 			dataFile := filepath.Join(dataDirectory, "data")
@@ -75,8 +76,10 @@ func TestTask(t *testing.T) {
 				Environment: common.Environment{
 					Image: "ubuntu",
 					Script: `#!/bin/bash
-						cat data
-						echo "$ENVIRONMENT_VARIABLE_DATA" | tee data
+						mv data data.old
+						echo "$ENVIRONMENT_VARIABLE_DATA" > data
+						sleep 60
+						cat data data.old
 					`,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
@@ -88,7 +91,6 @@ func TestTask(t *testing.T) {
 					Ingress: common.FirewallRule{
 						Ports: &[]uint16{22},
 					},
-					// Egress: everything open.
 				},
 				Spot:        common.SpotEnabled,
 				Parallelism: 1,
@@ -120,23 +122,22 @@ func TestTask(t *testing.T) {
 				require.Nil(t, err)
 
 				for _, log := range logs {
-					if assert.Contains(t, log, oldData) &&
-						assert.Contains(t, log, newData) {
+					if strings.Contains(t, log, oldData) &&
+						strings.Contains(t, log, newData) {
 						break loop
 					}
 				}
+
+				time.Sleep(10 * time.Second)
 			}
 
 			if provider == common.ProviderK8S {
 				require.Equal(t, newTask.Start(ctx), common.NotImplementedError)
 				require.Equal(t, newTask.Stop(ctx), common.NotImplementedError)
 			} else {
-				require.Nil(t, newTask.Stop(ctx))
-				require.Nil(t, newTask.Stop(ctx))
-
 				for assert.Nil(t, newTask.Read(ctx)) &&
 					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
-					continue
+					time.Sleep(10 * time.Second)
 				}
 
 				require.Nil(t, newTask.Start(ctx))
@@ -144,7 +145,15 @@ func TestTask(t *testing.T) {
 
 				for assert.Nil(t, newTask.Read(ctx)) &&
 					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
-					continue
+					time.Sleep(10 * time.Second)
+				}
+
+				require.Nil(t, newTask.Stop(ctx))
+				require.Nil(t, newTask.Stop(ctx))
+
+				for assert.Nil(t, newTask.Read(ctx)) &&
+					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
+					time.Sleep(10 * time.Second)
 				}
 			}
 

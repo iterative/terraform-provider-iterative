@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 
@@ -240,8 +241,12 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	}
 	if scaleSetView.Statuses != nil {
 		for _, status := range *scaleSetView.Statuses {
+			statusTime := time.Unix(0, 0)
+			if status.Time != nil {
+				statusTime = status.Time.Time
+			}
 			v.Attributes.Events = append(v.Attributes.Events, common.Event{
-				Time: status.Time.Time,
+				Time: statusTime,
 				Code: to.String(status.Code),
 				Description: []string{
 					string(status.Level),
