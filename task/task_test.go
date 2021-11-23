@@ -88,7 +88,6 @@ func TestTask(t *testing.T) {
 					Ingress: common.FirewallRule{
 						Ports: &[]uint16{22},
 					},
-					// Egress: everything open.
 				},
 				Spot:        common.SpotEnabled,
 				Parallelism: 1,
