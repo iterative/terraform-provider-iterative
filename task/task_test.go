@@ -143,7 +143,7 @@ func TestTask(t *testing.T) {
 					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
 					continue
 				}
-				
+
 				require.Nil(t, newTask.Stop(ctx))
 				require.Nil(t, newTask.Stop(ctx))
 
