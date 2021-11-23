@@ -47,8 +47,11 @@ jobs:
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --file - |
-        perl -p -e 's/%/%25/g;' -e 's/\n/%0A/g;' -e 's/\r/%0D/g;' |
-        xargs -0 printf "::set-output name=kubeconfig::%s\n"
+        perl -0777p \
+          -e 's/%/%25/g;' \
+          -e 's/\n/%0A/g;' \
+          -e 's/\r/%0D/g;' \
+          -e 's/(.+)/::add-mask::\1\n::set-output name=kubeconfig::\1\n/g'
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
