@@ -1,6 +1,6 @@
 ![Terraform Provider Iterative](https://static.iterative.ai/img/cml/banner-terraform.png)
 
-# Terraform Iterative provider
+# Iterative Provider [![](https://img.shields.io/badge/-documentation-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 
 The Iterative Provider is a Terraform plugin that enables full lifecycle
 management of cloud computing resources, including GPUs, from your favorite
@@ -19,6 +19,8 @@ The Provider is designed for benefits like:
   (`name`,`labels`,`idle-timeout`,`repo`,`token`, and `driver`)
 
 ## Usage
+
+See [this guide](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) for more information.
 
 ### Runner
 
