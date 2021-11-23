@@ -8,7 +8,7 @@ Begin by [installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutor
 
 ## Defining a Task
 
-In an empty directory:
+In the project root directory:
 
 1. Create a directory named `shared` to store input data and output artifacts.
 2. Create a file named `main.tf` with the following contents:
