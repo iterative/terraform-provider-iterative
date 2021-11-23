@@ -60,7 +60,7 @@ Have a feature request or found a bug? Let us know via [GitHub issues](https://g
 
 ## License
 
-Iterative Provider is licensed under the [Apache 2.0 License](LICENSE).
+Iterative Provider is released under the [Apache 2.0 License](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE).
 
 ## Development
 
