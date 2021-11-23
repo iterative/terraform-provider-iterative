@@ -22,8 +22,8 @@ To use the Iterative Provider you will need to:
 The Iterative Provider can provision resources with the following cloud providers and orchestrators:
 
 - Amazon Web Services
-- Google Cloud Platform
 - Microsoft Azure
+- Google Cloud Platform
 - Kubernetes
 
 ## Example usage
