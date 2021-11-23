@@ -56,7 +56,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 END
 
 curl --location --remote-name https://github.com/iterative/terraform-provider-iterative/releases/latest/download/terraform-provider-iterative_linux_amd64
-sudo mv terraform-provider-tpi* /usr/bin/tpi
+sudo mv terraform-provider-iterative* /usr/bin/tpi
 sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
 sudo chown root:root /usr/bin/tpi
 
