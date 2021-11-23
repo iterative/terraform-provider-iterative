@@ -51,7 +51,7 @@ $ terraform apply
 
 - `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
 
--> **Note** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the
+-> **Note:** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the
 **contents** of the service account JSON key file.
 
 ### Microsoft Azure
@@ -65,4 +65,4 @@ $ terraform apply
 
 - `KUBECONFIG` - Path to a [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
 
--> **Note**: You can use `KUBECONFIG_DATA` instead, with the **contents** of the `kubeconfig` file.
+-> **Note:** You can use `KUBECONFIG_DATA` instead, with the **contents** of the `kubeconfig` file.
