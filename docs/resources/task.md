@@ -2,9 +2,9 @@
 
 This resource will:
 
-1. Create cloud resources (storage, machines) for the task
-2. Upload the given `directory` to the cloud storage, if specified
-3. Run the given `script` upon completion or `timeout` in the cloud
+1. Create cloud resources (machines and storage) for the task.
+2. Upload the given `directory` to the cloud storage, if specified.
+3. Run the given `script` until completion or `timeout` in the cloud machine.
 
 ## Example Usage
 
@@ -13,10 +13,9 @@ resource "iterative_task" "task" {
   name  = "example"
   cloud = "aws"
 
-  environment = {GREETING = "Hello, world!"}
+  environment = { GREETING = "Hello, world!" }
   directory   = "${path.root}/shared"
-
-  script = <<-END
+  script      = <<-END
     #!/bin/bash
     echo "$GREETING" | tee $(uuidgen)
   END
@@ -60,31 +59,23 @@ In addition to all arguments above, the following attributes are exported:
 
 ### Generic
 
-The Iterative Provider offers some common machine types which are roughly the same
-for all supported clouds.
+The Iterative Provider offers some common machine types (medium, large, and extra large) which are roughly the same for all supported clouds.
 
-#### No GPU
-
-- `m` - Medium, with (at least), 8 CPU cores and 16 GB of RAM.
-- `l` - Large, with (at least) 32 CPU cores and 64 GB of RAM.
-- `xl` - Extra large, with (at least) 64 CPU cores and 128 GB of RAM.
-
-#### NVIDIA Tesla K80 GPU
-
-- `m+k80` - Medium, with (at least) 4 CPU cores, 53 GB of RAM and 1 GPU device.
-- `l+k80` - Large, with (at least) 12 CPU cores, 112 GB of RAM and 2 GPU devices.
-- `xl+k80` - Extra large, with (at least) 24 CPU cores, 212 GB of RAM and 4 GPU devices.
-
-#### NVIDIA Tesla V100 GPU
-
-- `m+v100` - Medium, with (at least) 4 CPU cores, 61 GB of RAM and 1 GPU device.
-- `l+v100` - Large, with (at least) 12 CPU cores, 224 GB of RAM and 2 GPU devices.
-- `xl+v100` - Extra large, with (at least) 24 CPU cores, 448 GB of RAM and 4 GPU devices.
+| Type      | Minimum CPU cores | Minimum RAM | GPU                 |
+| :-------- | ----------------: | ----------: | :------------------ |
+| `m`       |                 8 |       16 GB | -                   |
+| `l`       |                32 |       64 GB | -                   |
+| `xl`      |                64 |      128 GB | -                   |
+| `m+k80`   |                 4 |       53 GB | 1 NVIDIA Tesla K80  |
+| `l+k80`   |                12 |      112 GB | 2 NVIDIA Tesla K80  |
+| `xl+k80`  |                24 |      212 GB | 4 NVIDIA Tesla K80  |
+| `m+v100`  |                 4 |       61 GB | 1 NVIDIA Tesla V100 |
+| `l+v100`  |                12 |      224 GB | 2 NVIDIA Tesla V100 |
+| `xl+v100` |                24 |      448 GB | 4 NVIDIA Tesla V100 |
 
 ### Cloud-specific
 
-In addition to generic types, it's possible to specify any machine type
-supported by the underlying cloud provider.
+In addition to generic types, it's possible to specify any machine type supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
@@ -112,15 +103,13 @@ supported by the underlying cloud provider.
 
 ### Generic
 
-The Iterative Provider offers some common machine images which are roughly the same
-for all supported clouds.
+The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
-- `ubuntu` - Official Ubuntu LTS image, currently 20.04.
+- `ubuntu` - Official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image (currently 20.04).
 
 ### Cloud-specific
 
-In addition to generic images, it's possible to specify any machine image
-supported by the underlying cloud provider.
+In addition to generic images, it's possible to specify any machine image supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
@@ -169,8 +158,7 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 ### Generic
 
-The Iterative Provider offers some common cloud regions which are roughly the same
-for all supported clouds.
+The Iterative Provider offers some common cloud regions which are roughly the same for all supported clouds.
 
 - `us-east` - United States of America, East.
 - `us-west` - United States of America, West.
@@ -179,8 +167,7 @@ for all supported clouds.
 
 ### Cloud-specific
 
-In addition to generic regions, it's possible to specify any cloud region
-supported by the underlying cloud provider.
+In addition to generic regions, it's possible to specify any cloud region supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
@@ -210,6 +197,6 @@ Setting the `region` attribute results in undefined behaviour.
 
 Unlike public cloud providers, Kubernetes does not offer any portable way of persisting and sharing storage between pods. When specified, the `directory` attribute will create a `PersistentVolumeClaim` of the default `StorageClass`, with the same lifecycle as the task and the specified `disk_size`.
 
-~> **Warning:** Access mode will be `ReadWriteOnce` for `parallelism` equal to 1 or `ReadWriteMany` otherwise.
+~> **Warning:** Access mode will be `ReadWriteOnce` if `parallelism=1` or `ReadWriteMany` otherwise.
 
 -> **Note:** Rancher's [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) might be the easiest way of deploying a quick `ReadWriteOnce` dynamically allocated storage solution for testing: just run `kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml`.

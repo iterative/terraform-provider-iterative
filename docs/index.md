@@ -1,7 +1,6 @@
 # Iterative Provider
 
-Use the Iterative Provider to launch resource-intensive tasks in popular cloud
-providers with a single Terraform file.
+Use the Iterative Provider to launch resource-intensive tasks in popular cloud providers with a single Terraform file.
 
 ## Example Usage
 
@@ -9,7 +8,7 @@ providers with a single Terraform file.
 terraform {
   required_providers {
     iterative = {
-      source  = "iterative/iterative"
+      source = "iterative/iterative"
     }
   }
 }
@@ -27,12 +26,11 @@ resource "iterative_task" "task" {
 }
 ```
 
--> **Note:** See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) for more information.
+-> **Note:** See [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) for more information.
 
 ## Authentication
 
-[Environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication) are the only supported authentication method. They should
-be present when running any of the `terraform` commands.
+Environment variables are the only supported authentication method. They should be present when running any of the `terraform` commands.
 
 ### Example
 
@@ -51,8 +49,7 @@ $ terraform apply
 
 - `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
 
--> **Note:** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the
-**contents** of the service account JSON key file.
+-> **Note:** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the **contents** of the service account JSON key file.
 
 ### Microsoft Azure
 
