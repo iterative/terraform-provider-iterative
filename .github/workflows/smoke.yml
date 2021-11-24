@@ -80,7 +80,7 @@ jobs:
           --name=GPUDedicatedVHDPreview
         az group create \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --location=westus
+          --location=eastus
         az aks create \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
