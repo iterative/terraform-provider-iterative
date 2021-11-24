@@ -60,17 +60,17 @@ In addition to all arguments above, the following attributes are exported:
 
 The Iterative Provider offers some common machine types which are roughly the same for all supported clouds.
 
-Type      | Minimum CPU cores | Minimum RAM | GPU
-:---------|------------------:|------------:|:-------------------
-`m`       |                 8 |       16 GB | -
-`l`       |                32 |       64 GB | -
-`xl`      |                64 |      128 GB | -
-`m+k80`   |                 4 |       53 GB | 1 NVIDIA Tesla K80
-`l+k80`   |                12 |      112 GB | 2 NVIDIA Tesla K80
-`xl+k80`  |                24 |      212 GB | 4 NVIDIA Tesla K80
-`m+v100`  |                 4 |       61 GB | 1 NVIDIA Tesla V100
-`l+v100`  |                12 |      224 GB | 2 NVIDIA Tesla V100
-`xl+v100` |                24 |      448 GB | 4 NVIDIA Tesla V100
+| Type      | Minimum CPU cores | Minimum RAM | GPU                 |
+| :-------- | ----------------: | ----------: | :------------------ |
+| `m`       |                 8 |       16 GB | -                   |
+| `l`       |                32 |       64 GB | -                   |
+| `xl`      |                64 |      128 GB | -                   |
+| `m+k80`   |                 4 |       53 GB | 1 NVIDIA Tesla K80  |
+| `l+k80`   |                12 |      112 GB | 2 NVIDIA Tesla K80  |
+| `xl+k80`  |                24 |      212 GB | 4 NVIDIA Tesla K80  |
+| `m+v100`  |                 4 |       61 GB | 1 NVIDIA Tesla V100 |
+| `l+v100`  |                12 |      224 GB | 2 NVIDIA Tesla V100 |
+| `xl+v100` |                24 |      448 GB | 4 NVIDIA Tesla V100 |
 
 ### Cloud-specific
 
