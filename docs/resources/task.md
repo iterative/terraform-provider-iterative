@@ -73,6 +73,8 @@ The Iterative Provider offers some common machine types (medium, large, and extr
 | `l+v100`  |                12 |      224 GB | 2 NVIDIA Tesla V100 |
 | `xl+v100` |                24 |      448 GB | 4 NVIDIA Tesla V100 |
 
+See [Generic Machine Types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/generic-machine-types) for exact specifications for each cloud.
+
 ### Cloud-specific
 
 In addition to generic types, it's possible to specify any machine type supported by the underlying cloud provider.
