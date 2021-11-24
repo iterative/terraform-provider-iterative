@@ -59,7 +59,7 @@ In addition to all arguments above, the following attributes are exported:
 
 ### Generic
 
-The Iterative Provider offers some common machine types which are roughly the same for all supported clouds.
+The Iterative Provider offers some common machine types (medium, large, and extra large) which are roughly the same for all supported clouds.
 
 | Type      | Minimum CPU cores | Minimum RAM | GPU                 |
 | :-------- | ----------------: | ----------: | :------------------ |
