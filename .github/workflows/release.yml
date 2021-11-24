@@ -45,3 +45,26 @@ jobs:
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  resync:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hashicorp/setup-terraform@v1
+    - id: tag
+      uses: actions/github-script@v5
+      with:
+        script: return context.payload.ref.replace(/\/refs\/tags\/v/, '');
+    - run: |
+        cd "$(mktemp --directory)"
+        cat <<END > main.tf
+          terraform {
+            required_providers {
+              iterative = {
+                source  = "iterative/iterative",
+                version = "=${{ steps.tag.outputs.result }}"
+              }
+            }
+          }
+          provider "iterative" {}
+        END
+        terraform init
