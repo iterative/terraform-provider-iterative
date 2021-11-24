@@ -76,10 +76,10 @@ func TestTask(t *testing.T) {
 				Environment: common.Environment{
 					Image: "ubuntu",
 					Script: `#!/bin/bash
-						mv data data.old
-						echo "$ENVIRONMENT_VARIABLE_DATA" > data
+						mv data /tmp/data
+						echo "$ENVIRONMENT_VARIABLE_DATA" | tee data
 						sleep 60
-						cat data data.old
+						cat /tmp/data
 					`,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
