@@ -73,6 +73,8 @@ The Iterative Provider offers some common machine types (medium, large, and extr
 | `l+v100`  |                12 |      224 GB | 2 NVIDIA Tesla V100 |
 | `xl+v100` |                24 |      448 GB | 4 NVIDIA Tesla V100 |
 
+See [Generic Machine Types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/generic-machine-types) for exact specifications for each cloud.
+
 ### Cloud-specific
 
 In addition to generic types, it's possible to specify any machine type supported by the underlying cloud provider.
@@ -81,14 +83,14 @@ In addition to generic types, it's possible to specify any machine type supporte
 
 - `{machine}` - Any [EC2 instance type](https://aws.amazon.com/ec2/instance-explorer) (e.g. `g4dn.xlarge`).
 
+#### Microsoft Azure
+
+- `{machine}` - Any [Azure VM](https://azure.microsoft.com/en-us/pricing/vm-selector) (e.g. `Standard_F8s_v2`).
+
 #### Google Cloud Platform
 
 - `{machine}` - Any [GCP machine type](https://cloud.google.com/compute/docs/machine-types) (e.g. `n2-custom-64-262144`).
 - `{machine}+{accelerator}*{count}` - Any machine and accelerator combination (e.g. `custom-8-53248+nvidia-tesla-k80*1`).
-
-#### Microsoft Azure
-
-- `{machine}` - Any [Azure VM](https://azure.microsoft.com/en-us/pricing/vm-selector) (e.g. `Standard_F8s_v2`).
 
 #### Kubernetes
 
