@@ -3,9 +3,9 @@ package task
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
-	"strings"
 
 	"io/ioutil"
 	"path/filepath"
