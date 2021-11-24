@@ -90,7 +90,7 @@ func TestTask(t *testing.T) {
 					},
 					// Egress: everything open.
 				},
-				Spot:        common.SpotEnabled,
+				Spot:        common.SpotDisabled,
 				Parallelism: 1,
 			}
 
