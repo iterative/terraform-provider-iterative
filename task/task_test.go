@@ -125,8 +125,8 @@ func TestTask(t *testing.T) {
 						break loop
 					}
 				}
-				
-				time.Sleep(10*time.Second)
+
+				time.Sleep(10 * time.Second)
 			}
 
 			if provider == common.ProviderK8S {
@@ -138,7 +138,7 @@ func TestTask(t *testing.T) {
 
 				for assert.Nil(t, newTask.Read(ctx)) &&
 					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
-					time.Sleep(10*time.Second)
+					time.Sleep(10 * time.Second)
 				}
 
 				require.Nil(t, newTask.Start(ctx))
@@ -146,7 +146,7 @@ func TestTask(t *testing.T) {
 
 				for assert.Nil(t, newTask.Read(ctx)) &&
 					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
-					time.Sleep(10*time.Second)
+					time.Sleep(10 * time.Second)
 				}
 			}
 
