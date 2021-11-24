@@ -8,7 +8,7 @@ Use the Iterative Provider to launch resource-intensive tasks in popular cloud p
 terraform {
   required_providers {
     iterative = {
-      source  = "iterative/iterative"
+      source = "iterative/iterative"
     }
   }
 }

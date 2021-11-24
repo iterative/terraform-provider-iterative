@@ -17,7 +17,7 @@ In the project root directory:
 terraform {
   required_providers {
     iterative = {
-      source  = "iterative/iterative"
+      source = "iterative/iterative"
     }
   }
 }
@@ -29,7 +29,7 @@ resource "iterative_task" "example" {
   cloud = "aws" # or any of: gcp, az, k8s
 
   directory = "${path.root}/shared"
-  script = <<-END
+  script    = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
   END
