@@ -384,6 +384,8 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 
 	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val, nil
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
+		return val, nil
 	} else if val, ok := instanceTypes[instanceType]; ok {
 		// Allow users to specify custom accelerator selectors.
 		return map[string]map[string]string{

@@ -389,6 +389,8 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 
 	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
+		return val
 	}
 
 	return instanceType
