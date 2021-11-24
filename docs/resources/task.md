@@ -2,9 +2,9 @@
 
 This resource will:
 
-1. Create cloud resources (storage, machines) for the task
-2. Upload the given `directory` to the cloud storage, if specified
-3. Run the given `script` upon completion or `timeout` in the cloud
+1. Create cloud resources (machines and storage) for the task.
+2. Upload the given `directory` to the cloud storage, if specified.
+3. Run the given `script` until completion or `timeout` in the cloud machine.
 
 ## Example Usage
 
@@ -12,10 +12,8 @@ This resource will:
 resource "iterative_task" "task" {
   name  = "example"
   cloud = "aws"
-
   environment = {GREETING = "Hello, world!"}
   directory   = "${path.root}/shared"
-
   script = <<-END
     #!/bin/bash
     echo "$GREETING" | tee $(uuidgen)
@@ -60,8 +58,7 @@ In addition to all arguments above, the following attributes are exported:
 
 ### Generic
 
-The Iterative Provider offers some common machine types which are roughly the same
-for all supported clouds.
+The Iterative Provider offers some common machine types which are roughly the same for all supported clouds.
 
 Type      | Minimum CPU cores | Minimum RAM | GPU
 :---------|------------------:|------------:|:-------------------
@@ -77,8 +74,7 @@ Type      | Minimum CPU cores | Minimum RAM | GPU
 
 ### Cloud-specific
 
-In addition to generic types, it's possible to specify any machine type
-supported by the underlying cloud provider.
+In addition to generic types, it's possible to specify any machine type supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
@@ -106,15 +102,13 @@ supported by the underlying cloud provider.
 
 ### Generic
 
-The Iterative Provider offers some common machine images which are roughly the same
-for all supported clouds.
+The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
-- `ubuntu` - Official Ubuntu LTS image, currently 20.04.
+- `ubuntu` - [Latest](https://hub.docker.com/_/ubuntu) official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image.
 
 ### Cloud-specific
 
-In addition to generic images, it's possible to specify any machine image
-supported by the underlying cloud provider.
+In addition to generic images, it's possible to specify any machine image supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
@@ -163,8 +157,7 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 ### Generic
 
-The Iterative Provider offers some common cloud regions which are roughly the same
-for all supported clouds.
+The Iterative Provider offers some common cloud regions which are roughly the same for all supported clouds.
 
 - `us-east` - United States of America, East.
 - `us-west` - United States of America, West.
@@ -173,8 +166,7 @@ for all supported clouds.
 
 ### Cloud-specific
 
-In addition to generic regions, it's possible to specify any cloud region
-supported by the underlying cloud provider.
+In addition to generic regions, it's possible to specify any cloud region supported by the underlying cloud provider.
 
 #### Amazon Web Services
 
@@ -204,6 +196,6 @@ Setting the `region` attribute results in undefined behaviour.
 
 Unlike public cloud providers, Kubernetes does not offer any portable way of persisting and sharing storage between pods. When specified, the `directory` attribute will create a `PersistentVolumeClaim` of the default `StorageClass`, with the same lifecycle as the task and the specified `disk_size`.
 
-~> **Warning:** Access mode will be `ReadWriteOnce` for `parallelism` equal to 1 or `ReadWriteMany` otherwise.
+~> **Warning:** Access mode will be `ReadWriteOnce` if `parallelism=1` or `ReadWriteMany` otherwise.
 
 -> **Note:** Rancher's [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) might be the easiest way of deploying a quick `ReadWriteOnce` dynamically allocated storage solution for testing: just run `kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml`.

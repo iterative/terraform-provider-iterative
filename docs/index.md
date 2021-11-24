@@ -27,11 +27,13 @@ resource "iterative_task" "task" {
 }
 ```
 
--> **Note:** See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) for more information.
+-> **Note:** See
+[Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started)
+for more information.
 
 ## Authentication
 
-[Environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication) are the only supported authentication method. They should
+Environment variables are the only supported authentication method. They should
 be present when running any of the `terraform` commands.
 
 ### Example
@@ -63,6 +65,8 @@ $ terraform apply
 
 ### Kubernetes
 
-- `KUBECONFIG` - Path to a [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
+- `KUBECONFIG` - Path to a
+  [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
 
--> **Note:** You can use `KUBECONFIG_DATA` instead, with the **contents** of the `kubeconfig` file.
+-> **Note:** You can use `KUBECONFIG_DATA` instead, with the **contents** of the
+`kubeconfig` file.
