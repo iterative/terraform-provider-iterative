@@ -43,6 +43,7 @@ jobs:
       env:
         SMOKE_TEST_SWEEP: true
   test-k8s:
+    name: test (K8S)
     needs: authorize
     runs-on: ubuntu-latest
     timeout-minutes: 30
