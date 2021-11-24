@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	"strings"
 
 	"io/ioutil"
 	"path/filepath"
@@ -48,8 +49,8 @@ func TestTask(t *testing.T) {
 		}
 
 		t.Run(string(provider), func(t *testing.T) {
-			oldData := gofakeit.Phrase()
-			newData := gofakeit.Phrase()
+			oldData := gofakeit.UUID()
+			newData := gofakeit.UUID()
 
 			dataDirectory := t.TempDir()
 			dataFile := filepath.Join(dataDirectory, "data")
@@ -75,10 +76,10 @@ func TestTask(t *testing.T) {
 				Environment: common.Environment{
 					Image: "ubuntu",
 					Script: `#!/bin/bash
-						cat data
+						mv data data.old
 						echo "$ENVIRONMENT_VARIABLE_DATA" > data
 						sleep 60
-						cat data
+						cat data data.old
 					`,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
@@ -121,8 +122,8 @@ func TestTask(t *testing.T) {
 				require.Nil(t, err)
 
 				for _, log := range logs {
-					if assert.Contains(t, log, oldData) &&
-						assert.Contains(t, log, newData) {
+					if strings.Contains(t, log, oldData) &&
+						strings.Contains(t, log, newData) {
 						break loop
 					}
 				}
