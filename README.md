@@ -9,7 +9,7 @@ The Iterative Provider makes it easy to:
 
 - Rapidly move local machine learning experiments to a cloud infrastructure
 - Take advantage of training models on spot instances without losing any progress
-- Configure provisioning of compute resources from any of the supported vendors in a unified manner
+- Unify configuration of various cloud compute providers
 - Automatically destroy unused cloud resources (never forget to turn your GPU off again)
 
 ## Prerequisites
@@ -42,6 +42,7 @@ provider "iterative" {}
 resource "iterative_task" "example" {
   name  = "example"
   cloud = "aws"
+  machine = "m+v100"
 
   script = <<-END
     #!/bin/bash
@@ -52,7 +53,7 @@ resource "iterative_task" "example" {
 
 ## Documentation
 
-You can find detailed documentation on how to configure and use the Iterative Provider [here](https://registry.terraform.io/providers/iterative/iterative/latest).
+More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
 
 ## Support
 
@@ -102,7 +103,7 @@ provider "iterative" {}
 # ... the documentation examples
 ```
 
-**Note:** specify `source = "github.com/iterative/iterative"` instead of `source = "iterative/iterative"` in order to use your local build, as opposed to downloading the latest stable release.
+**Note:** to use your local build, specify `source = "github.com/iterative/iterative"` (`source = "iterative/iterative"` will download the latest stable release instead).
 
 ### Initialize the provider
 
