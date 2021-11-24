@@ -77,6 +77,7 @@ func TestTask(t *testing.T) {
 					Script: `#!/bin/bash
 						cat data
 						echo "$ENVIRONMENT_VARIABLE_DATA" | tee data
+						sleep 60
 					`,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
