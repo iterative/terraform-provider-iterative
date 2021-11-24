@@ -123,11 +123,12 @@ In addition to generic images, it's possible to specify any machine image
 supported by the underlying cloud provider.
 
 Images should include, at least:
-* Linux
-* cloud-init
-* systemd
-* curl
-* python3
+
+- Linux
+- cloud-init
+- systemd
+- curl
+- python3
 
 #### Amazon Web Services
 
