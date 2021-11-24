@@ -12,6 +12,7 @@ This resource will:
 resource "iterative_task" "task" {
   name  = "example"
   cloud = "aws"
+
   environment = {GREETING = "Hello, world!"}
   directory   = "${path.root}/shared"
   script = <<-END

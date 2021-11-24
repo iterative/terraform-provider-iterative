@@ -4,9 +4,7 @@ page_title: Getting Started
 
 # Getting Started
 
-Begin by
-[installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
-if needed.
+Begin by [installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) if needed.
 
 ## Defining a Task
 
@@ -38,10 +36,7 @@ resource "iterative_task" "example" {
 }
 ```
 
--> **Note:** The `script` argument can take any string, including a
-[heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings)
-or the contents of a file returned by the
-[`file`](https://www.terraform.io/docs/language/functions/file.html) function.
+-> **Note:** The `script` argument can take any string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
 The project layout should look similar to this:
 
@@ -63,9 +58,7 @@ This command will:
 1. Download and install the Iterative Provider.
 2. Initialize Terraform in the current directory.
 
-~> **Note:** None of the subsequent commands will work without first setting
-some
-[authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
+~> **Note:** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
 
 ## Launching Tasks
 
@@ -107,5 +100,4 @@ This command will:
 
 ## Viewing Task Results
 
-After running `terraform destroy`, the `shared` directory should contain a file
-named `greeting.txt` with the text `Hello, World!`
+After running `terraform destroy`, the `shared` directory should contain a file named `greeting.txt` with the text `Hello, World!`
