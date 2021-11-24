@@ -105,7 +105,7 @@ In addition to generic types, it's possible to specify any machine type supporte
 
 The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
-- `ubuntu` - [Latest](https://hub.docker.com/_/ubuntu) official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image.
+- `ubuntu` - Official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image (currently 20.04).
 
 ### Cloud-specific
 
