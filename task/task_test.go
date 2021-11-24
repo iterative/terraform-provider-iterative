@@ -122,8 +122,8 @@ func TestTask(t *testing.T) {
 				require.Nil(t, err)
 
 				for _, log := range logs {
-					if strings.Contains(t, log, oldData) &&
-						strings.Contains(t, log, newData) {
+					if strings.Contains(log, oldData) &&
+						strings.Contains(log, newData) {
 						break loop
 					}
 				}
