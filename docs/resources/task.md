@@ -40,7 +40,7 @@ resource "iterative_task" "task" {
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `directory` - (Optional) Local directory to synchronize.
-- `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values.
+- `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
 
 ## Attribute Reference
