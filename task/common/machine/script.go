@@ -60,12 +60,24 @@ sudo mv terraform-provider-iterative* /usr/bin/tpi
 sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
 sudo chown root:root /usr/bin/tpi
 
-curl --remote-name https://downloads.rclone.org/rclone-current-linux-amd64.zip
-python3 -m zipfile -e rclone-current-linux-amd64.zip .
-sudo cp rclone-*-linux-amd64/rclone /usr/bin
-sudo chmod u=rwx,g=rx,o=rx /usr/bin/rclone
-sudo chown root:root /usr/bin/rclone
-rm --recursive rclone-*-linux-amd64*
+extract_here(){
+  if [[ -n "$(which unzip)" ]]; then
+    unzip "$1"
+  elif [[ -n "$(which python)" ]]; then
+    python -m zipfile -e "$1" .
+  else
+    python3 -m zipfile -e "$1" .
+  fi
+}
+
+if [[ -z "$(which rclone)" ]]; then
+  curl --remote-name https://downloads.rclone.org/rclone-current-linux-amd64.zip
+  extract_here rclone-current-linux-amd64.zip
+  sudo cp rclone-*-linux-amd64/rclone /usr/bin
+  sudo chmod u=rwx,g=rx,o=rx /usr/bin/rclone
+  sudo chown root:root /usr/bin/rclone
+  rm --recursive rclone-*-linux-amd64*
+fi
 
 rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 
