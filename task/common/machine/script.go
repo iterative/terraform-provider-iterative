@@ -61,16 +61,16 @@ sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
 sudo chown root:root /usr/bin/tpi
 
 extract_here(){
-  if [[ -n "$(which unzip)" ]]; then
+  if command -v unzip 2>&1 > /dev/null; then
     unzip "$1"
-  elif [[ -n "$(which python)" ]]; then
-    python -m zipfile -e "$1" .
-  else
+  elif command -v python3 2>&1 > /dev/null; then
     python3 -m zipfile -e "$1" .
+  else
+    python -m zipfile -e "$1" .
   fi
 }
 
-if [[ -z "$(which rclone)" ]]; then
+if ! command -v rclone 2>&1 > /dev/null; then
   curl --remote-name https://downloads.rclone.org/rclone-current-linux-amd64.zip
   extract_here rclone-current-linux-amd64.zip
   sudo cp rclone-*-linux-amd64/rclone /usr/bin
