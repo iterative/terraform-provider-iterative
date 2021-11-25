@@ -20,7 +20,7 @@ func (i Identifier) Long() string {
 		return match[0]
 	}
 
-	name := normalize(string(i), 50)
+	name := normalize(string(i), 30)
 	digest := hash(string(i), 4)
 
 	return fmt.Sprintf("tpi-%s-%s-%s", name, digest, hash(name+digest, 4))
@@ -48,13 +48,10 @@ func normalize(identifier string, truncate uint32) string {
 	lowercase := strings.ToLower(identifier)
 
 	normalized := regexp.MustCompile("[^a-z0-9]+").ReplaceAllString(lowercase, "-")
-	normalized = regexp.MustCompile("(^-)|(-$)").ReplaceAllString(normalized, "")
 
 	if len(normalized) > int(truncate) {
 		normalized = normalized[:truncate]
 	}
 
-	return normalized
+	return regexp.MustCompile("(^-)|(-$)").ReplaceAllString(normalized, "")
 }
-
-// func NormalizeIdentifier(identifier common.Identifier, long bool) string {
