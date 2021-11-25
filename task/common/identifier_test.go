@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestIdentifier(t *testing.T) {
 	name := gofakeit.NewCrypto().Sentence(512)
 
