@@ -15,21 +15,20 @@ type Identifier string
 
 const (
 	maximumLongLength = 50
-	shortLength = 16
+	shortLength       = 16
 )
 
 func (i Identifier) Long() string {
 	re := regexp.MustCompile(`(?s)^tpi-([a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)-([a-z0-9]+)-([a-z0-9]+)$`)
 
-	if match := re.FindStringSubmatch(string(i));
-	   len(match) > 0 && hash(match[1]+match[2], shortLength / 2) == match[3] {
+	if match := re.FindStringSubmatch(string(i)); len(match) > 0 && hash(match[1]+match[2], shortLength/2) == match[3] {
 		return match[0]
 	}
 
-	name := normalize(string(i), maximumLongLength - shortLength - uint32(len("tpi---")))
-	digest := hash(string(i), shortLength / 2)
+	name := normalize(string(i), maximumLongLength-shortLength-uint32(len("tpi---")))
+	digest := hash(string(i), shortLength/2)
 
-	return fmt.Sprintf("tpi-%s-%s-%s", name, digest, hash(name+digest, shortLength / 2))
+	return fmt.Sprintf("tpi-%s-%s-%s", name, digest, hash(name+digest, shortLength/2))
 }
 
 func (i Identifier) Short() string {
@@ -44,7 +43,7 @@ func hash(identifier string, size uint8) string {
 	random := uid.NewRandCustom(bytes.NewReader(digest[:]))
 	encoder := uid.NewEncoderBase36()
 	provider := uid.NewProviderCustom(sha256.Size, random, encoder)
-	result :=  provider.MustGenerate().String()
+	result := provider.MustGenerate().String()
 
 	if len(result) < int(size) {
 		panic("not enough bytes to satisfy requested size")
