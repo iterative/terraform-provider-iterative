@@ -35,14 +35,14 @@ func TestIdentifier(t *testing.T) {
 		require.Regexp(t, "^tpi-[a-z0-9-]+$", long)
 		require.Regexp(t, "^[a-z0-9]+$", short)
 
-		require.LessOrEqual(t, len(long), 50)
-		require.LessOrEqual(t, len(short), 24)
+		require.LessOrEqual(t, len(long), maximumLongLength)
+		require.Equal(t, len(short), shortLength)
 	})
 
 	t.Run("compatibility", func(t *testing.T) {
 		identifier := Identifier("test")
 
-		require.Equal(t, identifier.Long(), "tpi-test-189gt4x-1q5wad0")
-		require.Equal(t, identifier.Short(), "189gt4x1q5wad0")
+		require.Equal(t, "tpi-test-3z4xlzwq-3u0vweb4", identifier.Long())
+		require.Equal(t, "3z4xlzwq3u0vweb4", identifier.Short())
 	})
 }
