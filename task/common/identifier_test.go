@@ -9,43 +9,40 @@ import (
 
 
 func TestIdentifier(t *testing.T) {
-	faker := gofakeit.NewCrypto()
+	name := gofakeit.NewCrypto().Sentence(512)
 
-	t.Run("idempotency", func(t *testing.T) {
-		for count := 0; count < 1000; count++ {
-			value := faker.Sentence(512)
-			once := Identifier(value).Long()
-			twice := Identifier(once).Long()
-			require.Equal(t, once, twice)
-		}
+	t.Run("idempotence", func(t *testing.T) {
+		identifier := Identifier(name)
+
+		once := identifier.Long()
+		twice := Identifier(once).Long()
+		require.Equal(t, once, twice)
 	})
 
 	t.Run("stability", func(t *testing.T) {
-		value := faker.Sentence(512)
-		sample := Identifier(value)
-		longSample := Identifier(value).Long()
-		shortSample := Identifier(value).Short()
-		for count := 0; count < 1000; count++ {
-			require.Equal(t, longSample, sample.Long())
-			require.Equal(t, shortSample, sample.Short())
-			require.Equal(t, longSample, Identifier(value).Long())
-			require.Equal(t, shortSample, Identifier(value).Short())
-		}
+		identifier := Identifier(name)
+
+		require.Equal(t, identifier.Long(), identifier.Long())
+		require.Equal(t, identifier.Short(), identifier.Short())
 	})
 
 	t.Run("homogeneity", func(t *testing.T) {
-		for count := 0; count < 1000; count++ {
-			value := faker.Sentence(512)
+		identifier := Identifier(name)
 
-			identifier := Identifier(value)
-			long := identifier.Long()
-			short := identifier.Short()
+		long := identifier.Long()
+		short := identifier.Short()
 
-			require.Regexp(t, "^tpi-[a-z0-9-]+$", long)
-			require.Regexp(t, "^[a-z0-9]+$", short)
+		require.Regexp(t, "^tpi-[a-z0-9-]+$", long)
+		require.Regexp(t, "^[a-z0-9]+$", short)
 
-			require.LessOrEqual(t, len(long), 50)
-			require.LessOrEqual(t, len(short), 24)
-		}
+		require.LessOrEqual(t, len(long), 50)
+		require.LessOrEqual(t, len(short), 24)
+	})
+
+	t.Run("compatibility", func(t *testing.T) {
+		identifier := Identifier("test")
+
+		require.Equal(t, identifier.Long(), "tpi-test-189gt4x-1q5wad0")
+		require.Equal(t, identifier.Short(), "189gt4x1q5wad0")
 	})
 }
