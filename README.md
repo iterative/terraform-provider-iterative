@@ -40,8 +40,8 @@ terraform {
 provider "iterative" {}
 
 resource "iterative_task" "example" {
-  name  = "example"
-  cloud = "aws"
+  name    = "example"
+  cloud   = "aws"
   machine = "m+v100"
 
   script = <<-END
