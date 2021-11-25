@@ -99,8 +99,7 @@ terraform {
 
 provider "iterative" {}
 
-# ... paste resource blocks from
-# ... the documentation examples
+# ... other resource blocks ...
 ```
 
 **Note:** to use your local build, specify `source = "github.com/iterative/iterative"` (`source = "iterative/iterative"` will download the latest stable release instead).
