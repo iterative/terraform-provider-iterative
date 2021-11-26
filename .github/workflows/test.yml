@@ -6,6 +6,8 @@ on:
     branches:
       - main
   pull_request:
+  schedule:
+  - cron: '0 9 * * 1'  # M H d m w (Mondays at 9:00)
 jobs:
   lint:
     runs-on: ubuntu-latest
