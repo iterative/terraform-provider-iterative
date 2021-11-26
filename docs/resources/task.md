@@ -113,6 +113,14 @@ The Iterative Provider offers some common machine images which are roughly the s
 
 In addition to generic images, it's possible to specify any machine image supported by the underlying cloud provider.
 
+Images should include, at least:
+
+- Linux
+- cloud-init
+- systemd
+- curl
+- unzip, python3 or python
+
 #### Amazon Web Services
 
 `{user}@{architecture}:{owner}:{name}`
