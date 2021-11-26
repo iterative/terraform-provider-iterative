@@ -128,7 +128,7 @@ Images should include, at least:
 - cloud-init
 - systemd
 - curl
-- python3
+- unzip, python3 or python
 
 #### Amazon Web Services
 
