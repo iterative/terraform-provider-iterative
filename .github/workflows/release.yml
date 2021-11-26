@@ -23,6 +23,10 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   synchronize:
+    # Empyrically equivalent to pressing the "Resync" button in the Settings
+    # page of Terraform Registry, but without bothering humans in the process
+    # https://registry.terraform.io/providers/iterative/iterative/latest/settings
+    # https://www.terraform.io/docs/registry/providers/publishing.html#webhooks
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 15
