@@ -25,6 +25,7 @@ jobs:
   synchronize:
     needs: release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
     - uses: hashicorp/setup-terraform@v1
     - run: |
@@ -39,4 +40,7 @@ jobs:
           }
           provider "iterative" {}
         END
-        terraform init
+    - run: |
+        while ! terraform init; do
+            sleep $((2**++try))
+        done
