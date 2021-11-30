@@ -47,7 +47,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=/usr/bin/tpi-task
-  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
+  ExecStopPost=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
   EnvironmentFile=/tmp/tpi-environment
   WorkingDirectory=/tmp/tpi-task
   TimeoutStartSec=%s
