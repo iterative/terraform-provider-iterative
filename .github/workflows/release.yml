@@ -10,17 +10,15 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - uses: paultyng/ghaction-import-gpg@v2.1.0        
+      - run: |
+          gpg --import <<< "$TERRAFORM_REGISTRY_GPG_PRIVATE_KEY"
         env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
-        id: import_gpg
+          TERRAFORM_REGISTRY_GPG_PRIVATE_KEY: ${{ secrets.TERRAFORM_REGISTRY_GPG_PRIVATE_KEY }}
       - uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
           args: release --rm-dist
         env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   synchronize:
     # Empyrically equivalent to pressing the "Resync" button in the Settings
@@ -46,5 +44,5 @@ jobs:
         END
     - run: |
         while ! terraform init; do
-            sleep $((2**++try))
+          sleep $((2**++try))
         done
