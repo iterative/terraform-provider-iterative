@@ -41,12 +41,16 @@ while IFS= read -rd $'\0' variable; do
   export "$(perl -0777p -e 's/\\"/"/g;' -e 's/(.+?)="(.+)"/$1=$2/sg' <<< "$variable")"
 done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' /tmp/tpi-environment)
 
+TPI_MACHINE_IDENTITY="$(uuidgen)"
+TPI_LOG_DIRECTORY="$(mktemp --directory)"
+
 sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Unit]
   After=default.target
 [Service]
   Type=simple
-  ExecStart=/usr/bin/tpi-task
+  ExecStart=-/usr/bin/tpi-task
+  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo $SERVICE_RESULT $EXIT_CODE $EXIT_STATUS > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY" && rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log"'
   ExecStopPost=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
   Environment=HOME=/root
   EnvironmentFile=/tmp/tpi-environment
@@ -84,9 +88,6 @@ rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
-
-TPI_MACHINE_IDENTITY="$(uuidgen)"
-TPI_LOG_DIRECTORY="$(mktemp --directory)"
 
 while sleep 5; do
   journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
