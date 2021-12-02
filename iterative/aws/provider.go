@@ -32,7 +32,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
 	instanceProfile := d.Get("instance_permission_set").(string)
-
+	subnetId := d.Get("aws_subnet_id").(string)
 	availabilityZone := GetAvailabilityZone(region)
 
 	metadata := map[string]string{
@@ -191,6 +191,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
 	// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/ec2#Client.DescribeSubnets
+	// default Subnet selection
 	subnetOptions := &ec2.DescribeSubnetsInput{
 		Filters: []types.Filter{
 			{
@@ -199,10 +200,18 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	}
+	// use availability zone from user
 	if availabilityZone != "" {
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
 			Name:   aws.String("availability-zone"),
 			Values: []string{availabilityZone},
+		})
+	}
+	// use exact subnet-id from user
+	if subnetId != "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("subnet-id"),
+			Values: []string{subnetId},
 		})
 	}
 	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
@@ -210,14 +219,19 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	if len(subDesc.Subnets) == 0 {
-		return errors.New("no subnets found")
+		return errors.New("No Subnet found")
 	}
 	var subnetID string
-	for _, subnet := range subDesc.Subnets {
-		if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
-			subnetID = *subnet.SubnetId
-			break
+	// bypass with user provided ID
+	if subnetId == "" {
+		for _, subnet := range subDesc.Subnets {
+			if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
+				subnetID = *subnet.SubnetId
+				break
+			}
 		}
+	} else {
+		subnetID = subnetId
 	}
 	if subnetID == "" {
 		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
