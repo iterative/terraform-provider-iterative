@@ -201,7 +201,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	if availabilityZone != "" {
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
-			Name:   aws.String("availabilityZone"),
+			Name:   aws.String("availability-zone"),
 			Values: []string{availabilityZone},
 		})
 	}
