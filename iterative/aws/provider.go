@@ -33,7 +33,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	spotPrice := d.Get("spot_price").(float64)
 	instanceProfile := d.Get("instance_permission_set").(string)
 	subnetId := d.Get("aws_subnet_id").(string)
-	availabilityZone, region := GetAvailabilityZone(region)
+	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -411,14 +411,23 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
-func GetAvailabilityZone(region string) (string, string) {
+func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
 	// 0x61(a) to 0x7a(z)
 	if lastChar >= 0x61 && lastChar <= 0x71 {
-		strippedRegion := region[:len(region)-1]
-		return region, strippedRegion
+		return region
 	} else {
-		return "", region
+		return ""
+	}
+}
+
+func StripAvilabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	// 0x61(a) to 0x7a(z)
+	if lastChar >= 0x61 && lastChar <= 0x71 {
+		return region[:len(region)-1]
+	} else {
+		return region
 	}
 }
 
@@ -433,7 +442,7 @@ func GetRegion(region string) string {
 		return val
 	}
 
-	return region
+	return StripAvailabilityZone(region)
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
