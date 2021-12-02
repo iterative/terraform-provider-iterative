@@ -128,7 +128,7 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
-		"aws_subnet_id": $schema.Schema{ // cloud agnostic feature? subnet_id
+		"aws_subnet_id": &schema.Schema{ // cloud agnostic feature? subnet_id
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
