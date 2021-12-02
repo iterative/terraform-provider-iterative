@@ -399,7 +399,7 @@ func awsClient(region string) (aws.Config, error) {
 
 func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
-	// 0x61 - 0x7a
+	// 0x61(a) to 0x7a(z)
 	if lastChar >= 0x61 && lastChar <= 0x71 {
 		return region
 	} else {
