@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"terraform-provider-iterative/iterative/utils"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -46,7 +48,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if ami == "" {
 		ami = "iterative-cml"
 	}
-
+	fmt.Println(region)
 	config, err := awsClient(region)
 	if err != nil {
 		return decodeAWSError(region, err)
@@ -421,16 +423,6 @@ func GetAvailabilityZone(region string) string {
 	}
 }
 
-func StripAvailabilityZone(region string) string {
-	lastChar := region[len(region)-1]
-	// 0x61(a) to 0x7a(z)
-	if lastChar >= 0x61 && lastChar <= 0x71 {
-		return region[:len(region)-1]
-	} else {
-		return region
-	}
-}
-
 //GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
@@ -442,7 +434,7 @@ func GetRegion(region string) string {
 		return val
 	}
 
-	return StripAvailabilityZone(region)
+	return utils.StripAvailabilityZone(region)
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
