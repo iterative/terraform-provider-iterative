@@ -33,6 +33,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	spotPrice := d.Get("spot_price").(float64)
 	instanceProfile := d.Get("instance_permission_set").(string)
 
+	availabilityZone := GetAvailabilityZone(region)
+
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
 		"Id":   d.Id(),
@@ -188,14 +190,22 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	subDesc, err := svc.DescribeSubnets(ctx, &ec2.DescribeSubnetsInput{
+	// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/ec2#Client.DescribeSubnets
+	subnetOptions := &ec2.DescribeSubnetsInput{
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("vpc-id"),
 				Values: []string{vpcID},
 			},
 		},
-	})
+	}
+	if availabilityZone != "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("availabilityZone"),
+			Values: []string{availabilityZone},
+		})
+	}
+	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
@@ -385,6 +395,16 @@ func awsClient(region string) (aws.Config, error) {
 	return config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(region),
 	)
+}
+
+func GetAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	// 0x61 - 0x7a
+	if lastChar >= 0x61 && lastChar <= 0x71 {
+		return region
+	} else {
+		return ""
+	}
 }
 
 //GetRegion maps region to real cloud regions
