@@ -50,7 +50,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-/usr/bin/tpi-task
-  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo $SERVICE_RESULT $EXIT_CODE $EXIT_STATUS > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY" && rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log"'
+  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo $SERVICE_RESULT $EXIT_CODE $EXIT_STATUS > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log"'
   ExecStopPost=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
   Environment=HOME=/root
   EnvironmentFile=/tmp/tpi-environment
