@@ -358,7 +358,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	instanceDesc := descResult.Reservations[0].Instances[0]
 	var instanceIP string
-	if *instanceDesc.PublicIpAddress != "" {
+	if instanceDesc.PublicIpAddress != nil {
 		instanceIP = *instanceDesc.PublicIpAddress
 	} else {
 		instanceIP = *instanceDesc.PrivateIpAddress
