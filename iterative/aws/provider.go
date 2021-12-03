@@ -48,7 +48,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if ami == "" {
 		ami = "iterative-cml"
 	}
-	fmt.Println(region)
 	config, err := awsClient(region)
 	if err != nil {
 		return decodeAWSError(region, err)
