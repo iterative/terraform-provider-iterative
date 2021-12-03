@@ -324,7 +324,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			MinCount:            aws.Int32(1),
 			MaxCount:            aws.Int32(1),
 			SecurityGroupIds:    []string{sgID},
-			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
+			SubnetId:            aws.String(subnetID),
 			BlockDeviceMappings: blockDeviceMappings,
 			TagSpecifications:   resourceTagSpecifications(types.ResourceTypeInstance, metadata),
 		})
@@ -357,7 +357,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceDesc := descResult.Reservations[0].Instances[0]
-	d.Set("instance_ip", instanceDesc.PublicIpAddress)
+	var instanceIP string
+	if *instanceDesc.PublicIpAddress != "" {
+		instanceIP = *instanceDesc.PublicIpAddress
+	} else {
+		instanceIP = *instanceDesc.PrivateIpAddress
+	}
+	d.Set("instance_ip", instanceIP)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
 	d.Set("image", *imagesRes.Images[0].Name)
 
