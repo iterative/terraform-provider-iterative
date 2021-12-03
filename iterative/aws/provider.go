@@ -221,7 +221,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	if len(subDesc.Subnets) == 0 {
-		return errors.New("No Subnet found")
+		return errors.New("no Subnet found")
 	}
 	var subnetID string
 	// bypass with user provided ID
