@@ -159,7 +159,7 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
-			"aws_subnet_id": &schema.Schema{ // cloud agnostic feature? subnet_id
+			"aws_subnet_id": &schema.Schema{
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,

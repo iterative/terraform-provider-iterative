@@ -191,7 +191,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/ec2#Client.DescribeSubnets
 	// default Subnet selection
 	subnetOptions := &ec2.DescribeSubnetsInput{
 		Filters: []types.Filter{
