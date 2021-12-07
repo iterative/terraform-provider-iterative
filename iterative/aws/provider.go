@@ -421,9 +421,8 @@ func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
 	if lastChar >= 'a' && lastChar <= 'z' {
 		return region
-	} else {
-		return ""
 	}
+	return ""
 }
 
 //GetRegion maps region to real cloud regions

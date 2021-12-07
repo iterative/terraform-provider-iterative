@@ -28,7 +28,6 @@ func StripAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
 	if lastChar >= 'a' && lastChar <= 'z' {
 		return region[:len(region)-1]
-	} else {
-		return region
 	}
+	return region
 }
