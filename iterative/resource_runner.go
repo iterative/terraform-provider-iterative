@@ -159,6 +159,12 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
+			"aws_subnet_id": &schema.Schema{
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
+			},
 			"metadata": &schema.Schema{
 				Type:     schema.TypeMap,
 				ForceNew: true,
@@ -374,7 +380,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 				Attributes: AttributesType{
 					ID:                 d.Id(),
 					Cloud:              d.Get("cloud").(string),
-					Region:             d.Get("region").(string),
+					Region:             utils.StripAvailabilityZone(d.Get("region").(string)),
 					Name:               d.Get("name").(string),
 					Labels:             "",
 					IdleTimeout:        d.Get("idle_timeout").(int),

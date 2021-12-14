@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"terraform-provider-iterative/iterative/utils"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -32,6 +34,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
 	instanceProfile := d.Get("instance_permission_set").(string)
+	subnetId := d.Get("aws_subnet_id").(string)
+	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -44,7 +48,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if ami == "" {
 		ami = "iterative-cml"
 	}
-
 	config, err := awsClient(region)
 	if err != nil {
 		return decodeAWSError(region, err)
@@ -188,26 +191,47 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	subDesc, err := svc.DescribeSubnets(ctx, &ec2.DescribeSubnetsInput{
+	// default Subnet selection
+	subnetOptions := &ec2.DescribeSubnetsInput{
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("vpc-id"),
 				Values: []string{vpcID},
 			},
 		},
-	})
+	}
+	// use availability zone from user
+	if availabilityZone != "" && subnetId == "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("availability-zone"),
+			Values: []string{availabilityZone},
+		})
+	}
+	// use exact subnet-id from user
+	if subnetId != "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("subnet-id"),
+			Values: []string{subnetId},
+		})
+	}
+	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
 	if len(subDesc.Subnets) == 0 {
-		return errors.New("no subnets found")
+		return errors.New("no Subnet found")
 	}
 	var subnetID string
-	for _, subnet := range subDesc.Subnets {
-		if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
-			subnetID = *subnet.SubnetId
-			break
+	// bypass with user provided ID
+	if subnetId == "" {
+		for _, subnet := range subDesc.Subnets {
+			if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
+				subnetID = *subnet.SubnetId
+				break
+			}
 		}
+	} else {
+		subnetID = subnetId
 	}
 	if subnetID == "" {
 		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
@@ -299,7 +323,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			MinCount:            aws.Int32(1),
 			MaxCount:            aws.Int32(1),
 			SecurityGroupIds:    []string{sgID},
-			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
+			SubnetId:            aws.String(subnetID),
 			BlockDeviceMappings: blockDeviceMappings,
 			TagSpecifications:   resourceTagSpecifications(types.ResourceTypeInstance, metadata),
 		})
@@ -332,7 +356,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceDesc := descResult.Reservations[0].Instances[0]
-	d.Set("instance_ip", instanceDesc.PublicIpAddress)
+	var instanceIP string
+	if instanceDesc.PublicIpAddress != nil {
+		instanceIP = *instanceDesc.PublicIpAddress
+	} else {
+		instanceIP = *instanceDesc.PrivateIpAddress
+	}
+	d.Set("instance_ip", instanceIP)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
 	d.Set("image", *imagesRes.Images[0].Name)
 
@@ -387,6 +417,14 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
+func GetAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	if lastChar >= 'a' && lastChar <= 'z' {
+		return region
+	}
+	return ""
+}
+
 //GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
@@ -398,7 +436,7 @@ func GetRegion(region string) string {
 		return val
 	}
 
-	return region
+	return utils.StripAvailabilityZone(region)
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
