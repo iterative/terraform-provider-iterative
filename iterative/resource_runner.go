@@ -431,7 +431,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
-	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
+	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = utils.LoadGCPCredentials()
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
