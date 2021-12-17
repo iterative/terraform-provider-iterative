@@ -26,7 +26,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	userData := d.Get("startup_script").(string)
 	pairName := d.Id()
 	hddSize := d.Get("instance_hdd_size").(int)
-	region := GetRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	ami := d.Get("image").(string)
 	keyPublic := d.Get("ssh_public").(string)
@@ -35,7 +34,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	spotPrice := d.Get("spot_price").(float64)
 	instanceProfile := d.Get("instance_permission_set").(string)
 	subnetId := d.Get("aws_subnet_id").(string)
-	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
+
+	region := GetRegion(d.Get("region").(string))
+	availabilityZone := GetAvailabilityZone(region)
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -191,50 +192,38 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	// default Subnet selection
-	subnetOptions := &ec2.DescribeSubnetsInput{
-		Filters: []types.Filter{
-			{
-				Name:   aws.String("vpc-id"),
-				Values: []string{vpcID},
-			},
-		},
-	}
-	// use availability zone from user
-	if availabilityZone != "" && subnetId == "" {
-		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
-			Name:   aws.String("availability-zone"),
-			Values: []string{availabilityZone},
-		})
-	}
-	// use exact subnet-id from user
-	if subnetId != "" {
-		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
-			Name:   aws.String("subnet-id"),
-			Values: []string{subnetId},
-		})
-	}
-	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
-	if err != nil {
-		return decodeAWSError(region, err)
-	}
-	if len(subDesc.Subnets) == 0 {
-		return errors.New("no Subnet found")
-	}
-	var subnetID string
-	// bypass with user provided ID
+	subnetID := subnetId
 	if subnetId == "" {
+		subnetOptions := &ec2.DescribeSubnetsInput{
+			Filters: []types.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []string{vpcID},
+				},
+			},
+		}
+
+		if availabilityZone != "" {
+			subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+				Name:   aws.String("availability-zone"),
+				Values: []string{availabilityZone},
+			})
+		}
+
+		subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
+		if err != nil {
+			return decodeAWSError(region, err)
+		}
+		if len(subDesc.Subnets) == 0 {
+			return errors.New("no Subnet found")
+		}
+
 		for _, subnet := range subDesc.Subnets {
 			if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
 				subnetID = *subnet.SubnetId
 				break
 			}
 		}
-	} else {
-		subnetID = subnetId
-	}
-	if subnetID == "" {
-		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
 	}
 
 	blockDeviceMappings := []types.BlockDeviceMapping{
@@ -417,14 +406,6 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
-func GetAvailabilityZone(region string) string {
-	lastChar := region[len(region)-1]
-	if lastChar >= 'a' && lastChar <= 'z' {
-		return region
-	}
-	return ""
-}
-
 //GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
@@ -437,6 +418,14 @@ func GetRegion(region string) string {
 	}
 
 	return utils.StripAvailabilityZone(region)
+}
+
+func GetAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	if lastChar >= 'a' && lastChar <= 'z' {
+		return region
+	}
+	return ""
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
