@@ -192,38 +192,47 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	subnetID := subnetId
-	if subnetId == "" {
-		subnetOptions := &ec2.DescribeSubnetsInput{
-			Filters: []types.Filter{
-				{
-					Name:   aws.String("vpc-id"),
-					Values: []string{vpcID},
-				},
+	// default Subnet selection
+	subnetOptions := &ec2.DescribeSubnetsInput{
+		Filters: []types.Filter{
+			{
+				Name:   aws.String("vpc-id"),
+				Values: []string{vpcID},
 			},
-		}
-
-		if availabilityZone != "" {
-			subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
-				Name:   aws.String("availability-zone"),
-				Values: []string{availabilityZone},
-			})
-		}
-
-		subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
-		if err != nil {
-			return decodeAWSError(region, err)
-		}
-		if len(subDesc.Subnets) == 0 {
-			return errors.New("no Subnet found")
-		}
-
+		},
+	}
+	// use availability zone from user
+	if availabilityZone != "" && subnetId == "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("availability-zone"),
+			Values: []string{availabilityZone},
+		})
+	}
+	// use exact subnet-id from user
+	if subnetId != "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("subnet-id"),
+			Values: []string{subnetId},
+		})
+	}
+	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
+	if err != nil {
+		return decodeAWSError(region, err)
+	}
+	if len(subDesc.Subnets) == 0 {
+		return errors.New("no Subnet found")
+	}
+	var subnetID string
+	// bypass with user provided ID
+	if subnetId == "" {
 		for _, subnet := range subDesc.Subnets {
 			if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
 				subnetID = *subnet.SubnetId
 				break
 			}
 		}
+	} else {
+		subnetID = subnetId
 	}
 	if subnetID == "" {
 		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
