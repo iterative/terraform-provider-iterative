@@ -225,6 +225,9 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			}
 		}
 	}
+	if subnetID == "" {
+		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
+	}
 
 	blockDeviceMappings := []types.BlockDeviceMapping{
 		{
