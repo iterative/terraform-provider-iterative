@@ -51,6 +51,12 @@ func resourceRunner() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"cml_version": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "latest",
+			},
 			"labels": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -285,7 +291,7 @@ func renderScript(data map[string]interface{}) (string, error) {
 		`#!/bin/sh
 {{- if not .container}}
 {{- if .setup}}{{.setup}}{{- end}}
-sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
+{{.setupCML}}
 {{- end}}
 
 {{- if .runner_startup_script}}
@@ -429,8 +435,20 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
+	data["setupCML"] = GetCML(d.Get("cml_version").(string))
 
 	return renderScript(data)
+}
+
+func GetCML(version string) string {
+	npm_cml := "sudo npm config set user 0 && sudo npm install --global "
+	cmlVersions := make(map[string]string);
+	cmlVersions["latest"] = npm_cml + "@dvcorg/cml"
+
+	if val, ok := cmlVersions[version]; ok {
+		return val
+	}
+	return npm_cml + version
 }
 
 func isContainerAvailable(cloud string) bool {
