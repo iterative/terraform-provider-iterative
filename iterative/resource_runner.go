@@ -442,7 +442,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 
 func GetCML(version string) string {
 	npm_cml := "sudo npm config set user 0 && sudo npm install --global "
-	cmlVersions := make(map[string]string);
+	cmlVersions := make(map[string]string)
 	cmlVersions["latest"] = npm_cml + "@dvcorg/cml"
 
 	if val, ok := cmlVersions[version]; ok {
