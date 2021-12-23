@@ -34,10 +34,12 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
-
+if [[ "${CI}" ]]; then
+  cml rerun-workflow
+fi
 (systemctl is-system-running | grep stopping) || tpi --stop;
 END
-chmod u=rwx,g=rwx,o=rwx /usr/bin/tpi-task-shutdown
+chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
 base64 --decode << END | sudo tee /tmp/tpi-environment > /dev/null
 %s
@@ -69,7 +71,7 @@ sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
 sudo chown root:root /usr/bin/tpi
 
 curl --location --remote-name https://github.com/iterative/cml/releases/latest/download/cml-linux
-sudo chmod 777 cml-linux
+chmod u=rwx,g=rx,o=rx cml-linux
 sudo mv cml-linux /usr/bin/cml
 
 extract_here(){
