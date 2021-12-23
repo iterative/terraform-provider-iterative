@@ -241,6 +241,8 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			v[pair[0]] = &pair[1]
 		}
 	}
+	val := "true"
+	v["TPI_TASK"] = &val
 
 	c := common.Cloud{
 		Provider: common.Provider(d.Get("cloud").(string)),
