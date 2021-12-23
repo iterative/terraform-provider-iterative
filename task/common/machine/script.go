@@ -37,7 +37,7 @@ sudo tee /usr/bin/tpi-task-shutdown << 'END'
 
 (systemctl is-system-running | grep stopping) || tpi --stop;
 END
-chmod u=rwx,g=rwx,o=rwx /usr/bin/tpi-task-shutdown
+chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
 base64 --decode << END | sudo tee /tmp/tpi-environment > /dev/null
 %s
