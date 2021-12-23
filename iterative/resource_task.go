@@ -3,7 +3,6 @@ package iterative
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -228,17 +227,6 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		v[name] = nil
 		if contents := value.(string); contents != "" {
 			v[name] = &contents
-		}
-	}
-
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		if pair[1] != "" && (strings.HasPrefix(pair[0], "CI") ||
-			strings.HasPrefix(pair[0], "GITHUB") ||
-			strings.HasPrefix(pair[0], "BITBUCKET") ||
-			strings.HasPrefix(pair[0], "REPO_TOKEN") ||
-			strings.HasPrefix(pair[0], "CML")) {
-			v[pair[0]] = &pair[1]
 		}
 	}
 
