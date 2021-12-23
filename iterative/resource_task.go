@@ -225,6 +225,7 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{}) (task.Task, error) {
 	v := make(map[string]*string)
 	for name, value := range d.Get("environment").(map[string]interface{}) {
+		v[name] = nil
 		if contents := value.(string); contents != "" {
 			v[name] = &contents
 		}
