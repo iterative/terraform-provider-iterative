@@ -53,6 +53,11 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.Identifier = identifier
 	t.Attributes.Task = task
 	t.Attributes.Directory = persistentVolumeDirectory
+	t.Attributes.DirectoryOut = persistentVolumeDirectory
+	if task.Environment.DirectoryOut != "" {
+		t.Attributes.DirectoryOut = task.Environment.DirectoryOut
+	}
+
 	t.Resources.ConfigMap = resources.NewConfigMap(
 		t.Client,
 		t.Identifier,
@@ -80,7 +85,8 @@ type Task struct {
 	Identifier common.Identifier
 	Attributes struct {
 		common.Task
-		Directory string
+		Directory    string
+		DirectoryOut string
 	}
 	DataSources struct{}
 	Resources   struct {
@@ -156,7 +162,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	if t.Attributes.Directory != "" && t.Read(ctx) == nil {
+	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		os.Setenv("TPI_PULL_MODE", "true")
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
@@ -171,7 +177,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			return err
 		}
 		log.Println("[INFO] Downloading Directory...")
-		if err := t.Pull(ctx, t.Attributes.Directory); err != nil {
+		if err := t.Pull(ctx, t.Attributes.DirectoryOut); err != nil {
 			return err
 		}
 
