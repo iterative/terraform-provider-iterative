@@ -18,6 +18,7 @@ func resourceTask() *schema.Resource {
 		CreateContext: resourceTaskCreate,
 		DeleteContext: resourceTaskDelete,
 		ReadContext:   resourceTaskRead,
+		UpdateContext: resourceTaskRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
