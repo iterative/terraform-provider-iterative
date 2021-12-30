@@ -123,7 +123,7 @@ Images should include, at least:
 
 #### Amazon Web Services
 
-`{user}@{architecture}:{owner}:{name}`
+`{user}@{owner}:{architecture}:{name}`
 
 Fields:
 
