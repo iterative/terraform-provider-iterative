@@ -380,7 +380,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 				Attributes: AttributesType{
 					ID:                 d.Id(),
 					Cloud:              d.Get("cloud").(string),
-					Region:             utils.StripAvailabilityZone(d.Get("region").(string)),
+					Region:             utils.GetRegion(d),
 					Name:               d.Get("name").(string),
 					Labels:             "",
 					IdleTimeout:        d.Get("idle_timeout").(int),
