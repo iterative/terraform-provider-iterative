@@ -7,6 +7,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var (
+	SynthRegions = map[string]map[string]string{
+		"aws": {
+			"us-east":  "us-east-1",
+			"us-west":  "us-west-1",
+			"eu-north": "eu-north-1",
+			"eu-west":  "eu-west-1",
+		},
+		"gcp": {
+			"us-east":  "us-east1-c",
+			"us-west":  "us-west1-b",
+			"eu-north": "europe-north1-a",
+			"eu-west":  "europe-west1-d",
+		},
+		"az": {
+			"us-east":  "eastus",
+			"us-west":  "westus2",
+			"eu-north": "northeurope",
+			"eu-west":  "westeurope",
+		},
+	}
+)
+
 func MachinePrefix(d *schema.ResourceData) string {
 	prefix := ""
 	if _, hasMachine := d.GetOk("machine"); hasMachine {
@@ -37,23 +60,8 @@ func StripAvailabilityZone(region string) string {
 func GetRegion(d *schema.ResourceData) string {
 	region := d.Get("region").(string)
 	cloud := d.Get("cloud").(string)
-	lookup := make(map[string]map[string]string)
-	lookup["aws"]["us-east"] = "us-east-1"
-	lookup["aws"]["us-west"] = "us-west-1"
-	lookup["aws"]["eu-north"] = "eu-north-1"
-	lookup["aws"]["eu-west"] = "eu-west-1"
 
-	lookup["gcp"]["us-east"] = "us-east1-c"
-	lookup["gcp"]["us-west"] = "us-west1-b"
-	lookup["gcp"]["eu-north"] = "europe-north1-a"
-	lookup["gcp"]["eu-west"] = "europe-west1-d"
-
-	lookup["az"]["us-east"] = "eastus"
-	lookup["az"]["us-west"] = "westus2"
-	lookup["az"]["eu-north"] = "northeurope"
-	lookup["az"]["eu-west"] = "westeurope"
-
-	if val, ok := lookup[cloud][region]; ok {
+	if val, ok := SynthRegions[cloud][region]; ok {
 		return val
 	}
 	if cloud == "aws" {

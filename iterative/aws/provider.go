@@ -35,8 +35,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceProfile := d.Get("instance_permission_set").(string)
 	subnetId := d.Get("aws_subnet_id").(string)
 
-	region := GetRegion(d.Get("region").(string))
-	availabilityZone := GetAvailabilityZone(region)
+	region := utils.GetRegion(d)
+	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -373,7 +373,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 //ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	id := aws.String(d.Id())
-	region := GetRegion(d.Get("region").(string))
+	region := utils.GetRegion(d)
 
 	config, err := awsClient(region)
 	if err != nil {
@@ -418,22 +418,12 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
-//GetRegion maps region to real cloud regions
-func GetRegion(region string) string {
-	instanceRegions := make(map[string]string)
-	instanceRegions["us-east"] = "us-east-1"
-	instanceRegions["us-west"] = "us-west-1"
-	instanceRegions["eu-north"] = "eu-north-1"
-	instanceRegions["eu-west"] = "eu-west-1"
-	if val, ok := instanceRegions[region]; ok {
-		return val
-	}
-
-	return utils.StripAvailabilityZone(region)
-}
-
 func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
+	// no avail-zone with synthetic regions
+	if _, ok := utils.SynthRegions["aws"][region]; ok {
+		return ""
+	}
 	if lastChar >= 'a' && lastChar <= 'z' {
 		return region
 	}
