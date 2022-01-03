@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"terraform-provider-iterative/iterative/utils"
+
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
@@ -18,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//ResourceMachineCreate creates AWS instance
+//ResourceMachineCreate creates Azure instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	subscriptionID, err := subscriptionID()
 	if err != nil {
@@ -27,7 +29,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	username := "ubuntu"
 	customData := d.Get("startup_script").(string)
-	region := GetRegion(d.Get("region").(string))
+	region := utils.GetRegion(d)
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
@@ -358,21 +360,6 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	client.AddToUserAgent("iterative-provider")
 
 	return client, err
-}
-
-//GetRegion maps region to real cloud regions
-func GetRegion(region string) string {
-	instanceRegions := make(map[string]string)
-	instanceRegions["us-east"] = "eastus"
-	instanceRegions["us-west"] = "westus2"
-	instanceRegions["eu-north"] = "northeurope"
-	instanceRegions["eu-west"] = "westeurope"
-
-	if val, ok := instanceRegions[region]; ok {
-		return val
-	}
-
-	return region
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {

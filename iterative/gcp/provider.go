@@ -31,7 +31,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	networkName := "iterative"
 	instanceName := d.Get("name").(string)
-	instanceZone := getRegion(d.Get("region").(string))
+	instanceZone := utils.GetRegion(d)
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
 	instanceServiceAccount := d.Get("instance_permission_set").(string)
@@ -277,7 +277,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
-	instanceZone := getRegion(d.Get("region").(string))
+	instanceZone := utils.GetRegion(d)
 	instanceName := d.Get("name").(string)
 
 	service.Instances.Delete(project, instanceZone, instanceName).Do()
@@ -341,20 +341,6 @@ func waitForOperation(ctx context.Context, timeout time.Duration, function func(
 	})
 
 	return result, err
-}
-
-func getRegion(region string) string {
-	instanceRegions := make(map[string]string)
-	instanceRegions["us-east"] = "us-east1-c"
-	instanceRegions["us-west"] = "us-west1-b"
-	instanceRegions["eu-north"] = "europe-north1-a"
-	instanceRegions["eu-west"] = "europe-west1-d"
-
-	if val, ok := instanceRegions[region]; ok {
-		return val
-	}
-
-	return region
 }
 
 func getInstanceType(instanceType string, instanceGPU string) (map[string]map[string]string, error) {
