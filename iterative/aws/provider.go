@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"terraform-provider-iterative/iterative/utils"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -19,6 +17,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+var (
+	SynthRegions = map[string]string{
+		"us-east":  "us-east-1",
+		"us-west":  "us-west-1",
+		"eu-north": "eu-north-1",
+		"eu-west":  "eu-west-1",
+	}
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -35,7 +42,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceProfile := d.Get("instance_permission_set").(string)
 	subnetId := d.Get("aws_subnet_id").(string)
 
-	region := utils.AWSGetRegion(d)
+	region := GetRegion(d.Get("region").(string))
 	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
@@ -373,7 +380,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 //ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	id := aws.String(d.Id())
-	region := utils.AWSGetRegion(d)
+	region := GetRegion(d.Get("region").(string))
 
 	config, err := awsClient(region)
 	if err != nil {
@@ -418,10 +425,25 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
+func GetRegion(region string) string {
+	if val, ok := SynthRegions[region]; ok {
+		return val
+	}
+	return StripAvailabilityZone(region)
+}
+
+func StripAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	if lastChar >= 'a' && lastChar <= 'z' {
+		return region[:len(region)-1]
+	}
+	return region
+}
+
 func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
 	// no avail-zone with synthetic regions
-	if _, ok := utils.AWSSynthRegions["aws"][region]; ok {
+	if _, ok := SynthRegions[region]; ok {
 		return ""
 	}
 	if lastChar >= 'a' && lastChar <= 'z' {
