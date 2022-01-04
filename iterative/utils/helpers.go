@@ -26,14 +26,6 @@ func SetId(d *schema.ResourceData) {
 	}
 }
 
-func StripAvailabilityZone(region string) string {
-	lastChar := region[len(region)-1]
-	if lastChar >= 'a' && lastChar <= 'z' {
-		return region[:len(region)-1]
-	}
-	return region
-}
-
 func LoadGCPCredentials() string {
 	credentialsData := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
 	if len(credentialsData) == 0 {

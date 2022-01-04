@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"terraform-provider-iterative/iterative/utils"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -19,6 +17,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+var (
+	SynthRegions = map[string]string{
+		"us-east":  "us-east-1",
+		"us-west":  "us-west-1",
+		"eu-north": "eu-north-1",
+		"eu-west":  "eu-west-1",
+	}
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -36,7 +43,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	subnetId := d.Get("aws_subnet_id").(string)
 
 	region := GetRegion(d.Get("region").(string))
-	availabilityZone := GetAvailabilityZone(region)
+	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -418,22 +425,27 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
-//GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
-	instanceRegions := make(map[string]string)
-	instanceRegions["us-east"] = "us-east-1"
-	instanceRegions["us-west"] = "us-west-1"
-	instanceRegions["eu-north"] = "eu-north-1"
-	instanceRegions["eu-west"] = "eu-west-1"
-	if val, ok := instanceRegions[region]; ok {
+	if val, ok := SynthRegions[region]; ok {
 		return val
 	}
+	return StripAvailabilityZone(region)
+}
 
-	return utils.StripAvailabilityZone(region)
+func StripAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	if lastChar >= 'a' && lastChar <= 'z' {
+		return region[:len(region)-1]
+	}
+	return region
 }
 
 func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
+	// no avail-zone with synthetic regions
+	if _, ok := SynthRegions[region]; ok {
+		return ""
+	}
 	if lastChar >= 'a' && lastChar <= 'z' {
 		return region
 	}
