@@ -1,0 +1,107 @@
+name: Integration Test
+on:
+  pull_request:
+  schedule:
+  - cron: '0 9 * * 1'
+jobs:
+  integration_tests:
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [AZ]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
+      VENDOR: ${{ matrix.provider }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+    - name: task
+      run: |
+        make install
+        NAME=integration-test-$GITHUB_RUN_ID-$VENDOR
+        echo $NAME
+
+        echo "Testing task creation"
+        cat <<EOF > main.tf
+        terraform {
+          required_providers {
+            iterative = {
+              source = "github.com/iterative/iterative",
+            }
+          }
+        }
+
+        provider "iterative" {}
+
+        resource "iterative_task" "task" {
+          cloud     = "$VENDOR"
+          machine   = "Standard_D2S_v3"
+          region    = "us-west"
+
+          name      = "${NAME}"
+          directory = "."
+
+          script = <<-END
+          #!/bin/bash
+          echo -ne 'hello ' > data.txt
+          echo -ne 'tpi' >> data.txt
+          END
+        }
+        EOF
+
+        terraform init 
+        terraform apply --auto-approve
+
+        echo "Testing directory_out change"
+        cat <<EOF > main.tf
+        terraform {
+          required_providers {
+            iterative = {
+              source = "github.com/iterative/iterative",
+            }
+          }
+        }
+
+        provider "iterative" {}
+
+        resource "iterative_task" "task" {
+          cloud     = "$VENDOR"
+          machine   = "Standard_D2S_v3"
+          region    = "us-west"
+
+          name      = "${NAME}"
+          directory = "."
+          directory_out = "./task_$NAME"
+
+          script = <<-END
+          #!/bin/bash
+          echo -ne 'hello ' > data.txt
+          echo -ne 'tpi' >> data.txt
+          END
+        }
+        EOF
+        terraform apply --auto-approve || FAILED=1
+
+        echo "Testing destroy"
+        terraform destroy --auto-approve 
+        if [ ! -f "./task_$NAME/data.txt" ]; then 
+          FAILED=1
+        ;fi
+
+        if [ "$FAILED" == "1" ]; then
+          "Failed changing the output or checking the files"
+          ls
+          exit 1; 
+        fi
