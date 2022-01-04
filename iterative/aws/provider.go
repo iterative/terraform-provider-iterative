@@ -35,7 +35,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceProfile := d.Get("instance_permission_set").(string)
 	subnetId := d.Get("aws_subnet_id").(string)
 
-	region := utils.GetRegion(d)
+	region := utils.AWSGetRegion(d)
 	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
@@ -373,7 +373,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 //ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	id := aws.String(d.Id())
-	region := utils.GetRegion(d)
+	region := utils.AWSGetRegion(d)
 
 	config, err := awsClient(region)
 	if err != nil {
@@ -421,7 +421,7 @@ func awsClient(region string) (aws.Config, error) {
 func GetAvailabilityZone(region string) string {
 	lastChar := region[len(region)-1]
 	// no avail-zone with synthetic regions
-	if _, ok := utils.SynthRegions["aws"][region]; ok {
+	if _, ok := utils.AWSSynthRegions["aws"][region]; ok {
 		return ""
 	}
 	if lastChar >= 'a' && lastChar <= 'z' {

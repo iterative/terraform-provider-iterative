@@ -8,24 +8,12 @@ import (
 )
 
 var (
-	SynthRegions = map[string]map[string]string{
+	AWSSynthRegions = map[string]map[string]string{
 		"aws": {
 			"us-east":  "us-east-1",
 			"us-west":  "us-west-1",
 			"eu-north": "eu-north-1",
 			"eu-west":  "eu-west-1",
-		},
-		"gcp": {
-			"us-east":  "us-east1-c",
-			"us-west":  "us-west1-b",
-			"eu-north": "europe-north1-a",
-			"eu-west":  "europe-west1-d",
-		},
-		"az": {
-			"us-east":  "eastus",
-			"us-west":  "westus2",
-			"eu-north": "northeurope",
-			"eu-west":  "westeurope",
 		},
 	}
 )
@@ -57,11 +45,11 @@ func StripAvailabilityZone(region string) string {
 	return region
 }
 
-func GetRegion(d *schema.ResourceData) string {
+func AWSGetRegion(d *schema.ResourceData) string {
 	region := d.Get("region").(string)
 	cloud := d.Get("cloud").(string)
 
-	if val, ok := SynthRegions[cloud][region]; ok {
+	if val, ok := AWSSynthRegions[cloud][region]; ok {
 		return val
 	}
 	if cloud == "aws" {
