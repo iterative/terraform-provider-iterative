@@ -107,7 +107,7 @@ func resourceTask() *schema.Resource {
 				Optional: true,
 				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
-				  	Schema: map[string]*schema.Schema{
+					Schema: map[string]*schema.Schema{
 						"directory": {
 							Type:     schema.TypeString,
 							ForceNew: true,
@@ -261,13 +261,13 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 	if d.Get("storage").(*schema.Set).Len() > 0 {
 		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
 		directory = storage["directory"].(string)
-		
+
 		directory_out = storage["directory_out"].(string)
 		if directory_out == "" {
 			directory_out = directory
 		}
 	}
-	
+
 	t := common.Task{
 		Size: common.Size{
 			Machine: d.Get("machine").(string),
