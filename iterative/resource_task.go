@@ -103,17 +103,25 @@ func resourceTask() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
-			"directory": {
-				Type:     schema.TypeString,
-				ForceNew: true,
+			"storage": {
 				Optional: true,
-				Default:  "",
-			},
-			"directory_out": {
-				Type:     schema.TypeString,
-				ForceNew: false,
-				Optional: true,
-				Default:  "",
+				Type:     schema.TypeSet,
+				Elem: &schema.Resource{
+				  	Schema: map[string]*schema.Schema{
+						"directory": {
+							Type:     schema.TypeString,
+							ForceNew: true,
+							Optional: true,
+							Default:  "",
+						},
+						"directory_out": {
+							Type:     schema.TypeString,
+							ForceNew: false,
+							Optional: true,
+							Default:  "",
+						},
+					},
+				},
 			},
 			"parallelism": {
 				Type:     schema.TypeInt,
@@ -248,10 +256,18 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		},
 	}
 
-	directory := d.Get("directory_out").(string)
-	if directory == "" {
-		directory = d.Get("directory").(string)
+	directory := ""
+	directory_out := ""
+	if d.Get("storage").(*schema.Set).Len() > 0 {
+		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
+		directory = storage["directory"].(string)
+		
+		directory_out = storage["directory_out"].(string)
+		if directory_out == "" {
+			directory_out = directory
+		}
 	}
+	
 	t := common.Task{
 		Size: common.Size{
 			Machine: d.Get("machine").(string),
@@ -261,8 +277,8 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			Image:        d.Get("image").(string),
 			Script:       d.Get("script").(string),
 			Variables:    v,
-			Directory:    d.Get("directory").(string),
-			DirectoryOut: directory,
+			Directory:    directory,
+			DirectoryOut: directory_out,
 			Timeout:      time.Duration(d.Get("timeout").(int)) * time.Second,
 		},
 		Firewall: common.Firewall{
