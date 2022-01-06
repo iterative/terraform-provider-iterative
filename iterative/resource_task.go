@@ -145,7 +145,11 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	if err := task.Create(ctx); err != nil {
-		return diagnostic(diags, err, diag.Error)
+		diags = diagnostic(diags, err, diag.Error)
+		if err := task.Delete(ctx); err != nil {
+			diags = diagnostic(diags, err, diag.Error)
+		}
+		return diags
 	}
 
 	d.SetId(task.GetIdentifier(ctx).Long())
