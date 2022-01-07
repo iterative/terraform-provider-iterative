@@ -101,8 +101,8 @@ done &
 
 while sleep 10; do
   if [[ "$(stat -t "$TPI_DATA_DIRECTORY")" != "$TPI_DATA_DIRECTORY_EPOCH" ]]; then
-    rclone copy "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
     TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%%T@\n" | sort | tail -1)"
+    rclone copy "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
   fi
 done &
 `,
