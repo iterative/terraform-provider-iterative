@@ -136,7 +136,7 @@ func TestTask(t *testing.T) {
 
 				for assert.Nil(t, newTask.Read(ctx)) {
 					status, err := newTask.Status(ctx)
-					require.Nil(err)
+					require.Nil(t, err)
 					if status[common.StatusCodeActive] > 0 {
 						break
 					}
@@ -147,7 +147,7 @@ func TestTask(t *testing.T) {
 
 				for assert.Nil(t, newTask.Read(ctx)) {
 					status, err := newTask.Status(ctx)
-					require.Nil(err)
+					require.Nil(t, err)
 					if status[common.StatusCodeActive] == 0 {
 						break
 					}

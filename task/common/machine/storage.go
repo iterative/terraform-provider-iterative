@@ -7,7 +7,6 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
-	"log"
 
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
@@ -21,9 +20,9 @@ import (
 )
 
 type StatusReport struct {
-  Result string
-  Status string
-  Code string
+	Result string
+	Status string
+	Code   string
 }
 
 func Reports(ctx context.Context, remote, prefix string) ([]string, error) {
