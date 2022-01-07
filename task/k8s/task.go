@@ -255,8 +255,8 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 	return nil
 }
 
-func (t *Task) Status(ctx context.Context) common.Status {
-	return t.Attributes.Status
+func (t *Task) Status(ctx context.Context) (common.Status, error) {
+	return t.Attributes.Status, nil
 }
 
 func (t *Task) Events(ctx context.Context) []common.Event {

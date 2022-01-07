@@ -3,9 +3,11 @@ package machine
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"path/filepath"
 	"strings"
+	"log"
 
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
@@ -14,15 +16,23 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/sync"
+
+	"terraform-provider-iterative/task/common"
 )
 
-func Logs(ctx context.Context, remote string) ([]string, error) {
+type StatusReport struct {
+  Result string
+  Status string
+  Code string
+}
+
+func Reports(ctx context.Context, remote, prefix string) ([]string, error) {
 	remoteFileSystem, err := fs.NewFs(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
 
-	entries, err := remoteFileSystem.List(ctx, "/log")
+	entries, err := remoteFileSystem.List(ctx, "/reports")
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +40,7 @@ func Logs(ctx context.Context, remote string) ([]string, error) {
 	var logs []string
 	for _, entry := range entries {
 		path := entry.Remote()
-		if base := filepath.Base(path); !strings.HasPrefix(base, "task-") {
+		if base := filepath.Base(path); !strings.HasPrefix(base, prefix+"-") {
 			continue
 		}
 
@@ -51,6 +61,31 @@ func Logs(ctx context.Context, remote string) ([]string, error) {
 	}
 
 	return logs, nil
+}
+
+func Logs(ctx context.Context, remote string) ([]string, error) {
+	return Reports(ctx, remote, "task")
+}
+
+func Status(ctx context.Context, remote string, initialStatus common.Status) (common.Status, error) {
+	reports, err := Reports(ctx, remote, "status")
+	if err != nil {
+		return initialStatus, err
+	}
+
+	for _, report := range reports {
+		log.Printf("[INFO] REPORT %s\n", report)
+		var statusReport StatusReport
+		json.Unmarshal([]byte(report), &statusReport)
+		if statusReport.Code != "" {
+			if statusReport.Code == "0" {
+				initialStatus[common.StatusCodeSucceeded] += 1
+			} else {
+				initialStatus[common.StatusCodeFailed] += 1
+			}
+		}
+	}
+	return initialStatus, nil
 }
 
 func Transfer(ctx context.Context, source, destination string) error {

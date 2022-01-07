@@ -265,10 +265,9 @@ func (j *Job) Read(ctx context.Context) error {
 		})
 	}
 	j.Attributes.Status = common.Status{
-		common.StatusCodeRunning:       int(job.Status.Active),
-		common.StatusCode("active"):    int(job.Status.Active),
-		common.StatusCode("succeeded"): int(job.Status.Succeeded),
-		common.StatusCode("failed"):    int(job.Status.Failed),
+		common.StatusCodeActive:       int(job.Status.Active),
+		common.StatusCodeSucceeded:       int(job.Status.Succeeded),
+		common.StatusCodeFailed:       int(job.Status.Failed),
 	}
 	j.Resource = job
 	return nil

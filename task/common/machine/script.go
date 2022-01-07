@@ -43,6 +43,7 @@ done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' /tmp/tpi-en
 
 TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
+TPI_DATA_DIRECTORY="/tmp/tpi-task"
 
 sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Unit]
@@ -50,7 +51,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-/usr/bin/tpi-task
-  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo $SERVICE_RESULT $EXIT_CODE $EXIT_STATUS > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log"'
+  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/reports"'
   ExecStopPost=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
   Environment=HOME=/root
   EnvironmentFile=/tmp/tpi-environment
@@ -92,11 +93,17 @@ sudo systemctl enable tpi-task.service --now
 while sleep 5; do
   journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
   journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
-  rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/log"
+  if [[ "$(stat -t "$TPI_LOG_DIRECTORY")" != "$TPI_LOG_DIRECTORY_HASH" ]]; then
+    TPI_LOG_DIRECTORY_HASH="$(md5sum "$TPI_LOG_DIRECTORY"/*)"
+    rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/reports"
+  fi
 done &
 
 while sleep 10; do
-  rclone copy /tmp/tpi-task "$RCLONE_REMOTE/data"
+  if [[ "$(stat -t "$TPI_DATA_DIRECTORY")" != "$TPI_DATA_DIRECTORY_EPOCH" ]]; then
+    rclone copy "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
+    TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%T@\n" | sort | tail -1)"
+  fi
 done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),

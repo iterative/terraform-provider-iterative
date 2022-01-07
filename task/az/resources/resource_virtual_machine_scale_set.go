@@ -224,7 +224,7 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	}
 
 	v.Attributes.Events = []common.Event{}
-	v.Attributes.Status = common.Status{common.StatusCodeRunning: 0}
+	v.Attributes.Status = common.Status{common.StatusCodeActive: 0}
 	scaleSetView, err := v.Client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		return err
@@ -232,9 +232,9 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	if scaleSetView.VirtualMachine.StatusesSummary != nil {
 		for _, status := range *scaleSetView.VirtualMachine.StatusesSummary {
 			code := to.String(status.Code)
-			v.Attributes.Status[common.StatusCode(code)] = int(to.Int32(status.Count))
+			// DEBUG v.Attributes.Status[common.StatusCode(code)] = int(to.Int32(status.Count))
 			if code == "ProvisioningState/succeeded" {
-				v.Attributes.Status[common.StatusCodeRunning] = int(to.Int32(status.Count))
+				v.Attributes.Status[common.StatusCodeActive] = int(to.Int32(status.Count))
 			}
 		}
 	}
