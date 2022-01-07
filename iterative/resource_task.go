@@ -2,7 +2,10 @@ package iterative
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -268,6 +271,10 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 	}
 
+	if directory_out != ""  && !isOutputValid(directory_out) {
+		return nil, errors.New("directory_out " + directory_out + " is not empty!")
+	}
+	
 	t := common.Task{
 		Size: common.Size{
 			Machine: d.Get("machine").(string),
@@ -299,4 +306,18 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
+}
+
+func isOutputValid(path string) (bool) {
+	f, err := os.Open(path)
+	if err != nil {
+		return true
+	}
+	defer f.Close()
+
+	_, err = f.Readdir(1)
+	if err == io.EOF {
+		return true
+	}
+	return false
 }
