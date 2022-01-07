@@ -265,8 +265,12 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 	return t.Attributes.Events
 }
 
-func (t *Task) Status(ctx context.Context) common.Status {
-	return t.Attributes.Status
+func (t *Task) Status(ctx context.Context) (common.Status, error) {
+	if err := t.Read(ctx); err != nil {
+		return nil, err
+	}
+
+	return machine.Status(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"], t.Attributes.Status)
 }
 
 func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {

@@ -75,9 +75,9 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	}
 
 	i.Attributes.Addresses = []net.IP{}
-	i.Attributes.Status = common.Status{common.StatusCodeRunning: 0}
+	i.Attributes.Status = common.Status{common.StatusCodeActive: 0}
 	for _, groupInstance := range groupInstances.Items {
-		i.Attributes.Status[common.StatusCode(groupInstance.Status)]++
+		// DEBUG i.Attributes.Status[common.StatusCode(groupInstance.Status)]++
 		if groupInstance.Status == "RUNNING" {
 			instance, err := i.Client.Services.Compute.Instances.Get(i.Client.Credentials.ProjectID, i.Client.Region, filepath.Base(groupInstance.Instance)).Do()
 			if err != nil {
@@ -86,7 +86,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 			if address := net.ParseIP(instance.NetworkInterfaces[0].AccessConfigs[0].NatIP); address != nil {
 				i.Attributes.Addresses = append(i.Attributes.Addresses, address)
 			}
-			i.Attributes.Status[common.StatusCodeRunning]++
+			i.Attributes.Status[common.StatusCodeActive]++
 		}
 	}
 
