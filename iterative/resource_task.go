@@ -3,7 +3,6 @@ package iterative
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
