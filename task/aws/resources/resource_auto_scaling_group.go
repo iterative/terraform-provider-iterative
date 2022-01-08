@@ -136,7 +136,6 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 					if status == "running" {
 						a.Attributes.Status[common.StatusCodeActive]++
 					}
-					// DEBUG a.Attributes.Status[common.StatusCode(status)]++
 					if address := net.ParseIP(aws.ToString(instance.PublicIpAddress)); address != nil {
 						a.Attributes.Addresses = append(a.Attributes.Addresses, address)
 					}

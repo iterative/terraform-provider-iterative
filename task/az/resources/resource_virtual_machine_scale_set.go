@@ -232,7 +232,6 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	if scaleSetView.VirtualMachine.StatusesSummary != nil {
 		for _, status := range *scaleSetView.VirtualMachine.StatusesSummary {
 			code := to.String(status.Code)
-			// DEBUG v.Attributes.Status[common.StatusCode(code)] = int(to.Int32(status.Count))
 			if code == "ProvisioningState/succeeded" {
 				v.Attributes.Status[common.StatusCodeActive] = int(to.Int32(status.Count))
 			}
