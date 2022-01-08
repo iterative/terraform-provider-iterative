@@ -106,18 +106,18 @@ func resourceTask() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
-			"storage": {
+			"workdir": {
 				Optional: true,
 				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"directory": {
+						"input": {
 							Type:     schema.TypeString,
 							ForceNew: true,
 							Optional: true,
 							Default:  "",
 						},
-						"directory_out": {
+						"output": {
 							Type:     schema.TypeString,
 							ForceNew: false,
 							Optional: true,
@@ -261,18 +261,18 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 
 	directory := ""
 	directory_out := ""
-	if d.Get("storage").(*schema.Set).Len() > 0 {
-		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
-		directory = storage["directory"].(string)
+	if d.Get("workdir").(*schema.Set).Len() > 0 {
+		storage := d.Get("workdir").(*schema.Set).List()[0].(map[string]interface{})
+		directory = storage["input"].(string)
 
-		directory_out = storage["directory_out"].(string)
+		directory_out = storage["output"].(string)
 		if directory_out == "" {
 			directory_out = directory
 		}
 	}
 
 	if directory_out != "" && !isOutputValid(directory_out) {
-		return nil, errors.New("directory_out " + directory_out + " is not empty!")
+		return nil, errors.New("output directory " + directory_out + " is not empty!")
 	}
 
 	t := common.Task{
