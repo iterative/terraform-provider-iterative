@@ -236,6 +236,15 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 	}
 
+	val := "true"
+	v["TPI_TASK"] = &val
+	v["CI"] = nil
+	v["CI_*"] = nil
+	v["GITHUB_*"] = nil
+	v["BITBUCKET_*"] = nil
+	v["CML_*"] = nil
+	v["REPO_TOKEN"] = nil
+
 	c := common.Cloud{
 		Provider: common.Provider(d.Get("cloud").(string)),
 		Region:   common.Region(d.Get("region").(string)),
