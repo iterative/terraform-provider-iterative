@@ -34,7 +34,7 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
-if [[ "${CI}" ]]; then
+if ! test -z "$CI"; then
   cml rerun-workflow
 fi
 (systemctl is-system-running | grep stopping) || tpi --stop;

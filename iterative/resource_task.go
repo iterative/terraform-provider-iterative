@@ -231,18 +231,14 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 	}
 
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		if pair[1] != "" && (strings.HasPrefix(pair[0], "CI") ||
-			strings.HasPrefix(pair[0], "GITHUB") ||
-			strings.HasPrefix(pair[0], "BITBUCKET") ||
-			strings.HasPrefix(pair[0], "REPO_TOKEN") ||
-			strings.HasPrefix(pair[0], "CML")) {
-			v[pair[0]] = &pair[1]
-		}
-	}
 	val := "true"
-	v["TPI_TASK"] = &val
+	v["TPI_TASK"] = &(val)
+	v["CI"] = nil
+    v["CI_*"] = nil
+	v["GITHUB_*"] = nil
+	v["BITBUCKET_*"] = nil
+	v["CML_*"] = nil
+	v["REPO_TOKEN"] = nil
 
 	c := common.Cloud{
 		Provider: common.Provider(d.Get("cloud").(string)),
