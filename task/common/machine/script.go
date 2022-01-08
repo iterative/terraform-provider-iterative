@@ -32,6 +32,15 @@ base64 --decode << END | sudo tee /usr/bin/tpi-task > /dev/null
 END
 chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 
+sudo tee /usr/bin/tpi-task-shutdown << 'END'
+#!/bin/bash
+if ! test -z "$CI"; then
+  cml rerun-workflow
+fi
+(systemctl is-system-running | grep stopping) || tpi --stop;
+END
+chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
+
 base64 --decode << END | sudo tee /tmp/tpi-environment > /dev/null
 %s
 END
@@ -50,9 +59,9 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   After=default.target
 [Service]
   Type=simple
-  ExecStart=-/usr/bin/tpi-task
+  ExecStart=/usr/bin/tpi-task
   ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/reports"'
-  ExecStopPost=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
+  ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
   EnvironmentFile=/tmp/tpi-environment
   WorkingDirectory=/tmp/tpi-task
@@ -65,6 +74,10 @@ curl --location --remote-name https://github.com/iterative/terraform-provider-it
 sudo mv terraform-provider-iterative* /usr/bin/tpi
 sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
 sudo chown root:root /usr/bin/tpi
+
+curl --location --remote-name https://github.com/iterative/cml/releases/latest/download/cml-linux
+chmod u=rwx,g=rx,o=rx cml-linux
+sudo mv cml-linux /usr/bin/cml
 
 extract_here(){
   if command -v unzip 2>&1 > /dev/null; then

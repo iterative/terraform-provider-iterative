@@ -2,6 +2,7 @@ package iterative
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -145,7 +146,12 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	if err := task.Create(ctx); err != nil {
-		return diagnostic(diags, err, diag.Error)
+		diags = diagnostic(diags, err, diag.Error)
+		if err := task.Delete(ctx); err == nil {
+			diags = diagnostic(diags, errors.New("deleted all the remaining resources"), diag.Warning)
+		} else {
+			diags = diagnostic(diags, err, diag.Error)
+		}
 	}
 
 	d.SetId(task.GetIdentifier(ctx).Long())
@@ -233,6 +239,15 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			v[name] = &contents
 		}
 	}
+
+	val := "true"
+	v["TPI_TASK"] = &val
+	v["CI"] = nil
+	v["CI_*"] = nil
+	v["GITHUB_*"] = nil
+	v["BITBUCKET_*"] = nil
+	v["CML_*"] = nil
+	v["REPO_TOKEN"] = nil
 
 	c := common.Cloud{
 		Provider: common.Provider(d.Get("cloud").(string)),
