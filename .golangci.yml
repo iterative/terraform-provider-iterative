@@ -1,0 +1,9 @@
+run:
+  timeout: 10m
+  skip-dirs:
+    - iterative
+    - cml
+output:
+  format: github-actions
+severity:
+  default-severity: error

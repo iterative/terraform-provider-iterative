@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"terraform-provider-iterative/iterative/utils"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	gcp_compute "google.golang.org/api/compute/v1"
@@ -289,7 +291,7 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	var credentials *google.Credentials
 	var err error
 
-	if credentialsData := []byte(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")); len(credentialsData) > 0 {
+	if credentialsData := []byte(utils.LoadGCPCredentials()); len(credentialsData) > 0 {
 		credentials, err = google.CredentialsFromJSON(oauth2.NoContext, credentialsData, gcp_compute.ComputeScope)
 	} else {
 		credentials, err = google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
@@ -441,9 +443,9 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 
 	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val, nil
-	}
-
-	if val, ok := instanceTypes[instanceType]; ok {
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
+		return val, nil
+	} else if val, ok := instanceTypes[instanceType]; ok {
 		return map[string]map[string]string{
 			"accelerator": {
 				"count": val["accelerator"]["count"],

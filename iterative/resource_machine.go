@@ -128,6 +128,12 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
+		"aws_subnet_id": &schema.Schema{
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Optional: true,
+			Default:  "",
+		},
 		"metadata": &schema.Schema{
 			Type:     schema.TypeMap,
 			ForceNew: true,

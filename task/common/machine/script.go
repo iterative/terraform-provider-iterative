@@ -47,7 +47,8 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=/usr/bin/tpi-task
-  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
+  ExecStopPost=/bin/bash -c 'systemctl is-system-running | grep stopping || tpi --stop'
+  Environment=HOME=/root
   EnvironmentFile=/tmp/tpi-environment
   WorkingDirectory=/tmp/tpi-task
   TimeoutStartSec=%s
@@ -60,12 +61,24 @@ sudo mv terraform-provider-iterative* /usr/bin/tpi
 sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
 sudo chown root:root /usr/bin/tpi
 
-curl --remote-name https://downloads.rclone.org/rclone-current-linux-amd64.zip
-python3 -m zipfile -e rclone-current-linux-amd64.zip .
-sudo cp rclone-*-linux-amd64/rclone /usr/bin
-sudo chmod u=rwx,g=rx,o=rx /usr/bin/rclone
-sudo chown root:root /usr/bin/rclone
-rm --recursive rclone-*-linux-amd64*
+extract_here(){
+  if command -v unzip 2>&1 > /dev/null; then
+    unzip "$1"
+  elif command -v python3 2>&1 > /dev/null; then
+    python3 -m zipfile -e "$1" .
+  else
+    python -m zipfile -e "$1" .
+  fi
+}
+
+if ! command -v rclone 2>&1 > /dev/null; then
+  curl --remote-name https://downloads.rclone.org/rclone-current-linux-amd64.zip
+  extract_here rclone-current-linux-amd64.zip
+  sudo cp rclone-*-linux-amd64/rclone /usr/bin
+  sudo chmod u=rwx,g=rx,o=rx /usr/bin/rclone
+  sudo chown root:root /usr/bin/rclone
+  rm --recursive rclone-*-linux-amd64*
+fi
 
 rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 

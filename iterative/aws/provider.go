@@ -19,12 +19,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var (
+	SynthRegions = map[string]string{
+		"us-east":  "us-east-1",
+		"us-west":  "us-west-1",
+		"eu-north": "eu-north-1",
+		"eu-west":  "eu-west-1",
+	}
+)
+
 //ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	userData := d.Get("startup_script").(string)
 	pairName := d.Id()
 	hddSize := d.Get("instance_hdd_size").(int)
-	region := GetRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
 	ami := d.Get("image").(string)
 	keyPublic := d.Get("ssh_public").(string)
@@ -32,6 +40,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
 	instanceProfile := d.Get("instance_permission_set").(string)
+	subnetId := d.Get("aws_subnet_id").(string)
+
+	region := GetRegion(d.Get("region").(string))
+	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
 		"Name": d.Get("name").(string),
@@ -44,7 +56,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if ami == "" {
 		ami = "iterative-cml"
 	}
-
 	config, err := awsClient(region)
 	if err != nil {
 		return decodeAWSError(region, err)
@@ -188,26 +199,47 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sgID = *sgDesc.SecurityGroups[0].GroupId
 	vpcID = *sgDesc.SecurityGroups[0].VpcId
 
-	subDesc, err := svc.DescribeSubnets(ctx, &ec2.DescribeSubnetsInput{
+	// default Subnet selection
+	subnetOptions := &ec2.DescribeSubnetsInput{
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("vpc-id"),
 				Values: []string{vpcID},
 			},
 		},
-	})
+	}
+	// use availability zone from user
+	if availabilityZone != "" && subnetId == "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("availability-zone"),
+			Values: []string{availabilityZone},
+		})
+	}
+	// use exact subnet-id from user
+	if subnetId != "" {
+		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
+			Name:   aws.String("subnet-id"),
+			Values: []string{subnetId},
+		})
+	}
+	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
 	if err != nil {
 		return decodeAWSError(region, err)
 	}
 	if len(subDesc.Subnets) == 0 {
-		return errors.New("no subnets found")
+		return errors.New("no Subnet found")
 	}
 	var subnetID string
-	for _, subnet := range subDesc.Subnets {
-		if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
-			subnetID = *subnet.SubnetId
-			break
+	// bypass with user provided ID
+	if subnetId == "" {
+		for _, subnet := range subDesc.Subnets {
+			if *subnet.AvailableIpAddressCount > 0 && *subnet.MapPublicIpOnLaunch {
+				subnetID = *subnet.SubnetId
+				break
+			}
 		}
+	} else {
+		subnetID = subnetId
 	}
 	if subnetID == "" {
 		return errors.New("No subnet found with public IPs available or able to create new public IPs on creation")
@@ -299,7 +331,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			MinCount:            aws.Int32(1),
 			MaxCount:            aws.Int32(1),
 			SecurityGroupIds:    []string{sgID},
-			SubnetId:            aws.String(*subDesc.Subnets[0].SubnetId),
+			SubnetId:            aws.String(subnetID),
 			BlockDeviceMappings: blockDeviceMappings,
 			TagSpecifications:   resourceTagSpecifications(types.ResourceTypeInstance, metadata),
 		})
@@ -332,7 +364,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceDesc := descResult.Reservations[0].Instances[0]
-	d.Set("instance_ip", instanceDesc.PublicIpAddress)
+	var instanceIP string
+	if instanceDesc.PublicIpAddress != nil {
+		instanceIP = *instanceDesc.PublicIpAddress
+	} else {
+		instanceIP = *instanceDesc.PrivateIpAddress
+	}
+	d.Set("instance_ip", instanceIP)
 	d.Set("instance_launch_time", instanceDesc.LaunchTime.Format(time.RFC3339))
 	d.Set("image", *imagesRes.Images[0].Name)
 
@@ -387,18 +425,31 @@ func awsClient(region string) (aws.Config, error) {
 	)
 }
 
-//GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
-	instanceRegions := make(map[string]string)
-	instanceRegions["us-east"] = "us-east-1"
-	instanceRegions["us-west"] = "us-west-1"
-	instanceRegions["eu-north"] = "eu-north-1"
-	instanceRegions["eu-west"] = "eu-west-1"
-	if val, ok := instanceRegions[region]; ok {
+	if val, ok := SynthRegions[region]; ok {
 		return val
 	}
+	return StripAvailabilityZone(region)
+}
 
+func StripAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	if lastChar >= 'a' && lastChar <= 'z' {
+		return region[:len(region)-1]
+	}
 	return region
+}
+
+func GetAvailabilityZone(region string) string {
+	lastChar := region[len(region)-1]
+	// no avail-zone with synthetic regions
+	if _, ok := SynthRegions[region]; ok {
+		return ""
+	}
+	if lastChar >= 'a' && lastChar <= 'z' {
+		return region
+	}
+	return ""
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
@@ -414,6 +465,8 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 	instanceTypes["xl+v100"] = "p3.16xlarge"
 
 	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
+		return val
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
 		return val
 	}
 

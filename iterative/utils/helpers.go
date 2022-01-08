@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"os"
+
 	"github.com/aohorodnyk/uid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,4 +24,16 @@ func SetId(d *schema.ResourceData) {
 			d.Set("name", d.Id())
 		}
 	}
+}
+
+func LoadGCPCredentials() string {
+	credentialsData := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
+	if len(credentialsData) == 0 {
+		credentialsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+		if len(credentialsPath) > 0 {
+			jsonData, _ := os.ReadFile(credentialsPath)
+			credentialsData = string(jsonData)
+		}
+	}
+	return credentialsData
 }
