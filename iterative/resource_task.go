@@ -232,7 +232,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	val := "true"
-	v["TPI_TASK"] = &(val)
+	v["TPI_TASK"] = &val
 	v["CI"] = nil
 	v["CI_*"] = nil
 	v["GITHUB_*"] = nil
