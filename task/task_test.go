@@ -134,17 +134,23 @@ func TestTask(t *testing.T) {
 				require.Nil(t, newTask.Stop(ctx))
 				require.Nil(t, newTask.Stop(ctx))
 
-				for assert.Nil(t, newTask.Read(ctx)) &&
-					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
-					continue
+				for assert.Nil(t, newTask.Read(ctx)) {
+					status, err := newTask.Status(ctx)
+					require.Nil(t, err)
+					if status[common.StatusCodeActive] > 0 {
+						break
+					}
 				}
 
 				require.Nil(t, newTask.Start(ctx))
 				require.Nil(t, newTask.Start(ctx))
 
-				for assert.Nil(t, newTask.Read(ctx)) &&
-					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
-					continue
+				for assert.Nil(t, newTask.Read(ctx)) {
+					status, err := newTask.Status(ctx)
+					require.Nil(t, err)
+					if status[common.StatusCodeActive] == 0 {
+						break
+					}
 				}
 			}
 

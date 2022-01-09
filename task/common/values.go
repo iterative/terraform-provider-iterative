@@ -26,7 +26,9 @@ type Status map[StatusCode]int
 type StatusCode string
 
 const (
-	StatusCodeRunning StatusCode = "running"
+	StatusCodeActive    StatusCode = "running"
+	StatusCodeSucceeded StatusCode = "succeeded"
+	StatusCodeFailed    StatusCode = "failed"
 )
 
 type Size struct {

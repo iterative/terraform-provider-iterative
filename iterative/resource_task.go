@@ -202,7 +202,11 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	d.Set("events", events)
 
-	d.Set("status", task.Status(ctx))
+	status, err := task.Status(ctx)
+	if err != nil {
+		return diagnostic(diags, err, diag.Warning)
+	}
+	d.Set("status", status)
 
 	logs, err := task.Logs(ctx)
 	if err != nil {

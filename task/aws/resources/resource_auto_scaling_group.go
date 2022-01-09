@@ -113,28 +113,32 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 		return common.NotFoundError
 	}
 
-	var instancesInput ec2.DescribeInstancesInput
-	for _, instance := range groups.AutoScalingGroups[0].Instances {
-		instancesInput.InstanceIds = append(instancesInput.InstanceIds, aws.ToString(instance.InstanceId))
-	}
-
 	a.Attributes.Addresses = []net.IP{}
-	a.Attributes.Status = common.Status{common.StatusCodeRunning: 0}
-	for instancesPaginator := ec2.NewDescribeInstancesPaginator(a.Client.Services.EC2, &instancesInput); instancesPaginator.HasMorePages(); {
-		page, err := instancesPaginator.NextPage(ctx)
-		if err != nil {
-			return err
+	a.Attributes.Status = common.Status{common.StatusCodeActive: 0}
+	if len(groups.AutoScalingGroups[0].Instances) > 0 {
+		var instancesInput ec2.DescribeInstancesInput
+		for _, instance := range groups.AutoScalingGroups[0].Instances {
+			instancesInput.InstanceIds = append(instancesInput.InstanceIds, aws.ToString(instance.InstanceId))
 		}
 
-		for _, reservation := range page.Reservations {
-			for _, instance := range reservation.Instances {
-				status := string(instance.State.Name)
-				if instance.StateReason != nil {
-					status += " " + aws.ToString(instance.StateReason.Message)
-				}
-				a.Attributes.Status[common.StatusCode(status)]++
-				if address := net.ParseIP(aws.ToString(instance.PublicIpAddress)); address != nil {
-					a.Attributes.Addresses = append(a.Attributes.Addresses, address)
+		for instancesPaginator := ec2.NewDescribeInstancesPaginator(a.Client.Services.EC2, &instancesInput); instancesPaginator.HasMorePages(); {
+			page, err := instancesPaginator.NextPage(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, reservation := range page.Reservations {
+				for _, instance := range reservation.Instances {
+					status := string(instance.State.Name)
+					if instance.StateReason != nil {
+						status += " " + aws.ToString(instance.StateReason.Message)
+					}
+					if status == "running" {
+						a.Attributes.Status[common.StatusCodeActive]++
+					}
+					if address := net.ParseIP(aws.ToString(instance.PublicIpAddress)); address != nil {
+						a.Attributes.Addresses = append(a.Attributes.Addresses, address)
+					}
 				}
 			}
 		}
