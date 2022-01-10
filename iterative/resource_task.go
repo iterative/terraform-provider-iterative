@@ -288,7 +288,6 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			return nil, errors.New("output directory " + directory_out + " is not empty!")
 		}
 	}
-
 	if directory_out == "" {
 		directory_out = directory
 	}
