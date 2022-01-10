@@ -74,8 +74,9 @@ type Environment struct {
 	Image  string
 	Script string
 	Variables
-	Timeout   time.Duration
-	Directory string
+	Timeout      time.Duration
+	Directory    string
+	DirectoryOut string
 }
 
 type Variables map[string]*string

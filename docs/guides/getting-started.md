@@ -15,21 +15,16 @@ In the project root directory:
 
 ```hcl
 terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
+  required_providers { iterative = { source = "iterative/iterative" } }
 }
-
 provider "iterative" {}
-
-resource "iterative_task" "example" {
+resource "iterative_task" "task" {
   name  = "example"
   cloud = "aws" # or any of: gcp, az, k8s
-
-  directory = "${path.root}/shared"
-  script    = <<-END
+  workdir {
+    input = "${path.root}/shared"
+  }
+  script = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
   END
@@ -70,7 +65,7 @@ $ terraform apply
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified shared `directory` to the cloud.
+2. Upload the specified shared `input` working directory to the cloud.
 3. Launch the task `script`.
 
 ## Viewing Task Statuses
@@ -95,7 +90,7 @@ $ terraform destroy
 
 This command will:
 
-1. Download the specified shared `directory` from the cloud.
+1. Download the specified shared working directory from the cloud.
 2. Delete all the cloud resources created by `terraform apply`.
 
 ## Viewing Task Results

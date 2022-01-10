@@ -184,8 +184,8 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	log.Println("[INFO] Downloading Directory...")
-	if t.Attributes.Environment.Directory != "" && t.Read(ctx) == nil {
-		if err := t.Pull(ctx, t.Attributes.Environment.Directory); err != nil && err != common.NotFoundError {
+	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
+		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}

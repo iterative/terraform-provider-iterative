@@ -3,8 +3,9 @@
 This resource will:
 
 1. Create cloud resources (machines and storage) for the task.
-2. Upload the given `directory` to the cloud storage, if specified.
-3. Run the given `script` until completion or `timeout` in the cloud machine.
+2. Upload the given `workdir.input` to the cloud storage.
+3. Run the given `script` on the cloud machine until completion or `timeout`.
+4. Download results to the given `workdir.output`.
 
 ## Example Usage
 
@@ -14,8 +15,11 @@ resource "iterative_task" "task" {
   cloud = "aws"
 
   environment = { GREETING = "Hello, world!" }
-  directory   = "${path.root}/shared"
-  script      = <<-END
+  workdir {
+    input  = "${path.root}/shared"
+    output = "${path.root}/results"
+  }
+  script = <<-END
     #!/bin/bash
     echo "$GREETING" | tee $(uuidgen)
   END
@@ -38,7 +42,8 @@ resource "iterative_task" "task" {
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
-- `directory` - (Optional) Local directory to synchronize.
+- `workdir.input` - (Optional) Local working directory to upload.
+- `workdir.output` - (Optional) Local directory to download results to (default: `workdir.input`).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
 
@@ -205,7 +210,7 @@ Setting the `region` attribute results in undefined behaviour.
 
 #### Directory storage
 
-Unlike public cloud providers, Kubernetes does not offer any portable way of persisting and sharing storage between pods. When specified, the `directory` attribute will create a `PersistentVolumeClaim` of the default `StorageClass`, with the same lifecycle as the task and the specified `disk_size`.
+Unlike public cloud providers, Kubernetes does not offer any portable way of persisting and sharing storage between pods. When specified, the `workdir.input` attribute will create a `PersistentVolumeClaim` of the default `StorageClass`, with the same lifecycle as the task and the specified `disk_size`.
 
 ~> **Warning:** Access mode will be `ReadWriteOnce` if `parallelism=1` or `ReadWriteMany` otherwise.
 

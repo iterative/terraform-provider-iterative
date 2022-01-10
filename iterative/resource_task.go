@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -19,6 +21,7 @@ func resourceTask() *schema.Resource {
 		CreateContext: resourceTaskCreate,
 		DeleteContext: resourceTaskDelete,
 		ReadContext:   resourceTaskRead,
+		UpdateContext: resourceTaskRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -103,11 +106,25 @@ func resourceTask() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
-			"directory": {
-				Type:     schema.TypeString,
-				ForceNew: true,
+			"workdir": {
 				Optional: true,
-				Default:  "",
+				Type:     schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"input": {
+							Type:     schema.TypeString,
+							ForceNew: true,
+							Optional: true,
+							Default:  "",
+						},
+						"output": {
+							Type:     schema.TypeString,
+							ForceNew: false,
+							Optional: true,
+							Default:  "",
+						},
+					},
+				},
 			},
 			"parallelism": {
 				Type:     schema.TypeInt,
@@ -260,17 +277,34 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		},
 	}
 
+	directory := ""
+	directory_out := ""
+	if d.Get("workdir").(*schema.Set).Len() > 0 {
+		storage := d.Get("workdir").(*schema.Set).List()[0].(map[string]interface{})
+		directory = storage["input"].(string)
+
+		directory_out = storage["output"].(string)
+		if directory_out == "" {
+			directory_out = directory
+		}
+	}
+
+	if directory_out != "" && !isOutputValid(directory_out) {
+		return nil, errors.New("output directory " + directory_out + " is not empty!")
+	}
+
 	t := common.Task{
 		Size: common.Size{
 			Machine: d.Get("machine").(string),
 			Storage: d.Get("disk_size").(int),
 		},
 		Environment: common.Environment{
-			Image:     d.Get("image").(string),
-			Script:    d.Get("script").(string),
-			Variables: v,
-			Directory: d.Get("directory").(string),
-			Timeout:   time.Duration(d.Get("timeout").(int)) * time.Second,
+			Image:        d.Get("image").(string),
+			Script:       d.Get("script").(string),
+			Variables:    v,
+			Directory:    directory,
+			DirectoryOut: directory_out,
+			Timeout:      time.Duration(d.Get("timeout").(int)) * time.Second,
 		},
 		Firewall: common.Firewall{
 			Ingress: common.FirewallRule{
@@ -290,4 +324,18 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
+}
+
+func isOutputValid(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return true
+	}
+	defer f.Close()
+
+	_, err = f.Readdir(1)
+	if err == io.EOF {
+		return true
+	}
+	return false
 }
