@@ -90,15 +90,9 @@ Create a file named `main.tf` in an empty directory with the following contents:
 
 ```hcl
 terraform {
-  required_providers {
-    iterative = {
-      source = "github.com/iterative/iterative"
-    }
-  }
+  required_providers { iterative = { source = "iterative/iterative" } }
 }
-
 provider "iterative" {}
-
 # ... other resource blocks ...
 ```
 

@@ -15,16 +15,10 @@ In the project root directory:
 
 ```hcl
 terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
+  required_providers { iterative = { source = "iterative/iterative" } }
 }
-
 provider "iterative" {}
-
-resource "iterative_task" "example" {
+resource "iterative_task" "task" {
   name  = "example"
   cloud = "aws" # or any of: gcp, az, k8s
   workdir {
