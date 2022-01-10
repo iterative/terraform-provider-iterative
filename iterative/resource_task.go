@@ -287,11 +287,12 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		if directory_out != "" && !isOutputValid(directory_out) {
 			return nil, errors.New("output directory " + directory_out + " is not empty!")
 		}
-
-		if directory_out == "" {
-			directory_out = directory
-		}
 	}
+
+	if directory_out == "" {
+		directory_out = directory
+	}
+
 	t := common.Task{
 		Size: common.Size{
 			Machine: d.Get("machine").(string),
