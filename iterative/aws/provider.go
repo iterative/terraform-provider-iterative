@@ -177,17 +177,25 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			}
 		}
 	}
+	
+	sgFilters := []types.Filter{}
+	if strings.StartsWith(securityGroup, "sg-") {
+			sgFilters = append(sgFilters, types.Filter{
+			Name: aws.String("group-id"),
+			Values: []string{securityGroup},
+		})
+	} else {
+		sgFilters = append(sgFilters, types.Filter{
+			Name: aws.String("group-name"),
+			Values: []string{
+				securityGroup,
+				strings.Title(securityGroup),
+				strings.ToUpper(securityGroup)},
+		})
+	}
 
 	sgDesc, err := svc.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
-		Filters: []types.Filter{
-			{
-				Name: aws.String("group-name"),
-				Values: []string{
-					securityGroup,
-					strings.Title(securityGroup),
-					strings.ToUpper(securityGroup)},
-			},
-		},
+		Filters: sgFilters,
 	})
 	if err != nil {
 		return decodeAWSError(region, err)
