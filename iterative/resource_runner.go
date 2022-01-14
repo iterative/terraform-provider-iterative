@@ -332,7 +332,7 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 
 HOME="$(mktemp -d)" exec cml runner \
-  {{if .name}} --name {{escape .name}}{{end}}  \
+  {{if .name}} --name {{escape .name}}{{end}} \
   {{if .labels}} --labels {{escape .labels}}{{end}} \
   {{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}} \
   {{if .driver}} --driver {{escape .driver}}{{end}} \
