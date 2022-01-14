@@ -173,6 +173,14 @@ func resourceRunner() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"docker_volumes": &schema.Schema{
+				Type:     schema.TypeList,
+				ForceNew: true,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -323,15 +331,16 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
 
-HOME="$(mktemp -d)" exec cml-runner \
-  {{if .name}} --name {{escape .name}}{{end}} \
+HOME="$(mktemp -d)" exec cml runner \
+  {{if .name}} --name {{escape .name}}{{end}}  \
   {{if .labels}} --labels {{escape .labels}}{{end}} \
   {{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}} \
   {{if .driver}} --driver {{escape .driver}}{{end}} \
   {{if .repo}} --repo {{escape .repo}}{{end}} \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
-  {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
+  {{if .docker_volumes}}{{.docker_volumes}}{{end}} \
+  --tf-resource {{escape .tf_resource}}
 
 {{- if not .container}}
 EOF
@@ -412,6 +421,13 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
+	tmpl, err := template.New("volumes").Parse(`{{range .}}--docker-volumes {{.}} {{end}}`)
+	var customDataBuffer bytes.Buffer
+	err = tmpl.Execute(&customDataBuffer, d.Get("docker_volumes").([]interface{}))
+	if err != nil {
+		return code, err
+	}
+
 	data := make(map[string]interface{})
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
@@ -424,6 +440,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["single"] = d.Get("single").(bool)
+	data["docker_volumes"] = customDataBuffer.String()
 	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
 	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")
