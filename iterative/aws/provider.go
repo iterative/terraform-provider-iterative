@@ -179,7 +179,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	sgFilters := []types.Filter{}
-	if strings.StartsWith(securityGroup, "sg-") {
+	if strings.HasPrefix(securityGroup, "sg-") {
 		sgFilters = append(sgFilters, types.Filter{
 			Name:   aws.String("group-id"),
 			Values: []string{securityGroup},
