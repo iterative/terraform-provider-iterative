@@ -57,7 +57,7 @@ More details on configuring and using the Iterative Provider are in the [documen
 
 ## Support
 
-Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.com/invite/dvwXA2N); we'll be happy to help you get started!
+Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.gg/hqNbSTBGV6); we'll be happy to help you get started!
 
 ## License
 
