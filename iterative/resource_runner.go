@@ -212,12 +212,6 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
-	diags = append(diags, diag.Diagnostic{
-		Severity: diag.Error,
-		Summary:  fmt.Sprintf(startupScript),
-	})
-	return diags
-
 	d.Set("startup_script", startupScript)
 	if d.Get("instance_gpu") == "tesla" {
 		diags = append(diags, diag.Diagnostic{
