@@ -340,7 +340,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
   {{if .docker_volumes}}{{.docker_volumes}}{{end}} \
-  {{if .tf_resource}}--tf-resource {{escape .tf_resource}}{{end}}
+  {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
 EOF
