@@ -331,7 +331,7 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
 
-HOME="$(mktemp -d)" exec cml runner \
+HOME="$(mktemp -d)" exec cml-runner \
   {{if .name}} --name {{escape .name}}{{end}} \
   {{if .labels}} --labels {{escape .labels}}{{end}} \
   {{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}} \
@@ -340,7 +340,7 @@ HOME="$(mktemp -d)" exec cml runner \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
   {{if .docker_volumes}}{{.docker_volumes}}{{end}} \
-  --tf-resource {{escape .tf_resource}}
+  {{if .tf_resource}}--tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
 EOF
