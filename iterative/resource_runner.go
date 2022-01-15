@@ -212,6 +212,12 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
+	diags = append(diags, diag.Diagnostic{
+		Severity: diag.Error,
+		Summary:  fmt.Sprintf(startupScript),
+	})
+	return diags
+
 	d.Set("startup_script", startupScript)
 	if d.Get("instance_gpu") == "tesla" {
 		diags = append(diags, diag.Diagnostic{
@@ -339,7 +345,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .repo}} --repo {{escape .repo}}{{end}} \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
-  {{if .docker_volumes}}{{.docker_volumes}}{{end}} \
+  {{range .docker_volumes}}--docker-volumes {{.}} {{end}} \
   {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
@@ -421,13 +427,6 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
-	tmpl, err := template.New("volumes").Parse(`{{range .}}--docker-volumes {{.}} {{end}}`)
-	var customDataBuffer bytes.Buffer
-	err = tmpl.Execute(&customDataBuffer, d.Get("docker_volumes").([]interface{}))
-	if err != nil {
-		return code, err
-	}
-
 	data := make(map[string]interface{})
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
@@ -440,7 +439,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["single"] = d.Get("single").(bool)
-	data["docker_volumes"] = customDataBuffer.String()
+	data["docker_volumes"] = d.Get("docker_volumes").([]interface{})
 	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
 	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")
