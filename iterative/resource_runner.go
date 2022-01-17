@@ -302,10 +302,6 @@ func renderScript(data map[string]interface{}) (string, error) {
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
 {{- end}}
 
-{{- if .runner_startup_script}}
-{{.runner_startup_script}}
-{{- end}}
-
 {{- if not .container}}
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
@@ -329,6 +325,10 @@ export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTI
 {{- if eq .cloud "kubernetes"}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
+{{- end}}
+
+{{- if .runner_startup_script}}
+{{.runner_startup_script}}
 {{- end}}
 
 HOME="$(mktemp -d)" exec cml-runner \
