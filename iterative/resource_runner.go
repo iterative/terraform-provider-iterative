@@ -339,7 +339,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .repo}} --repo {{escape .repo}}{{end}} \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
-  {{range .docker_volumes}}--docker-volumes {{.}} {{end}} \
+  {{range .docker_volumes}}--docker-volumes {{escape .}} {{end}} \
   {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
