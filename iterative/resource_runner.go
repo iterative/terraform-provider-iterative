@@ -173,6 +173,14 @@ func resourceRunner() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"docker_volumes": &schema.Schema{
+				Type:     schema.TypeList,
+				ForceNew: true,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -331,6 +339,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .repo}} --repo {{escape .repo}}{{end}} \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
+  {{range .docker_volumes}}--docker-volumes {{escape .}} {{end}} \
   {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
@@ -424,6 +433,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["single"] = d.Get("single").(bool)
+	data["docker_volumes"] = d.Get("docker_volumes").([]interface{})
 	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
 	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")

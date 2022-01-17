@@ -48,6 +48,7 @@ HOME="$(mktemp -d)" exec cml-runner \
    --repo '14 value with "quotes" and spaces' \
    --token '13 value with "quotes" and spaces' \
    --single \
+   \
    --tf-resource eyJtb2RlIjoibWFuYWdlZCIsInR5cGUiOiJpdGVyYXRpdmVfY21sX3J1bm5lciIsIm5hbWUiOiJydW5uZXIiLCJwcm92aWRlciI6InByb3ZpZGVyW1wicmVnaXN0cnkudGVycmFmb3JtLmlvL2l0ZXJhdGl2ZS9pdGVyYXRpdmVcIl0iLCJpbnN0YW5jZXMiOlt7InByaXZhdGUiOiIiLCJzY2hlbWFfdmVyc2lvbiI6MCwiYXR0cmlidXRlcyI6eyJuYW1lIjoiMTAgdmFsdWUgd2l0aCBcInF1b3Rlc1wiIGFuZCBzcGFjZXMiLCJsYWJlbHMiOiIiLCJpZGxlX3RpbWVvdXQiOjExLCJyZXBvIjoiIiwidG9rZW4iOiIiLCJkcml2ZXIiOiIiLCJjbG91ZCI6ImF3cyIsImN1c3RvbV9kYXRhIjoiIiwiaWQiOiIiLCJpbWFnZSI6IiIsImluc3RhbmNlX2dwdSI6IiIsImluc3RhbmNlX2hkZF9zaXplIjoxMiwiaW5zdGFuY2VfaXAiOiIiLCJpbnN0YW5jZV9sYXVuY2hfdGltZSI6IiIsImluc3RhbmNlX3R5cGUiOiIiLCJyZWdpb24iOiI5IHZhbHVlIHdpdGggXCJxdW90ZXNcIiBhbmQgc3BhY2VzIiwic3NoX25hbWUiOiIiLCJzc2hfcHJpdmF0ZSI6IiIsInNzaF9wdWJsaWMiOiIiLCJhd3Nfc2VjdXJpdHlfZ3JvdXAiOiIifX1dfQ==
 EOF
 sudo chmod +x /usr/bin/cml.sh

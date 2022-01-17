@@ -21,6 +21,17 @@ func TestScript(t *testing.T) {
 	})
 }
 
+func TestDockerVolumes(t *testing.T) {
+	t.Run("Runner Docker Volumes", func(t *testing.T) {
+		data := make(map[string]interface{})
+		data["docker_volumes"] = []string{"/one/one.txt:/one/one.txt", "/two:/two"}
+
+		script, err := renderScript(data)
+		assert.Nil(t, err)
+		assert.Contains(t, script, "--docker-volumes /one/one.txt:/one/one.txt --docker-volumes /two:/two")
+	})
+}
+
 func TestProvisionerCode(t *testing.T) {
 	g := goldie.New(t, goldie.WithDiffEngine(goldie.ColoredDiff))
 
