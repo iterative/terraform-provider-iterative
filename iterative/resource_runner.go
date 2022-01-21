@@ -89,7 +89,9 @@ func resourceRunner() *schema.Resource {
 			},
 			"image": &schema.Schema{
 				Type:     schema.TypeString,
-				Computed: true,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
 			},
 			"spot": &schema.Schema{
 				Type:     schema.TypeBool,
