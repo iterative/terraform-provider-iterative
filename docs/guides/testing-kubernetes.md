@@ -15,7 +15,6 @@ In order to automatically provision GPU nodes for the cluster, enable the follow
 
 ```bash
 az extension add --name aks-preview
-
 az provider register --namespace Microsoft.ContainerService
 az feature register \
   --namespace Microsoft.ContainerService \
