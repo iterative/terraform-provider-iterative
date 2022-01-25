@@ -42,7 +42,7 @@ provider "iterative" {}
 resource "iterative_task" "example" {
   name    = "example"
   cloud   = "aws"
-  machine = "m+v100"
+  machine = "m"
 
   script = <<-END
     #!/bin/bash
