@@ -34,6 +34,7 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
+sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
@@ -66,6 +67,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   EnvironmentFile=/tmp/tpi-environment
   WorkingDirectory=/tmp/tpi-task
   TimeoutStartSec=%s
+  TimeoutStopSec=infinity
 [Install]
   WantedBy=default.target
 END
@@ -106,16 +108,18 @@ sudo systemctl enable tpi-task.service --now
 while sleep 5; do
   journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
   journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
-  if [[ "$(stat -t "$TPI_LOG_DIRECTORY")" != "$TPI_LOG_DIRECTORY_HASH" ]]; then
-    TPI_LOG_DIRECTORY_HASH="$(md5sum "$TPI_LOG_DIRECTORY"/*)"
-    rclone copy "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/reports"
+  NEW_TPI_LOG_DIRECTORY_HASH="$(md5sum "$TPI_LOG_DIRECTORY"/*)"
+  if [[ "$NEW_TPI_LOG_DIRECTORY_HASH" != "$TPI_LOG_DIRECTORY_HASH" ]]; then
+    TPI_LOG_DIRECTORY_HASH="$NEW_TPI_LOG_DIRECTORY_HASH"
+    rclone sync "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/reports"
   fi
 done &
 
 while sleep 10; do
-  if [[ "$(stat -t "$TPI_DATA_DIRECTORY")" != "$TPI_DATA_DIRECTORY_EPOCH" ]]; then
-    TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%%T@\n" | sort | tail -1)"
-    rclone copy "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
+  NEW_TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%%T@\n" | sort | tail -1)"
+  if [[ "$NEW_TPI_DATA_DIRECTORY_EPOCH" != "$TPI_DATA_DIRECTORY_EPOCH" ]]; then
+    TPI_DATA_DIRECTORY_EPOCH="$NEW_TPI_DATA_DIRECTORY_EPOCH"
+    rclone sync "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
   fi
 done &
 `,
