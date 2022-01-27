@@ -37,6 +37,7 @@ sudo tee /usr/bin/tpi-task-shutdown << 'END'
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
+sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 (systemctl is-system-running | grep stopping) || tpi --stop;
 END
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
@@ -66,6 +67,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   EnvironmentFile=/tmp/tpi-environment
   WorkingDirectory=/tmp/tpi-task
   TimeoutStartSec=%s
+  TimeoutStopSec=infinity
 [Install]
   WantedBy=default.target
 END
