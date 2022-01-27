@@ -34,10 +34,10 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
+sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
-sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 (systemctl is-system-running | grep stopping) || tpi --stop;
 END
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
