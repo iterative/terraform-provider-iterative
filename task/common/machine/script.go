@@ -107,7 +107,7 @@ sudo systemctl enable tpi-task.service --now
 
 while sleep 5; do
   journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
-  journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
+  journalctl --output=cat --unit tpi-task > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
   NEW_TPI_LOG_DIRECTORY_HASH="$(md5sum "$TPI_LOG_DIRECTORY"/*)"
   if [[ "$NEW_TPI_LOG_DIRECTORY_HASH" != "$TPI_LOG_DIRECTORY_HASH" ]]; then
     TPI_LOG_DIRECTORY_HASH="$NEW_TPI_LOG_DIRECTORY_HASH"
