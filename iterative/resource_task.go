@@ -171,7 +171,7 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		} else {
 			diags = diagnostic(diags, err, diag.Error)
 		}
-	} 
+	}
 
 	return
 }
