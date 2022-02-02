@@ -441,7 +441,18 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		},
 	}
 
-	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
+	match := regexp.MustCompile(`^([^+]+)\+([^*]+)\*([1-9]\d*)?$`).FindStringSubmatch(instanceType)
+	if match != nil {
+		return map[string]map[string]string{
+			"accelerator": {
+				"count": match[3],
+				"type":  match[2],
+			},
+			"machine": {
+				"type": match[1],
+			},
+		}, nil
+	} else if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val, nil
 	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
 		return val, nil
