@@ -4,7 +4,10 @@ page_title: Getting Started
 
 # Getting Started
 
-Begin by [installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) if needed.
+To use the Iterative Provider you will need to:
+
+- [Install Terraform 1.0](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) or greater
+- Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ## Defining a Task
 
@@ -19,15 +22,16 @@ terraform {
 }
 provider "iterative" {}
 resource "iterative_task" "task" {
-  name  = "example"
-  cloud = "aws" # or any of: gcp, az, k8s
-  workdir {
-    input = "${path.root}/shared"
-  }
+  name   = "example"
+  cloud  = "aws" # or any of: gcp, az, k8s
   script = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
   END
+
+  workdir {
+    input = "${path.root}/shared"
+  }
 }
 ```
 
