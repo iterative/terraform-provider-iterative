@@ -299,6 +299,8 @@ func renderScript(data map[string]interface{}) (string, error) {
 
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
 		`#!/bin/sh
+sudo systemctl is-enabled cml.service && return 0
+
 {{- if not .container}}
 {{- if .setup}}{{.setup}}{{- end}}
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
@@ -362,7 +364,11 @@ EOF'
 
 {{- if .cloud}}
 sudo systemctl daemon-reload
-sudo systemctl enable cml.service --now
+sudo systemctl enable cml.service
+{{- if .instance_gpu}}
+nvidia-smi &>/dev/null || reboot
+{{- end}}
+sudo systemctl start cml.service
 {{- end}}
 
 {{- end}}

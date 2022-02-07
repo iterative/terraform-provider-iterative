@@ -1,4 +1,5 @@
 #!/bin/sh
+sudo systemctl is-enabled cml.service && return 0
 export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
 
 HOME="$(mktemp -d)" exec cml-runner \
