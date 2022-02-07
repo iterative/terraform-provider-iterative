@@ -1,4 +1,5 @@
 #!/bin/sh
+sudo systemctl is-enabled cml.service && return 0
 FILE=/var/log/cml_stack.log
 if [ ! -f "$FILE" ]; then
   DEBIAN_FRONTEND=noninteractive
@@ -66,4 +67,6 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
   WantedBy=default.target
 EOF'
 sudo systemctl daemon-reload
-sudo systemctl enable cml.service --now
+sudo systemctl enable cml.service
+nvidia-smi &>/dev/null || reboot
+sudo systemctl start cml.service
