@@ -51,16 +51,16 @@ func (i *Image) Read(ctx context.Context) error {
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-				resource, err := i.Client.Services.Compute.Images.GetFromFamily(project, imageOrFamily).Do()
-				if err != nil {
-					var e *googleapi.Error
-					if errors.As(err, &e) && e.Code == 404 {
-						return common.NotFoundError
-					}
-					return err
+			resource, err := i.Client.Services.Compute.Images.GetFromFamily(project, imageOrFamily).Do()
+			if err != nil {
+				var e *googleapi.Error
+				if errors.As(err, &e) && e.Code == 404 {
+					return common.NotFoundError
 				}
-				i.Resource = resource
-				return nil
+				return err
+			}
+			i.Resource = resource
+			return nil
 		}
 		return err
 	}
