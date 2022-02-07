@@ -192,7 +192,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 			Publisher: to.StringPtr(publisher),
 			Product:   to.StringPtr(offer),
 			Name:      to.StringPtr(sku),
-		},
+		}
 	}
 
 	spot := v.Attributes.Spot
