@@ -22,8 +22,10 @@ terraform {
 }
 provider "iterative" {}
 resource "iterative_task" "task" {
-  name   = "example"
-  cloud  = "aws" # or any of: gcp, az, k8s
+  name    = "example"
+  cloud   = "aws" # or any of: gcp, az, k8s
+  machine = "m"
+  
   script = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
@@ -34,6 +36,8 @@ resource "iterative_task" "task" {
   }
 }
 ```
+
+See [this table](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#generic) for more information on `machine` types.
 
 -> **Note:** The `script` argument can take any string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
