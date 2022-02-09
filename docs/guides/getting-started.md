@@ -25,7 +25,7 @@ resource "iterative_task" "task" {
   name    = "example"
   cloud   = "aws" # or any of: gcp, az, k8s
   machine = "m"
-  
+
   script = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
