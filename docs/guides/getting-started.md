@@ -26,18 +26,17 @@ resource "iterative_task" "task" {
   cloud   = "aws" # or any of: gcp, az, k8s
   machine = "m"
 
+  workdir {
+    input = "${path.root}/shared"
+  }
   script = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
   END
-
-  workdir {
-    input = "${path.root}/shared"
-  }
 }
 ```
 
-See [this table](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#generic) for more information on `machine` types.
+See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for a full list of options -- including more information on [`machine` types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type).
 
 -> **Note:** The `script` argument can take any string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
@@ -67,7 +66,6 @@ This command will:
 
 ```console
 $ terraform apply
-···
 ```
 
 This command will:
@@ -80,9 +78,6 @@ This command will:
 
 ```console
 $ terraform refresh && terraform show
-resource "iterative_task" "example" {
-  ···
-}
 ```
 
 This command will:
