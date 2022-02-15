@@ -4,7 +4,10 @@ page_title: Getting Started
 
 # Getting Started
 
-Begin by [installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) if needed.
+To use the Iterative Provider you will need to:
+
+- [Install Terraform 1.0](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) or greater
+- Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ## Defining a Task
 
@@ -19,8 +22,10 @@ terraform {
 }
 provider "iterative" {}
 resource "iterative_task" "task" {
-  name  = "example"
-  cloud = "aws" # or any of: gcp, az, k8s
+  name    = "example"
+  cloud   = "aws" # or any of: gcp, az, k8s
+  machine = "m"
+
   workdir {
     input = "${path.root}/shared"
   }
@@ -30,6 +35,8 @@ resource "iterative_task" "task" {
   END
 }
 ```
+
+See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for a full list of options -- including more information on [`machine` types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type).
 
 -> **Note:** The `script` argument can take any string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
@@ -59,7 +66,6 @@ This command will:
 
 ```console
 $ terraform apply
-···
 ```
 
 This command will:
@@ -72,9 +78,6 @@ This command will:
 
 ```console
 $ terraform refresh && terraform show
-resource "iterative_task" "example" {
-  ···
-}
 ```
 
 This command will:

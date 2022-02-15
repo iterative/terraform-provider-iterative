@@ -12,13 +12,6 @@ The Iterative Provider makes it easy to:
 - Unify configuration of various cloud compute providers
 - Automatically destroy unused cloud resources (never forget to turn your GPU off again)
 
-## Prerequisites
-
-To use the Iterative Provider you will need to:
-
-- [Install Terraform 1.0+](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
-- Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
-
 The Iterative Provider can provision resources with the following cloud providers and orchestrators:
 
 - Amazon Web Services
@@ -26,34 +19,9 @@ The Iterative Provider can provision resources with the following cloud provider
 - Google Cloud Platform
 - Kubernetes
 
-## Example usage
-
-```
-terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
-}
-
-provider "iterative" {}
-
-resource "iterative_task" "example" {
-  name    = "example"
-  cloud   = "aws"
-  machine = "m+v100"
-
-  script = <<-END
-    #!/bin/bash
-    echo "hello!"
-  END
-}
-```
-
 ## Documentation
 
-More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
+See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide to learn how to use the Iterative Provider. More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
 
 ## Support
 
