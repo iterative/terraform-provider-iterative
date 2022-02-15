@@ -43,7 +43,7 @@ resource "iterative_task" "task" {
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `workdir.input` - (Optional) Local working directory to upload.
-- `workdir.output` - (Optional) Local directory to download results to (default: `workdir.input`).
+- `workdir.output` - (Optional) Local directory to download results to.
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
 
