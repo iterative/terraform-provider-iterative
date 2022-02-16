@@ -295,10 +295,10 @@ func getServiceAccountData(saString string) (string, []string) {
 	serviceAccountEmail := splitStr[0]
 	if len(splitStr) == 1 {
 		// warn user about scopes?
-		return serviceAccountEmail, []string{""}
+		return serviceAccountEmail, nil
 	}
 	// ["scopes", "s1"]
-	splitStr[1] = strings.Split(splitStr[1], "0")[1]
+	splitStr[1] = strings.Split(splitStr[1], ",")[1]
 	// ["s1", "s2", ...]
 	serviceAccountScopes := splitStr[1:]
 	return serviceAccountEmail, serviceAccountScopes
