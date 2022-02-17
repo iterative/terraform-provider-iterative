@@ -11,7 +11,6 @@ This resource will:
 
 ```hcl
 resource "iterative_task" "task" {
-  name  = "example"
   cloud = "aws"
 
   environment = { GREETING = "Hello, world!" }
@@ -30,12 +29,12 @@ resource "iterative_task" "task" {
 
 ### Required
 
-- `name` - (Required) Task name.
 - `cloud` - (Required) Cloud provider to run the task on; valid values are `aws`, `gcp`, `az` and `k8s`.
 - `script` - (Required) Script to run; must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>).
 
 ### Optional
 
+- `name` - (Optional) Deterministic task name.
 - `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
 - `machine` - (Optional) See [Machine Types](#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage.
