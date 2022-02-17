@@ -19,30 +19,6 @@ The Iterative Provider can provision resources with the following cloud provider
 - Google Cloud Platform
 - Kubernetes
 
-## Example usage
-
-```
-terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
-}
-
-provider "iterative" {}
-
-resource "iterative_task" "example" {
-  cloud   = "aws"
-  machine = "m+v100"
-
-  script = <<-END
-    #!/bin/bash
-    echo "hello!"
-  END
-}
-```
-
 ## Documentation
 
 See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide to learn how to use the Iterative Provider. More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
