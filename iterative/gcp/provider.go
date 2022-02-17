@@ -301,7 +301,7 @@ func getServiceAccountData(saString string) (string, []string) {
 	splitStr[1] = strings.Split(splitStr[1], "=")[1]
 	// ["s1", "s2", ...]
 	serviceAccountScopes := splitStr[1:]
-	return serviceAccountEmail, serviceAccountScopes
+	return serviceAccountEmail, utils.CanonicalizeServiceScopes(serviceAccountScopes)
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
