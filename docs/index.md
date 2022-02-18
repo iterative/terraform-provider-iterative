@@ -38,6 +38,8 @@ $ terraform apply
 - `AWS_SECRET_ACCESS_KEY` - Secret access key.
 - `AWS_SESSION_TOKEN` - (Optional) Session token.
 
+See the [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) for more information.
+
 ### Microsoft Azure
 
 - `AZURE_CLIENT_ID` - Client identifier.
@@ -45,11 +47,15 @@ $ terraform apply
 - `AZURE_SUBSCRIPTION_ID` - Subscription identifier.
 - `AZURE_TENANT_ID` - Tenant identifier.
 
+See the [Azure documentation](https://docs.microsoft.com/en-us/python/api/azure-identity/azure.identity.environmentcredential) for more information.
+
 ### Google Cloud Platform
 
-- `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
+- `GOOGLE_APPLICATION_CREDENTIALS` - Path to a [service account](https://cloud.google.com/iam/docs/service-accounts) JSON key file.
 
 -> **Note:** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the **contents** of the service account JSON key file.
+
+See the [summary of GCP credentials on the DVC site](https://dvc.org/doc/user-guide/setup-google-drive-remote#using-service-accounts) to get started quickly.
 
 ### Kubernetes
 
