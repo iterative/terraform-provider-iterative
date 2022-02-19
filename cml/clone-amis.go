@@ -69,9 +69,10 @@ func main() {
 	ami := imagesRes.Images[0]
 
 	var wg sync.WaitGroup
+	wg.Add(len(regions))
 	for _, destination := range regions {
-		wg.Add(1)
 		go func(destinationRegion string) {
+			defer wg.Done()
 			fmt.Printf("Cloning image to region %s...\n", destinationRegion)
 			if err := cloneImage(region, destinationRegion, *ami.ImageId, *ami.Name, *ami.Description); err != nil {
 				fmt.Printf("Error cloning image to region %s\n", destinationRegion)
