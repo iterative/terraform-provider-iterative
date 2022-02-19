@@ -3,6 +3,7 @@ package machine
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"path/filepath"
 	"strings"
@@ -14,15 +15,23 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/sync"
+
+	"terraform-provider-iterative/task/common"
 )
 
-func Logs(ctx context.Context, remote string) ([]string, error) {
+type StatusReport struct {
+	Result string
+	Status string
+	Code   string
+}
+
+func Reports(ctx context.Context, remote, prefix string) ([]string, error) {
 	remoteFileSystem, err := fs.NewFs(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
 
-	entries, err := remoteFileSystem.List(ctx, "/log")
+	entries, err := remoteFileSystem.List(ctx, "/reports")
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +39,7 @@ func Logs(ctx context.Context, remote string) ([]string, error) {
 	var logs []string
 	for _, entry := range entries {
 		path := entry.Remote()
-		if base := filepath.Base(path); !strings.HasPrefix(base, "task-") {
+		if base := filepath.Base(path); !strings.HasPrefix(base, prefix+"-") {
 			continue
 		}
 
@@ -51,6 +60,32 @@ func Logs(ctx context.Context, remote string) ([]string, error) {
 	}
 
 	return logs, nil
+}
+
+func Logs(ctx context.Context, remote string) ([]string, error) {
+	return Reports(ctx, remote, "task")
+}
+
+func Status(ctx context.Context, remote string, initialStatus common.Status) (common.Status, error) {
+	reports, err := Reports(ctx, remote, "status")
+	if err != nil {
+		return initialStatus, err
+	}
+
+	for _, report := range reports {
+		var statusReport StatusReport
+		if err := json.Unmarshal([]byte(report), &statusReport); err != nil {
+			return initialStatus, err
+		}
+		if statusReport.Code != "" {
+			if statusReport.Code == "0" {
+				initialStatus[common.StatusCodeSucceeded] += 1
+			} else {
+				initialStatus[common.StatusCodeFailed] += 1
+			}
+		}
+	}
+	return initialStatus, nil
 }
 
 func Transfer(ctx context.Context, source, destination string) error {

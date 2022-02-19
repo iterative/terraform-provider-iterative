@@ -12,13 +12,6 @@ The Iterative Provider makes it easy to:
 - Unify configuration of various cloud compute providers
 - Automatically destroy unused cloud resources (never forget to turn your GPU off again)
 
-## Prerequisites
-
-To use the Iterative Provider you will need to:
-
-- [Install Terraform 1.0+](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
-- Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
-
 The Iterative Provider can provision resources with the following cloud providers and orchestrators:
 
 - Amazon Web Services
@@ -26,38 +19,13 @@ The Iterative Provider can provision resources with the following cloud provider
 - Google Cloud Platform
 - Kubernetes
 
-## Example usage
-
-```
-terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
-}
-
-provider "iterative" {}
-
-resource "iterative_task" "example" {
-  name    = "example"
-  cloud   = "aws"
-  machine = "m+v100"
-
-  script = <<-END
-    #!/bin/bash
-    echo "hello!"
-  END
-}
-```
-
 ## Documentation
 
-More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
+See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide to learn how to use the Iterative Provider. More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
 
 ## Support
 
-Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.com/invite/dvwXA2N); we'll be happy to help you get started!
+Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.gg/CDEsr8t9Nj); we'll be happy to help you get started!
 
 ## License
 
@@ -90,15 +58,9 @@ Create a file named `main.tf` in an empty directory with the following contents:
 
 ```hcl
 terraform {
-  required_providers {
-    iterative = {
-      source = "github.com/iterative/iterative"
-    }
-  }
+  required_providers { iterative = { source = "iterative/iterative" } }
 }
-
 provider "iterative" {}
-
 # ... other resource blocks ...
 ```
 

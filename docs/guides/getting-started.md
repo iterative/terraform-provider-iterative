@@ -4,7 +4,10 @@ page_title: Getting Started
 
 # Getting Started
 
-Begin by [installing Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) if needed.
+To use the Iterative Provider you will need to:
+
+- [Install Terraform 1.0](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) or greater
+- Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ## Defining a Task
 
@@ -15,26 +18,24 @@ In the project root directory:
 
 ```hcl
 terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
+  required_providers { iterative = { source = "iterative/iterative" } }
 }
-
 provider "iterative" {}
+resource "iterative_task" "task" {
+  cloud   = "aws" # or any of: gcp, az, k8s
+  machine = "m"
 
-resource "iterative_task" "example" {
-  name  = "example"
-  cloud = "aws" # or any of: gcp, az, k8s
-
-  directory = "${path.root}/shared"
-  script    = <<-END
+  workdir {
+    input = "${path.root}/shared"
+  }
+  script = <<-END
     #!/bin/bash
     echo "Hello World!" > greeting.txt
   END
 }
 ```
+
+See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for a full list of options -- including more information on [`machine` types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type).
 
 -> **Note:** The `script` argument can take any string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
@@ -64,22 +65,18 @@ This command will:
 
 ```console
 $ terraform apply
-···
 ```
 
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified shared `directory` to the cloud.
+2. Upload the specified shared `input` working directory to the cloud.
 3. Launch the task `script`.
 
 ## Viewing Task Statuses
 
 ```console
 $ terraform refresh && terraform show
-resource "iterative_task" "example" {
-  ···
-}
 ```
 
 This command will:
@@ -95,7 +92,7 @@ $ terraform destroy
 
 This command will:
 
-1. Download the specified shared `directory` from the cloud.
+1. Download the specified shared working directory from the cloud.
 2. Delete all the cloud resources created by `terraform apply`.
 
 ## Viewing Task Results

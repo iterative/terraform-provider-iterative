@@ -6,17 +6,10 @@ Use the Iterative Provider to launch resource-intensive tasks in popular cloud p
 
 ```hcl
 terraform {
-  required_providers {
-    iterative = {
-      source = "iterative/iterative"
-    }
-  }
+  required_providers { iterative = { source = "iterative/iterative" } }
 }
-
 provider "iterative" {}
-
 resource "iterative_task" "task" {
-  name  = "example"
   cloud = "aws"
 
   script = <<-END

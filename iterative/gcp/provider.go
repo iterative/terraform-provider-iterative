@@ -34,7 +34,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
-	instanceServiceAccount := d.Get("instance_permission_set").(string)
+
+	serviceAccountEmail, serviceAccountScopes := getServiceAccountData(d.Get("instance_permission_set").(string))
 
 	instanceMetadata := map[string]string{}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
@@ -199,7 +200,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		MachineType: instanceMachineType.SelfLink,
 		ServiceAccounts: []*gcp_compute.ServiceAccount{
 			{
-				Email: instanceServiceAccount,
+				Email:  serviceAccountEmail,
+				Scopes: serviceAccountScopes,
 			},
 		},
 		Disks: []*gcp_compute.AttachedDisk{
@@ -285,6 +287,21 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	service.Firewalls.Delete(project, instanceName+"-egress").Do()
 
 	return nil
+}
+
+func getServiceAccountData(saString string) (string, []string) {
+	// ["SA email", "scopes=s1", "s2", ...]
+	splitStr := strings.Split(saString, ",")
+	serviceAccountEmail := splitStr[0]
+	if len(splitStr) == 1 {
+		// warn user about scopes?
+		return serviceAccountEmail, nil
+	}
+	// ["scopes=s1", "s2"]
+	splitStr[1] = strings.Split(splitStr[1], "=")[1]
+	// ["s1", "s2", ...]
+	serviceAccountScopes := splitStr[1:]
+	return serviceAccountEmail, utils.CanonicalizeServiceScopes(serviceAccountScopes)
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
@@ -441,7 +458,18 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		},
 	}
 
-	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
+	match := regexp.MustCompile(`^([^+]+)\+([^*]+)\*([1-9]\d*)?$`).FindStringSubmatch(instanceType)
+	if match != nil {
+		return map[string]map[string]string{
+			"accelerator": {
+				"count": match[3],
+				"type":  match[2],
+			},
+			"machine": {
+				"type": match[1],
+			},
+		}, nil
+	} else if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val, nil
 	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
 		return val, nil

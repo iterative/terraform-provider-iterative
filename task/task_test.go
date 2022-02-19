@@ -135,25 +135,15 @@ func TestTask(t *testing.T) {
 				require.Equal(t, newTask.Start(ctx), common.NotImplementedError)
 				require.Equal(t, newTask.Stop(ctx), common.NotImplementedError)
 			} else {
-				for assert.Nil(t, newTask.Read(ctx)) &&
-					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
-					time.Sleep(10 * time.Second)
-				}
-
-				require.Nil(t, newTask.Start(ctx))
-				require.Nil(t, newTask.Start(ctx))
-
-				for assert.Nil(t, newTask.Read(ctx)) &&
-					newTask.Status(ctx)[common.StatusCodeRunning] == 0 {
-					time.Sleep(10 * time.Second)
-				}
-
-				require.Nil(t, newTask.Stop(ctx))
-				require.Nil(t, newTask.Stop(ctx))
-
-				for assert.Nil(t, newTask.Read(ctx)) &&
-					newTask.Status(ctx)[common.StatusCodeRunning] > 0 {
-					time.Sleep(10 * time.Second)
+				for assert.Nil(t, newTask.Read(ctx)) {
+					status, err := newTask.Status(ctx)
+					require.Nil(t, err)
+					if status[common.StatusCodeActive] == 0 &&
+            status[common.StatusCodeSucceeded] > 0 {
+						break
+          } else {
+            time.Sleep(10 * time.Second)
+          }
 				}
 			}
 

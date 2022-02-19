@@ -2,9 +2,14 @@ package iterative
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/aohorodnyk/uid"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -18,11 +23,12 @@ func resourceTask() *schema.Resource {
 		CreateContext: resourceTaskCreate,
 		DeleteContext: resourceTaskDelete,
 		ReadContext:   resourceTaskRead,
+		UpdateContext: resourceTaskRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
 				ForceNew: true,
-				Required: true,
+				Optional: true,
 			},
 			"cloud": {
 				Type:     schema.TypeString,
@@ -102,11 +108,25 @@ func resourceTask() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
-			"directory": {
-				Type:     schema.TypeString,
-				ForceNew: true,
+			"workdir": {
 				Optional: true,
-				Default:  "",
+				Type:     schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"input": {
+							Type:     schema.TypeString,
+							ForceNew: true,
+							Optional: true,
+							Default:  "",
+						},
+						"output": {
+							Type:     schema.TypeString,
+							ForceNew: false,
+							Optional: true,
+							Default:  "",
+						},
+					},
+				},
 			},
 			"parallelism": {
 				Type:     schema.TypeInt,
@@ -144,11 +164,18 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		return diagnostic(diags, err, diag.Error)
 	}
 
+	d.SetId(task.GetIdentifier(ctx).Long())
+
 	if err := task.Create(ctx); err != nil {
-		return diagnostic(diags, err, diag.Error)
+		diags = diagnostic(diags, err, diag.Error)
+		if err := task.Delete(ctx); err != nil {
+			diags = diagnostic(diags, err, diag.Error)
+		} else {
+			diags = diagnostic(diags, errors.New("failed to create"), diag.Error)
+			d.SetId("")
+		}
 	}
 
-	d.SetId(task.GetIdentifier(ctx).Long())
 	return
 }
 
@@ -196,7 +223,11 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	d.Set("events", events)
 
-	d.Set("status", task.Status(ctx))
+	status, err := task.Status(ctx)
+	if err != nil {
+		return diagnostic(diags, err, diag.Warning)
+	}
+	d.Set("status", status)
 
 	logs, err := task.Logs(ctx)
 	if err != nil {
@@ -230,6 +261,15 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 	}
 
+	val := "true"
+	v["TPI_TASK"] = &val
+	v["CI"] = nil
+	v["CI_*"] = nil
+	v["GITHUB_*"] = nil
+	v["BITBUCKET_*"] = nil
+	v["CML_*"] = nil
+	v["REPO_TOKEN"] = nil
+
 	c := common.Cloud{
 		Provider: common.Provider(d.Get("cloud").(string)),
 		Region:   common.Region(d.Get("region").(string)),
@@ -241,17 +281,33 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		},
 	}
 
+	directory := ""
+	directory_out := ""
+	if d.Get("workdir").(*schema.Set).Len() > 0 {
+		storage := d.Get("workdir").(*schema.Set).List()[0].(map[string]interface{})
+		directory = storage["input"].(string)
+
+		directory_out = storage["output"].(string)
+		if directory_out != "" && !isOutputValid(directory_out) {
+			return nil, errors.New("output directory " + directory_out + " is not empty!")
+		}
+	}
+	if directory_out == "" {
+		directory_out = directory
+	}
+
 	t := common.Task{
 		Size: common.Size{
 			Machine: d.Get("machine").(string),
 			Storage: d.Get("disk_size").(int),
 		},
 		Environment: common.Environment{
-			Image:     d.Get("image").(string),
-			Script:    d.Get("script").(string),
-			Variables: v,
-			Directory: d.Get("directory").(string),
-			Timeout:   time.Duration(d.Get("timeout").(int)) * time.Second,
+			Image:        d.Get("image").(string),
+			Script:       d.Get("script").(string),
+			Variables:    v,
+			Directory:    directory,
+			DirectoryOut: directory_out,
+			Timeout:      time.Duration(d.Get("timeout").(int)) * time.Second,
 		},
 		Firewall: common.Firewall{
 			Ingress: common.FirewallRule{
@@ -263,7 +319,22 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		Parallelism: uint16(d.Get("parallelism").(int)),
 	}
 
-	return task.New(ctx, c, common.Identifier(d.Get("name").(string)), t)
+	name := d.Id()
+	if name == "" {
+		if identifier := d.Get("name").(string); identifier != "" {
+			name = identifier
+		} else if identifier := os.Getenv("GITHUB_RUN_ID"); identifier != "" {
+			name = identifier
+		} else if identifier := os.Getenv("CI_PIPELINE_ID"); identifier != "" {
+			name = identifier
+		} else if identifier := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); identifier != "" {
+			name = identifier
+		} else {
+			name = uid.NewProvider36Size(8).MustGenerate().String()
+		}
+	}
+
+	return task.New(ctx, c, common.Identifier(name), t)
 }
 
 func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.Diagnostics {
@@ -271,4 +342,18 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
+}
+
+func isOutputValid(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return true
+	}
+	defer f.Close()
+
+	_, err = f.Readdir(1)
+	if err == io.EOF {
+		return true
+	}
+	return false
 }
