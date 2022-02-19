@@ -139,11 +139,11 @@ func TestTask(t *testing.T) {
 					status, err := newTask.Status(ctx)
 					require.Nil(t, err)
 					if status[common.StatusCodeActive] == 0 &&
-            status[common.StatusCodeSucceeded] > 0 {
+						status[common.StatusCodeSucceeded] > 0 {
 						break
-          } else {
-            time.Sleep(10 * time.Second)
-          }
+					} else {
+						time.Sleep(10 * time.Second)
+					}
 				}
 			}
 
