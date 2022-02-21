@@ -27,6 +27,7 @@ resource "iterative_task" "task" {
 
   workdir {
     input = "${path.root}/shared"
+    output = "${path.root}/shared"
   }
   script = <<-END
     #!/bin/bash
