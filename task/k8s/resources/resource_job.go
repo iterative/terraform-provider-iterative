@@ -68,9 +68,17 @@ func (j *Job) Create(ctx context.Context) error {
 		"l+v100":  "32-256000+nvidia-tesla-v100*4",
 		"xl+v100": "64-512000+nvidia-tesla-v100*8",
 	}
-
 	if val, ok := sizes[size]; ok {
 		size = val
+	}
+
+	image := j.Attributes.Task.Environment.Image
+	images := map[string]string{
+		"ubuntu": "ubuntu",
+		"nvidia": "nvidia/cuda",
+	}
+	if val, ok := images[image]; ok {
+		image = val
 	}
 
 	match := regexp.MustCompile(`^(\d+)-(\d+)(?:\+([^*]+)\*([1-9]\d*))?$`).FindStringSubmatch(size)
@@ -206,7 +214,7 @@ func (j *Job) Create(ctx context.Context) error {
 					Containers: []kubernetes_core.Container{
 						{
 							Name:  j.Identifier,
-							Image: j.Attributes.Task.Environment.Image,
+							Image: image,
 							Resources: kubernetes_core.ResourceRequirements{
 								Limits: jobLimits,
 								Requests: kubernetes_core.ResourceList{

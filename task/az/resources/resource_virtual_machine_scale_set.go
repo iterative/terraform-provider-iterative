@@ -82,12 +82,13 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	image := v.Attributes.Environment.Image
 	images := map[string]string{
 		"ubuntu": "ubuntu@Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
+		"nvidia": "ubuntu@nvidia:ngc_base_image_version_b:gen2_21-11-0:latest#plan",
 	}
 	if val, ok := images[image]; ok {
 		image = val
 	}
 
-	imageParts := regexp.MustCompile(`^([^@]+)@([^:]+):([^:]+):([^:]+):([^:]+)$`).FindStringSubmatch(image)
+	imageParts := regexp.MustCompile(`^([^@]+)@([^:]+):([^:]+):([^:]+):([^:]+)(:?(#plan)?)$`).FindStringSubmatch(image)
 	if imageParts == nil {
 		return errors.New("invalid machine image format: use publisher:offer:sku:version")
 	}
@@ -97,6 +98,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	offer := imageParts[3]
 	sku := imageParts[4]
 	version := imageParts[5]
+	plan := imageParts[6]
 
 	size := v.Attributes.Size.Machine
 	sizes := map[string]string{
@@ -183,6 +185,14 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 				},
 			},
 		},
+	}
+
+	if plan == "#plan" {
+		settings.Plan = &compute.Plan{
+			Publisher: to.StringPtr(publisher),
+			Product:   to.StringPtr(offer),
+			Name:      to.StringPtr(sku),
+		}
 	}
 
 	spot := v.Attributes.Spot
