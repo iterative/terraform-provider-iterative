@@ -1,6 +1,6 @@
 // Code generated for package main by go-bindata DO NOT EDIT. (@generated)
 // sources:
-// images/provisioner/setup.sh
+// environment/setup.sh
 package main
 
 import (
@@ -82,7 +82,7 @@ var _imagesProvisionerSetupSh = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff
 func imagesProvisionerSetupShBytes() ([]byte, error) {
 	return bindataRead(
 		_imagesProvisionerSetupSh,
-		"images/provisioner/setup.sh",
+		"environment/setup.sh",
 	)
 }
 
@@ -92,7 +92,7 @@ func imagesProvisionerSetupSh() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "images/provisioner/setup.sh", size: 1391, mode: os.FileMode(420), modTime: time.Unix(1631470006, 0)}
+	info := bindataFileInfo{name: "environment/setup.sh", size: 1391, mode: os.FileMode(420), modTime: time.Unix(1631470006, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -149,7 +149,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"images/provisioner/setup.sh": imagesProvisionerSetupSh,
+	"environment/setup.sh": imagesProvisionerSetupSh,
 }
 
 // AssetDir returns the file names below a certain
@@ -193,10 +193,8 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"images": &bintree{nil, map[string]*bintree{
-		"provisioner": &bintree{nil, map[string]*bintree{
-			"setup.sh": &bintree{imagesProvisionerSetupSh, map[string]*bintree{}},
-		}},
+	"environment": &bintree{nil, map[string]*bintree{
+		"setup.sh": &bintree{imagesProvisionerSetupSh, map[string]*bintree{}},
 	}},
 }}
 
