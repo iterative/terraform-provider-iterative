@@ -2,7 +2,7 @@
 // sources:
 // ../environment/ami.pkr.hcl
 // ../environment/setup.sh
-package main
+package iterative
 
 import (
 	"bytes"
