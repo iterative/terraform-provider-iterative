@@ -31,6 +31,7 @@ locals {
     Name        = var.image_name
     Environment = "prod"
   }
+  
   aws_release_regions = [
     "af-south-1",
     "ap-east-1",
@@ -75,9 +76,9 @@ data "amazon-ami" "ubuntu" {
 
 source "amazon-ebs" "source" {
   ami_groups      = ["all"]
-  ami_name        = var.test ? "${var.image_name}-test" : var.image_name
+  ami_name        = var.image_name
   ami_description = var.image_description
-  ami_regions     = var.test ? [local.aws_build_region] : local.aws_release_regions
+  ami_regions     = local.aws_release_regions
 
   region        = var.aws_build_region
   instance_type = var.aws_build_instance
