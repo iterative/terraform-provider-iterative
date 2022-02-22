@@ -66,6 +66,12 @@
           - containerd.io
         state: present
 
+    - name: Install Docker credential helpers
+      apt:
+        name:
+          - amazon-ecr-credential-helper
+        state: present
+
     - name: Add Hashicorp repository key
       apt_key:
         url: https://apt.releases.hashicorp.com/gpg
