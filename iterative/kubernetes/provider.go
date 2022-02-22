@@ -42,6 +42,12 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	jobName := d.Id()
 	jobNamespace := namespace
 
+	// Define the metadata
+	jobMetadata := map[string]string{}
+	for key, value := range d.Get("metadata").(map[string]interface{}) {
+		jobMetadata[key] = value.(string)
+	}
+
 	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
 	jobAccelerator := instanceType["accelerator"]["model"]
@@ -88,8 +94,10 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 
 	job := kubernetes_batch.Job{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
-			Name:      jobName,
-			Namespace: jobNamespace,
+			Name:        jobName,
+			Namespace:   jobNamespace,
+			Labels:      jobMetadata,
+			Annotations: jobMetadata,
 		},
 		Spec: kubernetes_batch.JobSpec{
 			BackoffLimit:            &jobBackoffLimit,
@@ -319,7 +327,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "64"},
 		"memory": {"amount": "256Gi"},
 	}
-	instanceTypes["mk80"] = map[string]map[string]string{
+	instanceTypes["m+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia.com/gpu",
@@ -328,7 +336,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "4"},
 		"memory": {"amount": "64Gi"},
 	}
-	instanceTypes["lk80"] = map[string]map[string]string{
+	instanceTypes["l+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia.com/gpu",
@@ -337,7 +345,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "32"},
 		"memory": {"amount": "512Gi"},
 	}
-	instanceTypes["xlk80"] = map[string]map[string]string{
+	instanceTypes["xl+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "16",
 			"type":  "nvidia.com/gpu",
@@ -346,7 +354,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "64"},
 		"memory": {"amount": "768Gi"},
 	}
-	instanceTypes["mv100"] = map[string]map[string]string{
+	instanceTypes["m+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia.com/gpu",
@@ -355,7 +363,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "8"},
 		"memory": {"amount": "64Gi"},
 	}
-	instanceTypes["lv100"] = map[string]map[string]string{
+	instanceTypes["l+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
 			"type":  "nvidia.com/gpu",
@@ -364,7 +372,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"cores":  {"count": "32"},
 		"memory": {"amount": "256Gi"},
 	}
-	instanceTypes["xlv100"] = map[string]map[string]string{
+	instanceTypes["xl+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia.com/gpu",
@@ -374,7 +382,9 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"memory": {"amount": "512Gi"},
 	}
 
-	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
+	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
+		return val, nil
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
 		return val, nil
 	} else if val, ok := instanceTypes[instanceType]; ok {
 		// Allow users to specify custom accelerator selectors.

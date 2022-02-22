@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"terraform-provider-iterative/iterative/utils"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	gcp_compute "google.golang.org/api/compute/v1"
@@ -32,6 +34,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
+
+	serviceAccountEmail, serviceAccountScopes := getServiceAccountData(d.Get("instance_permission_set").(string))
 
 	instanceMetadata := map[string]string{}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
@@ -194,6 +198,12 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	instanceDefinition := &gcp_compute.Instance{
 		Name:        instanceName,
 		MachineType: instanceMachineType.SelfLink,
+		ServiceAccounts: []*gcp_compute.ServiceAccount{
+			{
+				Email:  serviceAccountEmail,
+				Scopes: serviceAccountScopes,
+			},
+		},
 		Disks: []*gcp_compute.AttachedDisk{
 			{
 				Boot:       true,
@@ -270,7 +280,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceZone := getRegion(d.Get("region").(string))
-	instanceName := d.Id()
+	instanceName := d.Get("name").(string)
 
 	service.Instances.Delete(project, instanceZone, instanceName).Do()
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
@@ -279,11 +289,26 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
+func getServiceAccountData(saString string) (string, []string) {
+	// ["SA email", "scopes=s1", "s2", ...]
+	splitStr := strings.Split(saString, ",")
+	serviceAccountEmail := splitStr[0]
+	if len(splitStr) == 1 {
+		// warn user about scopes?
+		return serviceAccountEmail, nil
+	}
+	// ["scopes=s1", "s2"]
+	splitStr[1] = strings.Split(splitStr[1], "=")[1]
+	// ["s1", "s2", ...]
+	serviceAccountScopes := splitStr[1:]
+	return serviceAccountEmail, utils.CanonicalizeServiceScopes(serviceAccountScopes)
+}
+
 func getProjectService() (string, *gcp_compute.Service, error) {
 	var credentials *google.Credentials
 	var err error
 
-	if credentialsData := []byte(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")); len(credentialsData) > 0 {
+	if credentialsData := []byte(utils.LoadGCPCredentials()); len(credentialsData) > 0 {
 		credentials, err = google.CredentialsFromJSON(oauth2.NoContext, credentialsData, gcp_compute.ComputeScope)
 	} else {
 		credentials, err = google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
@@ -378,7 +403,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "n2-custom-64-262144",
 		},
 	}
-	instanceTypes["mk80"] = map[string]map[string]string{
+	instanceTypes["m+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia-tesla-k80",
@@ -387,7 +412,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-8-53248",
 		},
 	}
-	instanceTypes["lk80"] = map[string]map[string]string{
+	instanceTypes["l+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
 			"type":  "nvidia-tesla-k80",
@@ -396,7 +421,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-32-131072",
 		},
 	}
-	instanceTypes["xlk80"] = map[string]map[string]string{
+	instanceTypes["xl+k80"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia-tesla-k80",
@@ -405,7 +430,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-64-212992-ext",
 		},
 	}
-	instanceTypes["mv100"] = map[string]map[string]string{
+	instanceTypes["m+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "1",
 			"type":  "nvidia-tesla-v100",
@@ -414,7 +439,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-8-65536-ext",
 		},
 	}
-	instanceTypes["lv100"] = map[string]map[string]string{
+	instanceTypes["l+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "4",
 			"type":  "nvidia-tesla-v100",
@@ -423,7 +448,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": "custom-32-262144-ext",
 		},
 	}
-	instanceTypes["xlv100"] = map[string]map[string]string{
+	instanceTypes["xl+v100"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "8",
 			"type":  "nvidia-tesla-v100",
@@ -433,11 +458,22 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		},
 	}
 
-	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
+	match := regexp.MustCompile(`^([^+]+)\+([^*]+)\*([1-9]\d*)?$`).FindStringSubmatch(instanceType)
+	if match != nil {
+		return map[string]map[string]string{
+			"accelerator": {
+				"count": match[3],
+				"type":  match[2],
+			},
+			"machine": {
+				"type": match[1],
+			},
+		}, nil
+	} else if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val, nil
-	}
-
-	if val, ok := instanceTypes[instanceType]; ok {
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
+		return val, nil
+	} else if val, ok := instanceTypes[instanceType]; ok {
 		return map[string]map[string]string{
 			"accelerator": {
 				"count": val["accelerator"]["count"],

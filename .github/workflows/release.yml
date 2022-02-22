@@ -1,47 +1,48 @@
-# This GitHub action can publish assets for release when a tag is created.
-# Currently its setup to run on any tag that matches the pattern "v*" (ie. v0.1.0).
-#
-# This uses an action (paultyng/ghaction-import-gpg) that assumes you set your 
-# private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
-# secret. If you would rather own your own GPG handling, please fork this action
-# or use an alternative one for key handling.
-#
-# You will need to pass the `--batch` flag to `gpg` in your signing step 
-# in `goreleaser` to indicate this is being used in a non-interactive mode.
-#
-name: release
+name: Release
 on: 
-  push:
-    tags:
-      - 'v*'
-
+  release:
+    types: [published]
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Unshallow
-        run: git fetch --prune --unshallow
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
         with:
-          go-version: 1.16
-
-      - name: Import GPG key
-        id: import_gpg
-        uses: paultyng/ghaction-import-gpg@v2.1.0
+          go-version: 1.17
+      - run: |
+          gpg --import <<< "$TERRAFORM_REGISTRY_GPG_PRIVATE_KEY"
         env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
-          
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+          TERRAFORM_REGISTRY_GPG_PRIVATE_KEY: ${{ secrets.TERRAFORM_REGISTRY_GPG_PRIVATE_KEY }}
+      - uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
           args: release --rm-dist
         env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  synchronize:
+    # Empyrically equivalent to pressing the "Resync" button in the Settings
+    # page of Terraform Registry, but without bothering humans in the process
+    # https://registry.terraform.io/providers/iterative/iterative/latest/settings
+    # https://www.terraform.io/docs/registry/providers/publishing.html#webhooks
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: hashicorp/setup-terraform@v1
+    - run: |
+        cat <<END > main.tf
+          terraform {
+            required_providers {
+              iterative = {
+                source  = "iterative/iterative",
+                version = "${GITHUB_REF##refs/tags/v}"
+              }
+            }
+          }
+          provider "iterative" {}
+        END
+    - run: |
+        while ! terraform init; do
+          sleep $((2**++try))
+        done

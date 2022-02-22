@@ -94,6 +94,12 @@ func machineSchema() *map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
+		"instance_permission_set": &schema.Schema{
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Optional: true,
+			Default:  "",
+		},
 		"ssh_public": &schema.Schema{
 			Type:     schema.TypeString,
 			Computed: true,
@@ -117,6 +123,12 @@ func machineSchema() *map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"aws_security_group": &schema.Schema{
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Optional: true,
+			Default:  "",
+		},
+		"aws_subnet_id": &schema.Schema{
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
@@ -168,6 +180,15 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	d.Set("startup_script", script64)
 
 	cloud := d.Get("cloud").(string)
+
+	if len(d.Get("instance_permission_set").(string)) > 0 && (cloud == "azure" || cloud == "kubernetes") {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("instance_permission_set is not yet supported in " + cloud),
+		})
+		return diags
+	}
+
 	if cloud == "aws" {
 		err := aws.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
@@ -176,7 +197,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
-	} else if cloud == "azure" {
+	} else if cloud == "azure" || cloud == "az" {
 		err := azure.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
 			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
@@ -192,7 +213,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Summary:  fmt.Sprintf("Failed creating the machine: %v", err),
 			})
 		}
-	} else if cloud == "kubernetes" {
+	} else if cloud == "kubernetes" || cloud == "k8s" {
 		err := kubernetes.ResourceMachineCreate(ctx, d, m)
 		if err != nil {
 			diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{

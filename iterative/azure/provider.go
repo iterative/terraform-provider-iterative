@@ -292,7 +292,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	groupsClient.Delete(context.Background(), d.Id())
+	groupsClient.Delete(context.Background(), d.Id(), "")
 	return nil
 }
 
@@ -380,14 +380,16 @@ func getInstanceType(instanceType string, instanceGPU string) string {
 	instanceTypes["m"] = "Standard_F8s_v2"
 	instanceTypes["l"] = "Standard_F32s_v2"
 	instanceTypes["xl"] = "Standard_F64s_v2"
-	instanceTypes["mk80"] = "Standard_NC6"
-	instanceTypes["lk80"] = "Standard_NC12"
-	instanceTypes["xlk80"] = "Standard_NC24"
-	instanceTypes["mv100"] = "Standard_NC6s_v3"
-	instanceTypes["lv100"] = "Standard_NC12s_v3"
-	instanceTypes["xlv100"] = "Standard_NC24s_v3"
+	instanceTypes["m+k80"] = "Standard_NC6"
+	instanceTypes["l+k80"] = "Standard_NC12"
+	instanceTypes["xl+k80"] = "Standard_NC24"
+	instanceTypes["m+v100"] = "Standard_NC6s_v3"
+	instanceTypes["l+v100"] = "Standard_NC12s_v3"
+	instanceTypes["xl+v100"] = "Standard_NC24s_v3"
 
-	if val, ok := instanceTypes[instanceType+instanceGPU]; ok {
+	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
+		return val
+	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
 		return val
 	}
 

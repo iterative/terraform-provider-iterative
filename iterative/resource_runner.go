@@ -89,7 +89,9 @@ func resourceRunner() *schema.Resource {
 			},
 			"image": &schema.Schema{
 				Type:     schema.TypeString,
-				Computed: true,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
 			},
 			"spot": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -129,6 +131,12 @@ func resourceRunner() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"instance_permission_set": &schema.Schema{
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
+			},
 			"ssh_public": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -153,8 +161,22 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
+			"aws_subnet_id": &schema.Schema{
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
+			},
 			"metadata": &schema.Schema{
 				Type:     schema.TypeMap,
+				ForceNew: true,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"docker_volumes": &schema.Schema{
+				Type:     schema.TypeList,
 				ForceNew: true,
 				Optional: true,
 				Elem: &schema.Schema{
@@ -277,13 +299,11 @@ func renderScript(data map[string]interface{}) (string, error) {
 
 	tmpl, err := template.New("deploy").Funcs(template.FuncMap{"escape": shellescape.Quote}).Parse(
 		`#!/bin/sh
+sudo systemctl is-enabled cml.service && return 0
+
 {{- if not .container}}
 {{- if .setup}}{{.setup}}{{- end}}
 sudo npm config set user 0 && sudo npm install --global @dvcorg/cml
-{{- end}}
-
-{{- if .runner_startup_script}}
-{{.runner_startup_script}}
 {{- end}}
 
 {{- if not .container}}
@@ -311,6 +331,10 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
 
+{{- if .runner_startup_script}}
+{{.runner_startup_script}}
+{{- end}}
+
 HOME="$(mktemp -d)" exec cml-runner \
   {{if .name}} --name {{escape .name}}{{end}} \
   {{if .labels}} --labels {{escape .labels}}{{end}} \
@@ -319,6 +343,7 @@ HOME="$(mktemp -d)" exec cml-runner \
   {{if .repo}} --repo {{escape .repo}}{{end}} \
   {{if .token}} --token {{escape .token}}{{end}} \
   {{if .single}} --single{{end}} \
+  {{range .docker_volumes}}--docker-volumes {{escape .}} {{end}} \
   {{if .tf_resource}} --tf-resource {{escape .tf_resource}}{{end}}
 
 {{- if not .container}}
@@ -339,7 +364,11 @@ EOF'
 
 {{- if .cloud}}
 sudo systemctl daemon-reload
-sudo systemctl enable cml.service --now
+sudo systemctl enable cml.service
+{{- if .instance_gpu}}
+nvidia-smi &>/dev/null || reboot
+{{- end}}
+sudo systemctl start cml.service
 {{- end}}
 
 {{- end}}
@@ -395,7 +424,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
-	setup, err := Asset("environment/setup.sh")
+	setup, err := Asset("../environment/setup.sh")
 	if err != nil {
 		return code, err
 	}
@@ -412,6 +441,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
 	data["instance_gpu"] = d.Get("instance_gpu").(string)
 	data["single"] = d.Get("single").(bool)
+	data["docker_volumes"] = d.Get("docker_volumes").([]interface{})
 	data["AWS_SECRET_ACCESS_KEY"] = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	data["AWS_ACCESS_KEY_ID"] = os.Getenv("AWS_ACCESS_KEY_ID")
 	data["AWS_SESSION_TOKEN"] = os.Getenv("AWS_SESSION_TOKEN")
@@ -419,7 +449,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
-	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
+	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = utils.LoadGCPCredentials()
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)

@@ -1,0 +1,110 @@
+name: Smoke Test
+on:
+  pull_request_target:
+    paths: 'task/**'
+  schedule:
+  - cron: '0 9 * * 1'
+jobs:
+  authorize:
+    environment: ${{ github.event_name == 'schedule' && 'automatic' || 'manual' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ✓
+  test:
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [AWS, AZ, GCP]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
+      SMOKE_TEST_ENABLE_${{ matrix.provider }}: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+    - run: go test ./task -v -timeout=30m -count=1
+    - if: always()
+      uses: actions/checkout@v2
+      with:
+        ref: master
+    - if: always()
+      run: go test ./task -v -timeout=30m -count=1
+      env:
+        SMOKE_TEST_SWEEP: true
+  test-k8s:
+    name: test (K8S)
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+    - run: |
+        az login \
+          --service-principal \
+          --user="$AZURE_CLIENT_ID" \
+          --password="$AZURE_CLIENT_SECRET" \
+          --tenant="$AZURE_TENANT_ID"
+        az account set \
+          --subscription="$AZURE_SUBSCRIPTION_ID"
+    - id: cluster
+      run: |
+        az extension add \
+          --name=aks-preview
+        az provider register \
+          --namespace=Microsoft.ContainerService
+        az feature register \
+          --namespace=Microsoft.ContainerService \
+          --name=GPUDedicatedVHDPreview
+        az group create \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --location=eastus
+        az aks create \
+          --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --node-vm-size=Standard_NC6 \
+          --node-count=1 \
+          --aks-custom-headers=UseGPUDedicatedVHD=true \
+          --generate-ssh-keys
+        az aks get-credentials \
+          --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --file - |
+        perl -0777p \
+          -e 's/%/%25/g;' \
+          -e 's/\n/%0A/g;' \
+          -e 's/\r/%0D/g;' \
+          -e 's/(.+)/::add-mask::\1\n::set-output name=kubeconfig::\1\n/g'
+    - run: go test ./task -v -timeout=30m -count=1
+      env:
+        KUBECONFIG_DATA: ${{ steps.cluster.outputs.kubeconfig }}
+        SMOKE_TEST_ENABLE_K8S: true
+    - if: always()
+      run: |
+        az group delete \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --yes
+env:
+  SMOKE_TEST_IDENTIFIER: smoke test ${{ github.run_id }}
