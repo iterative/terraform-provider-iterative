@@ -15,7 +15,7 @@ locals {
   aws_tags = {
     ManagedBy   = "packer"
     Name        = var.image_name
-    Environment = var.test ? "test" : "prod"
+    Environment = "prod"
   }
   aws_release_regions = [
     "af-south-1",
