@@ -31,7 +31,7 @@ locals {
     Name        = var.image_name
     Environment = "prod"
   }
-  
+
   aws_release_regions = [
     "af-south-1",
     "ap-east-1",
