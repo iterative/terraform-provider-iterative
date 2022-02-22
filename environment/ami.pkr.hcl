@@ -1,3 +1,17 @@
+packer {
+  required_plugins {
+    amazon = {
+      version = ">= 1.0.0"
+      source  = "github.com/hashicorp/amazon"
+    }
+  }
+}
+
+variables {
+  image_name        = "iterative-cml"
+  image_description = "CML (Continuous Machine Learning) Ubuntu 18.04"
+}
+
 variables {
   aws_build_region       = "us-west-1"
   aws_build_instance     = "g2.2xlarge"
@@ -15,7 +29,7 @@ locals {
   aws_tags = {
     ManagedBy   = "packer"
     Name        = var.image_name
-    Environment = var.test ? "test" : "prod"
+    Environment = "prod"
   }
   aws_release_regions = [
     "af-south-1",
@@ -84,5 +98,13 @@ source "amazon-ebs" "source" {
   assume_role {
     role_arn     = var.aws_role_arn
     session_name = var.aws_role_session_name
+  }
+}
+
+build {
+  sources = ["source.amazon-ebs.source"]
+
+  provisioner "shell" {
+    script = "${path.root}/setup.sh"
   }
 }
