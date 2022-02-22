@@ -20,7 +20,6 @@ require (
 	github.com/aws/smithy-go v1.9.0
 	github.com/brianvoe/gofakeit/v6 v6.9.0
 	github.com/cloudflare/gokey v0.1.0
-	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
