@@ -6,7 +6,6 @@ on:
     paths: 'task/**'
   schedule:
   - cron: '0 9 * * 1'
-  push:
 jobs:
   authorize:
     environment: ${{ github.event_name == 'schedule' && 'automatic' || 'manual' }}
