@@ -13,6 +13,7 @@ jobs:
       - run: echo ✓
   test:
     needs: authorize
+    environment: automatic
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -48,6 +49,7 @@ jobs:
   test-k8s:
     name: test (K8S)
     needs: authorize
+    environment: automatic
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
