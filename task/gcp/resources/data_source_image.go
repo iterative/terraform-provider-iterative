@@ -32,6 +32,7 @@ func (i *Image) Read(ctx context.Context) error {
 	image := i.Identifier
 	images := map[string]string{
 		"ubuntu": "ubuntu@ubuntu-os-cloud/ubuntu-2004-lts",
+		"nvidia": "ubuntu@nvidia-ngc-public/nvidia-gpu-cloud-image-20211105",
 	}
 	if val, ok := images[image]; ok {
 		image = val
@@ -39,18 +40,27 @@ func (i *Image) Read(ctx context.Context) error {
 
 	match := regexp.MustCompile(`^([^@]+)@([^/]+)/([^/]+)$`).FindStringSubmatch(image)
 	if match == nil {
-		return common.NotFoundError
+		return errors.New("wrong image name")
 	}
 
 	i.Attributes.SSHUser = match[1]
 	project := match[2]
-	family := match[3]
+	imageOrFamily := match[3]
 
-	resource, err := i.Client.Services.Compute.Images.GetFromFamily(project, family).Do()
+	resource, err := i.Client.Services.Compute.Images.Get(project, imageOrFamily).Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			return common.NotFoundError
+			resource, err := i.Client.Services.Compute.Images.GetFromFamily(project, imageOrFamily).Do()
+			if err != nil {
+				var e *googleapi.Error
+				if errors.As(err, &e) && e.Code == 404 {
+					return common.NotFoundError
+				}
+				return err
+			}
+			i.Resource = resource
+			return nil
 		}
 		return err
 	}
