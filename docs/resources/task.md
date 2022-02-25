@@ -30,7 +30,7 @@ resource "iterative_task" "task" {
 ### Required
 
 - `cloud` - (Required) Cloud provider to run the task on; valid values are `aws`, `gcp`, `az` and `k8s`.
-- `script` - (Required) Script to run; must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>).
+- `script` - (Required) Script to run (relative to `workdir.input`); must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>). Can use a string, including a [heredoc](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings), or the contents of a file returned by the [`file`](https://www.terraform.io/docs/language/functions/file.html) function.
 
 ### Optional
 

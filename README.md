@@ -10,7 +10,7 @@ The Iterative Provider makes it easy to:
 - Rapidly move local machine learning experiments to a cloud infrastructure
 - Take advantage of training models on spot instances without losing any progress
 - Unify configuration of various cloud compute providers
-- Automatically destroy unused cloud resources (never forget to turn your GPU off again)
+- Automatically destroy unused cloud resources (compute instances are terminated on job completion/failure, and storage is removed when results are downloaded)
 
 The Iterative Provider can provision resources with the following cloud providers and orchestrators:
 
