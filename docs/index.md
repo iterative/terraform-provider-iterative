@@ -51,11 +51,11 @@ See the [Azure documentation](https://docs.microsoft.com/en-us/python/api/azure-
 
 ### Google Cloud Platform
 
-- `GOOGLE_APPLICATION_CREDENTIALS` - Path to a [service account](https://cloud.google.com/iam/docs/service-accounts) JSON key file.
+- `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
 
 -> **Note:** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the **contents** of the service account JSON key file.
 
-See the [summary of GCP credentials on the DVC site](https://dvc.org/doc/user-guide/setup-google-drive-remote#using-service-accounts) to get started quickly.
+See the [GCP documentation](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account) for more information.
 
 ### Kubernetes
 
