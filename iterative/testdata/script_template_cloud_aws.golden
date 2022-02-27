@@ -37,7 +37,7 @@ if [ ! -f "$FILE" ]; then
   echo OK | sudo tee "$FILE"
 fi
 
-sudo npm config set user 0 && sudo npm install --global @dvcorg/cml@v0.0.0
+sudo npm config set user 0 && sudo npm install --global 18 value with "quotes" and spaces
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
 export AWS_SECRET_ACCESS_KEY='0 value with "quotes" and spaces'
