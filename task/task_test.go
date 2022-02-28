@@ -84,9 +84,9 @@ func TestTask(t *testing.T) {
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
 					},
-					Directory: dataDirectory,
+					Directory:    dataDirectory,
 					DirectoryOut: dataDirectory,
-					Timeout:   10 * time.Minute,
+					Timeout:      10 * time.Minute,
 				},
 				Firewall: common.Firewall{
 					Ingress: common.FirewallRule{
