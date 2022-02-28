@@ -65,6 +65,7 @@ func generateSchemaTestData(cloud string, t *testing.T) *schema.ResourceData {
 		"driver":                "15 value with \"quotes\" and spaces",
 		"labels":                "16 value with \"quotes\" and spaces",
 		"instance_gpu":          "17 value with \"quotes\" and spaces",
+		"cml_version":           "18 value with \"quotes\" and spaces",
 		"runner_startup_script": "echo \"custom startup script\"",
 	})
 }
