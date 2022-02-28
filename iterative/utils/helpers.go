@@ -28,7 +28,7 @@ func GetCML(version string) string {
 		}
 	}
 	// handle semver
-	ver, err := semver.Make(strings.TrimPrefix(ver, "v"))
+	ver, err := semver.Make(strings.TrimPrefix(version, "v"))
 	if err == nil {
 		return getSemverCML(ver)
 	}
