@@ -2,7 +2,7 @@
 sudo systemctl is-enabled cml.service && return 0
 export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
 
-HOME="$(mktemp -d)" exec cml-runner \
+HOME="$(mktemp -d)" exec $(which cml-runner || echo "cml runner") \
    --name '10 value with "quotes" and spaces' \
    --labels '16 value with "quotes" and spaces' \
    --idle-timeout 11 \
