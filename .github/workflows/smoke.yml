@@ -1,5 +1,4 @@
 name: Smoke Test
-concurrency: ${{ github.workflow }}
 permissions:
   id-token: write
 on:
@@ -7,6 +6,9 @@ on:
     paths: 'task/**'
   schedule:
   - cron: '0 9 * * 1'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   authorize:
     environment: ${{ (github.event_name == 'pull_request_target' &&
@@ -24,9 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         provider: [AWS, AZ, GCP]
-    concurrency: 
-      group: ${{ github.head_ref || github.ref }}-${{ matrix.provider }}
-      cancel-in-progress: true
+    concurrency: ${{ github.workflow }}-${{ matrix.provider }}
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -61,9 +61,7 @@ jobs:
     environment: automatic
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    concurrency: 
-      group: ${{ github.head_ref || github.ref }}-k8s
-      cancel-in-progress: true
+    concurrency: ${{ github.workflow }}-k8s
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
