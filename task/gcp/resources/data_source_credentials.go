@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
@@ -31,7 +30,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 	if len(c.Client.Credentials.JSON) == 0 {
 		return errors.New("unable to find credentials JSON string")
 	}
-	credentials := strings.ReplaceAll(string(c.Client.Credentials.JSON), "\n", " ")
+	credentials := string(c.Client.Credentials.JSON)
 
 	connectionString := fmt.Sprintf(
 		":googlecloudstorage,service_account_credentials='%s':%s",
