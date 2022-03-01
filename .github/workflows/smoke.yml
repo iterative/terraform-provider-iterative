@@ -61,7 +61,7 @@ jobs:
     environment: automatic
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    concurrency: ${{ github.workflow }}-k8s
+    concurrency: ${{ github.workflow }}-K8S
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
