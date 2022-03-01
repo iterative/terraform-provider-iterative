@@ -31,7 +31,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 	if len(c.Client.Credentials.JSON) == 0 {
 		return errors.New("unable to find credentials JSON string")
 	}
-	credentials := strings.ReplaceAll(c.Client.Credentials.JSON, "\n", " ")
+	credentials := strings.ReplaceAll(string(c.Client.Credentials.JSON), "\n", " ")
 
 	connectionString := fmt.Sprintf(
 		":googlecloudstorage,service_account_credentials='%s':%s",
