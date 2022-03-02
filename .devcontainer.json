@@ -1,5 +1,5 @@
 {
   "name": "terraform",
   "extensions": ["hashicorp.terraform"],
-  "postCreateCommand": "go get"
+  "postCreateCommand": "/usr/bin/env go get"
 }
