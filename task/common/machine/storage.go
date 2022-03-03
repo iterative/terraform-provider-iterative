@@ -114,7 +114,7 @@ func Delete(ctx context.Context, destination string) error {
 		return err
 	}
 
-	if err :=  operations.Rmdirs(ctx, destinationFileSystem, "", true); err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !strings.Contains(err.Error(), "no such host") {
+	if err := operations.Rmdirs(ctx, destinationFileSystem, "", true); err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !strings.Contains(err.Error(), "no such host") {
 		return err
 	}
 
