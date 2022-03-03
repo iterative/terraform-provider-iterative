@@ -241,7 +241,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger.Info("instance")
 	logger.Info("logs")
 	logger.Info("status")
-	
+
 	return diags
 }
 

@@ -11,32 +11,32 @@ func TestState(t *testing.T) {
 		"name": "mytask",
 		"status": map[string]interface{}{
 			"running": 0,
-			"failed": 0,
+			"failed":  0,
 		},
 	})
 
 	logger := TpiLogger(d)
 	logger.Info("status")
-}   
+}
 
 func TestState2(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
 		"name": "mytask",
 		"status": map[string]interface{}{
 			"running": 0,
-			"failed": 1,
+			"failed":  1,
 		},
 	})
 
 	logger := TpiLogger(d)
 	logger.Info("status")
-} 
+}
 
 func TestState3(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
 		"name": "mytask",
 		"status": map[string]interface{}{
-			"running": 0,
+			"running":   0,
 			"succeeded": 1,
 		},
 	})
@@ -60,17 +60,16 @@ func TestLogs(t *testing.T) {
 
 func TestMachine(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
-		"name": "mytask",
-		"cloud": "aws",
+		"name":    "mytask",
+		"cloud":   "aws",
 		"machine": "t2.micro",
-		"spot": 0.2,
-		"region": "us-west",
+		"spot":    0.2,
+		"region":  "us-west",
 	})
 
 	logger := TpiLogger(d)
 	logger.Info("instance")
 }
-
 
 func generateSchemaData(t *testing.T, raw map[string]interface{}) *schema.ResourceData {
 	sch := map[string]*schema.Schema{
