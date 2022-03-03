@@ -15,6 +15,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/sync"
+	"github.com/rclone/rclone/fs/operations"
 
 	"terraform-provider-iterative/task/common"
 )
@@ -99,7 +100,16 @@ func Transfer(ctx context.Context, source, destination string) error {
 		return err
 	}
 
-	if err := sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true); err != nil {
+	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
+}
+
+func Purge(ctx context.Context, destination string) error {
+	destinationFileSystem, err := fs.NewFs(ctx, destination)
+	if err != nil {
+		return err
+	}
+
+	if err := operations.Purge(ctx, destinationFileSystem, ""); err.Error() != "resource not found" {
 		return err
 	}
 
