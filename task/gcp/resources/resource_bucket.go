@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 	"time"
-	
+
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
 
@@ -71,7 +71,7 @@ func (b *Bucket) Delete(ctx context.Context) error {
 		} else if i > 30 {
 			return errors.New("timed out waiting for bucket to be deleted")
 		}
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 	}
 
 	b.Resource = nil
