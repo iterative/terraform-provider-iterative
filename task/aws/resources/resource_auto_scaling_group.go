@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"errors"
+	"log"
 	"net"
 	"strconv"
 	"time"
@@ -133,6 +134,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 					if instance.StateReason != nil {
 						status += " " + aws.ToString(instance.StateReason.Message)
 					}
+					log.Println("[DEBUG] AutoScaling Group State:", status)
 					if status == "running" {
 						a.Attributes.Status[common.StatusCodeActive]++
 					}

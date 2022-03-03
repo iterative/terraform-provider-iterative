@@ -3,7 +3,8 @@ package resources
 import (
 	"context"
 	"errors"
-
+	"time"
+	
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
 
@@ -61,12 +62,14 @@ func (b *Bucket) Update(ctx context.Context) error {
 }
 
 func (b *Bucket) Delete(ctx context.Context) error {
-	if b.Read(ctx) == common.NotFoundError {
-		return nil
-	}
-
-	if err := b.Client.Services.Storage.Buckets.Delete(b.Identifier).Do(); err != nil {
-		return err
+	for i, err := 0, b.Client.Services.Storage.Buckets.Delete(b.Identifier).Do(); b.Read(ctx) != common.NotFoundError; i++ {
+		var e *googleapi.Error
+		if !errors.As(err, &e) || e.Code != 409 {
+			return err
+		} else if i > 10 {
+			return errors.New("timed out waiting for bucket to be deleted")
+		}
+		time.Sleep(10*time.Second)
 	}
 
 	b.Resource = nil

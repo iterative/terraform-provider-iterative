@@ -263,9 +263,11 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	log.Println("[INFO] Downloading Directory...")
-	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
-		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
-			return err
+	if t.Read(ctx) == nil {
+		if t.Attributes.Environment.DirectoryOut != "" {
+			if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
+				return err
+			}
 		}
 		log.Println("[INFO] Emptying Bucket...")
 		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
