@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"path/filepath"
 	"strings"
@@ -14,8 +15,8 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 
 	"terraform-provider-iterative/task/common"
 )
@@ -103,11 +104,19 @@ func Transfer(ctx context.Context, source, destination string) error {
 	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
 }
 
-func Purge(ctx context.Context, destination string) error {
+func Delete(ctx context.Context, destination string) error {
 	destinationFileSystem, err := fs.NewFs(ctx, destination)
 	if err != nil {
 		return err
 	}
 
-	return operations.Purge(ctx, destinationFileSystem, "")
+	if err := operations.Delete(ctx, destinationFileSystem); err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !strings.Contains(err.Error(), "no such host") {
+		return err
+	}
+
+	if err :=  operations.Rmdirs(ctx, destinationFileSystem, "", true); err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !strings.Contains(err.Error(), "no such host") {
+		return err
+	}
+
+	return nil
 }

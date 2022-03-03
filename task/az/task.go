@@ -254,7 +254,7 @@ func (t *Task) Empty(ctx context.Context) error {
 		return err
 	}
 
-	return machine.Purge(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"])
+	return machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"])
 }
 
 func (t *Task) Start(ctx context.Context) error {
