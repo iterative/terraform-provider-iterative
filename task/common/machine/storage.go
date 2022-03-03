@@ -14,8 +14,8 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 
 	"terraform-provider-iterative/task/common"
 )
