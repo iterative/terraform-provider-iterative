@@ -64,7 +64,7 @@ func (b *Bucket) Update(ctx context.Context) error {
 
 func (b *Bucket) Delete(ctx context.Context) error {
 	for i, err := 0, b.Client.Services.Storage.Buckets.Delete(b.Identifier).Do(); b.Read(ctx) != common.NotFoundError; i++ {
-	    log.Println("[DEBUG] Deleting Bucket...")
+		log.Println("[DEBUG] Deleting Bucket...")
 		var e *googleapi.Error
 		if !errors.As(err, &e) || e.Code != 409 {
 			return err
