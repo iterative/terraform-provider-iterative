@@ -199,6 +199,10 @@ func (t *Task) Delete(ctx context.Context) error {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
+		log.Println("[INFO] Emptying Bucket...")
+		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
+			return err
+		}
 	}
 	log.Println("[INFO] Deleting AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Delete(ctx); err != nil {
@@ -218,10 +222,6 @@ func (t *Task) Delete(ctx context.Context) error {
 	}
 	log.Println("[INFO] Deleting Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
-		return err
-	}
-	log.Println("[INFO] Emptying Bucket...")
-	if err := t.Empty(ctx); err != nil {
 		return err
 	}
 	log.Println("[INFO] Deleting Bucket...")
@@ -254,14 +254,6 @@ func (t *Task) Push(ctx context.Context, source string) error {
 	}
 
 	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
-}
-
-func (t *Task) Empty(ctx context.Context) error {
-	if err := t.Read(ctx); err != nil && err != common.NotFoundError {
-		return err
-	}
-
-	return machine.Purge(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"])
 }
 
 func (t *Task) Start(ctx context.Context) error {
