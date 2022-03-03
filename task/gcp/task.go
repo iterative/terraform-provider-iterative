@@ -140,65 +140,65 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating DefaultNetwork...")
+	log.Println("[DEBUG] Creating DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Image...")
+	log.Println("[DEBUG] Creating Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Bucket...")
+	log.Println("[DEBUG] Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Credentials...")
+	log.Println("[DEBUG] Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating FirewallInternalEgress...")
+	log.Println("[DEBUG] Creating FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating FirewallInternalIngress...")
+	log.Println("[DEBUG] Creating FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating FirewallExternalEgress...")
+	log.Println("[DEBUG] Creating FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating FirewallExternalIngress...")
+	log.Println("[DEBUG] Creating FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating FirewallDenyEgress...")
+	log.Println("[DEBUG] Creating FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating FirewallDenyIngress...")
+	log.Println("[DEBUG] Creating FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating InstanceTemplate...")
+	log.Println("[DEBUG] Creating InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating InstanceGroupManager...")
+	log.Println("[DEBUG] Creating InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Uploading Directory...")
+	log.Println("[DEBUG] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Starting task...")
+	log.Println("[DEBUG] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -206,55 +206,55 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[INFO] Reading DefaultNetwork...")
+	log.Println("[DEBUG] Reading DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Image...")
+	log.Println("[DEBUG] Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Bucket...")
+	log.Println("[DEBUG] Reading Bucket...")
 	if err := t.Resources.Bucket.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	log.Println("[DEBUG] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading FirewallInternalEgress...")
+	log.Println("[DEBUG] Reading FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading FirewallInternalIngress...")
+	log.Println("[DEBUG] Reading FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading FirewallExternalEgress...")
+	log.Println("[DEBUG] Reading FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading FirewallExternalIngress...")
+	log.Println("[DEBUG] Reading FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading FirewallDenyEgress...")
+	log.Println("[DEBUG] Reading FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading FirewallDenyIngress...")
+	log.Println("[DEBUG] Reading FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading InstanceTemplate...")
+	log.Println("[DEBUG] Reading InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading InstanceGroupManager...")
+	log.Println("[DEBUG] Reading InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -262,49 +262,49 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[INFO] Downloading Directory...")
+	log.Println("[DEBUG] Downloading Directory...")
 	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[INFO] Deleting InstanceGroupManager...")
+	log.Println("[DEBUG] Deleting InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting InstanceTemplate...")
+	log.Println("[DEBUG] Deleting InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting FirewallInternalEgress...")
+	log.Println("[DEBUG] Deleting FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting FirewallInternalIngress...")
+	log.Println("[DEBUG] Deleting FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting FirewallExternalEgress...")
+	log.Println("[DEBUG] Deleting FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting FirewallExternalIngress...")
+	log.Println("[DEBUG] Deleting FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting FirewallDenyEgress...")
+	log.Println("[DEBUG] Deleting FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting FirewallDenyIngress...")
+	log.Println("[DEBUG] Deleting FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Bucket...")
+	log.Println("[DEBUG] Deleting Bucket...")
 	if err := t.Resources.Bucket.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	return nil
 }
 

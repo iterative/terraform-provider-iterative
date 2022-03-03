@@ -93,6 +93,7 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func TpiLogger(d *schema.ResourceData) *logrus.Entry {
+	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&tpiFormatter{})
 
 	return logrus.WithFields(logrus.Fields{"d": d})

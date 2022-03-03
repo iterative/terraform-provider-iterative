@@ -93,49 +93,49 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating ResourceGroup...")
+	log.Println("[DEBUG] Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating StorageAccount...")
+	log.Println("[DEBUG] Creating StorageAccount...")
 	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating BlobContainer...")
+	log.Println("[DEBUG] Creating BlobContainer...")
 	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Credentials...")
+	log.Println("[DEBUG] Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating VirtualNetwork...")
+	log.Println("[DEBUG] Creating VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating SecurityGroup...")
+	log.Println("[DEBUG] Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Subnet...")
+	log.Println("[DEBUG] Creating Subnet...")
 	if err := t.Resources.Subnet.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating VirtualMachineScaleSet...")
+	log.Println("[DEBUG] Creating VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Uploading Directory...")
+	log.Println("[DEBUG] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Starting task...")
+	log.Println("[DEBUG] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -143,39 +143,39 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[INFO] Reading ResourceGroup...")
+	log.Println("[DEBUG] Reading ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading StorageAccount...")
+	log.Println("[DEBUG] Reading StorageAccount...")
 	if err := t.Resources.StorageAccount.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading BlobContainer...")
+	log.Println("[DEBUG] Reading BlobContainer...")
 	if err := t.Resources.BlobContainer.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	log.Println("[DEBUG] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading VirtualNetwork...")
+	log.Println("[DEBUG] Reading VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading SecurityGroup...")
+	log.Println("[DEBUG] Reading SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Subnet...")
+	log.Println("[DEBUG] Reading Subnet...")
 	if err := t.Resources.Subnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading VirtualMachineScaleSet...")
+	log.Println("[DEBUG] Reading VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -183,41 +183,41 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[INFO] Downloading Directory...")
+	log.Println("[DEBUG] Downloading Directory...")
 	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[INFO] Deleting VirtualMachineScaleSet...")
+	log.Println("[DEBUG] Deleting VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Subnet...")
+	log.Println("[DEBUG] Deleting Subnet...")
 	if err := t.Resources.Subnet.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting SecurityGroup...")
+	log.Println("[DEBUG] Deleting SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting VirtualNetwork...")
+	log.Println("[DEBUG] Deleting VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting BlobContainer...")
+	log.Println("[DEBUG] Deleting BlobContainer...")
 	if err := t.Resources.BlobContainer.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting StorageAccount...")
+	log.Println("[DEBUG] Deleting StorageAccount...")
 	if err := t.Resources.StorageAccount.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting ResourceGroup...")
+	log.Println("[DEBUG] Deleting ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	return nil
 }
 

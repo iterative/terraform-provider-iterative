@@ -92,53 +92,53 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating DefaultVPC...")
+	log.Println("[DEBUG] Creating DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating DefaultVPCSubnet...")
+	log.Println("[DEBUG] Creating DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Image...")
+	log.Println("[DEBUG] Creating Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Bucket...")
+	log.Println("[DEBUG] Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating SecurityGroup...")
+	log.Println("[DEBUG] Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating KeyPair...")
+	log.Println("[DEBUG] Creating KeyPair...")
 	if err := t.Resources.KeyPair.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Credentials...")
+	log.Println("[DEBUG] Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating LaunchTemplate...")
+	log.Println("[DEBUG] Creating LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating AutoScalingGroup...")
+	log.Println("[DEBUG] Creating AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Uploading Directory...")
+	log.Println("[DEBUG] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Starting task...")
+	log.Println("[DEBUG] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -146,47 +146,47 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[INFO] Reading DefaultVPC...")
+	log.Println("[DEBUG] Reading DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading DefaultVPCSubnet...")
+	log.Println("[DEBUG] Reading DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Image...")
+	log.Println("[DEBUG] Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Bucket...")
+	log.Println("[DEBUG] Reading Bucket...")
 	if err := t.Resources.Bucket.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	log.Println("[DEBUG] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading SecurityGroup...")
+	log.Println("[DEBUG] Reading SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading KeyPair...")
+	log.Println("[DEBUG] Reading KeyPair...")
 	if err := t.Resources.KeyPair.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	log.Println("[DEBUG] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading LaunchTemplate...")
+	log.Println("[DEBUG] Reading LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading AutoScalingGroup...")
+	log.Println("[DEBUG] Reading AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -194,37 +194,37 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[INFO] Downloading Directory...")
+	log.Println("[DEBUG] Downloading Directory...")
 	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[INFO] Deleting AutoScalingGroup...")
+	log.Println("[DEBUG] Deleting AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting LaunchTemplate...")
+	log.Println("[DEBUG] Deleting LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting KeyPair...")
+	log.Println("[DEBUG] Deleting KeyPair...")
 	if err := t.Resources.KeyPair.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting SecurityGroup...")
+	log.Println("[DEBUG] Deleting SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Credentials...")
+	log.Println("[DEBUG] Deleting Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Bucket...")
+	log.Println("[DEBUG] Deleting Bucket...")
 	if err := t.Resources.Bucket.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	log.Println("[DEBUG] Done!")
 	return nil
 }
 
