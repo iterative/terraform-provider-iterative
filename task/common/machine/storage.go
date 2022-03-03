@@ -110,7 +110,7 @@ func Delete(ctx context.Context, destination string) error {
 		return err
 	}
 
-	actions := []func(context.Context) error {
+	actions := []func(context.Context) error{
 		func(ctx context.Context) error {
 			return operations.Delete(ctx, destinationFileSystem)
 		},
