@@ -199,6 +199,10 @@ func (t *Task) Delete(ctx context.Context) error {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
+		log.Println("[INFO] Emptying Bucket...")
+		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
+			return err
+		}
 	}
 	log.Println("[INFO] Deleting AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Delete(ctx); err != nil {
