@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/sirupsen/logrus"
@@ -12,6 +11,15 @@ import (
 var baseTimestamp = time.Now()
 var colors = make(map[string]int)
 
+type basicFormatter struct {}
+
+func (f *basicFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	levelText := strings.ToUpper(entry.Level.String())
+	levelColor := colors[levelText]
+	tpl := "[%s] 🚀\x1b[%dmTPI\x1b[0m %s\n"
+	return []byte(fmt.Sprintf(tpl,levelText, levelColor, entry.Message)), nil
+}
+
 func init() {
 	colors["DEBUG"] = 36
 	colors["INFO"] = 36
@@ -19,6 +27,9 @@ func init() {
 	colors["ERROR"] = 31
 	colors["FATAL"] = 31
 	colors["purple"] = 35
+
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&basicFormatter{})
 }
 
 type tpiFormatter struct{}
@@ -32,6 +43,7 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	d := data["d"].(*schema.ResourceData)
 	message := entry.Message
 	levelText := strings.ToUpper(entry.Level.String())
+	levelColor := colors[levelText]
 
 	if message == "instance" {
 		cloud := d.Get("cloud").(string)
@@ -81,20 +93,11 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		message = fmt.Sprintf("Task logs:\x1b[%dm%s\x1b[0m", colors["purple"], taskLogs)
 	}
 
-	levelColor := colors[levelText]
-	date := int(entry.Time.Sub(baseTimestamp) / time.Second)
-
-	tpl := "[%s] \x1b[%dm%s\x1b[0m [%04d] %-44s "
-	var b *bytes.Buffer
-	b = &bytes.Buffer{}
-	fmt.Fprintf(b, tpl, levelText, levelColor, d.Id(), date, message)
-	b.WriteByte('\n')
-
-	return b.Bytes(), nil
+	tpl := "[%s] \x1b[%dm🚀TPI %s\x1b[0m %s '\n"
+	return []byte(fmt.Sprintf(tpl, levelText, levelColor, d.Id(), message)), nil
 }
 
 func TpiLogger(d *schema.ResourceData) *logrus.Entry {
-	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&tpiFormatter{})
 
 	return logrus.WithFields(logrus.Fields{"d": d})

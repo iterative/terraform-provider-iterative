@@ -2,8 +2,9 @@ package az
 
 import (
 	"context"
-	"log"
 	"net"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/az/resources"
@@ -93,49 +94,49 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[DEBUG] Creating ResourceGroup...")
+	logrus.Debug("Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating StorageAccount...")
+	logrus.Debug("Creating StorageAccount...")
 	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating BlobContainer...")
+	logrus.Debug("Creating BlobContainer...")
 	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating Credentials...")
+	logrus.Debug("Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating VirtualNetwork...")
+	logrus.Debug("Creating VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating SecurityGroup...")
+	logrus.Debug("Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating Subnet...")
+	logrus.Debug("Creating Subnet...")
 	if err := t.Resources.Subnet.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating VirtualMachineScaleSet...")
+	logrus.Debug("Creating VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Uploading Directory...")
+	logrus.Debug("Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[DEBUG] Starting task...")
+	logrus.Debug("Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -143,39 +144,39 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[DEBUG] Reading ResourceGroup...")
+	logrus.Debug("Reading ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading StorageAccount...")
+	logrus.Debug("Reading StorageAccount...")
 	if err := t.Resources.StorageAccount.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading BlobContainer...")
+	logrus.Debug("Reading BlobContainer...")
 	if err := t.Resources.BlobContainer.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading Credentials...")
+	logrus.Debug("Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading VirtualNetwork...")
+	logrus.Debug("Reading VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading SecurityGroup...")
+	logrus.Debug("Reading SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading Subnet...")
+	logrus.Debug("Reading Subnet...")
 	if err := t.Resources.Subnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading VirtualMachineScaleSet...")
+	logrus.Debug("Reading VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -183,41 +184,41 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[DEBUG] Downloading Directory...")
+	logrus.Debug("Downloading Directory...")
 	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[DEBUG] Deleting VirtualMachineScaleSet...")
+	logrus.Debug("Deleting VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting Subnet...")
+	logrus.Debug("Deleting Subnet...")
 	if err := t.Resources.Subnet.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting SecurityGroup...")
+	logrus.Debug("Deleting SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting VirtualNetwork...")
+	logrus.Debug("Deleting VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting BlobContainer...")
+	logrus.Debug("Deleting BlobContainer...")
 	if err := t.Resources.BlobContainer.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting StorageAccount...")
+	logrus.Debug("Deleting StorageAccount...")
 	if err := t.Resources.StorageAccount.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting ResourceGroup...")
+	logrus.Debug("Deleting ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Done!")
+	logrus.Debug("Done!")
 	return nil
 }
 

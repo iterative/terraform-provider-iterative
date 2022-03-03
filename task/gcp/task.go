@@ -2,8 +2,9 @@ package gcp
 
 import (
 	"context"
-	"log"
 	"net"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/machine"
@@ -140,65 +141,65 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[DEBUG] Creating DefaultNetwork...")
+	logrus.Debug("Creating DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating Image...")
+	logrus.Debug("Creating Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating Bucket...")
+	logrus.Debug("Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating Credentials...")
+	logrus.Debug("Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating FirewallInternalEgress...")
+	logrus.Debug("Creating FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating FirewallInternalIngress...")
+	logrus.Debug("Creating FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating FirewallExternalEgress...")
+	logrus.Debug("Creating FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating FirewallExternalIngress...")
+	logrus.Debug("Creating FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating FirewallDenyEgress...")
+	logrus.Debug("Creating FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating FirewallDenyIngress...")
+	logrus.Debug("Creating FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating InstanceTemplate...")
+	logrus.Debug("Creating InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Creating InstanceGroupManager...")
+	logrus.Debug("Creating InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Uploading Directory...")
+	logrus.Debug("Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[DEBUG] Starting task...")
+	logrus.Debug("Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -206,55 +207,55 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[DEBUG] Reading DefaultNetwork...")
+	logrus.Debug("Reading DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading Image...")
+	logrus.Debug("Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading Bucket...")
+	logrus.Debug("Reading Bucket...")
 	if err := t.Resources.Bucket.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading Credentials...")
+	logrus.Debug("Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading FirewallInternalEgress...")
+	logrus.Debug("Reading FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading FirewallInternalIngress...")
+	logrus.Debug("Reading FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading FirewallExternalEgress...")
+	logrus.Debug("Reading FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading FirewallExternalIngress...")
+	logrus.Debug("Reading FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading FirewallDenyEgress...")
+	logrus.Debug("Reading FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading FirewallDenyIngress...")
+	logrus.Debug("Reading FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading InstanceTemplate...")
+	logrus.Debug("Reading InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading InstanceGroupManager...")
+	logrus.Debug("Reading InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -262,49 +263,49 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[DEBUG] Downloading Directory...")
+	logrus.Debug("Downloading Directory...")
 	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
 		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[DEBUG] Deleting InstanceGroupManager...")
+	logrus.Debug("Deleting InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting InstanceTemplate...")
+	logrus.Debug("Deleting InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting FirewallInternalEgress...")
+	logrus.Debug("Deleting FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting FirewallInternalIngress...")
+	logrus.Debug("Deleting FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting FirewallExternalEgress...")
+	logrus.Debug("Deleting FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting FirewallExternalIngress...")
+	logrus.Debug("Deleting FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting FirewallDenyEgress...")
+	logrus.Debug("Deleting FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting FirewallDenyIngress...")
+	logrus.Debug("Deleting FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Deleting Bucket...")
+	logrus.Debug("Deleting Bucket...")
 	if err := t.Resources.Bucket.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Done!")
+	logrus.Debug("Done!")
 	return nil
 }
 
