@@ -11,13 +11,13 @@ import (
 var baseTimestamp = time.Now()
 var colors = make(map[string]int)
 
-type basicFormatter struct {}
+type basicFormatter struct{}
 
 func (f *basicFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	levelText := strings.ToUpper(entry.Level.String())
 	levelColor := colors[levelText]
 	tpl := "[%s] 🚀\x1b[%dmTPI\x1b[0m %s\n"
-	return []byte(fmt.Sprintf(tpl,levelText, levelColor, entry.Message)), nil
+	return []byte(fmt.Sprintf(tpl, levelText, levelColor, entry.Message)), nil
 }
 
 func init() {
