@@ -21,12 +21,12 @@ func (f *basicFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func init() {
-	colors["DEBUG"] = 36
+	colors["DEBUG"] = 34
 	colors["INFO"] = 36
 	colors["WARN"] = 33
 	colors["ERROR"] = 31
 	colors["FATAL"] = 31
-	colors["purple"] = 35
+	colors["foreground"] = 35
 
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&basicFormatter{})
@@ -55,22 +55,23 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		if spot > 0 {
 			spottext = fmt.Sprintf("(Spot %f/h)", spot)
 		}
-		message = fmt.Sprintf("🚀 %s %s%s at %s", cloud, machine, spottext, region)
+		message = fmt.Sprintf("%s %s%s in %s", cloud, machine, spottext, region)
 	}
 
 	if message == "status" {
 		status := d.Get("status").(map[string]interface{})
+		terminatedStr := "terminated 🔵"
 
-		running := "not yet started"
+		running := "queued 🟣"
 		if status["running"] != nil {
-			running = "is terminated"
+			running = terminatedStr
 			if status["running"].(int) == 1 {
-				running = "is running 🟡"
+				running = "running 🟡"
 			}
 		}
 
 		success := ""
-		if running == "is terminated" {
+		if running == terminatedStr {
 			success = "without any output"
 			if status["succeeded"] != nil && status["succeeded"].(int) == 1 {
 				success = "succesfully 🟢"
@@ -90,10 +91,10 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 			taskLogs = strings.Replace(logs[0].(string), "\n", fmt.Sprintf("\n[%s] ", levelText), -1)
 		}
 
-		message = fmt.Sprintf("Task logs:\x1b[%dm%s\x1b[0m", colors["purple"], taskLogs)
+		message = fmt.Sprintf("Task logs:\x1b[%dm%s\x1b[0m", colors["foreground"], taskLogs)
 	}
 
-	tpl := "[%s] \x1b[%dm🚀TPI %s\x1b[0m %s '\n"
+	tpl := "[%s] \x1b[%dm🚀TPI %s\x1b[0m %s'\n"
 	return []byte(fmt.Sprintf(tpl, levelText, levelColor, d.Id(), message)), nil
 }
 
