@@ -18,9 +18,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.7.2
 	github.com/aws/smithy-go v1.9.0
+	github.com/blang/semver/v4 v4.0.0
 	github.com/brianvoe/gofakeit/v6 v6.9.0
 	github.com/cloudflare/gokey v0.1.0
 	github.com/gobwas/glob v0.2.3
+	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
 	github.com/rclone/rclone v1.57.0

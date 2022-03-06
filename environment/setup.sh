@@ -25,6 +25,9 @@ if [ ! -f "$FILE" ]; then
   sudo apt install -y ubuntu-drivers-common
   sudo ubuntu-drivers autoinstall
 
+  sudo curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login
+  sudo chmod 755 /usr/bin/docker-credential-ecr-login
+
   curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
   curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
   sudo apt update && sudo apt install -y nvidia-docker2

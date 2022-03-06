@@ -1,27 +1,33 @@
 name: Smoke Test
+permissions:
+  id-token: write
 on:
   pull_request_target:
     paths: 'task/**'
   schedule:
   - cron: '0 9 * * 1'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   authorize:
-    environment: ${{ github.event_name == 'schedule' && 'automatic' || 'manual' }}
+    environment: ${{ (github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name != github.repository) &&
+      'manual' || 'automatic' }}
     runs-on: ubuntu-latest
     steps:
       - run: echo ✓
   test:
     needs: authorize
+    environment: automatic
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         provider: [AWS, AZ, GCP]
+    concurrency: ${{ github.workflow }}-${{ matrix.provider }}
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -35,6 +41,11 @@ jobs:
     - uses: actions/setup-go@v2
       with:
         go-version: ^1.17
+    - if: matrix.provider == 'AWS'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-west-1
+        role-to-assume: arn:aws:iam::342840881361:role/SandboxUser
     - run: go test ./task -v -timeout=30m -count=1
     - if: always()
       uses: actions/checkout@v2
@@ -47,8 +58,10 @@ jobs:
   test-k8s:
     name: test (K8S)
     needs: authorize
+    environment: automatic
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency: ${{ github.workflow }}-K8S
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
