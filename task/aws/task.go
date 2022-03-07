@@ -196,8 +196,14 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	logrus.Debug("Downloading Directory...")
-	if t.Attributes.Environment.DirectoryOut != "" && t.Read(ctx) == nil {
-		if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
+	if t.Read(ctx) == nil {
+		if t.Attributes.Environment.DirectoryOut != "" {
+			if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
+				return err
+			}
+		}
+		logrus.Debug("Emptying Bucket...")
+		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
