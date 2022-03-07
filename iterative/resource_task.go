@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"terraform-provider-iterative/iterative/utils"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
@@ -234,8 +235,13 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diagnostic(diags, err, diag.Warning)
 	}
 	d.Set("logs", logs)
-
 	d.SetId(task.GetIdentifier(ctx).Long())
+
+	logger := utils.TpiLogger(d)
+	logger.Info("instance")
+	logger.Info("logs")
+	logger.Info("status")
+
 	return diags
 }
 

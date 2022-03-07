@@ -2,8 +2,9 @@ package az
 
 import (
 	"context"
-	"log"
 	"net"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/az/resources"
@@ -93,49 +94,49 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating ResourceGroup...")
+	logrus.Debug("Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating StorageAccount...")
+	logrus.Debug("Creating StorageAccount...")
 	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating BlobContainer...")
+	logrus.Debug("Creating BlobContainer...")
 	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Credentials...")
+	logrus.Debug("Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating VirtualNetwork...")
+	logrus.Debug("Creating VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating SecurityGroup...")
+	logrus.Debug("Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Subnet...")
+	logrus.Debug("Creating Subnet...")
 	if err := t.Resources.Subnet.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating VirtualMachineScaleSet...")
+	logrus.Debug("Creating VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Uploading Directory...")
+	logrus.Debug("Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Starting task...")
+	logrus.Debug("Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -143,39 +144,39 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[INFO] Reading ResourceGroup...")
+	logrus.Debug("Reading ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading StorageAccount...")
+	logrus.Debug("Reading StorageAccount...")
 	if err := t.Resources.StorageAccount.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading BlobContainer...")
+	logrus.Debug("Reading BlobContainer...")
 	if err := t.Resources.BlobContainer.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	logrus.Debug("Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading VirtualNetwork...")
+	logrus.Debug("Reading VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading SecurityGroup...")
+	logrus.Debug("Reading SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Subnet...")
+	logrus.Debug("Reading Subnet...")
 	if err := t.Resources.Subnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading VirtualMachineScaleSet...")
+	logrus.Debug("Reading VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -183,47 +184,47 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[INFO] Downloading Directory...")
+	logrus.Debug("Downloading Directory...")
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 				return err
 			}
 		}
-		log.Println("[INFO] Emptying Bucket...")
+		logrus.Debug("Emptying Bucket...")
 		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[INFO] Deleting VirtualMachineScaleSet...")
+	logrus.Debug("Deleting VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Subnet...")
+	logrus.Debug("Deleting Subnet...")
 	if err := t.Resources.Subnet.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting SecurityGroup...")
+	logrus.Debug("Deleting SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting VirtualNetwork...")
+	logrus.Debug("Deleting VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting BlobContainer...")
+	logrus.Debug("Deleting BlobContainer...")
 	if err := t.Resources.BlobContainer.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting StorageAccount...")
+	logrus.Debug("Deleting StorageAccount...")
 	if err := t.Resources.StorageAccount.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting ResourceGroup...")
+	logrus.Debug("Deleting ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Debug("Done!")
 	return nil
 }
 

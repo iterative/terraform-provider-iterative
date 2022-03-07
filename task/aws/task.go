@@ -2,8 +2,9 @@ package aws
 
 import (
 	"context"
-	"log"
 	"net"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/aws/resources"
@@ -92,53 +93,53 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating DefaultVPC...")
+	logrus.Debug("Creating DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating DefaultVPCSubnet...")
+	logrus.Debug("Creating DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Image...")
+	logrus.Debug("Creating Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Bucket...")
+	logrus.Debug("Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating SecurityGroup...")
+	logrus.Debug("Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating KeyPair...")
+	logrus.Debug("Creating KeyPair...")
 	if err := t.Resources.KeyPair.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating Credentials...")
+	logrus.Debug("Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating LaunchTemplate...")
+	logrus.Debug("Creating LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating AutoScalingGroup...")
+	logrus.Debug("Creating AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Uploading Directory...")
+	logrus.Debug("Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	log.Println("[INFO] Starting task...")
+	logrus.Debug("Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -146,47 +147,47 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[INFO] Reading DefaultVPC...")
+	logrus.Debug("Reading DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading DefaultVPCSubnet...")
+	logrus.Debug("Reading DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Image...")
+	logrus.Debug("Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Bucket...")
+	logrus.Debug("Reading Bucket...")
 	if err := t.Resources.Bucket.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	logrus.Debug("Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading SecurityGroup...")
+	logrus.Debug("Reading SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading KeyPair...")
+	logrus.Debug("Reading KeyPair...")
 	if err := t.Resources.KeyPair.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Credentials...")
+	logrus.Debug("Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading LaunchTemplate...")
+	logrus.Debug("Reading LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading AutoScalingGroup...")
+	logrus.Debug("Reading AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Debug("Done!")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -194,43 +195,43 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	log.Println("[INFO] Downloading Directory...")
+	logrus.Debug("Downloading Directory...")
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 				return err
 			}
 		}
-		log.Println("[INFO] Emptying Bucket...")
+		logrus.Debug("Emptying Bucket...")
 		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	log.Println("[INFO] Deleting AutoScalingGroup...")
+	logrus.Debug("Deleting AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting LaunchTemplate...")
+	logrus.Debug("Deleting LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting KeyPair...")
+	logrus.Debug("Deleting KeyPair...")
 	if err := t.Resources.KeyPair.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting SecurityGroup...")
+	logrus.Debug("Deleting SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Credentials...")
+	logrus.Debug("Deleting Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting Bucket...")
+	logrus.Debug("Deleting Bucket...")
 	if err := t.Resources.Bucket.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Debug("Done!")
 	return nil
 }
 

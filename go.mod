@@ -27,6 +27,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
 	github.com/rclone/rclone v1.57.0
 	github.com/sebdah/goldie/v2 v2.5.3
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
