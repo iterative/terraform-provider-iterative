@@ -8,7 +8,7 @@
 - **Sync & Execute**: move data & run code in the cloud with minimal configuration
 - **Low cost**: auto-recovery from spot/preemptible instances to vastly reduce cost
 - **No waste**: auto-cleanup unused resources
-- **No lock-in**: switch between cloud vendors with minimal configuration
+- **No lock-in**: switch between cloud vendors with ease
 
 Iterative's Provider is a [Terraform](https://terraform.io) plugin built with machine learning pipelines in mind. It enables full lifecycle management of computing resources (including GPUs) from several cloud vendors:
 
