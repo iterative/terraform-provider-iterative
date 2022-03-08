@@ -21,15 +21,11 @@ The aim is to easily (minimal configuration unified across cloud vendors) move l
 
 ## Documentation
 
-See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide to learn how to use the Iterative Provider. More details on configuring and using the Iterative Provider are in the [documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
+See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide and detailed configuration information in the [Documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
 
 ## Support
 
 Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.gg/bzA6uY7); we'll be happy to help you get started!
-
-## License
-
-Iterative Provider is released under the [Apache 2.0 License](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE).
 
 ## Usage
 
@@ -87,3 +83,7 @@ cd terraform-provider-iterative
 Specify `source = "github.com/iterative/iterative"` to use the local repository.
 
 **Note:** `source = "iterative/iterative"` will download the latest release instead.
+
+## License
+
+[Apache 2.0](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE).
