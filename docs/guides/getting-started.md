@@ -25,12 +25,13 @@ resource "iterative_task" "example" {
   machine = "m"   # medium
 
   workdir {
-    input = "${path.root}/shared"
-    output = "${path.root}/shared"
+    input  = "."
+    output = "results"
   }
   script = <<-END
     #!/bin/bash
-    echo "Hello World!" > greeting.txt
+    mkdir results
+    echo "Hello World!" > results/greeting.txt
   END
 }
 ```
@@ -44,7 +45,7 @@ The project layout should look similar to this:
 ```
 project/
 ├── main.tf
-└── shared/
+└── results/
     └── ...
 ```
 
@@ -70,7 +71,7 @@ $ terraform apply
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified shared `input` working directory to the cloud.
+2. Upload the specified `input` working directory to the cloud.
 3. Launch the task `script`.
 
 ## Viewing Task Statuses
@@ -92,9 +93,9 @@ $ terraform destroy
 
 This command will:
 
-1. Download the specified shared working directory from the cloud.
+1. Download the specified output directory from the cloud.
 2. Delete all the cloud resources created by `terraform apply`.
 
 ## Viewing Task Results
 
-After running `terraform destroy`, the `shared` directory should contain a file named `greeting.txt` with the text `Hello, World!`
+After running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
