@@ -17,7 +17,7 @@ Iterative's Provider is a [Terraform](https://terraform.io) plugin built with ma
 - Google Cloud Platform (GCP)
 - Kubernetes (K8s)
 
-The aim is to easily (minimal configuration unified across cloud vendors) move local experiments to the cloud, use low-cost spot instances without losing progress, and avoid being charged for unused cloud resources (terminate compute instances upon job completion/failure, and remove storage upon download of results).
+With a minimal configuration unified across cloud vendors, the aim is to easily move local experiments to the cloud, transparently resume from interrupted low-cost spot instances, and avoid being charged for unused cloud resources (terminate compute instances upon job completion/failure, and remove storage upon download of results).
 
 ## Usage
 
