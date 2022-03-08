@@ -1,23 +1,23 @@
-![Terraform Provider Iterative](https://static.iterative.ai/img/cml/banner-terraform.png)
+![TPI](https://static.iterative.ai/img/cml/banner-terraform.png)
 
-# Iterative Provider [![](https://img.shields.io/badge/-documentation-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
+# Terraform Provider Iterative
 
-The Iterative Provider is a Terraform plugin that enables full lifecycle
-management of computing resources for machine learning pipelines, including GPUs, from your favorite cloud vendors.
+[![](https://img.shields.io/badge/-documentation-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 
-The Iterative Provider makes it easy to:
+- **Orchestrate Resources**: create cloud compute & storage resources without reading pages of documentation
+- **Sync & Execute**: move data & run code in the cloud with minimal configuration
+- **Low cost**: auto-recovery from spot/preemptible instances to vastly reduce cost
+- **No waste**: auto-cleanup unused resources
+- **No lock-in**: switch between cloud vendors with minimal configuration
 
-- Rapidly move local machine learning experiments to a cloud infrastructure
-- Take advantage of training models on spot instances without losing any progress
-- Unify configuration of various cloud compute providers
-- Automatically destroy unused cloud resources (compute instances are terminated on job completion/failure, and storage is removed when results are downloaded)
+Iterative's Provider is a [Terraform](https://terraform.io) plugin built with machine learning pipelines in mind. It enables full lifecycle management of computing resources (including GPUs) from several cloud vendors:
 
-The Iterative Provider can provision resources with the following cloud providers and orchestrators:
-
-- Amazon Web Services
+- Amazon Web Services (AWS)
 - Microsoft Azure
-- Google Cloud Platform
-- Kubernetes
+- Google Cloud Platform (GCP)
+- Kubernetes (K8s)
+
+The aim is to easily (minimal configuration unified across cloud vendors) move local experiments to the cloud, use low-cost spot instances without losing progress, and avoid being charged for unused cloud resources (terminate compute instances upon job completion/failure, and remove storage upon download of results).
 
 ## Documentation
 
@@ -31,18 +31,7 @@ Have a feature request or found a bug? Let us know via [GitHub issues](https://g
 
 Iterative Provider is released under the [Apache 2.0 License](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE).
 
-## Development
-
-### Install Go 1.17+
-
-Refer to the [official documentation](https://golang.org/doc/install) for specific instructions.
-
-### Clone the repository
-
-```console
-git clone https://github.com/iterative/terraform-provider-iterative
-cd terraform-provider-iterative
-```
+## Usage
 
 ### Install the provider
 
@@ -64,8 +53,6 @@ provider "iterative" {}
 # ... other resource blocks ...
 ```
 
-**Note:** to use your local build, specify `source = "github.com/iterative/iterative"` (`source = "iterative/iterative"` will download the latest stable release instead).
-
 ### Initialize the provider
 
 Run this command after every `make install` to use the new build:
@@ -79,3 +66,23 @@ terraform init --upgrade
 ```console
 terraform apply
 ```
+## Contributing
+
+Instead of using the latest stable release, a local copy of the repository must be used.
+
+### Install Go 1.17+
+
+Refer to the [official documentation](https://golang.org/doc/install) for specific instructions.
+
+### Clone the repository
+
+```console
+git clone https://github.com/iterative/terraform-provider-iterative
+cd terraform-provider-iterative
+```
+
+### Modify test file
+
+Specify `source = "github.com/iterative/iterative"` to use the local repository.
+
+**Note:** `source = "iterative/iterative"` will download the latest release instead.
