@@ -50,7 +50,7 @@ resource "iterative_task" "example" {
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
-- `workdir.input` - (Optional) Local working directory to upload and use as the working directory.
+- `workdir.input` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `workdir.output` - (Optional) Results directory (relative to `input`) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
