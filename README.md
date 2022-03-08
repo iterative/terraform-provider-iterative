@@ -66,6 +66,7 @@ terraform init --upgrade
 ```console
 terraform apply
 ```
+
 ## Contributing
 
 Instead of using the latest stable release, a local copy of the repository must be used.
