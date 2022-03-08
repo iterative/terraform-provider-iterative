@@ -19,15 +19,9 @@ Iterative's Provider is a [Terraform](https://terraform.io) plugin built with ma
 
 The aim is to easily (minimal configuration unified across cloud vendors) move local experiments to the cloud, use low-cost spot instances without losing progress, and avoid being charged for unused cloud resources (terminate compute instances upon job completion/failure, and remove storage upon download of results).
 
-## Documentation
-
-See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide and detailed configuration information in the [Documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs).
-
-## Support
-
-Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.gg/bzA6uY7); we'll be happy to help you get started!
-
 ## Usage
+
+See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide for a more detailed guide.
 
 ### Install the provider
 
@@ -46,8 +40,23 @@ terraform {
   required_providers { iterative = { source = "iterative/iterative" } }
 }
 provider "iterative" {}
-# ... other resource blocks ...
+resource "iterative_task" "example" {
+  cloud   = "aws" # or any of: gcp, az, k8s
+  machine = "m"   # medium
+
+  workdir {
+    input  = "."
+    output = "results"
+  }
+  script = <<-END
+    #!/bin/bash
+    mkdir results
+    echo "Hello World!" > results/greeting.txt
+  END
+}
 ```
+
+See the [Documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs) for obtaining credentials for the chosen `cloud`, and the [Reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for the full list of options for `main.tf`.
 
 ### Initialize the provider
 
@@ -62,6 +71,10 @@ terraform init --upgrade
 ```console
 terraform apply
 ```
+
+## Help
+
+Have a feature request or found a bug? Let us know via [GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues). Have questions? Join our [community on Discord](https://discord.gg/bzA6uY7); we'll be happy to help you get started!
 
 ## Contributing
 
