@@ -13,17 +13,16 @@ To use the Iterative Provider you will need to:
 
 In the project root directory:
 
-1. Create a directory named `shared` to store input data and output artefacts.
-2. Create a file named `main.tf` with the following contents:
+Create a file named `main.tf` with the following contents:
 
 ```hcl
 terraform {
   required_providers { iterative = { source = "iterative/iterative" } }
 }
 provider "iterative" {}
-resource "iterative_task" "task" {
+resource "iterative_task" "example" {
   cloud   = "aws" # or any of: gcp, az, k8s
-  machine = "m"
+  machine = "m"   # medium
 
   workdir {
     input = "${path.root}/shared"

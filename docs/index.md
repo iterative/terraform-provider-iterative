@@ -9,12 +9,18 @@ terraform {
   required_providers { iterative = { source = "iterative/iterative" } }
 }
 provider "iterative" {}
-resource "iterative_task" "task" {
-  cloud = "aws"
+resource "iterative_task" "example" {
+  cloud   = "aws" # or any of: gcp, az, k8s
+  machine = "m"   # medium
 
+  workdir {
+    input  = "."
+    output = "results"
+  }
   script = <<-END
     #!/bin/bash
-    echo "hello!"
+    mkdir results
+    echo "Hello World!" > results/greeting.txt
   END
 }
 ```

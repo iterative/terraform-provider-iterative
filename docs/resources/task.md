@@ -10,18 +10,27 @@ This resource will:
 ## Example Usage
 
 ```hcl
-resource "iterative_task" "task" {
-  cloud = "aws"
+resource "iterative_task" "example" {
+  name        = "example"
+  cloud       = "aws"
+  machine     = "m"       # medium
+  image       = "ubuntu"
+  region      = "us-east"
+  disk_size   = 30        # GB
+  spot        = 0         # auto-price
+  parallelism = 1
+  timeout     = 3600      # max 1h idle
 
   environment = { GREETING = "Hello, world!" }
   workdir {
-    input  = "${path.root}/shared"
-    output = "${path.root}/results"
+    input  = "."
+    output = "results"
   }
   script = <<-END
     #!/bin/bash
-    echo "$GREETING" | tee $(uuidgen)
+    echo "$GREETING" | tee results/$(uuidgen)
   END
+  # or: script = file("example.sh")
 }
 ```
 
@@ -37,12 +46,12 @@ resource "iterative_task" "task" {
 - `name` - (Optional) Deterministic task name.
 - `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
 - `machine` - (Optional) See [Machine Types](#machine-types) below.
-- `disk_size` - (Optional) Size of the ephemeral machine storage.
+- `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
-- `workdir.input` - (Optional) Local working directory to upload.
-- `workdir.output` - (Optional) Local directory to download results to (default: no download).
+- `workdir.input` - (Optional) Local working directory to upload and use as the working directory.
+- `workdir.output` - (Optional) Results directory (relative to `input`) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
 
