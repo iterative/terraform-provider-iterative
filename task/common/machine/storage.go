@@ -94,7 +94,7 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 func Transfer(ctx context.Context, source, destination string, include string) error {
 	include = filepath.Clean(include)
 	if filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
-		return errors.New("storage.output path should be inside storage.workdir")
+		return errors.New("storage.output must be inside storage.workdir")
 	}
 
 	rules := []string{
