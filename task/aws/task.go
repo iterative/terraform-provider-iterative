@@ -198,7 +198,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	logrus.Debug("Downloading Directory...")
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
-			if err := t.Pull(ctx, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
+			if err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 				return err
 			}
 		}
@@ -243,12 +243,12 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 	return machine.Logs(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"])
 }
 
-func (t *Task) Pull(ctx context.Context, destination string) error {
+func (t *Task) Pull(ctx context.Context, destination, include string) error {
 	if err := t.Read(ctx); err != nil {
 		return err
 	}
 
-	return machine.Transfer(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", destination)
+	return machine.Transfer(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", destination, include)
 }
 
 func (t *Task) Push(ctx context.Context, source string) error {
@@ -256,7 +256,7 @@ func (t *Task) Push(ctx context.Context, source string) error {
 		return err
 	}
 
-	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data")
+	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", "**")
 }
 
 func (t *Task) Start(ctx context.Context) error {

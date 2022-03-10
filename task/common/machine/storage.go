@@ -15,6 +15,7 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 
@@ -90,7 +91,25 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 	return initialStatus, nil
 }
 
-func Transfer(ctx context.Context, source, destination string) error {
+func Transfer(ctx context.Context, source, destination string, include string) error {
+	include = filepath.Clean(include)
+	if filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
+		return errors.New("storage.output must be inside storage.workdir")
+	}
+
+	rules := []string{
+		"+ /" + include,
+		"+ /" + include + "/**",
+		"- **",
+	}
+
+	ctx, fi := filter.AddConfig(ctx)
+	for _, rule := range rules {
+		if err := fi.AddRule(rule); err != nil {
+			return err
+		}
+	}
+
 	sourceFileSystem, err := fs.NewFs(ctx, source)
 	if err != nil {
 		return err
