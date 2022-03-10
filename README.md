@@ -2,7 +2,8 @@
 
 # Terraform Provider Iterative
 
-[![](https://img.shields.io/badge/-documentation-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
+[![docs](https://img.shields.io/badge/-docs-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
+[![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
 
 - **Orchestrate Resources**: create cloud compute & storage resources without reading pages of documentation
 - **Sync & Execute**: move data & run code in the cloud with minimal configuration
