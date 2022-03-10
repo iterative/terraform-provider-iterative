@@ -1,24 +1,23 @@
 ![TPI](https://static.iterative.ai/img/cml/banner-terraform.png)
 
-# Terraform Provider Iterative
+# Terraform Provider Iterative (TPI)
 
 [![docs](https://img.shields.io/badge/-docs-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 [![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
 
-- **Orchestrate Resources**: create cloud compute & storage resources without reading pages of documentation
-- **Sync & Execute**: move data & run code in the cloud with minimal configuration
-- **Low cost**: auto-recovery from spot/preemptible instances to vastly reduce cost
-- **No waste**: auto-cleanup unused resources
-- **No lock-in**: switch between cloud vendors with ease
+- **Provision Resources**: create cloud compute & storage resources without reading pages of documentation
+- **Sync & Execute**: easily sync & run local data & code in the cloud
+- **Low cost**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
+- **No waste**: auto-cleanup unused resources (terminate compute instances upon job completion/failure & remove storage upon download of results)
+- **No lock-in**: switch between several cloud vendors with ease due to concise unified configuration
 
-Iterative's Provider is a [Terraform](https://terraform.io) plugin built with machine learning pipelines in mind. It enables full lifecycle management of computing resources (including GPUs) from several cloud vendors:
+Supported cloud vendors include:
 
 - Amazon Web Services (AWS)
 - Microsoft Azure
 - Google Cloud Platform (GCP)
 - Kubernetes (K8s)
 
-With a minimal configuration unified across cloud vendors, the aim is to easily move local experiments to the cloud, transparently resume from interrupted low-cost spot instances, and avoid being charged for unused cloud resources (terminate compute instances upon job completion/failure, and remove storage upon download of results).
 
 ## Usage
 
