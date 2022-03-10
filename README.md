@@ -18,18 +18,14 @@ Supported cloud vendors include:
 - Google Cloud Platform (GCP)
 - Kubernetes (K8s)
 
-
 ## Usage
 
 See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide for a more detailed guide.
 
-### Install the provider
+### Requirements
 
-Build the provider and install the resulting binary to the [local mirror directory](https://www.terraform.io/docs/cli/config/config-file.html#implied-local-mirror-directories):
-
-```console
-make install
-```
+- [Download terraform](https://www.terraform.io/downloads.html) and extract it to your path
+- [Obtain credentials](https://registry.terraform.io/providers/iterative/iterative/latest/docs) from any supported cloud vendor
 
 ### Create a test file
 
@@ -56,11 +52,11 @@ resource "iterative_task" "example" {
 }
 ```
 
-See the [Documentation](https://registry.terraform.io/providers/iterative/iterative/latest/docs) for obtaining credentials for the chosen `cloud`, and the [Reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for the full list of options for `main.tf`.
+See the [Reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for the full list of options for `main.tf`.
 
 ### Initialize the provider
 
-Run this command after every `make install` to use the new build:
+Run this once to pull the latest TPI plugin:
 
 ```console
 terraform init --upgrade
@@ -80,22 +76,13 @@ Have a feature request or found a bug? Let us know via [GitHub issues](https://g
 
 Instead of using the latest stable release, a local copy of the repository must be used.
 
-### Install Go 1.17+
-
-Refer to the [official documentation](https://golang.org/doc/install) for specific instructions.
-
-### Clone the repository
-
-```console
-git clone https://github.com/iterative/terraform-provider-iterative
-cd terraform-provider-iterative
-```
-
-### Modify test file
-
-Specify `source = "github.com/iterative/iterative"` to use the local repository.
-
-**Note:** `source = "iterative/iterative"` will download the latest release instead.
+1. [Install Go 1.17+](https://golang.org/doc/install)
+2. Clone the repository
+    ```console
+    git clone https://github.com/iterative/terraform-provider-iterative
+    cd terraform-provider-iterative
+    ```
+3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead)
 
 ## License
 
