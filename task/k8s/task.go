@@ -242,7 +242,7 @@ func (t *Task) Pull(ctx context.Context, destination, include string) error {
 		return err
 	}
 
-	return machine.Transfer(ctx, dir, destination, "/"+include)
+	return machine.Transfer(ctx, dir, destination, include)
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {
