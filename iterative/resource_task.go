@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -293,11 +291,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 	if d.Get("storage").(*schema.Set).Len() > 0 {
 		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
 		directory = storage["input"].(string)
-
-		directory_out = filepath.Clean(storage["output"].(string))
-		if directory_out != "" && (filepath.IsAbs(directory_out) || strings.HasPrefix(directory_out, "../")) {
-			return nil, errors.New("storage output path should be relative to input path")
-		}
+		directory_out = storage["output"].(string)
 	}
 
 	t := common.Task{
@@ -346,18 +340,4 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
-}
-
-func isOutputValid(path string) bool {
-	f, err := os.Open(path)
-	if err != nil {
-		return true
-	}
-	defer f.Close()
-
-	_, err = f.Readdir(1)
-	if err == io.EOF {
-		return true
-	}
-	return false
 }

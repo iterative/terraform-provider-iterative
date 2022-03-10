@@ -328,7 +328,7 @@ func (t *Task) Pull(ctx context.Context, destination, include string) error {
 		return err
 	}
 
-	return machine.Transfer(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", destination, "/"+include)
+	return machine.Transfer(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", destination, include)
 }
 
 func (t *Task) Push(ctx context.Context, source string) error {
@@ -336,7 +336,7 @@ func (t *Task) Push(ctx context.Context, source string) error {
 		return err
 	}
 
-	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", "/**")
+	return machine.Transfer(ctx, source, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]+"/data", "**")
 }
 
 func (t *Task) Start(ctx context.Context) error {

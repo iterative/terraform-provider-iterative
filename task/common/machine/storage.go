@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	// "log"
 	"io"
 	"path/filepath"
 	"strings"
@@ -22,15 +21,6 @@ import (
 
 	"terraform-provider-iterative/task/common"
 )
-
-// func init() {
-// 	operations.SyncPrintf = func(format string, a ...interface{}) {
-// 		log.Printf("[DEBUG] "+format, a...)
-// 	}
-// 	fs.LogPrint = func(level fs.LogLevel, text string) {
-// 		log.Println("[DEBUG]", level, text)
-// 	}
-// }
 
 type StatusReport struct {
 	Result string
@@ -102,16 +92,23 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 }
 
 func Transfer(ctx context.Context, source, destination string, include string) error {
-	// ctx, ci := fs.AddConfig(ctx)
+	include = filepath.Clean(include)
+	if filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
+		return errors.New("storage output path should be relative to input path")
+	}
+
+	rules := []string{
+		"+ /" + include,
+		"+ /" + include + "/**",
+		"- **",
+	}
+
 	ctx, fi := filter.AddConfig(ctx)
-
-	// ci.LogLevel = fs.LogLevelDebug
-	// ci.StatsLogLevel = fs.LogLevelDebug
-	// ci.Progress = true
-
-	fi.AddRule("+ "+include)
-	fi.AddRule("+ "+include+"/**")
-	fi.AddRule("- **")
+	for _, rule := range rules {
+		if err := fi.AddRule(rule); err != nil {
+			return err
+		}
+	}
 
 	sourceFileSystem, err := fs.NewFs(ctx, source)
 	if err != nil {
