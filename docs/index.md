@@ -1,6 +1,21 @@
 # Iterative Provider
 
-Use the Iterative Provider to launch resource-intensive tasks in popular cloud providers with a single Terraform file.
+![TPI](https://static.iterative.ai/img/cml/banner-terraform.png)
+
+- **Orchestrate Resources**: create cloud compute & storage resources without reading pages of documentation
+- **Sync & Execute**: move data & run code in the cloud with minimal configuration
+- **Low cost**: auto-recovery from spot/preemptible instances to vastly reduce cost
+- **No waste**: auto-cleanup unused resources
+- **No lock-in**: switch between cloud vendors with ease
+
+Iterative's Provider is a [Terraform](https://terraform.io) plugin built with machine learning pipelines in mind. It enables full lifecycle management of computing resources (including GPUs) from several cloud vendors:
+
+- Amazon Web Services (AWS)
+- Microsoft Azure
+- Google Cloud Platform (GCP)
+- Kubernetes (K8s)
+
+With a minimal configuration unified across cloud vendors, the aim is to easily move local experiments to the cloud, transparently resume from interrupted low-cost spot instances, and avoid being charged for unused cloud resources (terminate compute instances upon job completion/failure, and remove storage upon download of results).
 
 ## Example Usage
 
