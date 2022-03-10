@@ -44,9 +44,9 @@ resource "iterative_task" "example" {
   cloud   = "aws" # or any of: gcp, az, k8s
   machine = "m"   # medium
 
-  workdir {
-    input  = "."
-    output = "results"
+  storage {
+    workdir = "."
+    output  = "results"
   }
   script = <<-END
     #!/bin/bash

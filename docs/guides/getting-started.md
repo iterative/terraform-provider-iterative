@@ -24,9 +24,9 @@ resource "iterative_task" "example" {
   cloud   = "aws" # or any of: gcp, az, k8s
   machine = "m"   # medium
 
-  workdir {
-    input  = "."
-    output = "results"
+  storage {
+    workdir = "."
+    output  = "results"
   }
   script = <<-END
     #!/bin/bash
@@ -46,7 +46,7 @@ The project layout should look similar to this:
 project/
 ├── main.tf
 └── results/
-    └── ...
+    └── greeting.txt (created in the cloud and downloaded locally)
 ```
 
 ## Initializing Terraform
@@ -71,7 +71,7 @@ $ terraform apply
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified `input` working directory to the cloud.
+2. Upload the specified working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
 
 ## Viewing Task Statuses
