@@ -6,14 +6,12 @@ page_title: Getting Started
 
 To use the Iterative Provider you will need to:
 
-- [Install Terraform 1.0](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform) or greater
-- Create an account with your preferred cloud compute provider and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
+- [Install Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
+- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ## Defining a Task
 
-In the project root directory:
-
-Create a file named `main.tf` with the following contents:
+In the project root directory, create a file named `main.tf` with the following contents:
 
 ```hcl
 terraform {

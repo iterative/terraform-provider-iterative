@@ -4,6 +4,7 @@
 
 [![docs](https://img.shields.io/badge/-docs-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 [![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
+[![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE)
 
 - **Provision Resources**: create cloud compute & storage resources without reading pages of documentation
 - **Sync & Execute**: easily sync & run local data & code in the cloud
@@ -24,8 +25,8 @@ See the [Getting Started](https://registry.terraform.io/providers/iterative/iter
 
 ### Requirements
 
-- [Download terraform](https://www.terraform.io/downloads.html) and extract it to your path
-- [Obtain credentials](https://registry.terraform.io/providers/iterative/iterative/latest/docs) from any supported cloud vendor
+- [Install Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
+- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ### Create a test file
 
@@ -83,7 +84,3 @@ Instead of using the latest stable release, a local copy of the repository must 
     cd terraform-provider-iterative
     ```
 3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead)
-
-## License
-
-[Apache 2.0](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE).

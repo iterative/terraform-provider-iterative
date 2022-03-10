@@ -3,6 +3,7 @@
 ![TPI](https://static.iterative.ai/img/cml/banner-terraform.png)
 
 [![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
+[![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE)
 
 - **Orchestrate Resources**: create cloud compute & storage resources without reading pages of documentation
 - **Sync & Execute**: move data & run code in the cloud with minimal configuration
