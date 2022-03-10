@@ -13,7 +13,7 @@ This resource will:
 resource "iterative_task" "example" {
   name        = "example"
   cloud       = "aws"
-  machine     = "m"       # medium
+  machine     = "m"       # medium, or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"
   region      = "us-east"
   disk_size   = 30        # GB

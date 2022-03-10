@@ -42,7 +42,7 @@ terraform {
 provider "iterative" {}
 resource "iterative_task" "example" {
   cloud   = "aws" # or any of: gcp, az, k8s
-  machine = "m"   # medium
+  machine = "m"   # medium, or any of: l, xl, m+k80, xl+v100, ...
 
   storage {
     workdir = "."
