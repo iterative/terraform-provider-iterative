@@ -18,7 +18,6 @@ Supported cloud vendors include:
 - Google Cloud Platform (GCP)
 - Kubernetes (K8s)
 
-
 ## Usage
 
 See the [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) guide for a more detailed guide.
