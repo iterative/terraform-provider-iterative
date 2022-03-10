@@ -52,8 +52,14 @@ func TestTask(t *testing.T) {
 			oldData := gofakeit.UUID()
 			newData := gofakeit.UUID()
 
-			dataDirectory := t.TempDir()
-			dataFile := filepath.Join(dataDirectory, "data")
+			baseDirectory := t.TempDir()
+			cacheDirectory := filepath.Join(baseDirectory, "cache")
+			outputDirectory := filepath.Join(baseDirectory, "output")
+			cacheFile := filepath.Join(cacheDirectory, "file")
+			outputFile := filepath.Join(outputDirectory, "file")
+
+			relativeOutputDirectory, err := filepath.Rel(baseDirectory, outputDirectory)
+			require.Nil(t, err)
 
 			cloud := common.Cloud{
 				Provider: provider,
@@ -76,15 +82,18 @@ func TestTask(t *testing.T) {
 				Environment: common.Environment{
 					Image: "ubuntu",
 					Script: `#!/bin/bash
-						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append data
+					    mkdir cache
+						touch cache/file
+						mkdir output
+						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
 						sleep 60
-						cat data
+						cat output/file
 					`,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
 					},
-					Directory:    dataDirectory,
-					DirectoryOut: dataDirectory,
+					Directory:    baseDirectory,
+					DirectoryOut: relativeOutputDirectory,
 					Timeout:      10 * time.Minute,
 				},
 				Firewall: common.Firewall{
@@ -106,7 +115,10 @@ func TestTask(t *testing.T) {
 				return
 			}
 
-			file, err := os.Create(dataFile)
+			require.Nil(t, os.Mkdir(cacheDirectory, 0777))
+			require.Nil(t, os.Mkdir(outputDirectory, 0777))
+
+			file, err := os.Create(outputFile)
 			require.Nil(t, err)
 
 			_, err = file.WriteString(oldData)
@@ -151,9 +163,10 @@ func TestTask(t *testing.T) {
 			require.Nil(t, newTask.Delete(ctx))
 			require.Nil(t, newTask.Delete(ctx))
 
-			require.FileExists(t, dataFile)
+			require.NoFileExists(t, cacheFile)
+			require.FileExists(t, outputFile)
 
-			contents, err := ioutil.ReadFile(dataFile)
+			contents, err := ioutil.ReadFile(outputFile)
 			require.Nil(t, err)
 
 			require.Contains(t, string(contents), newData)

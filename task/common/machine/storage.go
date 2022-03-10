@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	// "log"
 	"io"
 	"path/filepath"
 	"strings"
@@ -15,11 +16,21 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 
 	"terraform-provider-iterative/task/common"
 )
+
+// func init() {
+// 	operations.SyncPrintf = func(format string, a ...interface{}) {
+// 		log.Printf("[DEBUG] "+format, a...)
+// 	}
+// 	fs.LogPrint = func(level fs.LogLevel, text string) {
+// 		log.Println("[DEBUG]", level, text)
+// 	}
+// }
 
 type StatusReport struct {
 	Result string
@@ -90,7 +101,18 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 	return initialStatus, nil
 }
 
-func Transfer(ctx context.Context, source, destination string) error {
+func Transfer(ctx context.Context, source, destination string, include string) error {
+	// ctx, ci := fs.AddConfig(ctx)
+	ctx, fi := filter.AddConfig(ctx)
+
+	// ci.LogLevel = fs.LogLevelDebug
+	// ci.StatsLogLevel = fs.LogLevelDebug
+	// ci.Progress = true
+
+	fi.AddRule("+ "+include)
+	fi.AddRule("+ "+include+"/**")
+	fi.AddRule("- **")
+
 	sourceFileSystem, err := fs.NewFs(ctx, source)
 	if err != nil {
 		return err
