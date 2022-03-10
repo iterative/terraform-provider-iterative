@@ -98,8 +98,8 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 	}
 
 	ctx, fi := filter.AddConfig(ctx)
-	fi.AddRule("+ /"+include)
-	fi.AddRule("+ /"+include+"/**")
+	fi.AddRule("+ /" + include)
+	fi.AddRule("+ /" + include + "/**")
 	fi.AddRule("- **")
 
 	sourceFileSystem, err := fs.NewFs(ctx, source)
