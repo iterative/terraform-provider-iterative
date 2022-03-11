@@ -55,7 +55,7 @@ resource "iterative_task" "example" {
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
 
-~> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
+-> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
 
 ## Attribute Reference
 
@@ -68,7 +68,7 @@ In addition to all arguments above, the following attributes are exported:
 - `events` - List of events for the machine orchestrator.
 - `logs` - List with task logs; one for each machine.
 
-~> **Note:** Status and events don't produce a stable output between cloud providers and are intended for human consumption only.
+~> **Warning:** Status and events don't produce a stable output between cloud providers and are intended for human consumption only.
 
 ## Machine Type
 

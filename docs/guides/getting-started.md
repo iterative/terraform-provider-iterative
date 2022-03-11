@@ -55,7 +55,7 @@ $ terraform init
 
 This command will check `main.tf` and download the required TPI plugin.
 
-~> **Note:** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
+~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
 
 ## Launch Task
 

@@ -75,14 +75,13 @@ See the [Azure documentation](https://docs.microsoft.com/en-us/python/api/azure-
 
 ### Google Cloud Platform
 
-- `GOOGLE_APPLICATION_CREDENTIALS` - Path to a service account JSON key file.
-
--> **Note:** you can also use `GOOGLE_APPLICATION_CREDENTIALS_DATA` with the **contents** of the service account JSON key file.
+- `GOOGLE_APPLICATION_CREDENTIALS` - Path to (or contents of) a service account JSON key file.
 
 See the [GCP documentation](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account) for more information.
 
 ### Kubernetes
 
-- `KUBECONFIG` - Path to a [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
+Either one of:
 
--> **Note:** You can use `KUBECONFIG_DATA` instead, with the **contents** of the `kubeconfig` file.
+- `KUBECONFIG` - Path to a [`kubeconfig` file](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#the-kubeconfig-environment-variable).
+- `KUBECONFIG_DATA` - Alternatively, the **contents** of a `kubeconfig` file.
