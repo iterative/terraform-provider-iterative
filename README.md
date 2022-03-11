@@ -4,6 +4,8 @@
 
 [![docs](https://img.shields.io/badge/-docs-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 [![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
+
+TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. Full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
 [![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE)
 
 - **Provision Resources**: create cloud compute & storage resources without reading pages of documentation
@@ -53,14 +55,14 @@ resource "iterative_task" "example" {
 }
 ```
 
-See the [Reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for the full list of options for `main.tf`.
+See the [Reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#argument-reference) for the full list of options for `main.tf`.
 
 ### Initialize the provider
 
 Run this once to pull the latest TPI plugin:
 
 ```console
-terraform init --upgrade
+terraform init
 ```
 
 ### Test the provider
