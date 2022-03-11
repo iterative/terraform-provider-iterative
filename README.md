@@ -4,7 +4,7 @@
 
 [![docs](https://img.shields.io/badge/-docs-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 [![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
-[![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE)
+[![Apache-2.0][licence-badge]][licence-file]
 
 TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. Full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
 
@@ -95,3 +95,10 @@ Instead of using the latest stable release, a local copy of the repository must 
    make install
    ```
 3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead), and run `terraform init --upgrade`
+
+## Copyright
+
+This project and all contributions to it are distributed under [![Apache-2.0][licence-badge]][licence-file]
+
+[licence-badge]: https://img.shields.io/badge/licence-Apache%202.0-blue
+[licence-file]: https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE
