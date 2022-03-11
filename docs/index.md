@@ -20,27 +20,8 @@ Supported cloud vendors include:
 - Google Cloud Platform (GCP)
 - Kubernetes (K8s)
 
-## Example Usage
+## Links
 
-```hcl
-terraform {
-  required_providers { iterative = { source = "iterative/iterative" } }
-}
-provider "iterative" {}
-resource "iterative_task" "example" {
-  cloud   = "aws" # or any of: gcp, az, k8s
-  machine = "m"   # medium, or any of: l, xl, m+k80, xl+v100, ...
-
-  storage {
-    workdir = "."
-    output  = "results"
-  }
-  script = <<-END
-    #!/bin/bash
-    mkdir results
-    echo "Hello World!" > results/greeting.txt
-  END
-}
-```
-
--> **Note:** See [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) for more information.
+- [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started)
+  + [Authentication](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication)
+- [Full reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task)
