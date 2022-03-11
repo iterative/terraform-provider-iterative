@@ -7,7 +7,7 @@
 
 TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. Full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
 
-- **Provision Resources**: create cloud compute & storage resources without reading pages of documentation
+- **Provision Resources**: create cloud compute (CPU, GPU, RAM) & storage resources without reading pages of documentation
 - **Sync & Execute**: easily sync & run local data & code in the cloud
 - **Low cost**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
 - **No waste**: auto-cleanup unused resources (terminate compute instances upon job completion/failure & remove storage upon download of results)
