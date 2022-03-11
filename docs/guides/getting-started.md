@@ -4,14 +4,14 @@ page_title: Getting Started
 
 # Getting Started
 
-To use the Iterative Provider you will need to:
+## Requirements
 
 - [Install Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
 - Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
 ## Defining a Task
 
-In the project root directory, create a file named `main.tf` with the following contents:
+In a project root directory, create a file named `main.tf` with the following contents:
 
 ```hcl
 terraform {
@@ -34,7 +34,7 @@ resource "iterative_task" "example" {
 }
 ```
 
-See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task) for a full list of options -- including more information on [`machine` types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type).
+See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#argument-reference) for the full list of options for `main.tf` -- including more information on [`machine` types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type).
 
 -> **Note:** The `script` argument must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>), and can take the form of a [heredoc string](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or [a `file()` function](https://www.terraform.io/docs/language/functions/file.html) function (e.g. `file("task_run.sh")`).
 
@@ -47,20 +47,17 @@ project/
     └── greeting.txt (created in the cloud and downloaded locally)
 ```
 
-## Initializing Terraform
+## Initialise Terraform
 
 ```console
 $ terraform init
 ```
 
-This command will:
-
-1. Download and install the Iterative Provider.
-2. Initialize Terraform in the current directory.
+This command will check `main.tf` and download the required TPI plugin.
 
 ~> **Note:** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
 
-## Launching Tasks
+## Launch Task
 
 ```console
 $ terraform apply
@@ -72,7 +69,7 @@ This command will:
 2. Upload the specified working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
 
-## Viewing Task Statuses
+## View Task Status
 
 ```console
 $ terraform refresh && terraform show
@@ -83,7 +80,7 @@ This command will:
 1. Query the task status from the cloud.
 2. Display the task status.
 
-## Deleting Tasks
+## Stop Task
 
 ```console
 $ terraform destroy
@@ -94,6 +91,6 @@ This command will:
 1. Download the specified output directory from the cloud.
 2. Delete all the cloud resources created by `terraform apply`.
 
-## Viewing Task Results
+## View Task Results
 
 After running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`

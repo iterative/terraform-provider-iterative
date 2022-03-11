@@ -4,9 +4,9 @@
 
 [![docs](https://img.shields.io/badge/-docs-5c4ee5?logo=terraform)](https://registry.terraform.io/providers/iterative/iterative/latest/docs)
 [![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
+[![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE)
 
 TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. Full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
-[![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE)
 
 - **Provision Resources**: create cloud compute & storage resources without reading pages of documentation
 - **Sync & Execute**: easily sync & run local data & code in the cloud
@@ -30,9 +30,9 @@ See the [Getting Started](https://registry.terraform.io/providers/iterative/iter
 - [Install Terraform 1.0 or greater](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
 - Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
 
-### Create a test file
+### Define a Task
 
-Create a file named `main.tf` in an empty directory with the following contents:
+In a project root directory, create a file named `main.tf` with the following contents:
 
 ```hcl
 terraform {
@@ -55,21 +55,19 @@ resource "iterative_task" "example" {
 }
 ```
 
-See the [Reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#argument-reference) for the full list of options for `main.tf`.
+See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#argument-reference) for the full list of options for `main.tf`.
 
-### Initialize the provider
-
-Run this once to pull the latest TPI plugin:
+Run this once (in the directory containing `main.tf`) to download the `required_providers`:
 
 ```console
 terraform init
 ```
 
-### Test the provider
+### Run a Task
 
-```console
-terraform apply
-```
+- `terraform apply`: launch cloud instance(s), upload `workdir`, and run `script`
+- `terraform refresh && terraform show`: query and display cloud status
+- `terraform destroy`: terminate cloud instance(s), download `output`, and remove cloud storage
 
 ## Help
 
