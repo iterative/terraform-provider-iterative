@@ -17,7 +17,9 @@ page_title: Getting Started
     sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     sudo apt-get update && sudo apt-get install terraform
     ```
-- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication)
+- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][authentication]
+
+[authentication]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
 ## Defining a Task
 
@@ -65,7 +67,7 @@ $ terraform init
 
 This command will check `main.tf` and download the required TPI plugin.
 
-~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs#authentication).
+~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables][authentication].
 
 ## Launch Task
 
