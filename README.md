@@ -78,9 +78,10 @@ Have a feature request or found a bug? Let us know via [GitHub issues](https://g
 Instead of using the latest stable release, a local copy of the repository must be used.
 
 1. [Install Go 1.17+](https://golang.org/doc/install)
-2. Clone the repository
+2. Clone the repository & build the provider
    ```console
    git clone https://github.com/iterative/terraform-provider-iterative
    cd terraform-provider-iterative
+   make install
    ```
-3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead)
+3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead), and run `terraform init --upgrade`
