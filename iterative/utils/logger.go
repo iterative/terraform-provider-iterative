@@ -43,7 +43,7 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	if data["d"] == nil {
-		return nil, errors.New("ResourceData is not yet available")
+		return nil, errors.New("ResourceData is not available")
 	}
 
 	d := data["d"].(*schema.ResourceData)
