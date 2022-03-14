@@ -7,8 +7,12 @@ terraform {
   }
 }
 
+variable "aws_region" {
+  description = "Name of the Amazon Web Services region to use"
+}
+
 provider "aws" {
-  region = "us-west-1"
+  region = var.aws_region
 }
 
 resource "aws_iam_user" "task" {
@@ -25,34 +29,24 @@ resource "aws_iam_user_policy" "task" {
   policy = data.aws_iam_policy_document.task.json
 }
 
-data "aws_region" "current" {}
-
-data "aws_partition" "current" {}
-
-data "aws_caller_identity" "current" {}
-
 data "aws_iam_policy_document" "task" {
   statement {
     actions = [
+      "autoscaling:CreateAutoScalingGroup",
+      "autoscaling:DeleteAutoScalingGroup",
       "autoscaling:DescribeAutoScalingGroups",
       "autoscaling:DescribeScalingActivities",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "autoscaling:CreateAutoScalingGroup",
       "autoscaling:UpdateAutoScalingGroup",
-      "autoscaling:DeleteAutoScalingGroup",
-    ]
-    resources = [
-"arn:${data.aws_partition.current.partition}:autoscaling:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:autoScalingGroup:*:autoScalingGroupName/tpi-*",
-    ]
-  }
-
-  statement {
-    actions = [
+      "ec2:AuthorizeSecurityGroupEgress",
+      "ec2:AuthorizeSecurityGroupIngress",
+      "ec2:CancelSpotInstanceRequests",
+      "ec2:CreateKeyPair",
+      "ec2:CreateLaunchTemplate",
+      "ec2:CreateSecurityGroup",
+      "ec2:CreateTags",
+      "ec2:DeleteKeyPair",
+      "ec2:DeleteLaunchTemplate",
+      "ec2:DeleteSecurityGroup",
       "ec2:DescribeAutoScalingGroups",
       "ec2:DescribeImages",
       "ec2:DescribeInstances",
@@ -60,75 +54,26 @@ data "aws_iam_policy_document" "task" {
       "ec2:DescribeLaunchTemplates",
       "ec2:DescribeScalingActivities",
       "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSpotInstanceRequests",
       "ec2:DescribeSubnets",
       "ec2:DescribeVpcs",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "ec2:CreateSecurityGroup",
-      "ec2:DeleteSecurityGroup",
+      "ec2:GetLaunchTemplateData",
+      "ec2:ImportKeyPair",
+      "ec2:ModifyImageAttribute",
+      "ec2:ModifyLaunchTemplate",
+      "ec2:RequestSpotInstances",
       "ec2:RevokeSecurityGroupEgress",
       "ec2:RevokeSecurityGroupIngress",
-      "ec2:AuthorizeSecurityGroupEgress",
-      "ec2:AuthorizeSecurityGroupIngress",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "ec2:ImportKeyPair",
-      "ec2:DeleteKeyPair",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "ec2:CreateLaunchTemplate",
-      "ec2:GetLaunchTemplateData",
-      "ec2:ModifyLaunchTemplate",
-      "ec2:DeleteLaunchTemplate",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
       "ec2:RunInstances",
       "ec2:TerminateInstances",
-      "ec2:*"
-    ]
-    resources = [
-      "*",
-    ]
-  }
-
-
-  statement {
-    actions = [
-      "ec2:CreateTags"
-    ]
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:ListBucket",
       "s3:CreateBucket",
       "s3:DeleteBucket",
-      "s3:GetObject",
-      "s3:PutObject",
       "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:PutObject",
     ]
-    resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::tpi-*",
-    ]
+    resources = ["*"]
   }
 }
 
