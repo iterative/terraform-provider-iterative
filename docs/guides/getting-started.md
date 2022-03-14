@@ -7,10 +7,10 @@ page_title: Getting Started
 ## Requirements
 
 - [Install Terraform 1.0+](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform), e.g.:
-  + Brew (Homebrew/Mac OS): `brew tap hashicorp/tap && brew install hashicorp/tap/terraform`
-  + Choco (Chocolatey/Windows): `choco install terraform`
-  + Conda (Anaconda): `conda install -c conda-forge terraform`
-  + Debian (Ubuntu/Linux):
+  - Brew (Homebrew/Mac OS): `brew tap hashicorp/tap && brew install hashicorp/tap/terraform`
+  - Choco (Chocolatey/Windows): `choco install terraform`
+  - Conda (Anaconda): `conda install -c conda-forge terraform`
+  - Debian (Ubuntu/Linux):
     ```
     sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
     curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -

@@ -23,5 +23,5 @@ Supported cloud vendors include:
 ## Links
 
 - [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started)
-  + [Authentication](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication)
+  - [Authentication](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication)
 - [Full reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task)
