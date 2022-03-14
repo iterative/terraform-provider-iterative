@@ -31,8 +31,9 @@ terraform {
 }
 provider "iterative" {}
 resource "iterative_task" "example" {
-  cloud   = "aws" # or any of: gcp, az, k8s
-  machine = "m"   # medium, or any of: l, xl, m+k80, xl+v100, ...
+  cloud      = "aws" # or any of: gcp, az, k8s
+  machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
+  spot       = 0     # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
 
   storage {
     workdir = "."
@@ -69,7 +70,7 @@ This command will check `main.tf` and download the required TPI plugin.
 
 ~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables][authentication].
 
-## Launch Task
+## Run Task
 
 ```console
 $ terraform apply
@@ -78,16 +79,18 @@ $ terraform apply
 This command will:
 
 1. Create all the required cloud resources.
-2. Upload the specified working directory (`workdir`) to the cloud.
+2. Upload the working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
 
-## View Task Status
+With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
+
+## Query Status
 
 ```console
 $ terraform refresh && terraform show
 ```
 
-This command will:
+These commands will:
 
 1. Query the task status from the cloud.
 2. Display the task status.
@@ -100,9 +103,7 @@ $ terraform destroy
 
 This command will:
 
-1. Download the specified output directory from the cloud.
+1. Download the `output` directory from the cloud.
 2. Delete all the cloud resources created by `terraform apply`.
 
-## View Task Results
-
-After running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
+In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`

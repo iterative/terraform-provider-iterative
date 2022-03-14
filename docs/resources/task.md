@@ -13,11 +13,11 @@ This resource will:
 resource "iterative_task" "example" {
   name        = "example"
   cloud       = "aws"
-  machine     = "m"       # medium, or any of: l, xl, m+k80, xl+v100, ...
+  machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"
   region      = "us-east"
   disk_size   = 30        # GB
-  spot        = 0         # auto-price
+  spot        = 0         # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
   parallelism = 1
   timeout     = 3600      # max 1h idle
 
@@ -47,7 +47,7 @@ resource "iterative_task" "example" {
 - `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
 - `machine` - (Optional) See [Machine Types](#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
-- `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: fixed price.
+- `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
 - `image` - (Optional) [Machine image](#machine-images) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.

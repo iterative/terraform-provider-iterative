@@ -48,8 +48,9 @@ terraform {
 }
 provider "iterative" {}
 resource "iterative_task" "example" {
-  cloud   = "aws" # or any of: gcp, az, k8s
-  machine = "m"   # medium, or any of: l, xl, m+k80, xl+v100, ...
+  cloud      = "aws" # or any of: gcp, az, k8s
+  machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
+  spot       = 0     # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
 
   storage {
     workdir = "."
@@ -67,7 +68,7 @@ See [the reference](https://registry.terraform.io/providers/iterative/iterative/
 
 Run this once (in the directory containing `main.tf`) to download the `required_providers`:
 
-```console
+```
 terraform init
 ```
 
@@ -89,7 +90,7 @@ Instead of using the latest stable release, a local copy of the repository must 
 
 1. [Install Go 1.17+](https://golang.org/doc/install)
 2. Clone the repository & build the provider
-   ```console
+   ```
    git clone https://github.com/iterative/terraform-provider-iterative
    cd terraform-provider-iterative
    make install
