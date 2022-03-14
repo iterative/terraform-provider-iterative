@@ -1,4 +1,4 @@
-![TPI](https://static.iterative.ai/img/cml/banner-terraform.png)
+![TPI](https://static.iterative.ai/img/cml/banner-tpi.svg)
 
 # Terraform Provider Iterative (TPI)
 
