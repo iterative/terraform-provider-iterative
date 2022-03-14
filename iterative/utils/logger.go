@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/sirupsen/logrus"
 )
 
 var baseTimestamp = time.Now()
@@ -38,6 +40,10 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	data := make(logrus.Fields)
 	for k, v := range entry.Data {
 		data[k] = v
+	}
+
+	if data["d"] == nil {
+		return nil, errors.New("ResourceData is not yet available")
 	}
 
 	d := data["d"].(*schema.ResourceData)
