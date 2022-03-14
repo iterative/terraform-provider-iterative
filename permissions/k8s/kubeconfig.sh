@@ -28,6 +28,6 @@ TOKEN="$(
     kubectl config set-credentials task --token="$TOKEN"
     kubectl config set-context cluster --cluster=cluster --user=task
     kubectl config use-context cluster
-  } > /dev/null
+  } >/dev/null
   cat "$KUBECONFIG" && rm "$KUBECONFIG"
 )
