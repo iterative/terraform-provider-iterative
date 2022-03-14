@@ -1,3 +1,4 @@
+#!/bin/bash
 
 SERVER="$(
   kubectl config view --raw --flatten --output \
@@ -10,7 +11,7 @@ AUTHORITY="$(
 )"
 
 SECRET="$(
-  kubectl get serviceaccount task1 --output \
+  kubectl get serviceaccount task --output \
     jsonpath="{.secrets[0].name}"
 )"
 
@@ -24,9 +25,9 @@ TOKEN="$(
   {
     kubectl config set-cluster cluster --server="https://$SERVER"
     kubectl config set clusters.cluster.certificate-authority-data "$AUTHORITY"
-    kubectl config set-credentials task1 --token="$TOKEN"
-    kubectl config set-context cluster --cluster=cluster --user=task1
+    kubectl config set-credentials task --token="$TOKEN"
+    kubectl config set-context cluster --cluster=cluster --user=task
     kubectl config use-context cluster
   } > /dev/null
-  cat "$KUBECONFIG" && rm "$_"
+  cat "$KUBECONFIG" && rm "$KUBECONFIG"
 )

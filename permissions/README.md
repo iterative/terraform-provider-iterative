@@ -32,8 +32,3 @@ Follow these guides to learn how to authenticate with your cloud provider:
 
 * Run `kubectl apply --filename main.yml` in the `k8s` directory
 * Set the [`KUBECONFIG_DATA`](https://registry.terraform.io/providers/iterative/iterative/latest/docs#KUBECONFIG_DATA) environment variable to the value returned by the `kubeconfig.sh` script
-
-> :bulb: Use the following oneliner to set and export all the variables at once:
-> ```
-> eval "$(terraform output --json | jq --raw-output 'to_entries[]|"export \(.key|ascii_upcase)=\(.value.value|@sh)"')"
-> ```
