@@ -43,46 +43,7 @@ Google Cloud — Service Account + Role — replace `task-project` below with th
 If required, authentication can be configured through a narrowly scoped service account inside an ad-hoc namespace. Applying the following definitions will create a new namespace and an equally named service account, along with the required roles and role bindings:
 
 ```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: task
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  namespace: task
-  name: task
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: task
-  name: task
-rules:
-  -
-    apiGroups:
-      - ""
-      - apps
-      - batch
-    resources:
-      - jobs
-      - pods
-    verbs: ["*"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  namespace: task
-  name: task
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: task
-subjects:
-- kind: ServiceAccount
-  namespace: task
-  name: task
+
 
 ```
 
@@ -95,29 +56,29 @@ After applying the above configuration, you can generate the required `kubeconfi
 
 ```bash
 SERVER="$(
-  kubectl get endpoints --output \\
+  kubectl get endpoints --output \
     jsonpath="{.items[0].subsets[0].addresses[0].ip}"
 )"
 
 AUTHORITY="$(
-  kubectl config view --raw --minify --flatten --output \\
+  kubectl config view --raw --minify --flatten --output \
     jsonpath='{.clusters[].cluster.certificate-authority-data}'
 )"
 
 SECRET="$(
-  kubectl --namespace=task get serviceaccount task --output \\
+  kubectl --namespace=task get serviceaccount task --output \
     jsonpath="{.secrets[0].name}"
 )"
 
 TOKEN="$(
-  kubectl get secret "$SECRET" --namespace=task --output \\
+  kubectl get secret "$SECRET" --namespace=task --output \
     jsonpath="{.data.token}" | base64 --decode
 )"
 
 (
   export KUBECONFIG="$(mktemp)"
   {
-    kubectl config set-cluster cluster --server="<https://$SERVER>"
+    kubectl config set-cluster cluster --server="https://$SERVER"
     kubectl config set clusters.cluster.certificate-authority-data "$AUTHORITY"
     kubectl config set-credentials task --token="$TOKEN"
     kubectl config set-context cluster --cluster=cluster --namespace=task --user=task

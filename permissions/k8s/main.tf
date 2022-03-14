@@ -7,6 +7,8 @@ terraform {
   }
 }
 
+variable "k8s_server" {}
+
 provider "kubernetes" {
   config_path = pathexpand("~/.kube/config")
 }
@@ -22,6 +24,12 @@ resource "kubernetes_service_account" "task1" {
 }
 
 resource "kubernetes_secret" "task1" {
+  metadata {
+    name = "task1"
+  }
+}
+
+data "kubernetes_secret" "task1" {
   metadata {
     name = "task1"
   }
@@ -65,7 +73,7 @@ output "kubeconfig_data" {
     clusters = [{
       cluster = {
         "certificate-authority-data" = lookup(kubernetes_secret.task1.data, "ca.crt", null)
-        server                       = var.server
+        server                       = var.k8s_server
       }
       name = "cluster"
     }]
@@ -73,7 +81,7 @@ output "kubeconfig_data" {
       context = {
         cluster   = "cluster"
         namespace = lookup(kubernetes_secret.task1.data, "namespace", null)
-        user      = kubernetes_service_account.task1.metadata.name
+        user      = kubernetes_service_account.task1.metadata.0.name
       }
       name = "cluster"
     }]
@@ -81,7 +89,7 @@ output "kubeconfig_data" {
     kind              = "Config"
     preferences       = {}
     users = [{
-      name = kubernetes_service_account.task1.metadata.name
+      name = kubernetes_service_account.task1.metadata.0.name
       user = {
         token = lookup(kubernetes_secret.task1.data, "token", null)
       }
