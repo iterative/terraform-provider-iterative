@@ -16,10 +16,8 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/sync"
-
 	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
 	"terraform-provider-iterative/task/common/ssh"
 	"terraform-provider-iterative/task/k8s/client"
 	"terraform-provider-iterative/task/k8s/resources"
@@ -177,7 +175,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			return err
 		}
 		log.Println("[INFO] Downloading Directory...")
-		if err := t.Pull(ctx, t.Attributes.DirectoryOut); err != nil {
+		if err := t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut); err != nil {
 			return err
 		}
 
@@ -221,7 +219,7 @@ func (t *Task) Push(ctx context.Context, source string) error {
 	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
 }
 
-func (t *Task) Pull(ctx context.Context, destination string) error {
+func (t *Task) Pull(ctx context.Context, destination, include string) error {
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.GetObjectMeta().GetLabels()["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Delete, t.Client.Namespace, waitSelector)
 	if err != nil {
@@ -244,21 +242,7 @@ func (t *Task) Pull(ctx context.Context, destination string) error {
 		return err
 	}
 
-	sourceFileSystem, err := fs.NewFs(ctx, dir)
-	if err != nil {
-		return err
-	}
-
-	destinationFileSystem, err := fs.NewFs(ctx, destination)
-	if err != nil {
-		return err
-	}
-
-	if err := sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true); err != nil {
-		return err
-	}
-
-	return nil
+	return machine.Transfer(ctx, dir, destination, include)
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {

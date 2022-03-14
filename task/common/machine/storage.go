@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,8 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 
 	"terraform-provider-iterative/task/common"
@@ -88,7 +91,25 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 	return initialStatus, nil
 }
 
-func Transfer(ctx context.Context, source, destination string) error {
+func Transfer(ctx context.Context, source, destination string, include string) error {
+	include = filepath.Clean(include)
+	if filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
+		return errors.New("storage.output must be inside storage.workdir")
+	}
+
+	rules := []string{
+		"+ /" + include,
+		"+ /" + include + "/**",
+		"- **",
+	}
+
+	ctx, fi := filter.AddConfig(ctx)
+	for _, rule := range rules {
+		if err := fi.AddRule(rule); err != nil {
+			return err
+		}
+	}
+
 	sourceFileSystem, err := fs.NewFs(ctx, source)
 	if err != nil {
 		return err
@@ -99,8 +120,31 @@ func Transfer(ctx context.Context, source, destination string) error {
 		return err
 	}
 
-	if err := sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true); err != nil {
+	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
+}
+
+func Delete(ctx context.Context, destination string) error {
+	destinationFileSystem, err := fs.NewFs(ctx, destination)
+	if err != nil {
 		return err
+	}
+
+	actions := []func(context.Context) error{
+		func(ctx context.Context) error {
+			return operations.Delete(ctx, destinationFileSystem)
+		},
+		func(ctx context.Context) error {
+			return operations.Rmdirs(ctx, destinationFileSystem, "", true)
+		},
+	}
+
+	for _, action := range actions {
+		if err := action(ctx); err != nil {
+			if !errors.Is(err, fs.ErrorDirNotFound) && !strings.Contains(err.Error(), "no such host") {
+				return common.NotFoundError
+			}
+			return err
+		}
 	}
 
 	return nil

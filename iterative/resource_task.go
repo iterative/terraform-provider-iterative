@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"terraform-provider-iterative/iterative/utils"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
@@ -108,12 +108,12 @@ func resourceTask() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 			},
-			"workdir": {
+			"storage": {
 				Optional: true,
 				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"input": {
+						"workdir": {
 							Type:     schema.TypeString,
 							ForceNew: true,
 							Optional: true,
@@ -234,8 +234,13 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diagnostic(diags, err, diag.Warning)
 	}
 	d.Set("logs", logs)
-
 	d.SetId(task.GetIdentifier(ctx).Long())
+
+	logger := utils.TpiLogger(d)
+	logger.Info("instance")
+	logger.Info("logs")
+	logger.Info("status")
+
 	return diags
 }
 
@@ -283,14 +288,10 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 
 	directory := ""
 	directory_out := ""
-	if d.Get("workdir").(*schema.Set).Len() > 0 {
-		storage := d.Get("workdir").(*schema.Set).List()[0].(map[string]interface{})
-		directory = storage["input"].(string)
-
+	if d.Get("storage").(*schema.Set).Len() > 0 {
+		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
+		directory = storage["workdir"].(string)
 		directory_out = storage["output"].(string)
-		if directory_out != "" && !isOutputValid(directory_out) {
-			return nil, errors.New("output directory " + directory_out + " is not empty!")
-		}
 	}
 
 	t := common.Task{
@@ -339,18 +340,4 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
-}
-
-func isOutputValid(path string) bool {
-	f, err := os.Open(path)
-	if err != nil {
-		return true
-	}
-	defer f.Close()
-
-	_, err = f.Readdir(1)
-	if err == io.EOF {
-		return true
-	}
-	return false
 }
