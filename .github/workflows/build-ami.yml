@@ -1,7 +1,8 @@
 name: build-ami
 on: 
   push:
-    tags: ['ami*']
+    branches: [master]
+    paths: [environment]
 jobs:
   build-ami:
     runs-on: ubuntu-latest
