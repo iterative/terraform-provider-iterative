@@ -51,6 +51,7 @@ resource "iterative_task" "example" {
   cloud      = "aws" # or any of: gcp, az, k8s
   machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
   spot       = 0     # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
+  disk_size  = 30    # GB
 
   storage {
     workdir = "."
@@ -72,11 +73,32 @@ Run this once (in the directory containing `main.tf`) to download the `required_
 terraform init
 ```
 
-### Run a Task
+### Run Task
 
-- `terraform apply`: launch cloud instance(s), upload `workdir`, and run `script`
-- `terraform refresh && terraform show`: query and display cloud status
-- `terraform destroy`: terminate cloud instance(s), download `output`, and remove cloud storage
+```
+terraform apply
+```
+
+This launches a `machine` in the `cloud`, uploads `workdir`, and runs the `script`. Upon completion (or error), the `machine` is terminated.
+
+With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
+
+### Query Status
+
+Results and logs are periodically synced to persistent cloud storage. To query this status and view logs:
+
+```
+terraform refresh
+terraform show
+```
+
+### Stop Tasks
+
+```
+terraform destroy
+```
+
+This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
 
 ## Help
 

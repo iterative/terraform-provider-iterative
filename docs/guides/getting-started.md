@@ -34,6 +34,7 @@ resource "iterative_task" "example" {
   cloud      = "aws" # or any of: gcp, az, k8s
   machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
   spot       = 0     # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
+  disk_size  = 30    # GB
 
   storage {
     workdir = "."
