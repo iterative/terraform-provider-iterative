@@ -79,7 +79,7 @@ source "amazon-ebs" "source" {
   ami_name        = var.image_name
   ami_description = var.image_description
   ami_regions     = local.aws_release_regions
-
+  
   region        = var.aws_build_region
   instance_type = var.aws_build_instance
 
@@ -89,13 +89,15 @@ source "amazon-ebs" "source" {
   security_group_id = var.aws_security_group_id
   subnet_id         = var.aws_subnet_id
 
+  encrypt_boot = true
+
   force_delete_snapshot = true
   force_deregister      = true
 
   tags            = local.aws_tags
   run_tags        = local.aws_tags
   run_volume_tags = local.aws_tags
-
+  
   assume_role {
     role_arn     = var.aws_role_arn
     session_name = var.aws_role_session_name
