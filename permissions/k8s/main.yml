@@ -8,8 +8,7 @@ kind: Role
 metadata:
   name: task
 rules:
-  -
-    apiGroups:
+  - apiGroups:
       - ""
       - apps
       - batch
@@ -30,5 +29,5 @@ roleRef:
   kind: Role
   name: task
 subjects:
-- kind: ServiceAccount
-  name: task
+  - kind: ServiceAccount
+    name: task
