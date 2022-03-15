@@ -69,6 +69,6 @@ Either one of:
 Alternatively, authenticate with your local `kubeconfig` file and run the following commands in the [`docs/guides/permissions/k8s`](https://github.com/iterative/terraform-provider-iterative/tree/master/docs/guides/permissions/k8s) directory.
 
 ```bash
-terraform init && terraform apply
+kubectl apply --filename main.yml
 export KUBECONFIG_DATA="$(bash kubeconfig.sh)"
 ```
