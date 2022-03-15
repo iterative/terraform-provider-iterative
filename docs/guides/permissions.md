@@ -1,6 +1,10 @@
+---
+page_title: Permissions
+---
+
 # Permissions
 
-This directory contains sample roles and permissions to use TPI in all the supported cloud providers.
+The [docs/permissions](https://github.com/iterative/terraform-provider-iterative/tree/master/docs/permissions) directory contains sample roles and permissions to use TPI in all the supported cloud providers.
 
 ### Authenticating for the first time
 
