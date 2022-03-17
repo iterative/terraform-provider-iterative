@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: task
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: task
+rules:
+  - apiGroups:
+      - ""
+      - apps
+      - batch
+    resources:
+      - configmaps
+      - events
+      - jobs
+      - persistentvolumeclaims
+      - pods
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: task
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: task
+subjects:
+  - kind: ServiceAccount
+    name: task
