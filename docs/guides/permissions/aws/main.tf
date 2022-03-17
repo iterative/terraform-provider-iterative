@@ -15,11 +15,9 @@ provider "aws" {
 resource "aws_iam_user" "task" {
   name = "task"
 }
-
 resource "aws_iam_access_key" "task" {
   user = aws_iam_user.task.name
 }
-
 resource "aws_iam_user_policy" "task" {
   name   = aws_iam_user.task.name
   user   = aws_iam_user.task.name
@@ -77,7 +75,6 @@ data "aws_iam_policy_document" "task" {
 output "aws_access_key_id" {
   value = aws_iam_access_key.task.id
 }
-
 output "aws_secret_access_key" {
   value     = aws_iam_access_key.task.secret
   sensitive = true

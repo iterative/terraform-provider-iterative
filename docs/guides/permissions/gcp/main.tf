@@ -17,21 +17,17 @@ data "google_project" "current" {}
 resource "google_service_account" "task" {
   account_id = "task-service-account"
 }
-
 resource "google_service_account_key" "task" {
   service_account_id = google_service_account.task.email
 }
-
 resource "google_project_iam_binding" "task" {
   project = data.google_project.current.project_id
   role    = "projects/${data.google_project.current.project_id}/roles/${google_project_iam_custom_role.task.role_id}"
   members = ["serviceAccount:${google_service_account.task.email}"]
 }
-
 resource "google_project_iam_custom_role" "task" {
   role_id = replace("${google_service_account.task.account_id}-role", "-", "_")
   title   = replace("${google_service_account.task.account_id}-role", "-", "_")
-
   permissions = [
     "compute.acceleratorTypes.get",
     "compute.diskTypes.get",

@@ -6,34 +6,28 @@ terraform {
 }
 
 provider "azuread" {}
-
 provider "azurerm" {
   features {}
 }
 
 data "azuread_client_config" "current" {}
-
 data "azurerm_subscription" "current" {}
 
 resource "azuread_application" "task" {
   display_name = "task"
   owners       = [data.azuread_client_config.current.object_id]
 }
-
 resource "azuread_application_password" "task" {
   application_object_id = azuread_application.task.object_id
 }
-
 resource "azuread_service_principal" "task" {
   application_id               = azuread_application.task.application_id
   app_role_assignment_required = false
   owners                       = [data.azuread_client_config.current.object_id]
 }
-
 resource "azurerm_role_definition" "task" {
   name  = azuread_application.task.display_name
   scope = data.azurerm_subscription.current.id
-
   permissions {
     actions = [
       "Microsoft.Compute/virtualMachineScaleSets/delete",
@@ -88,7 +82,6 @@ resource "azurerm_role_definition" "task" {
     ]
   }
 }
-
 resource "azurerm_role_assignment" "task" {
   name               = azurerm_role_definition.task.name
   principal_id       = azuread_service_principal.task.object_id
@@ -99,15 +92,12 @@ resource "azurerm_role_assignment" "task" {
 output "azure_subscription_id" {
   value = basename(data.azurerm_subscription.current.id)
 }
-
 output "azure_tenant_id" {
   value = data.azurerm_subscription.current.tenant_id
 }
-
 output "azure_client_id" {
   value = azuread_application.task.application_id
 }
-
 output "azure_client_secret" {
   value     = azuread_application_password.task.value
   sensitive = true
