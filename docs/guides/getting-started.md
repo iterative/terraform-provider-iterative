@@ -7,6 +7,7 @@ page_title: Getting Started
 ## Requirements
 
 - [Install Terraform 1.0+](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform), e.g.:
+
   - Brew (Homebrew/Mac OS): `brew tap hashicorp/tap && brew install hashicorp/tap/terraform`
   - Choco (Chocolatey/Windows): `choco install terraform`
   - Conda (Anaconda): `conda install -c conda-forge terraform`
@@ -18,6 +19,7 @@ page_title: Getting Started
     sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     sudo apt-get update && sudo apt-get install terraform
     ```
+
 - Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][authentication]
 
 [authentication]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
