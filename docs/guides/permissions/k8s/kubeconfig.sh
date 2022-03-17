@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euxo pipefail
 SERVER="$(
   kubectl config view --raw --flatten --output \
     jsonpath='{.clusters[0].cluster.server}'

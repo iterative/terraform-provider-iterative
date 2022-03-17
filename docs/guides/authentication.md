@@ -4,11 +4,11 @@ page_title: Authentication
 
 # Authentication
 
-Environment variables are the only supported authentication method. They should be present when running any of the `terraform` commands. For example:
+Environment variables are the only supported authentication method, and should be present when running any `terraform` command. For example:
 
 ```bash
-$ export GOOGLE_APPLICATION_CREDENTIALS_DATA="$(cat service_account.json)"
-$ terraform apply
+export GOOGLE_APPLICATION_CREDENTIALS_DATA="$(cat service_account.json)"
+terraform apply
 ```
 
 ## Amazon Web Services
