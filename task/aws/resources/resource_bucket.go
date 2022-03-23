@@ -30,9 +30,11 @@ type Bucket struct {
 func (b *Bucket) Create(ctx context.Context) error {
 	createInput := s3.CreateBucketInput{
 		Bucket: aws.String(b.Identifier),
-		CreateBucketConfiguration: &types.CreateBucketConfiguration{
-			LocationConstraint: types.BucketLocationConstraint(b.Client.Region),
-		},
+		CreateBucketConfiguration: &types.CreateBucketConfiguration{},
+	}
+	
+	if b.Client.Region != "us-east-1" {
+		createInput.CreateBucketConfiguration.LocationConstraint = types.BucketLocationConstraint(b.Client.Region)
 	}
 
 	if _, err := b.Client.Services.S3.CreateBucket(ctx, &createInput); err != nil {
