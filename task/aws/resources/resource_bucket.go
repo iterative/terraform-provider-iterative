@@ -76,15 +76,52 @@ func (b *Bucket) Update(ctx context.Context) error {
 }
 
 func (b *Bucket) Delete(ctx context.Context) error {
-	input := s3.DeleteBucketInput{
+	listInput := s3.ListObjectsV2Input{
 		Bucket: aws.String(b.Identifier),
 	}
 
-	if _, err := b.Client.Services.S3.DeleteBucket(ctx, &input); err != nil {
-		var e smithy.APIError
-		if errors.As(err, &e) && e.ErrorCode() != "NoSuchBucket" {
+	for paginator := s3.NewListObjectsV2Paginator(b.Client.Services.S3, &listInput); paginator.HasMorePages(); {
+		page, err := paginator.NextPage(ctx)
+
+		if err != nil {
+			var e smithy.APIError
+			if errors.As(err, &e) && e.ErrorCode() == "NoSuchBucket" {
+				b.Resource = nil
+				return nil
+			}
 			return err
 		}
+
+		if len(page.Contents) == 0 {
+			break
+		}
+
+		var objects []types.ObjectIdentifier
+		for _, object := range page.Contents {
+			objects = append(objects, types.ObjectIdentifier{
+				Key: object.Key,
+			})
+		}
+
+		input := s3.DeleteObjectsInput{
+			Bucket: aws.String(b.Identifier),
+			Delete: &types.Delete{
+				Objects: objects,
+			},
+		}
+
+		if _, err = b.Client.Services.S3.DeleteObjects(ctx, &input); err != nil {
+			return err
+		}
+	}
+
+	deleteInput := s3.DeleteBucketInput{
+		Bucket: aws.String(b.Identifier),
+	}
+
+	_, err := b.Client.Services.S3.DeleteBucket(ctx, &deleteInput)
+	if err != nil {
+		return err
 	}
 
 	b.Resource = nil
