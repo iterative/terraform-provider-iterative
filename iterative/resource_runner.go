@@ -341,7 +341,7 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{.runner_startup_script}}
 {{- end}}
 
-HOME="$(mktemp -d)" exec $(which cml-runner || echo "cml runner") \
+HOME="$(mktemp -d)" exec $(which cml-runner || echo $(which cml-internal || echo cml) runner) \
   {{if .name}} --name {{escape .name}}{{end}} \
   {{if .labels}} --labels {{escape .labels}}{{end}} \
   {{if .idle_timeout}} --idle-timeout {{escape .idle_timeout}}{{end}} \
