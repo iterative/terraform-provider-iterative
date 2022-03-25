@@ -45,7 +45,7 @@ func getGHCML(v string) string {
 sudo curl --location --url %s --output /opt/cml/cml-linux
 sudo chmod +x /opt/cml/cml-linux
 sudo ln -s /opt/cml/cml-linux /usr/bin/cml
-sudo ln /opt/cml/cml-linux /usr/bin/cml-internal`, v)
+sudo ln /opt/cml/cml-linux /usr/bin/cml-internal`, v) # hard link to fix cml#920
 }
 
 func getNPMCML(v string) string {
