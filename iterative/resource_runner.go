@@ -276,7 +276,7 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if err != nil {
-		diags = append(diags, diag.Diagnostic{
+		diags = append(resourceMachineDelete(ctx, d, m), diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Error checking the runner status"),
 			Detail:   logEvents,
