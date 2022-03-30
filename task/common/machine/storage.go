@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	units "github.com/docker/go-units"
+
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
 	_ "github.com/rclone/rclone/backend/local"
@@ -18,6 +20,8 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/common"
 )
@@ -117,6 +121,12 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 
 	destinationFileSystem, err := fs.NewFs(ctx, destination)
 	if err != nil {
+		return err
+	}
+	
+	if count, size, err := operations.Count(ctx, sourceFileSystem); err == nil {
+		logrus.Infof("Transferring %d files with a total size of %s; this may take a while", count, units.HumanSize(float64(size)))
+	} else {
 		return err
 	}
 
