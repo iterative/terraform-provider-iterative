@@ -85,7 +85,7 @@ This command will:
 
 With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
 
--> **Note:** Uploading the `workdir` may take a long time, depending on the quantity and size of the files it contains.
+-> **Note:** A large `workdir` may take a long time to upload.
 
 ## Query Status
 
