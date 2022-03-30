@@ -125,7 +125,7 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 	}
 
 	if count, size, err := operations.Count(ctx, sourceFileSystem); err == nil {
-		logrus.Infof("Transferring %d files with a total size of %s; this may take a while", count, units.HumanSize(float64(size)))
+		logrus.Infof("Transferring %s (%d files)...", units.HumanSize(float64(size)), count)
 	} else {
 		return err
 	}
