@@ -77,7 +77,7 @@ This command will check `main.tf` and download the required TPI plugin.
 ## Run Task
 
 ```console
-$ terraform apply
+$ TF_LOG_PROVIDER=INFO terraform apply
 ```
 
 This command will:
@@ -95,7 +95,8 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 ## Query Status
 
 ```console
-$ terraform refresh && terraform show
+$ TF_LOG_PROVIDER=INFO terraform refresh
+$ TF_LOG_PROVIDER=INFO terraform show
 ```
 
 These commands will:
@@ -103,10 +104,12 @@ These commands will:
 1. Query the task status from the cloud.
 2. Display the task status.
 
+-> **Note**: Use `TF_LOG_PROVIDER=DEBUG` in lieu of `INFO` to increase verbosity for debugging. See the [logging docs](https://www.terraform.io/plugin/log/managing) for a full list of options.
+
 ## Stop Task
 
 ```console
-$ terraform destroy
+$ TF_LOG_PROVIDER=INFO terraform destroy
 ```
 
 This command will:

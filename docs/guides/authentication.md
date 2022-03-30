@@ -8,6 +8,7 @@ Environment variables are the only supported authentication method, and should b
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS_DATA="$(cat service_account.json)"
+export TF_LOG_PROVIDER=INFO
 terraform apply
 ```
 
@@ -22,6 +23,7 @@ See the [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli
 Alternatively, for more idiomatic or advanced use cases, follow the [Terraform AWS provider documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration) and run the following commands in the [`permissions/aws`](https://github.com/iterative/terraform-provider-iterative/tree/master/docs/guides/permissions/aws) directory:
 
 ```bash
+export TF_LOG_PROVIDER=INFO
 terraform init && terraform apply
 export AWS_ACCESS_KEY_ID="$(terraform output --raw aws_access_key_id)"
 export AWS_SECRET_ACCESS_KEY="$(terraform output --raw aws_secret_access_key)"
@@ -39,6 +41,7 @@ See the [Azure documentation](https://docs.microsoft.com/en-us/python/api/azure-
 Alternatively, for more idiomatic or advanced use cases, follow the [Terraform Azure provider documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/azure_cli) and run the following commands in the [`permissions/az`](https://github.com/iterative/terraform-provider-iterative/tree/master/docs/guides/permissions/az) directory:
 
 ```bash
+export TF_LOG_PROVIDER=INFO
 terraform init && terraform apply
 export AZURE_TENANT_ID="$(terraform output --raw azure_tenant_id)"
 export AZURE_SUBSCRIPTION_ID="$(terraform output --raw azure_subscription_id)"
@@ -55,6 +58,7 @@ See the [GCP documentation](https://cloud.google.com/docs/authentication/getting
 Alternatively, for more idiomatic or advanced use cases, follow the [Terraform GCP provider documentation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/getting_started) and run the following commands in the [`permissions/gcp`](https://github.com/iterative/terraform-provider-iterative/tree/master/docs/guides/permissions/gcp) directory:
 
 ```bash
+export TF_LOG_PROVIDER=INFO
 terraform init && terraform apply
 export GOOGLE_APPLICATION_CREDENTIALS_DATA="$(terraform output --raw google_application_credentials_data)"
 ```
@@ -70,5 +74,6 @@ Alternatively, authenticate with a local `kubeconfig` file and run the following
 
 ```bash
 kubectl apply --filename main.yml
+export TF_LOG_PROVIDER=INFO
 export KUBECONFIG_DATA="$(bash kubeconfig.sh)"
 ```
