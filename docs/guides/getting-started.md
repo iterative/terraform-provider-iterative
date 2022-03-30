@@ -111,4 +111,4 @@ This command will:
 
 In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
 
--> **Note:** Downloading the results may take a long time, depending on the quantity and size of the new/modified files inside the `output` directory.
+-> **Note:** A large `output` directory may take a long time to download.
