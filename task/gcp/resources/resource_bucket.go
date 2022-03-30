@@ -61,25 +61,11 @@ func (b *Bucket) Update(ctx context.Context) error {
 }
 
 func (b *Bucket) Delete(ctx context.Context) error {
-	if b.Read(ctx) == common.NotFoundError {
-		return nil
-	}
-
-	deletePage := func(objects *storage.Objects) error {
-		for _, object := range objects.Items {
-			if err := b.Client.Services.Storage.Objects.Delete(b.Identifier, object.Name).Do(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	if err := b.Client.Services.Storage.Objects.List(b.Identifier).Pages(ctx, deletePage); err != nil {
-		return err
-	}
-
 	if err := b.Client.Services.Storage.Buckets.Delete(b.Identifier).Do(); err != nil {
-		return err
+		var e *googleapi.Error
+		if errors.As(err, &e) && e.Code != 404 {
+			return err
+		}
 	}
 
 	b.Resource = nil
