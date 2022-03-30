@@ -132,7 +132,7 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 		return err
 	}
 
-	defer progress(2*time.Second)()
+	defer progress(2 * time.Second)()
 
 	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
 }
@@ -165,26 +165,26 @@ func Delete(ctx context.Context, destination string) error {
 }
 
 func progress(interval time.Duration) func() {
-		accounting.GlobalStats().ResetCounters()
-		ci := fs.GetConfig(context.Background())
-		ci.StatsOneLine = true
+	accounting.GlobalStats().ResetCounters()
+	ci := fs.GetConfig(context.Background())
+	ci.StatsOneLine = true
 
-		ticker := time.NewTicker(interval)
-		done := make(chan bool)
+	ticker := time.NewTicker(interval)
+	done := make(chan bool)
 
-		go func() {
-			for {
-				select {
-				case <-ticker.C:
-					logrus.Info(accounting.GlobalStats().String())
-				case <-done:
-					ticker.Stop()
-					return
-				}
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				logrus.Info(accounting.GlobalStats().String())
+			case <-done:
+				ticker.Stop()
+				return
 			}
-		}()
-
-		return func() {
-			done <- true
 		}
+	}()
+
+	return func() {
+		done <- true
+	}
 }
