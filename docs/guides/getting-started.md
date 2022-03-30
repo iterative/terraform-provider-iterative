@@ -85,6 +85,8 @@ This command will:
 
 With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
 
+-> **Note:** A large `workdir` may take a long time to upload.
+
 ## Query Status
 
 ```console
@@ -108,3 +110,5 @@ This command will:
 2. Delete all the cloud resources created by `terraform apply`.
 
 In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
+
+-> **Note:** A large `output` directory may take a long time to download.
