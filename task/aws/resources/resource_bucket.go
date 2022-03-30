@@ -81,7 +81,7 @@ func (b *Bucket) Delete(ctx context.Context) error {
 	input := s3.DeleteBucketInput{
 		Bucket: aws.String(b.Identifier),
 	}
-	
+
 	if _, err := b.Client.Services.S3.DeleteBucket(ctx, &input); err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() != "NoSuchBucket" {
