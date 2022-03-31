@@ -68,6 +68,13 @@ In addition to all arguments above, the following attributes are exported:
 - `events` - List of events for the machine orchestrator.
 - `logs` - List with task logs; one for each machine.
 
+After `terraform apply`, these attributes may be obtained using `terraform show` or `terraform console`. For example:
+
+```console
+$ terraform show -json | jq -r .values.root_module.resources[0].values.logs[0]
+$ echo "iterative_task.example.logs[0]" | terraform console
+```
+
 ~> **Warning:** `events` have different formats across cloud providers and cannot be relied on for programmatic consumption/automation.
 
 ## Machine Type
