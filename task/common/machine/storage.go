@@ -132,7 +132,7 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 		return err
 	}
 
-	defer progress(2 * time.Second)()
+	defer progress(10 * time.Second)()
 
 	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
 }
