@@ -124,3 +124,20 @@ In this example, after running `terraform destroy`, the `results` directory shou
 Use `TF_LOG_PROVIDER=DEBUG` in lieu of `INFO` to increase verbosity for debugging. See the [logging docs](https://www.terraform.io/plugin/log/managing) for a full list of options.
 
 In case of errors within the `script` itself, both `stdout` and `stderr` are available from the [status](#query-status).
+
+Advanced users may also want to SSH to debug failed scripts. This means preventing TPI from terminating the instance on `script` errors. For example:
+
+```hcl
+timeout     = 86400                  # 24h
+environment = { GITHUB_ACTOR = "" }  # optional: GitHub username
+script      = <<-END
+  #!/bin/bash
+  trap 'echo script error: waiting 24h for debugging over SSH. Run \"terraform destroy\" to stop waiting; sleep 24h' ERR
+  # optional: allow GitHub user's ssh keys.
+  # alternatively, use `ssh_private_key` and `addresses` from
+  # https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#attribute-reference
+  echo "$(curl https://github.com/${GITHUB_ACTOR}.keys)" >> $HOME/.ssh/authorized_keys
+
+  # ... rest of script ...
+END
+```
