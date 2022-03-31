@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"regexp"
@@ -15,6 +14,8 @@ import (
 	"k8s.io/kubectl/pkg/cmd/cp"
 
 	_ "github.com/rclone/rclone/backend/local"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/machine"
@@ -95,11 +96,11 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	log.Println("[INFO] Creating ConfigMap...")
+	logrus.Info("Creating ConfigMap...")
 	if err := t.Resources.ConfigMap.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Creating PersistentVolumeClaim...")
+	logrus.Info("Creating PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Create(ctx); err != nil {
 		return err
 	}
@@ -108,19 +109,19 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
 
-		log.Println("[INFO] Deleting Job...")
+		logrus.Info("Deleting Job...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
-		log.Println("[INFO] Creating ephemeral Job to upload directory...")
+		logrus.Info("Creating ephemeral Job to upload directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
-		log.Println("[INFO] Uploading Directory...")
+		logrus.Info("Uploading Directory...")
 		if err := t.Push(ctx, t.Attributes.Directory); err != nil {
 			return err
 		}
-		log.Println("[INFO] Deleting ephemeral Job to upload directory...")
+		logrus.Info("Deleting ephemeral Job to upload directory...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
@@ -128,11 +129,11 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Unsetenv("TPI_TRANSFER_MODE")
 	}
 
-	log.Println("[INFO] Creating Job...")
+	logrus.Info("Creating Job...")
 	if err := t.Resources.Job.Create(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Info("Done!")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -140,19 +141,19 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	log.Println("[INFO] Reading ConfigMap...")
+	logrus.Info("Reading ConfigMap...")
 	if err := t.Resources.ConfigMap.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading PersistentVolumeClaim...")
+	logrus.Info("Reading PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Reading Job...")
+	logrus.Info("Reading Job...")
 	if err := t.Resources.Job.Read(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Info("Done!")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -166,20 +167,20 @@ func (t *Task) Delete(ctx context.Context) error {
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
 		defer os.Unsetenv("TPI_PULL_MODE")
 
-		log.Println("[INFO] Deleting Job...")
+		logrus.Info("Deleting Job...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
-		log.Println("[INFO] Creating ephemeral Job to retrieve directory...")
+		logrus.Info("Creating ephemeral Job to retrieve directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
-		log.Println("[INFO] Downloading Directory...")
+		logrus.Info("Downloading Directory...")
 		if err := t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut); err != nil {
 			return err
 		}
 
-		log.Println("[INFO] Deleting ephemeral Job to retrieve directory...")
+		logrus.Info("Deleting ephemeral Job to retrieve directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
@@ -188,19 +189,19 @@ func (t *Task) Delete(ctx context.Context) error {
 		os.Unsetenv("TPI_PULL_MODE")
 	}
 
-	log.Println("[INFO] Deleting Job...")
+	logrus.Info("Deleting Job...")
 	if err := t.Resources.Job.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting PersistentVolumeClaim...")
+	logrus.Info("Deleting PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Deleting ConfigMap...")
+	logrus.Info("Deleting ConfigMap...")
 	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
 		return err
 	}
-	log.Println("[INFO] Done!")
+	logrus.Info("Done!")
 	return nil
 }
 
