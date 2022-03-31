@@ -11,7 +11,6 @@ This resource will:
 
 ```hcl
 resource "iterative_task" "example" {
-  name        = "example"
   cloud       = "aws"
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"
@@ -43,7 +42,6 @@ resource "iterative_task" "example" {
 
 ### Optional
 
-- `name` - (Optional) Deterministic task name.
 - `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
 - `machine` - (Optional) See [Machine Types](#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
@@ -54,10 +52,9 @@ resource "iterative_task" "example" {
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
+- `name` - (Optional) Deterministic task name. When set to `Hello, World!` always produces the `tpi-hello-world-5kz6ldls-57wo7rsp` deterministic identifier. Its use is discouraged, and it may be removed or have a different behavior in future versions.
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
-
-~> **Warning:** Setting `name` to `Hello, World!` will always produce the `tpi-hello-world-5kz6ldls-57wo7rsp` deterministic identifier. Using the `name` argument is discouraged, and it may be removed or have a different behavior in future versions.
 
 ## Attribute Reference
 
