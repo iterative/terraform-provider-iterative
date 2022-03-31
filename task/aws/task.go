@@ -196,7 +196,7 @@ func (t *Task) Read(ctx context.Context) error {
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
-	
+
 	t.Cached = true
 	return nil
 }

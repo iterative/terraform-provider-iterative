@@ -88,10 +88,10 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		for index, log := range logs {
 			prefix := fmt.Sprintf("\n\x1b[%dmLOG %d >> ", colors["foreground"], index)
 			message += strings.Trim(strings.ReplaceAll("\n"+strings.Trim(log.(string), "\n"), "\n", prefix), "\n")
-			if index + 1 < len(logs) {
+			if index+1 < len(logs) {
 				message += "\n"
 			}
-		} 
+		}
 	}
 
 	newPrefix := fmt.Sprintf("\x1b[%dmTPI [%s]\x1b[0m", levelColor, levelText)
@@ -106,13 +106,13 @@ func TpiLogger(d *schema.ResourceData) *logrus.Entry {
 
 func hideUnwantedPrefix(levelText, newPrefix, message string) string {
 	unwantedPrefixLength := len(fmt.Sprintf("yyyy-mm-ddThh:mm:ss.mmmZ [%s] provider.terraform-provider-iterative: [%[1]s]", levelText))
-	
+
 	var output string
 	for _, line := range strings.Split(message, "\n") {
 		formattedLine := fmt.Sprintf("[%s]\r%s %s", levelText, newPrefix, line)
-		padding := strings.Repeat(" ",  int(math.Max(float64(unwantedPrefixLength - len(line)), 0)))
+		padding := strings.Repeat(" ", int(math.Max(float64(unwantedPrefixLength-len(line)), 0)))
 		output += formattedLine + padding + "\n"
 	}
-	
+
 	return output
 }

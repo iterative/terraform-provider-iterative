@@ -162,7 +162,7 @@ func (t *Task) Read(ctx context.Context) error {
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
-	
+
 	t.Cached = true
 	return nil
 }
