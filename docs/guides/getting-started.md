@@ -89,8 +89,6 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 
 -> **Note:** The [`id`](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#id) returned by `terraform apply` can be used to locate the created cloud resources by any other means (e.g. cloud web console or command–line tool). Look for `[id=tpi-···]` at the end of the command output.
 
-
-
 ## Query Status
 
 ```console
