@@ -68,7 +68,7 @@ In addition to all arguments above, the following attributes are exported:
 - `events` - List of events for the machine orchestrator.
 - `logs` - List with task logs; one for each machine.
 
-~> **Warning:** `events` doesn't produce a stable output between cloud providers and are intended for human consumption only.
+~> **Warning:** `events` have different formats across cloud providers and cannot be relied on for programmatic consumption/automation.
 
 ## Machine Type
 
