@@ -209,7 +209,7 @@ func (t *Task) Delete(ctx context.Context) error {
 		return err
 	}
 	logrus.Info("Done!")
-	
+
 	t.Cached = false
 	return nil
 }
