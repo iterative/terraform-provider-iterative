@@ -87,7 +87,7 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 
 -> **Note:** A large `workdir` may take a long time to upload.
 
--> **Note:** The [`id`](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#id) returned by `terraform apply` can be used to locate the created cloud resources by any other means (e.g. cloud web console or command–line tool). Look for `[id=tpi-···]` at the end of the command output.
+-> **Note:** The [`id`](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#id) returned by `terraform apply` (i.e.  `[id=tpi-···]` in the last lines of the command output) can be used to locate the created cloud resources through the cloud's web console or command–line tool.
 
 ## Query Status
 
