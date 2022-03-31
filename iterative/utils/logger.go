@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/acarl005/stripansi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/sirupsen/logrus"
 )
@@ -110,7 +111,7 @@ func hideUnwantedPrefix(levelText, newPrefix, message string) string {
 	var output string
 	for _, line := range strings.Split(message, "\n") {
 		formattedLine := fmt.Sprintf("[%s]\r%s %s", levelText, newPrefix, line)
-		padding := strings.Repeat(" ", int(math.Max(float64(unwantedPrefixLength-len(line)), 0)))
+		padding := strings.Repeat(" ", int(math.Max(float64(unwantedPrefixLength - len(line)), 0)))
 		output += formattedLine + padding + "\n"
 	}
 
