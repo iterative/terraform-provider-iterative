@@ -8,6 +8,7 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"time"
 
 	units "github.com/docker/go-units"
 
@@ -17,6 +18,7 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
@@ -130,6 +132,8 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 		return err
 	}
 
+	defer progress(2 * time.Second)()
+
 	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
 }
 
@@ -158,4 +162,29 @@ func Delete(ctx context.Context, destination string) error {
 	}
 
 	return nil
+}
+
+func progress(interval time.Duration) func() {
+	accounting.GlobalStats().ResetCounters()
+	ci := fs.GetConfig(context.Background())
+	ci.StatsOneLine = true
+
+	ticker := time.NewTicker(interval)
+	done := make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				logrus.Info(accounting.GlobalStats().String())
+			case <-done:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	return func() {
+		done <- true
+	}
 }
