@@ -90,7 +90,6 @@ type Task struct {
 		*resources.LaunchTemplate
 		*resources.AutoScalingGroup
 	}
-	Cached bool
 }
 
 func (t *Task) Create(ctx context.Context) error {
@@ -148,10 +147,6 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	if t.Cached {
-		return nil
-	}
-
 	logrus.Info("Reading DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
@@ -196,8 +191,6 @@ func (t *Task) Read(ctx context.Context) error {
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
-
-	t.Cached = true
 	return nil
 }
 
@@ -239,8 +232,6 @@ func (t *Task) Delete(ctx context.Context) error {
 		return err
 	}
 	logrus.Info("Done!")
-
-	t.Cached = false
 	return nil
 }
 
