@@ -259,7 +259,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Creation", "Creation"))
+	logger.Info(fmt.Sprintf(logTpl, "Deletion", "Deletion"))
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
