@@ -159,6 +159,13 @@ func resourceTask() *schema.Resource {
 }
 
 func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+	logger := utils.TpiLogger(d)
+	if d.Get("spot").(float64) != nil {
+		logger.Info("Creation can take several minutes. With spot even longer, please consider to increase Create timeout. Please wait...")
+	} else {
+		logger.Info("Creation can take several minutes. Please wait...")
+	}
+
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
 		return diagnostic(diags, err, diag.Error)
@@ -233,6 +240,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diagnostic(diags, err, diag.Warning)
 	}
+
 	d.Set("logs", logs)
 	d.SetId(task.GetIdentifier(ctx).Long())
 
@@ -245,6 +253,9 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+	logger := utils.TpiLogger(d)
+	logger.Info("Deletion can take several minutes. Please wait...")
+
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
 		return diagnostic(diags, err, diag.Error)
