@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -18,16 +19,17 @@ type basicFormatter struct{}
 func (f *basicFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	levelText := strings.ToUpper(entry.Level.String())
 	levelColor := colors[levelText]
-	tpl := "[%s] 🚀\x1b[%dmTPI\x1b[0m %s\n"
-	return []byte(fmt.Sprintf(tpl, levelText, levelColor, entry.Message)), nil
+	newPrefix := fmt.Sprintf("\x1b[%dmTPI [%s]\x1b[0m", levelColor, levelText)
+	return []byte(hideUnwantedPrefix(levelText, newPrefix, entry.Message)), nil
 }
 
 func init() {
 	colors["DEBUG"] = 34
 	colors["INFO"] = 36
-	colors["WARN"] = 33
+	colors["WARNING"] = 33
 	colors["ERROR"] = 31
 	colors["FATAL"] = 31
+	colors["SUCCESS"] = 32
 	colors["foreground"] = 35
 
 	logrus.SetLevel(logrus.DebugLevel)
@@ -66,46 +68,51 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	if message == "status" {
 		status := d.Get("status").(map[string]interface{})
-		terminatedStr := "terminated 🔵"
 
-		running := "queued 🟣"
-		if status["running"] != nil {
-			running = terminatedStr
-			if status["running"].(int) == 1 {
-				running = "running 🟡"
-			}
+		message = fmt.Sprintf("\x1b[%dmStatus: queued 🔵\x1b[0m", colors["DEBUG"])
+
+		if status["succeeded"] != nil && status["succeeded"].(int) > 0 {
+			message = fmt.Sprintf("\x1b[%dmStatus: completed succesfully 🟢\x1b[0m", colors["SUCCESS"])
 		}
-
-		success := ""
-		if running == terminatedStr {
-			success = "without any output"
-			if status["succeeded"] != nil && status["succeeded"].(int) == 1 {
-				success = "succesfully 🟢"
-			}
-			if status["failed"] != nil && status["failed"].(int) == 1 {
-				success = "with errors 🔴"
-			}
+		if status["failed"] != nil && status["failed"].(int) > 0 {
+			message = fmt.Sprintf("\x1b[%dmStatus: completed with errors 🔴\x1b[0m", colors["ERROR"])
 		}
-
-		message = fmt.Sprintf("Task %s %s", running, success)
+		if status["running"] != nil && status["running"].(int) > 0 {
+			message = fmt.Sprintf("\x1b[%dmStatus: running 🟡\x1b[0m", colors["WARNING"])
+		}
 	}
 
 	if message == "logs" {
+		message = ""
 		logs := d.Get("logs").([]interface{})
-		taskLogs := "No logs"
-		if len(logs) > 0 {
-			taskLogs = strings.Replace(logs[0].(string), "\n", fmt.Sprintf("\n[%s] ", levelText), -1)
-		}
-
-		message = fmt.Sprintf("Task logs:\x1b[%dm%s\x1b[0m", colors["foreground"], taskLogs)
+		for index, log := range logs {
+			prefix := fmt.Sprintf("\n\x1b[%dmLOG %d >> ", colors["foreground"], index)
+			message += strings.Trim(strings.ReplaceAll("\n"+strings.Trim(log.(string), "\n"), "\n", prefix), "\n")
+			if index + 1 < len(logs) {
+				message += "\n"
+			}
+		} 
 	}
 
-	tpl := "[%s] \x1b[%dm🚀TPI %s\x1b[0m %s'\n"
-	return []byte(fmt.Sprintf(tpl, levelText, levelColor, d.Id(), message)), nil
+	newPrefix := fmt.Sprintf("\x1b[%dmTPI [%s]\x1b[0m", levelColor, levelText)
+	return []byte(hideUnwantedPrefix(levelText, newPrefix, message)), nil
 }
 
 func TpiLogger(d *schema.ResourceData) *logrus.Entry {
 	logrus.SetFormatter(&tpiFormatter{})
 
 	return logrus.WithFields(logrus.Fields{"d": d})
+}
+
+func hideUnwantedPrefix(levelText, newPrefix, message string) string {
+	unwantedPrefixLength := len(fmt.Sprintf("yyyy-mm-ddThh:mm:ss.mmmZ [%s] provider.terraform-provider-iterative: [%[1]s]", levelText))
+	
+	var output string
+	for _, line := range strings.Split(message, "\n") {
+		formattedLine := fmt.Sprintf("[%s]\r%s %s", levelText, newPrefix, line)
+		padding := strings.Repeat(" ",  int(math.Max(float64(unwantedPrefixLength - len(line)), 0)))
+		output += formattedLine + padding + "\n"
+	}
+	
+	return output
 }
