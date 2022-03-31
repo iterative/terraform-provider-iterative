@@ -104,8 +104,6 @@ These commands will:
 1. Query the task status from the cloud.
 2. Display the task status.
 
--> **Note**: Use `TF_LOG_PROVIDER=DEBUG` in lieu of `INFO` to increase verbosity for debugging. See the [logging docs](https://www.terraform.io/plugin/log/managing) for a full list of options.
-
 ## Stop Task
 
 ```console
@@ -120,3 +118,9 @@ This command will:
 In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
 
 -> **Note:** A large `output` directory may take a long time to download.
+
+## Debugging
+
+Use `TF_LOG_PROVIDER=DEBUG` in lieu of `INFO` to increase verbosity for debugging. See the [logging docs](https://www.terraform.io/plugin/log/managing) for a full list of options.
+
+In case of errors within the `script` itself, both `stdout` and `stderr` are available from the [status](#query-status).
