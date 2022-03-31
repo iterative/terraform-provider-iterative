@@ -57,10 +57,13 @@ resource "iterative_task" "example" {
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
 
+~> **Warning:** Setting `name = "Hello, World!"` will always produce the `tpi-hello-world-5kz6ldls-57wo7rsp` deterministic identifier; i.e. the suffix is not random, but tied to the `name` string. Using the `name` argument is discouraged, and it may be removed or have a different behavior in future versions.
+
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
+- `id` - Task identifier.
 - `ssh_public_key` - Used to access the created machines.
 - `ssh_private_key` - Used to access the created machines.
 - `addresses` - IP addresses of the currently active machines.
@@ -68,7 +71,9 @@ In addition to all arguments above, the following attributes are exported:
 - `events` - List of events for the machine orchestrator.
 - `logs` - List with task logs; one for each machine.
 
-~> **Warning:** Status and events don't produce a stable output between cloud providers and are intended for human consumption only.
+~> **Warning:** `events` doesn't produce a stable output between cloud providers and are intended for human consumption only.
+
+-> **Note:** `id` is always in the form `tpi-{name}–{1}-{2}`, where `{name}`, `{1}` and `{2}` are randomly generated identifiers. All the cloud resources are named `id` when legth limits allow it, or `{1}{2}` in cases where there is a more strict length limit.
 
 ## Machine Type
 
