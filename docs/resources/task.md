@@ -57,7 +57,7 @@ resource "iterative_task" "example" {
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
 
-~> **Warning:** Setting `name = "Hello, World!"` will always produce the `tpi-hello-world-5kz6ldls-57wo7rsp` deterministic identifier; i.e. the suffix is not random, but tied to the `name` string. Using the `name` argument is discouraged, and it may be removed or have a different behavior in future versions.
+~> **Warning:** Setting `name` to `Hello, World!` will always produce the `tpi-hello-world-5kz6ldls-57wo7rsp` deterministic identifier. Using the `name` argument is discouraged, and it may be removed or have a different behavior in future versions.
 
 ## Attribute Reference
 
