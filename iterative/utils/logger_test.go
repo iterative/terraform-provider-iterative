@@ -8,7 +8,7 @@ import (
 
 func TestState(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
-		"name": "mytask",
+		"name":        "mytask",
 		"parallelism": "1",
 		"status": map[string]interface{}{
 			"running": 0,
@@ -22,7 +22,7 @@ func TestState(t *testing.T) {
 
 func TestState2(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
-		"name": "mytask",
+		"name":        "mytask",
 		"parallelism": "1",
 		"status": map[string]interface{}{
 			"running": 0,
@@ -36,7 +36,7 @@ func TestState2(t *testing.T) {
 
 func TestState3(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
-		"name": "mytask",
+		"name":        "mytask",
 		"parallelism": "1",
 		"status": map[string]interface{}{
 			"running":   0,
