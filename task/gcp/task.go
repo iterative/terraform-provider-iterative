@@ -142,10 +142,6 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	if t.Cached {
-		return nil
-	}
-
 	logrus.Info("Creating DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
@@ -208,14 +204,14 @@ func (t *Task) Create(ctx context.Context) error {
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
-	if t.Cached {
-		return nil
-	}
-	t.Cached = true
 	return nil
 }
 
 func (t *Task) Read(ctx context.Context) error {
+	if t.Cached {
+		return nil
+	}
+
 	logrus.Info("Reading DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
@@ -268,6 +264,8 @@ func (t *Task) Read(ctx context.Context) error {
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
+
+	t.Cached = true
 	return nil
 }
 
@@ -321,6 +319,8 @@ func (t *Task) Delete(ctx context.Context) error {
 		return err
 	}
 	logrus.Info("Done!")
+
+	t.Cached = false
 	return nil
 }
 
