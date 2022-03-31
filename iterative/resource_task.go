@@ -168,7 +168,7 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	spot := d.Get("spot").(float64)
 	if spot > 0 {
-		logger.Info("Fixed spot price does not ensure the Task to be launched. We recommend you to use auto spot price (0)")
+		logger.Info("Fixed spot price does not ensure the Task to be launched. It's recommended to use auto spot price (0)")
 	}
 
 	task, err := resourceTaskBuild(ctx, d, m)
