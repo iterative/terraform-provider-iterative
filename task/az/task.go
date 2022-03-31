@@ -141,7 +141,7 @@ func (t *Task) Create(ctx context.Context) error {
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
-	
+
 	t.Cached = true
 	return nil
 }
