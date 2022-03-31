@@ -9,6 +9,7 @@ import (
 func TestState(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
 		"name": "mytask",
+		"parallelism": "1",
 		"status": map[string]interface{}{
 			"running": 0,
 			"failed":  0,
@@ -22,6 +23,7 @@ func TestState(t *testing.T) {
 func TestState2(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
 		"name": "mytask",
+		"parallelism": "1",
 		"status": map[string]interface{}{
 			"running": 0,
 			"failed":  1,
@@ -35,6 +37,7 @@ func TestState2(t *testing.T) {
 func TestState3(t *testing.T) {
 	d := generateSchemaData(t, map[string]interface{}{
 		"name": "mytask",
+		"parallelism": "1",
 		"status": map[string]interface{}{
 			"running":   0,
 			"succeeded": 1,
@@ -140,6 +143,12 @@ func generateSchemaData(t *testing.T, raw map[string]interface{}) *schema.Resour
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
+		},
+		"parallelism": {
+			Type:     schema.TypeInt,
+			ForceNew: true,
+			Optional: true,
+			Default:  1,
 		},
 		"script": {
 			Type:     schema.TypeString,

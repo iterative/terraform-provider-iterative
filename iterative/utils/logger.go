@@ -72,13 +72,13 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 		message = fmt.Sprintf("\x1b[%dmStatus: queued 🔵\x1b[0m", colors["DEBUG"])
 
-		if status["succeeded"] != nil && status["succeeded"].(int) > 0 {
+		if status["succeeded"] != nil && status["succeeded"].(int) >= d.Get("parallelism").(int) {
 			message = fmt.Sprintf("\x1b[%dmStatus: completed succesfully 🟢\x1b[0m", colors["SUCCESS"])
 		}
 		if status["failed"] != nil && status["failed"].(int) > 0 {
 			message = fmt.Sprintf("\x1b[%dmStatus: completed with errors 🔴\x1b[0m", colors["ERROR"])
 		}
-		if status["running"] != nil && status["running"].(int) > 0 {
+		if status["running"] != nil && status["running"].(int) >= d.Get("parallelism").(int) {
 			message = fmt.Sprintf("\x1b[%dmStatus: running 🟡\x1b[0m", colors["WARNING"])
 		}
 	}
