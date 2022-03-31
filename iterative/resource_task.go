@@ -160,7 +160,7 @@ func resourceTask() *schema.Resource {
 
 func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	logger := utils.TpiLogger(d)
-	if d.Get("spot").(float64) != nil {
+	if d.Get("spot").(float64) >= 0 {
 		logger.Info("Creation can take several minutes. With spot even longer, please consider to increase Create timeout. Please wait...")
 	} else {
 		logger.Info("Creation can take several minutes. Please wait...")
