@@ -148,6 +148,17 @@ func Delete(ctx context.Context, destination string) error {
 		return err
 	}
 
+	operations.SyncPrintf = func(format string, a ...interface{}) {
+		logrus.Infof(format, a...)
+	}
+	fs.LogPrint = func(level fs.LogLevel, text string) {
+		logrus.Info(text)
+	}
+
+	ctx, ci := fs.AddConfig(ctx)
+	ci.LogLevel = fs.LogLevelDebug
+	ci.StatsLogLevel = fs.LogLevelDebug
+
 	actions := []func(context.Context) error{
 		func(ctx context.Context) error {
 			return operations.Delete(ctx, destinationFileSystem)
