@@ -63,7 +63,7 @@ resource "iterative_task" "example" {
 
 In addition to all arguments above, the following attributes are exported:
 
-- `id` - Task identifier.
+- `id` - Task identifier, `tpi-{name}-{random_hash_1}-{random_hash_2}`. Either the full `{id}` or (if too long), the shorter `{random_hash_1}{random_hash_2}` is used as the name for all cloud resources.
 - `ssh_public_key` - Used to access the created machines.
 - `ssh_private_key` - Used to access the created machines.
 - `addresses` - IP addresses of the currently active machines.
@@ -72,8 +72,6 @@ In addition to all arguments above, the following attributes are exported:
 - `logs` - List with task logs; one for each machine.
 
 ~> **Warning:** `events` doesn't produce a stable output between cloud providers and are intended for human consumption only.
-
--> **Note:** `id` is always in the form `tpi-{name}–{1}-{2}`, where `{name}`, `{1}` and `{2}` are randomly generated identifiers. All the cloud resources are named `id` when legth limits allow it, or `{1}{2}` in cases where there is a more strict length limit.
 
 ## Machine Type
 
