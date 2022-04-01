@@ -180,7 +180,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			return err
 		}
 
-		logrus.Info("[3/6] Deleting ephemeral Job to retrieve directory...")
+		logrus.Info("[4/7] Deleting ephemeral Job to retrieve directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
@@ -189,15 +189,15 @@ func (t *Task) Delete(ctx context.Context) error {
 		os.Unsetenv("TPI_PULL_MODE")
 	}
 
-	logrus.Info("[4/7] Deleting Job...")
+	logrus.Info("[5/7] Deleting Job...")
 	if err := t.Resources.Job.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[5/7] Deleting PersistentVolumeClaim...")
+	logrus.Info("[6/7] Deleting PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[6/7] Deleting ConfigMap...")
+	logrus.Info("[7/7] Deleting ConfigMap...")
 	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
 		return err
 	}
