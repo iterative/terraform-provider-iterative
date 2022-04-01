@@ -136,7 +136,7 @@ script      = <<-END
   # optional: allow GitHub user's ssh keys.
   # alternatively, use `ssh_private_key` and `addresses` from
   # https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#attribute-reference
-  echo "$(curl https://github.com/${GITHUB_ACTOR}.keys)" >> $HOME/.ssh/authorized_keys
+  curl "https://github.com/$GITHUB_ACTOR.keys" >> "$HOME/.ssh/authorized_keys"
 
   # ... rest of script ...
 END
