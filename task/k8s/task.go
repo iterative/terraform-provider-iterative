@@ -129,7 +129,7 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Unsetenv("TPI_TRANSFER_MODE")
 	}
 
-	logrus.Info("Creating [7/7] Job...")
+	logrus.Info("[7/7] Creating Job...")
 	if err := t.Resources.Job.Create(ctx); err != nil {
 		return err
 	}
