@@ -94,49 +94,49 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating ResourceGroup...")
+	logrus.Info("[1/10] Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating StorageAccount...")
+	logrus.Info("[2/10] Creating StorageAccount...")
 	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating BlobContainer...")
+	logrus.Info("[3/10] Creating BlobContainer...")
 	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating Credentials...")
+	logrus.Info("[4/10] Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating VirtualNetwork...")
+	logrus.Info("[5/10] Creating VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating SecurityGroup...")
+	logrus.Info("[6/10] Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating Subnet...")
+	logrus.Info("[7/10] Creating Subnet...")
 	if err := t.Resources.Subnet.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating VirtualMachineScaleSet...")
+	logrus.Info("[8/10] Creating VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Uploading Directory...")
+	logrus.Info("[9/10] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	logrus.Info("Starting task...")
+	logrus.Info("[10/10] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Creation completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -144,39 +144,39 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading ResourceGroup...")
+	logrus.Info("[1/8] Reading ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading StorageAccount...")
+	logrus.Info("[2/8] Reading StorageAccount...")
 	if err := t.Resources.StorageAccount.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading BlobContainer...")
+	logrus.Info("[3/8] Reading BlobContainer...")
 	if err := t.Resources.BlobContainer.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading Credentials...")
+	logrus.Info("[4/8] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading VirtualNetwork...")
+	logrus.Info("[5/8] Reading VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading SecurityGroup...")
+	logrus.Info("[6/8] Reading SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading Subnet...")
+	logrus.Info("[7/8] Reading Subnet...")
 	if err := t.Resources.Subnet.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading VirtualMachineScaleSet...")
+	logrus.Info("[8/8] Reading VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Read completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -184,47 +184,47 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Downloading Directory...")
+	logrus.Info("[1/9] Downloading Directory...")
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			if err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 				return err
 			}
 		}
-		logrus.Info("Emptying Bucket...")
+		logrus.Info("[2/9] Emptying Bucket...")
 		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	logrus.Info("Deleting VirtualMachineScaleSet...")
+	logrus.Info("[3/9] Deleting VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting Subnet...")
+	logrus.Info("[4/9] Deleting Subnet...")
 	if err := t.Resources.Subnet.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting SecurityGroup...")
+	logrus.Info("[5/9] Deleting SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting VirtualNetwork...")
+	logrus.Info("[6/9] Deleting VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting BlobContainer...")
+	logrus.Info("[7/9] Deleting BlobContainer...")
 	if err := t.Resources.BlobContainer.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting StorageAccount...")
+	logrus.Info("[8/9] Deleting StorageAccount...")
 	if err := t.Resources.StorageAccount.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting ResourceGroup...")
+	logrus.Info("[9/9] Deleting ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Deletion completed")
 	return nil
 }
 

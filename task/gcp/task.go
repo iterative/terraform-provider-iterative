@@ -141,65 +141,65 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating DefaultNetwork...")
+	logrus.Info("[1/14] Creating DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating Image...")
+	logrus.Info("[2/14] Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating Bucket...")
+	logrus.Info("[3/14] Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating Credentials...")
+	logrus.Info("[4/14] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating FirewallInternalEgress...")
+	logrus.Info("[5/14] Creating FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating FirewallInternalIngress...")
+	logrus.Info("[6/14] Creating FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating FirewallExternalEgress...")
+	logrus.Info("[7/14] Creating FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating FirewallExternalIngress...")
+	logrus.Info("[8/14] Creating FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating FirewallDenyEgress...")
+	logrus.Info("[9/14] Creating FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating FirewallDenyIngress...")
+	logrus.Info("[10/14] Creating FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating InstanceTemplate...")
+	logrus.Info("[11/14] Creating InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating InstanceGroupManager...")
+	logrus.Info("[12/14] Creating InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Uploading Directory...")
+	logrus.Info("[13/14] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	logrus.Info("Starting task...")
+	logrus.Info("[14/14] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Creation completed")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -207,55 +207,55 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading DefaultNetwork...")
+	logrus.Info("[1/12] Reading DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading Image...")
+	logrus.Info("[2/12] Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading Bucket...")
+	logrus.Info("[3/12] Reading Bucket...")
 	if err := t.Resources.Bucket.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading Credentials...")
+	logrus.Info("[4/12] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading FirewallInternalEgress...")
+	logrus.Info("[5/12] Reading FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading FirewallInternalIngress...")
+	logrus.Info("[6/12] Reading FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading FirewallExternalEgress...")
+	logrus.Info("[7/12] Reading FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading FirewallExternalIngress...")
+	logrus.Info("[8/12] Reading FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading FirewallDenyEgress...")
+	logrus.Info("[9/12] Reading FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading FirewallDenyIngress...")
+	logrus.Info("[10/12] Reading FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading InstanceTemplate...")
+	logrus.Info("[11/12] Reading InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading InstanceGroupManager...")
+	logrus.Info("[12/12] Reading InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Read completed")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -263,55 +263,55 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Downloading Directory...")
+	logrus.Info("[1/11] Downloading Directory...")
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			if err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 				return err
 			}
 		}
-		logrus.Info("Emptying Bucket...")
+		logrus.Info("[2/11] Emptying Bucket...")
 		if err := machine.Delete(ctx, (*t.DataSources.Credentials.Resource)["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
 			return err
 		}
 	}
-	logrus.Info("Deleting InstanceGroupManager...")
+	logrus.Info("[3/11] Deleting InstanceGroupManager...")
 	if err := t.Resources.InstanceGroupManager.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting InstanceTemplate...")
+	logrus.Info("[4/11] Deleting InstanceTemplate...")
 	if err := t.Resources.InstanceTemplate.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting FirewallInternalEgress...")
+	logrus.Info("[5/11] Deleting FirewallInternalEgress...")
 	if err := t.Resources.FirewallInternalEgress.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting FirewallInternalIngress...")
+	logrus.Info("[6/11] Deleting FirewallInternalIngress...")
 	if err := t.Resources.FirewallInternalIngress.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting FirewallExternalEgress...")
+	logrus.Info("[7/11] Deleting FirewallExternalEgress...")
 	if err := t.Resources.FirewallExternalEgress.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting FirewallExternalIngress...")
+	logrus.Info("[8/11] Deleting FirewallExternalIngress...")
 	if err := t.Resources.FirewallExternalIngress.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting FirewallDenyEgress...")
+	logrus.Info("[9/11] Deleting FirewallDenyEgress...")
 	if err := t.Resources.FirewallDenyEgress.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting FirewallDenyIngress...")
+	logrus.Info("[10/11] Deleting FirewallDenyIngress...")
 	if err := t.Resources.FirewallDenyIngress.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting Bucket...")
+	logrus.Info("[11/11] Deleting Bucket...")
 	if err := t.Resources.Bucket.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Deletion completed")
 	return nil
 }
 
