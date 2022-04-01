@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	logTpl = "%s can take several minutes. If needed you might consider to increase %s timeout https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#timeout. Please wait..."
+	logTpl = "%s may take several minutes (consider increasing `timeout` https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#timeout). Please wait."
 )
 
 func resourceTask() *schema.Resource {
@@ -164,7 +164,7 @@ func resourceTask() *schema.Resource {
 
 func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Creation", "Creation"))
+	logger.Info(fmt.Sprintf(logTpl, "Creation"))
 
 	spot := d.Get("spot").(float64)
 	if spot > 0 {
@@ -259,7 +259,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Deletion", "Deletion"))
+	logger.Info(fmt.Sprintf(logTpl, "Destruction"))
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
