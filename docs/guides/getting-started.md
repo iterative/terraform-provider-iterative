@@ -128,7 +128,7 @@ In case of errors within the `script` itself, both `stdout` and `stderr` are ava
 Advanced users may also want to SSH to debug failed scripts. This means preventing TPI from terminating the instance on `script` errors. For example:
 
 ```hcl
-timeout     = 86400                  # 24h
+timeout     = 60*60*24               # 24h
 environment = { GITHUB_ACTOR = "" }  # optional: GitHub username
 script      = <<-END
   #!/bin/bash
