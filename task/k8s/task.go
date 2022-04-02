@@ -96,11 +96,11 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating ConfigMap...")
+	logrus.Info("[1/7] Creating ConfigMap...")
 	if err := t.Resources.ConfigMap.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Creating PersistentVolumeClaim...")
+	logrus.Info("[2/7] Creating PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Create(ctx); err != nil {
 		return err
 	}
@@ -109,19 +109,19 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
 
-		logrus.Info("Deleting Job...")
+		logrus.Info("[3/7] Deleting Job...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
-		logrus.Info("Creating ephemeral Job to upload directory...")
+		logrus.Info("[4/7] Creating ephemeral Job to upload directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
-		logrus.Info("Uploading Directory...")
+		logrus.Info("[5/7] Uploading Directory...")
 		if err := t.Push(ctx, t.Attributes.Directory); err != nil {
 			return err
 		}
-		logrus.Info("Deleting ephemeral Job to upload directory...")
+		logrus.Info("[6/7] Deleting ephemeral Job to upload directory...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
@@ -129,11 +129,11 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Unsetenv("TPI_TRANSFER_MODE")
 	}
 
-	logrus.Info("Creating Job...")
+	logrus.Info("[7/7] Creating Job...")
 	if err := t.Resources.Job.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Creation completed")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -141,19 +141,19 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading ConfigMap...")
+	logrus.Info("[1/3] Reading ConfigMap...")
 	if err := t.Resources.ConfigMap.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading PersistentVolumeClaim...")
+	logrus.Info("[2/3] Reading PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Reading Job...")
+	logrus.Info("[3/3] Reading Job...")
 	if err := t.Resources.Job.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Read completed")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -167,20 +167,20 @@ func (t *Task) Delete(ctx context.Context) error {
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
 		defer os.Unsetenv("TPI_PULL_MODE")
 
-		logrus.Info("Deleting Job...")
+		logrus.Info("[1/7] Deleting Job...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
-		logrus.Info("Creating ephemeral Job to retrieve directory...")
+		logrus.Info("[2/7] Creating ephemeral Job to retrieve directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
-		logrus.Info("Downloading Directory...")
+		logrus.Info("[3/7] Downloading Directory...")
 		if err := t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut); err != nil {
 			return err
 		}
 
-		logrus.Info("Deleting ephemeral Job to retrieve directory...")
+		logrus.Info("[4/7] Deleting ephemeral Job to retrieve directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
@@ -189,19 +189,19 @@ func (t *Task) Delete(ctx context.Context) error {
 		os.Unsetenv("TPI_PULL_MODE")
 	}
 
-	logrus.Info("Deleting Job...")
+	logrus.Info("[5/7] Deleting Job...")
 	if err := t.Resources.Job.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting PersistentVolumeClaim...")
+	logrus.Info("[6/7] Deleting PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Deleting ConfigMap...")
+	logrus.Info("[7/7] Deleting ConfigMap...")
 	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
 		return err
 	}
-	logrus.Info("Done!")
+	logrus.Info("Deletion completed")
 	return nil
 }
 

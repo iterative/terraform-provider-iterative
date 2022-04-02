@@ -11,7 +11,6 @@ This resource will:
 
 ```hcl
 resource "iterative_task" "example" {
-  name        = "example"
   cloud       = "aws"
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"
@@ -43,7 +42,6 @@ resource "iterative_task" "example" {
 
 ### Optional
 
-- `name` - (Optional) Deterministic task name.
 - `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
 - `machine` - (Optional) See [Machine Types](#machine-types) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
@@ -54,6 +52,7 @@ resource "iterative_task" "example" {
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before termination.
+- `name` - (Optional) Discouraged and may be removed in future. Deterministic task name (e.g. `name="Hello, World!"` always produces `id="tpi-hello-world-5kz6ldls-57wo7rsp"`).
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
 
@@ -61,6 +60,7 @@ resource "iterative_task" "example" {
 
 In addition to all arguments above, the following attributes are exported:
 
+- `id` - Task identifier, `tpi-{name}-{random_hash_1}-{random_hash_2}`. Either the full `{id}` or (if too long), the shorter `{random_hash_1}{random_hash_2}` is used as the name for all cloud resources.
 - `ssh_public_key` - Used to access the created machines.
 - `ssh_private_key` - Used to access the created machines.
 - `addresses` - IP addresses of the currently active machines.
@@ -68,7 +68,7 @@ In addition to all arguments above, the following attributes are exported:
 - `events` - List of events for the machine orchestrator.
 - `logs` - List with task logs; one for each machine.
 
-~> **Warning:** Status and events don't produce a stable output between cloud providers and are intended for human consumption only.
+~> **Warning:** `events` have different formats across cloud providers and cannot be relied on for programmatic consumption/automation.
 
 ## Machine Type
 

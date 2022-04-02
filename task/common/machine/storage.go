@@ -98,14 +98,13 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 }
 
 func Transfer(ctx context.Context, source, destination string, include string) error {
-	include = filepath.Clean(include)
-	if filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
+	if include = filepath.Clean(include); filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
 		return errors.New("storage.output must be inside storage.workdir")
 	}
 
 	rules := []string{
-		"+ /" + include,
-		"+ /" + include + "/**",
+		"+ " + filepath.Clean("/"+include),
+		"+ " + filepath.Clean("/"+include+"/**"),
 		"- **",
 	}
 
@@ -132,7 +131,7 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 		return err
 	}
 
-	defer progress(2 * time.Second)()
+	defer progress(10 * time.Second)()
 
 	return sync.CopyDir(ctx, destinationFileSystem, sourceFileSystem, true)
 }
