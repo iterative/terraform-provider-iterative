@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"regexp"
 	"time"
@@ -14,6 +13,8 @@ import (
 
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
@@ -244,7 +245,7 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	if scaleSetView.VirtualMachine.StatusesSummary != nil {
 		for _, status := range *scaleSetView.VirtualMachine.StatusesSummary {
 			code := to.String(status.Code)
-			log.Println("[DEBUG] ScaleSet Status Summary:", code, int(to.Int32(status.Count)))
+			logrus.Debug("ScaleSet Status Summary:", code, int(to.Int32(status.Count)))
 			if code == "ProvisioningState/succeeded" {
 				v.Attributes.Status[common.StatusCodeActive] = int(to.Int32(status.Count))
 			}

@@ -3,11 +3,12 @@ package resources
 import (
 	"context"
 	"errors"
-	"log"
 	"net"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -78,7 +79,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	i.Attributes.Addresses = []net.IP{}
 	i.Attributes.Status = common.Status{common.StatusCodeActive: 0}
 	for _, groupInstance := range groupInstances.Items {
-		log.Println("[DEBUG] Instance Group Manager Status:", groupInstance.Status)
+		logrus.Debug("Instance Group Manager Status:", groupInstance.Status)
 		if groupInstance.Status == "RUNNING" {
 			instance, err := i.Client.Services.Compute.Instances.Get(i.Client.Credentials.ProjectID, i.Client.Region, filepath.Base(groupInstance.Instance)).Do()
 			if err != nil {
