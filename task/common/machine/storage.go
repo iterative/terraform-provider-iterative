@@ -103,8 +103,8 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 	}
 
 	rules := []string{
-		"+ " + filepath.Clean("/" + include),
-		"+ " + filepath.Clean("/" + include + "/**"),
+		"+ " + filepath.Clean("/"+include),
+		"+ " + filepath.Clean("/"+include+"/**"),
 		"- **",
 	}
 
