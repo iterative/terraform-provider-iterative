@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"errors"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -14,7 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
@@ -93,7 +93,7 @@ func (a *AutoScalingGroup) Create(ctx context.Context) error {
 		AutoScalingGroupNames: []string{a.Identifier},
 	}
 
-	if err := autoscaling.NewGroupInServiceWaiter(a.Client.Services.AutoScaling).Wait(ctx, &waitInput, a.Client.Cloud.Timeouts.Create); err != nil {
+	if err := autoscaling.NewGroupExistsWaiter(a.Client.Services.AutoScaling).Wait(ctx, &waitInput, a.Client.Cloud.Timeouts.Create); err != nil {
 		return err
 	}
 
@@ -134,7 +134,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 					if instance.StateReason != nil {
 						status += " " + aws.ToString(instance.StateReason.Message)
 					}
-					log.Println("[DEBUG] AutoScaling Group State:", status)
+					logrus.Debug("AutoScaling Group State:", status)
 					if status == "running" {
 						a.Attributes.Status[common.StatusCodeActive]++
 					}
@@ -209,16 +209,11 @@ func (a *AutoScalingGroup) Delete(ctx context.Context) error {
 		return err
 	}
 
-	waitInput := ec2.DescribeInstancesInput{
-		Filters: []ec2types.Filter{
-			{
-				Name:   aws.String("tag:Name"),
-				Values: []string{a.Dependencies.LaunchTemplate.Identifier},
-			},
-		},
+	waitInput := autoscaling.DescribeAutoScalingGroupsInput{
+		AutoScalingGroupNames: []string{a.Identifier},
 	}
 
-	if err := ec2.NewInstanceTerminatedWaiter(a.Client.Services.EC2).Wait(ctx, &waitInput, a.Client.Cloud.Timeouts.Delete); err != nil {
+	if err := autoscaling.NewGroupNotExistsWaiter(a.Client.Services.AutoScaling).Wait(ctx, &waitInput, a.Client.Cloud.Timeouts.Delete); err != nil {
 		return err
 	}
 
