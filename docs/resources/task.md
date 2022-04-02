@@ -52,7 +52,7 @@ resource "iterative_task" "example" {
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
-- `name` - (Optional) *Discouraged and may be removed in future - change the resource name instead, i.e. `resource "iterative_task" "some_other_example_name"`.* Deterministic task name (e.g. `name="Hello, World!"` always produces `id="tpi-hello-world-5kz6ldls-57wo7rsp"`).
+- `name` - (Optional) _Discouraged and may be removed in future - change the resource name instead, i.e. `resource "iterative_task" "some_other_example_name"`._ Deterministic task name (e.g. `name="Hello, World!"` always produces `id="tpi-hello-world-5kz6ldls-57wo7rsp"`).
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
 
