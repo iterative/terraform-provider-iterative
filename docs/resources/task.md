@@ -96,7 +96,7 @@ $ terraform output --raw logs
 Finally, JSON output can be parsed using `terraform output --json` and `jq` like this:
 
 ```console
-terraform show --json | jq --raw-output '
+$ terraform show --json | jq --raw-output '
   .values.root_module.resources[] |
   select(.address == "iterative_task.example") |
   .values.logs[]'
