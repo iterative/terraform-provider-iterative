@@ -18,6 +18,10 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+var (
+	logTpl = "%s may take several minutes (consider increasing `timeout` https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#timeout). Please wait."
+)
+
 func resourceTask() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceTaskCreate,
@@ -159,6 +163,14 @@ func resourceTask() *schema.Resource {
 }
 
 func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+	logger := utils.TpiLogger(d)
+	logger.Info(fmt.Sprintf(logTpl, "Creation"))
+
+	spot := d.Get("spot").(float64)
+	if spot > 0 {
+		logger.Warn(fmt.Sprintf("Setting a maximum price `spot=%f` USD/h. Consider using auto-pricing (`spot=0`) instead.", spot))
+	}
+
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
 		return diagnostic(diags, err, diag.Error)
@@ -233,6 +245,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diagnostic(diags, err, diag.Warning)
 	}
+
 	d.Set("logs", logs)
 	d.SetId(task.GetIdentifier(ctx).Long())
 
@@ -245,6 +258,9 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+	logger := utils.TpiLogger(d)
+	logger.Info(fmt.Sprintf(logTpl, "Destruction"))
+
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
 		return diagnostic(diags, err, diag.Error)
