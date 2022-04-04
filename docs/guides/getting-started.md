@@ -7,16 +7,19 @@ page_title: Getting Started
 ## Requirements
 
 - [Install Terraform 1.0+](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform), e.g.:
+
   - Brew (Homebrew/Mac OS): `brew tap hashicorp/tap && brew install hashicorp/tap/terraform`
   - Choco (Chocolatey/Windows): `choco install terraform`
   - Conda (Anaconda): `conda install -c conda-forge terraform`
   - Debian (Ubuntu/Linux):
-    ```
+
+    ```console
     sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
     curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
     sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     sudo apt-get update && sudo apt-get install terraform
     ```
+
 - Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][authentication]
 
 [authentication]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
@@ -74,7 +77,7 @@ This command will check `main.tf` and download the required TPI plugin.
 ## Run Task
 
 ```console
-$ terraform apply
+$ TF_LOG_PROVIDER=INFO terraform apply
 ```
 
 This command will:
@@ -92,7 +95,8 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 ## Query Status
 
 ```console
-$ terraform refresh && terraform show
+$ TF_LOG_PROVIDER=INFO terraform refresh
+$ TF_LOG_PROVIDER=INFO terraform show
 ```
 
 These commands will:
@@ -103,7 +107,7 @@ These commands will:
 ## Stop Task
 
 ```console
-$ terraform destroy
+$ TF_LOG_PROVIDER=INFO terraform destroy
 ```
 
 This command will:
@@ -114,3 +118,26 @@ This command will:
 In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
 
 -> **Note:** A large `output` directory may take a long time to download.
+
+## Debugging
+
+Use `TF_LOG_PROVIDER=DEBUG` in lieu of `INFO` to increase verbosity for debugging. See the [logging docs](https://www.terraform.io/plugin/log/managing) for a full list of options.
+
+In case of errors within the `script` itself, both `stdout` and `stderr` are available from the [status](#query-status).
+
+Advanced users may also want to SSH to debug failed scripts. This means preventing TPI from terminating the instance on `script` errors. For example:
+
+```hcl
+timeout     = 60*60*24               # 24h
+environment = { GITHUB_ACTOR = "" }  # optional: GitHub username
+script      = <<-END
+  #!/bin/bash
+  trap 'echo script error: waiting 24h for debugging over SSH. Run \"terraform destroy\" to stop waiting; sleep 24h' ERR
+  # optional: allow GitHub user's ssh keys.
+  # alternatively, use `ssh_private_key` and `addresses` from
+  # https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#attribute-reference
+  curl "https://github.com/$GITHUB_ACTOR.keys" >> "$HOME/.ssh/authorized_keys"
+
+  # ... rest of script ...
+END
+```

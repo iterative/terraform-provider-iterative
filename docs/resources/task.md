@@ -18,7 +18,7 @@ resource "iterative_task" "example" {
   disk_size   = 30        # GB
   spot        = 0         # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
   parallelism = 1
-  timeout     = 3600      # max 1h idle
+  timeout     = 60*60     # max 1h before forced termination
 
   environment = { GREETING = "Hello, world!" }
   storage {
@@ -51,8 +51,8 @@ resource "iterative_task" "example" {
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
-- `timeout` - (Optional) Maximum number of seconds to run before termination.
-- `name` - (Optional) Discouraged and may be removed in future. Deterministic task name (e.g. `name="Hello, World!"` always produces `id="tpi-hello-world-5kz6ldls-57wo7rsp"`).
+- `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
+- `name` - (Optional) _Discouraged and may be removed in future - change the resource name instead, i.e. `resource "iterative_task" "some_other_example_name"`._ Deterministic task name (e.g. `name="Hello, World!"` always produces `id="tpi-hello-world-5kz6ldls-57wo7rsp"`).
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
 
@@ -69,6 +69,38 @@ In addition to all arguments above, the following attributes are exported:
 - `logs` - List with task logs; one for each machine.
 
 ~> **Warning:** `events` have different formats across cloud providers and cannot be relied on for programmatic consumption/automation.
+
+After `terraform apply`, these attributes may be obtained using `terraform console`. For example:
+
+```console
+$ echo 'try(join("\n", iterative_task.example.logs), "")' | terraform console
+```
+
+For convenience, this can placed in an `output` block in `main.tf`:
+
+```hcl
+resource "iterative_task" "example" {
+  ...
+}
+output "logs" {
+  value = try(join("\n", iterative_task.example.logs), "")
+}
+```
+
+The above would allow:
+
+```console
+$ terraform output --raw logs
+```
+
+Finally, JSON output can be parsed using `terraform output --json` and `jq` like this:
+
+```console
+$ terraform show --json | jq --raw-output '
+  .values.root_module.resources[] |
+  select(.address == "iterative_task.example") |
+  .values.logs[]'
+```
 
 ## Machine Type
 
