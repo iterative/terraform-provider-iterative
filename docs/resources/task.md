@@ -93,6 +93,7 @@ output "logs" {
   value = try(join("\n", iterative_task.example.logs), "")
 }
 ```
+
 ~> **Warning:** `events` have different formats across cloud providers and cannot be relied on for programmatic consumption/automation.
 
 ## Machine Type
