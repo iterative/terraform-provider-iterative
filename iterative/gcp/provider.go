@@ -324,9 +324,24 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	}
 
 	if credentials.ProjectID == "" {
-		return "", nil, errors.New("Couldn't extract the project identifier from the given credentials!")
+		// 	Coerce Credentials to handle GCP OIDC auth
+		//	Common ProjectID ENVs:
+		//		https://github.com/google-github-actions/auth/blob/b05f71482f54380997bcc43a29ef5007de7789b1/src/main.ts#L187-L191
+		//		https://github.com/hashicorp/terraform-provider-google/blob/d6734812e2c6a679334dcb46932f4b92729fa98c/google/provider.go#L64-L73
+		env_project := utils.MultiEnvLoadFirst([]string{
+			"CLOUDSDK_CORE_PROJECT",
+			"CLOUDSDK_PROJECT",
+			"GCLOUD_PROJECT",
+			"GCP_PROJECT",
+			"GOOGLE_CLOUD_PROJECT",
+			"GOOGLE_PROJECT",
+		})
+		if env_project == "" {
+			return "", nil, errors.New("Couldn't extract the project identifier from the given credentials!")
+		}
+		credentials.ProjectID = env_project
 	}
-
+	// re-visit below after test / credentials.JSON as a seperate field is not/? updated with project id found from env
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
 }

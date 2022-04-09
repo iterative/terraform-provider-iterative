@@ -89,6 +89,15 @@ func SetId(d *schema.ResourceData) {
 	}
 }
 
+func MultiEnvLoadFirst(envs []string) string {
+	for _, val := range envs {
+		if env_value := os.Getenv(val); env_value != "" {
+			return env_value
+		}
+	}
+	return ""
+}
+
 func LoadGCPCredentials() string {
 	credentialsData := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
 	if len(credentialsData) == 0 {
