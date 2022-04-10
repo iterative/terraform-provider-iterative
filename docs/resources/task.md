@@ -27,6 +27,7 @@ resource "iterative_task" "example" {
   }
   script = <<-END
     #!/bin/bash
+    mkdir -p results
     echo "$GREETING" | tee results/$(uuidgen)
   END
   # or: script = file("example.sh")

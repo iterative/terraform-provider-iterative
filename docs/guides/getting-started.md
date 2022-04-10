@@ -45,8 +45,17 @@ resource "iterative_task" "example" {
   }
   script = <<-END
     #!/bin/bash
-    mkdir results
-    echo "Hello World!" > results/greeting.txt
+
+    # create output directory if needed
+    mkdir -p results
+    # read last result (in case of spot/preemptible instance recovery)
+    if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
+
+    # (re)start training loop up to 42 epochs
+    for epoch in $(seq ${EPOCH:-1} 10); do
+      sleep 1
+      echo "$epoch" > results/epoch.txt
+    done
   END
 }
 ```
@@ -115,7 +124,7 @@ This command will:
 1. Download the `output` directory from the cloud.
 2. Delete all the cloud resources created by `terraform apply`.
 
-In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
+In this example, after running `terraform destroy`, the `results` directory should contain a file named `epoch.txt` with the text `10`.
 
 -> **Note:** A large `output` directory may take a long time to download.
 
