@@ -149,8 +149,7 @@ direction LR
     A -.-> |"offline (lunch break)"| A
     C -.-> |"(re)provision instance"| D
     D ==> |run script| D
-    B -.-> |restore| D
-    D -.-> |cache| B
+    B <-.-> |persistent workdir cache| D
     D ==> |script end,\nshutdown instance| B
     D -.-> |outage| C
     B ==> |download output| A
