@@ -13,6 +13,8 @@ TF_LOG_PROVIDER=INFO terraform apply
 
 ## Amazon Web Services
 
+[Create an AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/) if needed, and then set these environment variables:
+
 - `AWS_ACCESS_KEY_ID` - Access key identifier.
 - `AWS_SECRET_ACCESS_KEY` - Secret access key.
 - `AWS_SESSION_TOKEN` - (Optional) Session token.
@@ -28,6 +30,8 @@ export AWS_SECRET_ACCESS_KEY="$(terraform output --raw aws_secret_access_key)"
 ```
 
 ## Microsoft Azure
+
+[Create an Azure account](https://docs.microsoft.com/en-us/learn/modules/create-an-azure-account/) if needed, and then set these environment variables:
 
 - `AZURE_CLIENT_ID` - Client identifier.
 - `AZURE_CLIENT_SECRET` - Client secret.
@@ -47,6 +51,8 @@ export AZURE_CLIENT_SECRET="$(terraform output --raw azure_client_secret)"
 ```
 
 ## Google Cloud Platform
+
+[Create a GCP account](https://cloud.google.com/free) if needed, and then set the environment variable:
 
 - `GOOGLE_APPLICATION_CREDENTIALS` - Path to (or contents of) a service account JSON key file.
 

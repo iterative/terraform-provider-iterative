@@ -14,12 +14,14 @@ TPI is a [Terraform](https://terraform.io) plugin built with machine learning in
 - **No waste**: auto-cleanup unused resources (terminate compute instances upon job completion/failure & remove storage upon download of results)
 - **No lock-in**: switch between several cloud vendors with ease due to concise unified configuration
 
-Supported cloud vendors include:
+Supported cloud vendors [include][auth]:
 
 - Amazon Web Services (AWS)
 - Microsoft Azure
 - Google Cloud Platform (GCP)
 - Kubernetes (K8s)
+
+[auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
 ## Usage
 
@@ -36,7 +38,7 @@ Supported cloud vendors include:
     sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
     sudo apt-get update && sudo apt-get install terraform
     ```
-- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication)
+- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][auth]
 
 ### Define a Task
 
