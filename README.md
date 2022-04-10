@@ -130,6 +130,39 @@ Instead of using the latest stable release, a local copy of the repository must 
    ```
 3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead), and run `terraform init --upgrade`
 
+This diagram may also help to see what TPI does under-the-hood:
+
+```mermaid
+flowchart LR
+subgraph tpi [what TPI manages]
+direction LR
+    subgraph you [what you manage]
+        direction LR
+        A([Personal Computer])
+    end
+    B[("Cloud Storage (low cost)")]
+    C{{"Cloud Orchestrator (zero cost)"}}
+    D[["Cloud (spot) Instance"]]
+    A ---> |create cloud storage| B
+    A --> |create cloud orchestrator| C
+    A ==> |upload script & workdir| B
+    A -.-> |"offline (lunch break)"| A
+    C -.-> |"(re)provision instance"| D
+    D ==> |run script| D
+    B -.-> |restore| D
+    D -.-> |cache| B
+    D ==> |script end,\nshutdown instance| B
+    D -.-> |outage| C
+    B ==> |download output| A
+end
+style you fill:#fff,stroke:#13ADC7
+style tpi fill:#fff,stroke:#fff,stroke-width:0px
+style A fill:#13ADC7
+style B fill:#945DD5
+style D fill:#F46737
+style C fill:#7B61FF
+```
+
 ## Copyright
 
 This project and all contributions to it are distributed under [![Apache-2.0][licence-badge]][licence-file]
