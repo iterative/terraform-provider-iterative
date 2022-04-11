@@ -22,7 +22,7 @@ if [ ! -f "$FILE" ]; then
   curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
   sudo apt update && sudo apt-get install -y nodejs
 
-  sudo apt install -y ubuntu-drivers-common
+  sudo apt install -y ubuntu-drivers-common alsa-utils
   sudo ubuntu-drivers autoinstall
 
   sudo curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login
