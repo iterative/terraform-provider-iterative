@@ -154,12 +154,12 @@ direction LR
     D -.-> |outage| C
     B ==> |download output| A
 end
-style you fill:#fff,stroke:#13ADC7
-style tpi fill:#fff,stroke:#fff,stroke-width:0px
-style A fill:#13ADC7,stroke:#333
-style B fill:#945DD5,stroke:#333
-style D fill:#F46737,stroke:#333
-style C fill:#7B61FF,stroke:#333
+style you fill:#FFFFFF00,stroke:#13ADC7
+style tpi fill:#FFFFFF00,stroke:#FFFFFF00,stroke-width:0px
+style A fill:#13ADC7,stroke:#333333,color:#000000
+style B fill:#945DD5,stroke:#333333,color:#000000
+style D fill:#F46737,stroke:#333333,color:#000000
+style C fill:#7B61FF,stroke:#333333,color:#000000
 ```
 
 ## Copyright
