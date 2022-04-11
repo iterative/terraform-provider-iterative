@@ -52,7 +52,7 @@ resource "iterative_task" "example" {
     if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
 
     # (re)start training loop up to 42 epochs
-    for epoch in $(seq ${EPOCH:-1} 10); do
+    for epoch in $(seq ${EPOCH:-1} 42); do
       sleep 1
       echo "$epoch" > results/epoch.txt
     done
