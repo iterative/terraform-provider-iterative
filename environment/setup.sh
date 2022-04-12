@@ -19,7 +19,7 @@ if [ ! -f "$FILE" ]; then
   sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
   sudo apt update && sudo apt-get install -y terraform
 
-  curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
+  curl -sL https://deb.nodesource.com/setup_16.x | sudo bash
   sudo apt update && sudo apt-get install -y nodejs
 
   sudo apt install -y ubuntu-drivers-common
