@@ -1,6 +1,6 @@
 module terraform-provider-iterative
 
-go 1.14
+go 1.16
 
 require (
 	github.com/Azure/azure-sdk-for-go v58.1.0+incompatible
