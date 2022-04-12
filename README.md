@@ -117,18 +117,7 @@ The [getting started guide](https://registry.terraform.io/providers/iterative/it
 
 Feature requests and bugs can be [reported via GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues), while general questions and feedback are very welcome on our active [Discord server](https://discord.gg/bzA6uY7).
 
-## Contributing
-
-Instead of using the latest stable release, a local copy of the repository must be used.
-
-1. [Install Go 1.17+](https://golang.org/doc/install)
-2. Clone the repository & build the provider
-   ```
-   git clone https://github.com/iterative/terraform-provider-iterative
-   cd terraform-provider-iterative
-   make install
-   ```
-3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead), and run `terraform init --upgrade`
+## How it Works
 
 This diagram may also help to see what TPI does under-the-hood:
 
@@ -161,6 +150,19 @@ style B fill:#945DD5,stroke:#333333,color:#000000
 style D fill:#F46737,stroke:#333333,color:#000000
 style C fill:#7B61FF,stroke:#333333,color:#000000
 ```
+
+## Contributing
+
+Instead of using the latest stable release, a local copy of the repository must be used.
+
+1. [Install Go 1.17+](https://golang.org/doc/install)
+2. Clone the repository & build the provider
+   ```
+   git clone https://github.com/iterative/terraform-provider-iterative
+   cd terraform-provider-iterative
+   make install
+   ```
+3. Use `source = "github.com/iterative/iterative"` in your `main.tf` to use the local repository (`source = "iterative/iterative"` will download the latest release instead), and run `terraform init --upgrade`
 
 ## Copyright
 
