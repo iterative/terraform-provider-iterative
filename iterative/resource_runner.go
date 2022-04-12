@@ -454,7 +454,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = utils.LoadGCPCredentials()
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
-	data["setup"] = strings.Replace(environment.Setup, "#/bin/sh", "", 1)
+	data["setup"] = strings.Replace(environment.SetupScript, "#/bin/sh", "", 1)
 	data["setupCML"] = utils.GetCML(d.Get("cml_version").(string))
 
 	return renderScript(data)
