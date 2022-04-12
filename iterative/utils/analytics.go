@@ -34,7 +34,6 @@ func TaskDuration(logs string) float64 {
 	if len(matches) > 1 {
 		layout := "Mar 07 06:43:27"
 		t1, _ := time.Parse(layout, matches[len(matches)-1])
-		fmt.Println(t1)
 		t0, _ := time.Parse(layout, matches[0])
 		taskDuration = t1.Sub(t0).Seconds()
 	}
@@ -74,31 +73,30 @@ func TerraformVersion() string {
 
 func JitsuUserId() string {
 	hostStat, _ := host.Info()
-	id := hostStat.HostID()
+	id := hostStat.HostID
 
 	if IsCI() {
-		// case GitHub:
-		//     group_id = "$GITHUB_SERVER_URL/$(dirname "$GITHUB_REPOSITORY")"
-		//     user_id = "$GITHUB_ACTOR" # only the user name
-		// case GitLab:
-		//     group_id = "$CI_SERVER_URL/$CI_PROJECT_ROOT_NAMESPACE"
-		//     user_id = "$CI_COMMIT_AUTHOR" # equivalent to git log below
-		// case Bitbucket:
-		//     group_id "$BITBUCKET_WORKSPACE"
-		//     user_id = "$(git log -1 --pretty=format:'%an %ae')"
-		// *_id = uuid5(sha256(*_id)[:8])
-
-		//id = fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("GITHUB_SERVER_URL"))
+		id = fmt.Sprintf("%s%s%s",
+			os.Getenv("GITHUB_REPOSITORY_OWNER"),
+			os.Getenv("CI_PROJECT_ROOT_NAMESPACE"),
+			os.Getenv("BITBUCKET_WORKSPACE"),
+		)
 	}
 
 	space := uuid.MustParse("c62985c8-2e8c-45fa-93af-4b9f577ed49e")
 	hash := md5.Sum([]byte(id))
-	return uuid.NewSHA1(space, hash[:8])
+	uuid := uuid.NewSHA1(space, hash[:8]).String()
+	return uuid
 }
 
 func JitsuResourceData(d *schema.ResourceData) map[string]interface{} {
-	if d != nil {
+	if d == nil {
 		return map[string]interface{}{}
+	}
+
+	logs := ""
+	for _, log := range d.Get("logs").([]interface{}) {
+		logs += log.(string)
 	}
 
 	return map[string]interface{}{
@@ -108,20 +106,20 @@ func JitsuResourceData(d *schema.ResourceData) map[string]interface{} {
 		"disk_size": d.Get("disk_size").(int),
 		"spot":      d.Get("spot").(float64),
 		"status":    d.Get("status").(map[string]interface{}),
-		"duration":  TaskDuration(d.Get("logs").(string)),
+		"duration":  TaskDuration(logs),
 	}
 }
 
 func JitsuEventPayload(eventType string, eventName string, d *schema.ResourceData) map[string]interface{} {
 	payload := map[string]interface{}{
-		"event_type":    eventType,
-		"event_name":    eventName,
-		"version":       version(),
-		"tf_version":    TerraformVersion(),
-		"user_id":       JitsuUserId(),
-		"system_info":   SystemInfo(),
-		"ci":            IsCI(),
-		"resource_data": JitsuResourceData(d),
+		"event_type":  eventType,
+		"event_name":  eventName,
+		"version":     version(),
+		"tf_version":  TerraformVersion(),
+		"user_id":     JitsuUserId(),
+		"system_info": SystemInfo(),
+		"ci":          IsCI(),
+		"task":        JitsuResourceData(d),
 	}
 
 	return payload
@@ -140,7 +138,7 @@ func SendJitsuEvent(eventType string, eventName string, d *schema.ResourceData) 
 	url := host + "/api/v1/s2s/event?ip_policy=strict&token=" + token
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		logrus.Error("Analytics: failed sending event: %v", err)
+		logrus.Error("Analytics: failed sending event")
 	}
 	defer resp.Body.Close()
 }

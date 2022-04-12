@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,7 +20,7 @@ func TestJitsuUserId(t *testing.T) {
 
 func TestTerraformVersion(t *testing.T) {
 	ver := TerraformVersion()
-	assert.Equal(t, ver.HasPrefix('v'), true)
+	assert.Equal(t, strings.HasPrefix(ver, "v"), true)
 }
 
 func TestJitsuResourceData(t *testing.T) {
@@ -27,7 +28,7 @@ func TestJitsuResourceData(t *testing.T) {
 	region := "us-west"
 	machine := "xl"
 	disk_size := 30
-	spot := 0
+	spot := 0.0
 	status := map[string]interface{}{
 		"running": 0,
 		"failed":  0,
@@ -46,13 +47,14 @@ func TestJitsuResourceData(t *testing.T) {
 	})
 
 	data := JitsuResourceData(d)
+
 	assert.Equal(t, cloud, data["cloud"].(string))
 	assert.Equal(t, region, data["region"].(string))
 	assert.Equal(t, machine, data["machine"].(string))
 	assert.Equal(t, disk_size, data["disk_size"].(int))
 	assert.Equal(t, spot, data["spot"].(float64))
-	assert.Equal(t, status, data["status"].(map[string]interface))
-	assert.Equal(t, 0, data["duration"].(float64))
+	assert.Equal(t, status, data["status"].(map[string]interface{}))
+	assert.Equal(t, 0.0, data["duration"].(float64))
 }
 
 func generateSchemaData(t *testing.T, raw map[string]interface{}) *schema.ResourceData {
