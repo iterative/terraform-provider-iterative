@@ -22,6 +22,8 @@ Supported cloud vendors [include][auth]:
 
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
+![](https://static.iterative.ai/img/cml/tpi-high-level.png)
+
 ## Usage
 
 ### Requirements
