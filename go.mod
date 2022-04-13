@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
-	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/aohorodnyk/uid v1.1.0
 	github.com/aws/aws-sdk-go v1.40.27 // indirect
@@ -22,7 +22,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/brianvoe/gofakeit/v6 v6.9.0
 	github.com/cloudflare/gokey v0.1.0
-	github.com/docker/go-units v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect

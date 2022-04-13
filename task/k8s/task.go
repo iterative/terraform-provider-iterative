@@ -273,7 +273,7 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 }
 
 func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {
-	return nil, common.NotFoundError
+	return nil, common.NotImplementedError
 }
 
 func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
