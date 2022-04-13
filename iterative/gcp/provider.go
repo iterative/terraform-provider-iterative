@@ -307,8 +307,8 @@ func getServiceAccountData(saString string) (string, []string) {
 func getProjectService() (string, *gcp_compute.Service, error) {
 	var credentials *google.Credentials
 	var err error
-
-	if credentialsData := []byte(utils.LoadGCPCredentials()); len(credentialsData) > 0 {
+	credentialsData := []byte(utils.LoadGCPCredentials())
+	if len(credentialsData) > 0 {
 		credentials, err = google.CredentialsFromJSON(oauth2.NoContext, credentialsData, gcp_compute.ComputeScope)
 	} else {
 		credentials, err = google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
@@ -337,7 +337,12 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 			"GOOGLE_PROJECT",
 		})
 		if env_project == "" {
-			return "", nil, errors.New("Couldn't extract the project identifier from the given credentials!")
+			// last effort to load
+			fromCredentialsID, err := utils.GCPCoerceOIDCCredentials(credentialsData)
+			if err != nil {
+				return "", nil, fmt.Errorf("Couldn't extract the project identifier from the given credentials!: [%w]", err)
+			}
+			env_project = fromCredentialsID
 		}
 		credentials.ProjectID = env_project
 	}

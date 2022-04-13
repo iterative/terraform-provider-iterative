@@ -2,6 +2,8 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -96,6 +98,29 @@ func MultiEnvLoadFirst(envs []string) string {
 		}
 	}
 	return ""
+}
+
+func GCPCoerceOIDCCredentials(rawCreds []byte) (string, error) {
+	hack := make(map[string]interface{})
+	err := json.Unmarshal(rawCreds, &hack)
+	if err != nil {
+		return "", err
+	}
+	saString := fmt.Sprint(hack["service_account_impersonation_url"])
+	// saString example: "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/cml@cml-pulse.iam.gserviceaccount.com:generateAccessToken"
+	if saString == "" {
+		return "", errors.New("[GCP OIDC] Unable to load service_account_impersonation_url")
+	}
+	// from saString, yank this
+	// -----------------------v.........v----------------------
+	// (...serviceAccounts/cml@cml-pulse.iam.gserviceaccount.com:...)
+	atIndex := strings.Index(saString, "@") + 1
+	iamIndex := strings.Index(saString, ".iam.")
+	if atIndex == -1 || iamIndex == -1 {
+		return "", errors.New("[GCP OIDC] Failed to get Project ID from service_account_impersonation_url")
+	}
+	projectID := saString[atIndex:iamIndex]
+	return projectID, nil
 }
 
 func LoadGCPCredentials() string {
