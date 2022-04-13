@@ -346,7 +346,7 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 		}
 		credentials.ProjectID = env_project
 	}
-	// re-visit below after test / credentials.JSON as a seperate field is not/? updated with project id found from env
+
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
 }
