@@ -328,14 +328,15 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 		//	Common ProjectID ENVs:
 		//		https://github.com/google-github-actions/auth/blob/b05f71482f54380997bcc43a29ef5007de7789b1/src/main.ts#L187-L191
 		//		https://github.com/hashicorp/terraform-provider-google/blob/d6734812e2c6a679334dcb46932f4b92729fa98c/google/provider.go#L64-L73
-		env_project := utils.MultiEnvLoadFirst([]string{
-			"CLOUDSDK_CORE_PROJECT",
-			"CLOUDSDK_PROJECT",
-			"GCLOUD_PROJECT",
-			"GCP_PROJECT",
-			"GOOGLE_CLOUD_PROJECT",
-			"GOOGLE_PROJECT",
-		})
+		// env_project := utils.MultiEnvLoadFirst([]string{
+		// 	"CLOUDSDK_CORE_PROJECT",
+		// 	"CLOUDSDK_PROJECT",
+		// 	"GCLOUD_PROJECT",
+		// 	"GCP_PROJECT",
+		// 	"GOOGLE_CLOUD_PROJECT",
+		// 	"GOOGLE_PROJECT",
+		// })
+		env_project := ""
 		if env_project == "" {
 			// last effort to load
 			fromCredentialsID, err := utils.GCPCoerceOIDCCredentials(credentialsData)
