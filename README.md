@@ -15,10 +15,7 @@ TPI is a [Terraform](https://terraform.io) plugin built with machine learning in
 
 Supported cloud vendors [include][auth]:
 
-- Amazon Web Services (AWS)
-- Microsoft Azure
-- Google Cloud Platform (GCP)
-- Kubernetes (K8s)
+Amazon Web Services (AWS) | Microsoft Azure | Google Cloud Platform (GCP) | Kubernetes (K8s)
 
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
