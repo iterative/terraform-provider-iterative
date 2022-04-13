@@ -8,11 +8,10 @@
 
 TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. Full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
 
-- **Easy to use**: create cloud compute (CPU, GPU, RAM) & storage resources without reading pages of documentation
-- **Lower cost**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
-- **No cloud vendor lock-in**: our unified abstraction allows switching between clouds with just one line
-- **Seamless developer experience**: easily sync & run data & code in the cloud as easily as on a local laptop
+- **Lower cost with spot recovery**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
+- **No cloud vendor lock-in**: switch between clouds with just one line thanks to unified abstraction
 - **No waste**: auto-cleanup unused resources (terminate compute instances upon job completion/failure & remove storage upon download of results)
+- **Seamless developer experience**: easily sync data & run code with one command, making the cloud feel like a laptop
 
 Supported cloud vendors [include][auth]:
 
@@ -111,13 +110,15 @@ TF_LOG_PROVIDER=INFO terraform destroy
 
 This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
 
-## Help
+## Why TPI?
 
-The [getting started guide](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) has some more information. In case of errors, extra debugging information is available using `TF_LOG_PROVIDER=DEBUG` instead of `INFO`.
+Why switch from existing cloud scripts/custom orchestrators/solutions?
 
-Feature requests and bugs can be [reported via GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues), while general questions and feedback are very welcome on our active [Discord server](https://discord.gg/bzA6uY7).
-
-## How it Works
+- **Spot auto-recovery**: on spot/preemptible interruption, TPI re-provisions instances, restores the `workdir`, and re-runs the `script` (when `spot` bidding price drops below your threshold)
+- **Developer-first experience**: one-command data sync & code execution, single-file config, no external server, you can close your laptop - cloud auto-recovery happens even if you are offline
+- **No vendor lock-in**: unified abstraction layer which is cloud vendor-agnostic
+- **Auto-termination**: pay only for what you use thanks to auto-cleanup of unused compute & storage resources
+- **Easy to use**: orchestrate cloud compute & storage resources without needing DevOps expertise - a "non-service" with no extra infrastructure to maintain
 
 This diagram may also help to see what TPI does under-the-hood:
 
@@ -150,6 +151,12 @@ style B fill:#945DD5,stroke:#333333,color:#000000
 style D fill:#F46737,stroke:#333333,color:#000000
 style C fill:#7B61FF,stroke:#333333,color:#000000
 ```
+
+## Help
+
+The [getting started guide](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started) has some more information. In case of errors, extra debugging information is available using `TF_LOG_PROVIDER=DEBUG` instead of `INFO`.
+
+Feature requests and bugs can be [reported via GitHub issues](https://github.com/iterative/terraform-provider-iterative/issues), while general questions and feedback are very welcome on our active [Discord server](https://discord.gg/bzA6uY7).
 
 ## Contributing
 
