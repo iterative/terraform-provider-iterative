@@ -33,6 +33,7 @@ terraform {
   required_providers { iterative = { source = "iterative/iterative" } }
 }
 provider "iterative" {}
+
 resource "iterative_task" "example" {
   cloud      = "aws" # or any of: gcp, az, k8s
   machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
@@ -52,9 +53,9 @@ resource "iterative_task" "example" {
     if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
 
     # (re)start training loop up to 42 epochs
-    for epoch in $(seq ${EPOCH:-1} 42); do
+    for epoch in $(seq $${EPOCH:-1} 42); do
       sleep 1
-      echo "$epoch" > results/epoch.txt
+      echo "$epoch" | tee results/epoch.txt
     done
   END
 }

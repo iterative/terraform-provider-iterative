@@ -27,8 +27,18 @@ resource "iterative_task" "example" {
   }
   script = <<-END
     #!/bin/bash
+
+    # create output directory if needed
     mkdir -p results
     echo "$GREETING" | tee results/$(uuidgen)
+    # read last result (in case of spot/preemptible instance recovery)
+    if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
+
+    # (re)start training loop up to 42 epochs
+    for epoch in $(seq $${EPOCH:-1} 42); do
+      sleep 1
+      echo "$epoch" | tee results/epoch.txt
+    done
   END
   # or: script = file("example.sh")
 }
