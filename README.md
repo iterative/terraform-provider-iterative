@@ -15,22 +15,22 @@ TPI is a [Terraform](https://terraform.io) plugin built with machine learning in
 
 Supported cloud vendors [include][auth]:
 
-![Amazon Web Services (AWS)](https://img.shields.io/badge/AWS-Amazon_Web_Services-black?colorA=white&logoColor=232F3E&logo=amazonaws) | ![Microsoft Azure](https://img.shields.io/badge/Azure-Microsoft_Azure-black?colorA=white&logoColor=0078D4&logo=microsoftazure) | ![Google Cloud Platform (GCP)](https://img.shields.io/badge/GCP-Google_Cloud_Platform-black?colorA=white&logoColor=4285F4&logo=googlecloud) | ![Kubernetes (K8s)](https://img.shields.io/badge/K8s-Kubernetes-black?colorA=white&logoColor=326CE5&logo=kubernetes)
------------------|-----------------|-----------------|-----------------
+| ![Amazon Web Services (AWS)](https://img.shields.io/badge/AWS-Amazon_Web_Services-black?colorA=white&logoColor=232F3E&logo=amazonaws) | ![Microsoft Azure](https://img.shields.io/badge/Azure-Microsoft_Azure-black?colorA=white&logoColor=0078D4&logo=microsoftazure) | ![Google Cloud Platform (GCP)](https://img.shields.io/badge/GCP-Google_Cloud_Platform-black?colorA=white&logoColor=4285F4&logo=googlecloud) | ![Kubernetes (K8s)](https://img.shields.io/badge/K8s-Kubernetes-black?colorA=white&logoColor=326CE5&logo=kubernetes) |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-![](https://static.iterative.ai/img/tpi/high-level-light.png#gh-light-mode-only)
-![](https://static.iterative.ai/img/tpi/high-level-dark.png#gh-dark-mode-only)
+![](https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png#gh-light-mode-only)
+![](https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png#gh-dark-mode-only)
 
 ## What's Special
 
 There are a several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
 
 1. **Reduce management overhead and infrastructure cost**
-TPI is a CLI tool, not a running service. It requires no additional orchestrating machine (control plane/head nodes) to schedule/recover/terminate instances. Instead, TPI runs (spot) instances via cloud-native scaling groups[^scalers], taking care of recovery and termination automatically on the cloud provider's side. This design reduces management overhead & infrastructure costs. You can close your laptop while cloud tasks are running -- auto-recovery happens even if you are offline.
+   TPI is a CLI tool, not a running service. It requires no additional orchestrating machine (control plane/head nodes) to schedule/recover/terminate instances. Instead, TPI runs (spot) instances via cloud-native scaling groups[^scalers], taking care of recovery and termination automatically on the cloud provider's side. This design reduces management overhead & infrastructure costs. You can close your laptop while cloud tasks are running -- auto-recovery happens even if you are offline.
 2. **Unified tool for data science and software development teams**
-TPI provides consistent tooling for both data scientists and DevOps engineers, improving cross-team collaboration. This simplifies compute management to a single config file, and reduces time to deliver ML models into production.
+   TPI provides consistent tooling for both data scientists and DevOps engineers, improving cross-team collaboration. This simplifies compute management to a single config file, and reduces time to deliver ML models into production.
 
 [^scalers]: [AWS Auto Scaling Groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html), [Azure VM Scale Sets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets), [GCP managed instance groups](https://cloud.google.com/compute/docs/instance-groups#managed_instance_groups), and [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job).
 
