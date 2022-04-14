@@ -1,4 +1,4 @@
-![TPI](https://static.iterative.ai/img/cml/banner-tpi.svg)
+![TPI](https://static.iterative.ai/img/tpi/banner.svg)
 
 # Terraform Provider Iterative (TPI)
 
@@ -19,7 +19,8 @@ Amazon Web Services (AWS) | Microsoft Azure | Google Cloud Platform (GCP) | Kube
 
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-![](https://static.iterative.ai/img/cml/tpi-high-level.png)
+![](https://static.iterative.ai/img/tpi/high-level-light.png#gh-light-mode-only)
+![](https://static.iterative.ai/img/tpi/high-level-dark.png#gh-dark-mode-only)
 
 ## Usage
 
@@ -131,10 +132,10 @@ direction LR
         A([Personal Computer])
     end
     B[("Cloud Storage (low cost)")]
-    C{{"Cloud Orchestrator (zero cost)"}}
+    C{{"Cloud instance scaler (zero cost)"}}
     D[["Cloud (spot) Instance"]]
     A ---> |create cloud storage| B
-    A --> |create cloud orchestrator| C
+    A --> |create cloud instance scaler| C
     A ==> |upload script & workdir| B
     A -.-> |"offline (lunch break)"| A
     C -.-> |"(re)provision instance"| D
