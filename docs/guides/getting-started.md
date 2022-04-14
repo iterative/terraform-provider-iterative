@@ -51,9 +51,10 @@ resource "iterative_task" "example" {
     mkdir -p results
     # read last result (in case of spot/preemptible instance recovery)
     if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
+    EPOCH=$${EPOCH:-1}  # start from 1 if last result not found
 
-    # (re)start training loop up to 42 epochs
-    for epoch in $(seq $${EPOCH:-1} 42); do
+    echo "(re)starting training loop from $EPOCH up to 1337 epochs"
+    for epoch in $(seq $EPOCH 1337); do
       sleep 1
       echo "$epoch" | tee results/epoch.txt
     done
@@ -71,7 +72,7 @@ The project layout should look similar to this:
 project/
 ├── main.tf
 └── results/
-    └── greeting.txt (created in the cloud and downloaded locally)
+    └── epoch.txt (created in the cloud and downloaded locally)
 ```
 
 ## Initialise Terraform
@@ -96,9 +97,11 @@ This command will:
 2. Upload the working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
 
-With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
+With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent (`disk_size`) storage will be used to relaunch interrupted tasks.
 
 -> **Note:** A large `workdir` may take a long time to upload.
+
+~> **Warning:** To take full advantage of spot instance recovery, a `script` should start by cheching the disk for results (recovered from a previous interrupted run).
 
 -> **Note:** The [`id`](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#id) returned by `terraform apply` (i.e. `[id=tpi-···]`) can be used to locate the created cloud resources through the cloud's web console or command–line tool.
 

@@ -33,6 +33,8 @@ TPI provides consistent tooling for both data scientists and DevOps engineers, i
 
 [^scalers]: [AWS Auto Scaling Groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html), [Azure VM Scale Sets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets), [GCP managed instance groups](https://cloud.google.com/compute/docs/instance-groups#managed_instance_groups), and [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job).
 
+<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML runners](https://cml.dev/doc/self-hosted-runners), bringing cloud providers to existing CI/CD workflows.
+
 ## Usage
 
 ### Requirements
@@ -77,9 +79,10 @@ resource "iterative_task" "example" {
     mkdir -p results
     # read last result (in case of spot/preemptible instance recovery)
     if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
+    EPOCH=$${EPOCH:-1}  # start from 1 if last result not found
 
-    # (re)start training loop up to 42 epochs
-    for epoch in $(seq $${EPOCH:-1} 42); do
+    echo "(re)starting training loop from $EPOCH up to 1337 epochs"
+    for epoch in $(seq $EPOCH 1337); do
       sleep 1
       echo "$epoch" | tee results/epoch.txt
     done
@@ -103,7 +106,7 @@ TF_LOG_PROVIDER=INFO terraform apply
 
 This launches a `machine` in the `cloud`, uploads `workdir`, and runs the `script`. Upon completion (or error), the `machine` is terminated.
 
-With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
+With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent (`disk_size`) storage will be used to relaunch interrupted tasks.
 
 ### Query Status
 
@@ -155,6 +158,10 @@ style B fill:#945DD5,stroke:#333333,color:#000000
 style D fill:#F46737,stroke:#333333,color:#000000
 style C fill:#7B61FF,stroke:#333333,color:#000000
 ```
+
+## Future Plans
+
+TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org).
 
 ## Help
 
