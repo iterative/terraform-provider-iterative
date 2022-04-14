@@ -40,7 +40,7 @@ fi
 sudo npm config set user 0 && sudo npm install --global 18 value with "quotes" and spaces
 sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
-export GOOGLE_APPLICATION_CREDENTIALS_DATA='7 value with "quotes" and spaces'
+export GOOGLE_APPLICATION_CREDENTIALS_DATA=''
 
 HOME="$(mktemp -d)" exec $(which cml-runner || echo $(which cml-internal || echo cml) runner) \
    --name '10 value with "quotes" and spaces' \
