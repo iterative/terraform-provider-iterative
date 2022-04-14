@@ -32,7 +32,7 @@ resource "iterative_task" "example" {
     mkdir -p results
     echo "$GREETING" | tee results/$(uuidgen)
     # read last result (in case of spot/preemptible instance recovery)
-    if [[ -f results/epoch.txt ]]; then EPOCH="$(cat results/epoch.txt)"; fi
+    if test -f results/epoch.txt; then EPOCH="$(cat results/epoch.txt)"; fi
     EPOCH=$${EPOCH:-1}  # start from 1 if last result not found
 
     echo "(re)starting training loop from $EPOCH up to 1337 epochs"
