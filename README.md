@@ -20,8 +20,8 @@ Supported cloud vendors [include][auth]:
 
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-![](https://static.iterative.ai/img/tpi/high-level-light.png#gh-light-mode-only)
-![](https://static.iterative.ai/img/tpi/high-level-dark.png#gh-dark-mode-only)
+![](https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png#gh-light-mode-only)
+![](https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png#gh-dark-mode-only)
 
 ## What's Special
 
