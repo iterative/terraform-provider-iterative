@@ -10,8 +10,8 @@ TPI is a [Terraform](https://terraform.io) plugin built with machine learning in
 
 - **Lower cost with spot recovery**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
 - **No cloud vendor lock-in**: switch between clouds with just one line thanks to unified abstraction
-- **No waste**: auto-cleanup unused resources (terminate compute instances upon job completion/failure & remove storage upon download of results)
-- **Seamless developer experience**: easily sync data & run code with one command, making the cloud feel like a laptop
+- **No waste**: auto-cleanup unused resources (terminate compute instances upon task completion/failure & remove storage upon download of results), pay only for what you use
+- **Developer-first experience**: one-command data sync & code execution with no external server, making the cloud feel like a laptop, no DevOps expertise required
 
 Supported cloud vendors [include][auth]:
 
@@ -21,6 +21,17 @@ Amazon Web Services (AWS) | Microsoft Azure | Google Cloud Platform (GCP) | Kube
 
 ![](https://static.iterative.ai/img/tpi/high-level-light.png#gh-light-mode-only)
 ![](https://static.iterative.ai/img/tpi/high-level-dark.png#gh-dark-mode-only)
+
+## What's Special
+
+There are a several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
+
+1. **Reduce management overhead and infrastructure cost**
+TPI is a CLI tool, not a running service. It requires no additional orchestrating machine (control plane/head nodes) to schedule/recover/terminate instances. Instead, TPI runs (spot) instances via cloud-native scaling groups[^scalers], taking care of recovery and termination automatically on the cloud provider's side. This design reduces management overhead & infrastructure costs. You can close your laptop while cloud tasks are running -- auto-recovery happens even if you are offline.
+2. **Unified tool for data science and software development teams**
+TPI provides consistent tooling for both data scientists and DevOps engineers, improving cross-team collaboration. This simplifies compute management to a single config file, and reduces time to deliver ML models into production.
+
+[^scalers]: [AWS Auto Scaling Groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html), [Azure VM Scale Sets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets), [GCP managed instance groups](https://cloud.google.com/compute/docs/instance-groups#managed_instance_groups), and [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job).
 
 ## Usage
 
@@ -111,17 +122,9 @@ TF_LOG_PROVIDER=INFO terraform destroy
 
 This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
 
-## Why TPI?
+## How it Works
 
-Why switch from existing cloud scripts/custom orchestrators/solutions?
-
-- **Spot auto-recovery**: on spot/preemptible interruption, TPI re-provisions instances, restores the `workdir`, and re-runs the `script` (when `spot` bidding price drops below your threshold)
-- **Developer-first experience**: one-command data sync & code execution, single-file config, no external server, you can close your laptop - cloud auto-recovery happens even if you are offline
-- **No vendor lock-in**: unified abstraction layer which is cloud vendor-agnostic
-- **Auto-termination**: pay only for what you use thanks to auto-cleanup of unused compute & storage resources
-- **Easy to use**: orchestrate cloud compute & storage resources without needing DevOps expertise - a "non-service" with no extra infrastructure to maintain
-
-This diagram may also help to see what TPI does under-the-hood:
+This diagram may help to see what TPI does under-the-hood:
 
 ```mermaid
 flowchart LR
