@@ -16,7 +16,7 @@ TPI is a [Terraform](https://terraform.io) plugin built with machine learning in
 Supported cloud vendors [include][auth]:
 
 | [![Amazon Web Services (AWS)][aws-badge]][aws] | [![Microsoft Azure][azure-badge]][azure] | [![Google Cloud Platform (GCP)][gcp-badge]][gcp] | [![Kubernetes (K8s)][k8s-badge]][k8s] |
-| ---------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------- | ------------------------------------- |
+| ---------------------------------------------- | ---------------------------------------- | ------------------------------------------------ | ------------------------------------- |
 
 [aws-badge]: https://img.shields.io/badge/AWS-Amazon_Web_Services-black?colorA=white&logoColor=232F3E&logo=amazonaws
 [aws]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication#amazon-web-services
@@ -26,7 +26,6 @@ Supported cloud vendors [include][auth]:
 [gcp]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication#google-cloud-platform
 [k8s-badge]: https://img.shields.io/badge/K8s-Kubernetes-black?colorA=white&logoColor=326CE5&logo=kubernetes
 [k8s]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication#kubernetes
-
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
 ![](https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png#gh-light-mode-only)
