@@ -16,6 +16,7 @@ import (
 
 	"gopkg.in/alessio/shellescape.v1"
 
+	"terraform-provider-iterative/iterative/gcp"
 	"terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -435,6 +436,11 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 		return code, err
 	}
 
+	var gcpCredentials string
+	if credentials, err := gcp.LoadGCPCredentials(); err == nil {
+		gcpCredentials = string(credentials.JSON)
+	}
+
 	data := make(map[string]interface{})
 	data["token"] = d.Get("token").(string)
 	data["repo"] = d.Get("repo").(string)
@@ -455,7 +461,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_CLIENT_SECRET"] = os.Getenv("AZURE_CLIENT_SECRET")
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
-	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = utils.LoadGCPCredentials()
+	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = gcpCredentials
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(string(setup[:]), "#/bin/sh", "", 1)
