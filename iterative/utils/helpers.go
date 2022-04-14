@@ -123,18 +123,6 @@ func GCPCoerceOIDCCredentials(rawCreds []byte) (string, error) {
 	return projectID, nil
 }
 
-func LoadGCPCredentials() string {
-	credentialsData := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA")
-	if len(credentialsData) == 0 {
-		credentialsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-		if len(credentialsPath) > 0 {
-			jsonData, _ := os.ReadFile(credentialsPath)
-			credentialsData = string(jsonData)
-		}
-	}
-	return credentialsData
-}
-
 // Better way than copying?
 // https://github.com/hashicorp/terraform-provider-google/blob/8a362008bd4d36b6a882eb53455f87305e6dff52/google/service_scope.go#L5-L48
 func canonicalizeServiceScope(scope string) string {
