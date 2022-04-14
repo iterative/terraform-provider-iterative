@@ -52,9 +52,11 @@ export AZURE_CLIENT_SECRET="$(terraform output --raw azure_client_secret)"
 
 ## Google Cloud Platform
 
-[Create a GCP account](https://cloud.google.com/free) if needed, and then set the environment variable:
+[Create a GCP account](https://cloud.google.com/free) if needed, and then either one of the environment variables:
 
-- `GOOGLE_APPLICATION_CREDENTIALS` - Path to (or contents of) a service account JSON key file.
+- `GOOGLE_APPLICATION_CREDENTIALS` - **Path** to a service account JSON key file.
+- `GOOGLE_APPLICATION_CREDENTIALS_DATA` - Alternatively, **contents** of a service account JSON key file.
+
 
 See the [GCP documentation](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account) to obtain these variables directly.
 
