@@ -57,7 +57,6 @@ export AZURE_CLIENT_SECRET="$(terraform output --raw azure_client_secret)"
 - `GOOGLE_APPLICATION_CREDENTIALS` - **Path** to a service account JSON key file.
 - `GOOGLE_APPLICATION_CREDENTIALS_DATA` - Alternatively, **contents** of a service account JSON key file.
 
-
 See the [GCP documentation](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account) to obtain these variables directly.
 
 Alternatively, for more idiomatic or advanced use cases, follow the [Terraform GCP provider documentation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/getting_started) and run the following commands in the [`permissions/gcp`](https://github.com/iterative/terraform-provider-iterative/tree/master/docs/guides/permissions/gcp) directory:
