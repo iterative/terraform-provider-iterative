@@ -289,6 +289,14 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
+func LoadGCPCredentials() (*google.Credentials, error) {
+	if credentialsData := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA"); credentialsData != "" {
+		return google.CredentialsFromJSON(oauth2.NoContext, []byte(credentialsData), gcp_compute.ComputeScope)
+	}
+
+	return google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
+}
+
 func getServiceAccountData(saString string) (string, []string) {
 	// ["SA email", "scopes=s1", "s2", ...]
 	splitStr := strings.Split(saString, ",")
@@ -305,15 +313,7 @@ func getServiceAccountData(saString string) (string, []string) {
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
-	var credentials *google.Credentials
-	var err error
-
-	if credentialsData := []byte(utils.LoadGCPCredentials()); len(credentialsData) > 0 {
-		credentials, err = google.CredentialsFromJSON(oauth2.NoContext, credentialsData, gcp_compute.ComputeScope)
-	} else {
-		credentials, err = google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
-	}
-
+	credentials, err := LoadGCPCredentials()
 	if err != nil {
 		return "", nil, err
 	}
