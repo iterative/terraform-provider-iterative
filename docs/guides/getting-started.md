@@ -20,11 +20,11 @@ page_title: Getting Started
     sudo apt-get update && sudo apt-get install terraform
     ```
 
-- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][authentication]
+- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][auth]
 
-[authentication]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
+[auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-## Defining a Task
+## Define a Task
 
 In a project root directory, create a file named `main.tf` with the following contents:
 
@@ -83,7 +83,7 @@ $ terraform init
 
 This command will check `main.tf` and download the required TPI plugin.
 
-~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables][authentication].
+~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables][auth].
 
 ## Run Task
 
@@ -93,7 +93,7 @@ $ TF_LOG_PROVIDER=INFO terraform apply
 
 This command will:
 
-1. Create all the required cloud resources.
+1. Create all the required cloud resources (provisioning a `machine` with `disk_size` storage).
 2. Upload the working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
 
@@ -126,9 +126,9 @@ $ TF_LOG_PROVIDER=INFO terraform destroy
 This command will:
 
 1. Download the `output` directory from the cloud.
-2. Delete all the cloud resources created by `terraform apply`.
+2. Delete all the cloud resources created by `terraform apply` (terminating `machine` if it's still running and removing the persistent `disk_size` storage).
 
-In this example, after running `terraform destroy`, the `results` directory should contain a file named `epoch.txt` with the text `10`.
+In this example, after running `terraform destroy`, the `results` directory should contain a file named `epoch.txt` with the text `1337`.
 
 -> **Note:** A large `output` directory may take a long time to download.
 

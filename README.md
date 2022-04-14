@@ -11,7 +11,7 @@ TPI is a [Terraform](https://terraform.io) plugin built with machine learning in
 - **Lower cost with spot recovery**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
 - **No cloud vendor lock-in**: switch between clouds with just one line thanks to unified abstraction
 - **No waste**: auto-cleanup unused resources (terminate compute instances upon task completion/failure & remove storage upon download of results), pay only for what you use
-- **Developer-first experience**: one-command data sync & code execution with no external server, making the cloud feel like a laptop, no DevOps expertise required
+- **Developer-first experience**: one-command data sync & code execution with no external server, making the cloud feel like a laptop
 
 Supported cloud vendors [include][auth]:
 
@@ -117,7 +117,7 @@ TF_LOG_PROVIDER=INFO terraform refresh
 TF_LOG_PROVIDER=INFO terraform show
 ```
 
-### Stop Tasks
+### Stop Task
 
 ```
 TF_LOG_PROVIDER=INFO terraform destroy
