@@ -106,7 +106,8 @@ func TpiLogger(d *schema.ResourceData) *logrus.Entry {
 }
 
 func hideUnwantedPrefix(levelText, newPrefix, message string) string {
-	unwantedPrefixLength := len(fmt.Sprintf("yyyy-mm-ddThh:mm:ss.mmmZ [%s] provider.terraform-provider-iterative: [%[1]s]", levelText))
+	timeString := time.Now().Format("2006-01-02T15:04:05.000Z0700")
+	unwantedPrefixLength := len(fmt.Sprintf("%s [%s] provider.terraform-provider-iterative: [%[2]s]", timeString, levelText))
 
 	var output string
 	for _, line := range strings.Split(message, "\n") {
