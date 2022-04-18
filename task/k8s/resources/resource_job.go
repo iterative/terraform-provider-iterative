@@ -332,7 +332,9 @@ func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	var result []string
 
 	for _, pod := range pods.Items {
-		logs, err := j.Client.Services.Core.Pods(j.Client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{}).Stream(ctx)
+		logs, err := j.Client.Services.Core.Pods(j.Client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{
+			Timestamps: true,
+		}).Stream(ctx)
 		if err != nil {
 			if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && strings.HasSuffix(statusErr.ErrStatus.Message, "ContainerCreating") {
 				continue
