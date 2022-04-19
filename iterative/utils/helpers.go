@@ -100,27 +100,21 @@ func MultiEnvLoadFirst(envs []string) string {
 	return ""
 }
 
-func GCPCoerceOIDCCredentials(rawCreds []byte) (string, error) {
-	hack := make(map[string]interface{})
-	err := json.Unmarshal(rawCreds, &hack)
-	if err != nil {
+func GCPCoerceOIDCCredentials(credentialsJSON []byte) (string, error) {
+	var credentials map[string]interface{}
+	if err := json.Unmarshal(credentialsJSON, &credentials); err != nil {
 		return "", err
 	}
-	saString := fmt.Sprint(hack["service_account_impersonation_url"])
-	// saString example: "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/cml@cml-pulse.iam.gserviceaccount.com:generateAccessToken"
-	if saString == "" {
-		return "", errors.New("[GCP OIDC] Unable to load service_account_impersonation_url")
+
+	if url, ok := credentials["service_account_impersonation_url"].(string); ok {
+		re := regexp.MustCompile("^https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/.+?@(?P<project>.+).iam.gserviceaccount.com:generateAccessToken$")
+		if match := re.FindStringSubmatch(url); match != nil {
+			return match[1], nil
+		}
+		return "", errors.New("failed to get project identifier from service_account_impersonation_url")
 	}
-	// from saString, yank this
-	// -----------------------v.........v----------------------
-	// (...serviceAccounts/cml@cml-pulse.iam.gserviceaccount.com:...)
-	atIndex := strings.Index(saString, "@") + 1
-	iamIndex := strings.Index(saString, ".iam.")
-	if atIndex == -1 || iamIndex == -1 {
-		return "", errors.New("[GCP OIDC] Failed to get Project ID from service_account_impersonation_url")
-	}
-	projectID := saString[atIndex:iamIndex]
-	return projectID, nil
+
+	return "", errors.New("unable to load service_account_impersonation_url")
 }
 
 // Better way than copying?
