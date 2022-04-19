@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -338,7 +339,7 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 		})
 		if coercedProjectID == "" {
 			// last effort to load
-			fromCredentialsID, err := utils.GCPCoerceOIDCCredentials(credentials.JSON)
+			fromCredentialsID, err := coerceOIDCCredentials(credentials.JSON)
 			if err != nil {
 				return "", nil, fmt.Errorf("Couldn't extract the project identifier from the given credentials!: [%w]", err)
 			}
@@ -349,6 +350,23 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
+}
+
+func coerceOIDCCredentials(credentialsJSON []byte) (string, error) {
+	var credentials map[string]interface{}
+	if err := json.Unmarshal(credentialsJSON, &credentials); err != nil {
+		return "", err
+	}
+
+	if url, ok := credentials["service_account_impersonation_url"].(string); ok {
+		re := regexp.MustCompile("^https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/.+?@(?P<project>.+).iam.gserviceaccount.com:generateAccessToken$")
+		if match := re.FindStringSubmatch(url); match != nil {
+			return match[1], nil
+		}
+		return "", errors.New("failed to get project identifier from service_account_impersonation_url")
+	}
+
+	return "", errors.New("unable to load service_account_impersonation_url")
 }
 
 func waitForOperation(ctx context.Context, timeout time.Duration, function func(...googleapi.CallOption) (*gcp_compute.Operation, error), arguments ...googleapi.CallOption) (*gcp_compute.Operation, error) {

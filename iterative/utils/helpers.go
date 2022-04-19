@@ -2,11 +2,8 @@ package utils
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/aohorodnyk/uid"
@@ -99,21 +96,4 @@ func MultiEnvLoadFirst(envs []string) string {
 		}
 	}
 	return ""
-}
-
-func GCPCoerceOIDCCredentials(credentialsJSON []byte) (string, error) {
-	var credentials map[string]interface{}
-	if err := json.Unmarshal(credentialsJSON, &credentials); err != nil {
-		return "", err
-	}
-
-	if url, ok := credentials["service_account_impersonation_url"].(string); ok {
-		re := regexp.MustCompile("^https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/.+?@(?P<project>.+).iam.gserviceaccount.com:generateAccessToken$")
-		if match := re.FindStringSubmatch(url); match != nil {
-			return match[1], nil
-		}
-		return "", errors.New("failed to get project identifier from service_account_impersonation_url")
-	}
-
-	return "", errors.New("unable to load service_account_impersonation_url")
 }
