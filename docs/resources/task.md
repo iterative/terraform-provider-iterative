@@ -105,7 +105,7 @@ The above would allow:
 $ terraform output --raw logs
 ```
 
-Finally, JSON output can be parsed using `terraform output --json` and `jq` like this:
+Finally, JSON output can be parsed using `terraform show --json` and `jq` like this:
 
 ```console
 $ terraform show --json | jq --raw-output '
