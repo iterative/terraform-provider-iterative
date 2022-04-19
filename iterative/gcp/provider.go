@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -289,6 +290,14 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
+func LoadGCPCredentials() (*google.Credentials, error) {
+	if credentialsData := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA"); credentialsData != "" {
+		return google.CredentialsFromJSON(oauth2.NoContext, []byte(credentialsData), gcp_compute.ComputeScope)
+	}
+
+	return google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
+}
+
 func getServiceAccountData(saString string) (string, []string) {
 	// ["SA email", "scopes=s1", "s2", ...]
 	splitStr := strings.Split(saString, ",")
@@ -301,19 +310,11 @@ func getServiceAccountData(saString string) (string, []string) {
 	splitStr[1] = strings.Split(splitStr[1], "=")[1]
 	// ["s1", "s2", ...]
 	serviceAccountScopes := splitStr[1:]
-	return serviceAccountEmail, utils.CanonicalizeServiceScopes(serviceAccountScopes)
+	return serviceAccountEmail, getCanonicalizedServiceScopes(serviceAccountScopes)
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
-	var credentials *google.Credentials
-	var err error
-
-	if credentialsData := []byte(utils.LoadGCPCredentials()); len(credentialsData) > 0 {
-		credentials, err = google.CredentialsFromJSON(oauth2.NoContext, credentialsData, gcp_compute.ComputeScope)
-	} else {
-		credentials, err = google.FindDefaultCredentials(oauth2.NoContext, gcp_compute.ComputeScope)
-	}
-
+	credentials, err := LoadGCPCredentials()
 	if err != nil {
 		return "", nil, err
 	}
@@ -324,11 +325,48 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	}
 
 	if credentials.ProjectID == "" {
-		return "", nil, errors.New("Couldn't extract the project identifier from the given credentials!")
+		// 	Coerce Credentials to handle GCP OIDC auth
+		//	Common ProjectID ENVs:
+		//		https://github.com/google-github-actions/auth/blob/b05f71482f54380997bcc43a29ef5007de7789b1/src/main.ts#L187-L191
+		//		https://github.com/hashicorp/terraform-provider-google/blob/d6734812e2c6a679334dcb46932f4b92729fa98c/google/provider.go#L64-L73
+		coercedProjectID := utils.MultiEnvLoadFirst([]string{
+			"CLOUDSDK_CORE_PROJECT",
+			"CLOUDSDK_PROJECT",
+			"GCLOUD_PROJECT",
+			"GCP_PROJECT",
+			"GOOGLE_CLOUD_PROJECT",
+			"GOOGLE_PROJECT",
+		})
+		if coercedProjectID == "" {
+			// last effort to load
+			fromCredentialsID, err := coerceOIDCCredentials(credentials.JSON)
+			if err != nil {
+				return "", nil, fmt.Errorf("Couldn't extract the project identifier from the given credentials!: [%w]", err)
+			}
+			coercedProjectID = fromCredentialsID
+		}
+		credentials.ProjectID = coercedProjectID
 	}
 
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
+}
+
+func coerceOIDCCredentials(credentialsJSON []byte) (string, error) {
+	var credentials map[string]interface{}
+	if err := json.Unmarshal(credentialsJSON, &credentials); err != nil {
+		return "", err
+	}
+
+	if url, ok := credentials["service_account_impersonation_url"].(string); ok {
+		re := regexp.MustCompile("^https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/.+?@(?P<project>.+).iam.gserviceaccount.com:generateAccessToken$")
+		if match := re.FindStringSubmatch(url); match != nil {
+			return match[1], nil
+		}
+		return "", errors.New("failed to get project identifier from service_account_impersonation_url")
+	}
+
+	return "", errors.New("unable to load service_account_impersonation_url")
 }
 
 func waitForOperation(ctx context.Context, timeout time.Duration, function func(...googleapi.CallOption) (*gcp_compute.Operation, error), arguments ...googleapi.CallOption) (*gcp_compute.Operation, error) {
@@ -513,4 +551,47 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			"type": instanceType,
 		},
 	}, nil
+}
+
+// https://github.com/hashicorp/terraform-provider-google/blob/8a362008bd4d36b6a882eb53455f87305e6dff52/google/service_scope.go#L5-L48
+func shorthandServiceScopeLookup(scope string) string {
+	// This is a convenience map of short names used by the gcloud tool
+	// to the GCE auth endpoints they alias to.
+	scopeMap := map[string]string{
+		"bigquery":              "https://www.googleapis.com/auth/bigquery",
+		"cloud-platform":        "https://www.googleapis.com/auth/cloud-platform",
+		"cloud-source-repos":    "https://www.googleapis.com/auth/source.full_control",
+		"cloud-source-repos-ro": "https://www.googleapis.com/auth/source.read_only",
+		"compute-ro":            "https://www.googleapis.com/auth/compute.readonly",
+		"compute-rw":            "https://www.googleapis.com/auth/compute",
+		"datastore":             "https://www.googleapis.com/auth/datastore",
+		"logging-write":         "https://www.googleapis.com/auth/logging.write",
+		"monitoring":            "https://www.googleapis.com/auth/monitoring",
+		"monitoring-read":       "https://www.googleapis.com/auth/monitoring.read",
+		"monitoring-write":      "https://www.googleapis.com/auth/monitoring.write",
+		"pubsub":                "https://www.googleapis.com/auth/pubsub",
+		"service-control":       "https://www.googleapis.com/auth/servicecontrol",
+		"service-management":    "https://www.googleapis.com/auth/service.management.readonly",
+		"sql":                   "https://www.googleapis.com/auth/sqlservice",
+		"sql-admin":             "https://www.googleapis.com/auth/sqlservice.admin",
+		"storage-full":          "https://www.googleapis.com/auth/devstorage.full_control",
+		"storage-ro":            "https://www.googleapis.com/auth/devstorage.read_only",
+		"storage-rw":            "https://www.googleapis.com/auth/devstorage.read_write",
+		"taskqueue":             "https://www.googleapis.com/auth/taskqueue",
+		"trace":                 "https://www.googleapis.com/auth/trace.append",
+		"useraccounts-ro":       "https://www.googleapis.com/auth/cloud.useraccounts.readonly",
+		"useraccounts-rw":       "https://www.googleapis.com/auth/cloud.useraccounts",
+		"userinfo-email":        "https://www.googleapis.com/auth/userinfo.email",
+	}
+	if matchedURL, ok := scopeMap[scope]; ok {
+		return matchedURL
+	}
+	return scope
+}
+func getCanonicalizedServiceScopes(scopes []string) []string {
+	cs := make([]string, len(scopes))
+	for i, scope := range scopes {
+		cs[i] = shorthandServiceScopeLookup(scope)
+	}
+	return cs
 }
