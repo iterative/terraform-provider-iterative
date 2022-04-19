@@ -310,7 +310,7 @@ func getServiceAccountData(saString string) (string, []string) {
 	splitStr[1] = strings.Split(splitStr[1], "=")[1]
 	// ["s1", "s2", ...]
 	serviceAccountScopes := splitStr[1:]
-	return serviceAccountEmail, getCanonicalizeServiceScopes(serviceAccountScopes)
+	return serviceAccountEmail, getCanonicalizedServiceScopes(serviceAccountScopes)
 }
 
 func getProjectService() (string, *gcp_compute.Service, error) {
@@ -588,7 +588,7 @@ func shorthandServiceScopeLookup(scope string) string {
 	}
 	return scope
 }
-func getCanonicalizeServiceScopes(scopes []string) []string {
+func getCanonicalizedServiceScopes(scopes []string) []string {
 	cs := make([]string, len(scopes))
 	for i, scope := range scopes {
 		cs[i] = shorthandServiceScopeLookup(scope)
