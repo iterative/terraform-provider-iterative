@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"terraform-provider-iterative/task/k8s/client"
@@ -14,13 +15,19 @@ import (
 // Wait for the pods matching the specified selector to pass their respective readiness probes.
 func WaitForPods(ctx context.Context, client *client.Client, interval time.Duration, timeout time.Duration, namespace string, selector string) (string, error) {
 	// Retrieve all the pods matching the given selector.
-	pods, err := client.Services.Core.Pods(namespace).
-		List(ctx, v1.ListOptions{LabelSelector: selector})
-
-	if err != nil {
-		return "", err
-	} else if len(pods.Items) == 0 {
-		return "", fmt.Errorf("no pods in %s matching %s", namespace, selector)
+	var pods *corev1.PodList
+	function := func() (done bool, err error) {
+		pods, err = client.Services.Core.Pods(namespace).
+			List(ctx, metav1.ListOptions{LabelSelector: selector})
+		if err != nil {
+			return false, err
+		} else if len(pods.Items) > 0 {
+			return true, nil
+		}
+		return false, nil
+	}
+	if err := wait.PollImmediate(interval, timeout, function); err != nil {
+		return "", fmt.Errorf("no pods in %s matching %s: %w", namespace, selector, err)
 	}
 
 	var podName string
@@ -29,7 +36,7 @@ func WaitForPods(ctx context.Context, client *client.Client, interval time.Durat
 		// Define a closured function in charge of checking the state of the current pod.
 		function := func() (bool, error) {
 			pod, err := client.Services.Core.Pods(namespace).
-				Get(ctx, currentPod.Name, v1.GetOptions{})
+				Get(ctx, currentPod.Name, metav1.GetOptions{})
 
 			if err != nil {
 				return false, err

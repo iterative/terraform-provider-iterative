@@ -27,7 +27,19 @@ resource "iterative_task" "example" {
   }
   script = <<-END
     #!/bin/bash
+
+    # create output directory if needed
+    mkdir -p results
     echo "$GREETING" | tee results/$(uuidgen)
+    # read last result (in case of spot/preemptible instance recovery)
+    if test -f results/epoch.txt; then EPOCH="$(cat results/epoch.txt)"; fi
+    EPOCH=$${EPOCH:-1}  # start from 1 if last result not found
+
+    echo "(re)starting training loop from $EPOCH up to 1337 epochs"
+    for epoch in $(seq $EPOCH 1337); do
+      sleep 1
+      echo "$epoch" | tee results/epoch.txt
+    done
   END
   # or: script = file("example.sh")
 }
@@ -42,11 +54,11 @@ resource "iterative_task" "example" {
 
 ### Optional
 
-- `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
-- `machine` - (Optional) See [Machine Types](#machine-types) below.
+- `region` - (Optional) [Cloud region/zone](#cloud-region) to run the task on.
+- `machine` - (Optional) See [Machine Types](#machine-type) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
-- `image` - (Optional) [Machine image](#machine-images) to run the task with.
+- `image` - (Optional) [Machine image](#machine-image) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
@@ -148,7 +160,7 @@ In addition to generic types, it's possible to specify any machine type supporte
 
 -> **Note:** `{accelerator}` will be transformed into a node selector requesting `accelerator={accelerator}` and `{count}` will be configured as the **limits** count for `kubernetes.io/gpu`.
 
-## Machine Images
+## Machine Image
 
 ### Generic
 
@@ -211,7 +223,7 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 - `{image}` - Any [container image](https://kubernetes.io/docs/concepts/containers/images/#image-names).
 
-## Cloud Regions
+## Cloud Region
 
 ### Generic
 
