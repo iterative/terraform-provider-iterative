@@ -11,7 +11,7 @@ This resource will:
 
 ```hcl
 resource "iterative_task" "example" {
-  cloud       = "aws"
+  cloud       = "aws"     # or any of: gcp, az, k8s
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"  # or "nvidia", ...
   region      = "us-east"
