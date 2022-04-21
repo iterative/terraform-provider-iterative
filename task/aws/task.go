@@ -192,7 +192,7 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	logrus.Info("[1/8] Downloading Directory...")
-	if t.Read(ctx) == nil {
+	if t.Resources.Bucket.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			if err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
 				return err
