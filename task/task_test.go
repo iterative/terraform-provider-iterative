@@ -59,7 +59,7 @@ func TestTask(t *testing.T) {
 			outputFile := filepath.Join(outputDirectory, "file")
 
 			relativeOutputDirectory, err := filepath.Rel(baseDirectory, outputDirectory)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			cloud := common.Cloud{
 				Provider: provider,
@@ -108,30 +108,30 @@ func TestTask(t *testing.T) {
 			ctx := context.TODO()
 
 			newTask, err := New(ctx, cloud, identifier, task)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
-			require.Nil(t, newTask.Delete(ctx))
+			require.NoError(t, newTask.Delete(ctx))
 			if sweepOnly {
 				return
 			}
 
-			require.Nil(t, os.Mkdir(cacheDirectory, 0777))
-			require.Nil(t, os.Mkdir(outputDirectory, 0777))
+			require.NoError(t, os.Mkdir(cacheDirectory, 0777))
+			require.NoError(t, os.Mkdir(outputDirectory, 0777))
 
 			file, err := os.Create(outputFile)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			_, err = file.WriteString(oldData)
-			require.Nil(t, err)
-			require.Nil(t, file.Close())
+			require.NoError(t, err)
+			require.NoError(t, file.Close())
 
-			require.Nil(t, newTask.Create(ctx))
-			require.Nil(t, newTask.Create(ctx))
+			require.NoError(t, newTask.Create(ctx))
+			require.NoError(t, newTask.Create(ctx))
 
 		loop:
-			for assert.Nil(t, newTask.Read(ctx)) {
+			for assert.NoError(t, newTask.Read(ctx)) {
 				logs, err := newTask.Logs(ctx)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				for _, log := range logs {
 					if strings.Contains(log, oldData) &&
@@ -148,9 +148,9 @@ func TestTask(t *testing.T) {
 				require.Equal(t, newTask.Stop(ctx), common.NotImplementedError)
 			}
 
-			for assert.Nil(t, newTask.Read(ctx)) {
+			for assert.NoError(t, newTask.Read(ctx)) {
 				status, err := newTask.Status(ctx)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				if status[common.StatusCodeActive] == 0 &&
 					status[common.StatusCodeSucceeded] > 0 {
@@ -160,14 +160,14 @@ func TestTask(t *testing.T) {
 				time.Sleep(10 * time.Second)
 			}
 
-			require.Nil(t, newTask.Delete(ctx))
-			require.Nil(t, newTask.Delete(ctx))
+			require.NoError(t, newTask.Delete(ctx))
+			require.NoError(t, newTask.Delete(ctx))
 
 			require.NoFileExists(t, cacheFile)
 			require.FileExists(t, outputFile)
 
 			contents, err := ioutil.ReadFile(outputFile)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			require.Contains(t, string(contents), newData)
 		})
