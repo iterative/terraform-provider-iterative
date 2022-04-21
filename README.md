@@ -149,16 +149,16 @@ direction LR
     B[("Cloud Storage (low cost)")]
     C{{"Cloud instance scaler (zero cost)"}}
     D[["Cloud (spot) Instance"]]
-    A ---> |create cloud storage| B
-    A --> |create cloud instance scaler| C
-    A ==> |upload script & workdir| B
-    A -.-> |"offline (lunch break)"| A
-    C -.-> |"(re)provision instance"| D
-    D ==> |run script| D
-    B <-.-> |persistent workdir cache| D
-    D ==> |script end,\nshutdown instance| B
+    A ---> |2. create cloud storage| B
+    A --> |1. create cloud instance scaler| C
+    A ==> |3. upload script & workdir| B
+    A -.-> |"4. offline (lunch break)"| A
+    C -.-> |"5. (re)provision instance"| D
+    D ==> |7. run script| D
+    B <-.-> |6. persistent workdir cache| D
+    D ==> |8. script end,\nshutdown instance| B
     D -.-> |outage| C
-    B ==> |download output| A
+    B ==> |9. download output| A
 end
 style you fill:#FFFFFF00,stroke:#13ADC7
 style tpi fill:#FFFFFF00,stroke:#FFFFFF00,stroke-width:0px
