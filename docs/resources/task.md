@@ -13,7 +13,7 @@ This resource will:
 resource "iterative_task" "example" {
   cloud       = "aws"
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
-  image       = "ubuntu"
+  image       = "ubuntu"  # or "nvidia", ...
   region      = "us-east"
   disk_size   = 30        # GB
   spot        = 0         # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
@@ -169,6 +169,7 @@ In addition to generic types, it's possible to specify any machine type supporte
 The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
 - `ubuntu` - Official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image (currently 20.04).
+- `nvidia` - Official [NVIDIA NGC](https://docs.nvidia.com/ngc/ngc-deploy-public-cloud)-based images, typically needing `disk_size = 32` GB or more.
 
 ### Cloud-specific
 
