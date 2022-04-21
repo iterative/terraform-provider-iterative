@@ -105,9 +105,11 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 
 	size := v.Attributes.Size.Machine
 	sizes := map[string]string{
+		"s":       "Standard_B1s",
 		"m":       "Standard_F8s_v2",
 		"l":       "Standard_F32s_v2",
 		"xl":      "Standard_F64s_v2",
+		"s+t4":    "Standard_NC4as_T4_v3",
 		"m+k80":   "Standard_NC6",
 		"l+k80":   "Standard_NC12",
 		"xl+k80":  "Standard_NC24",

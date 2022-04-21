@@ -67,9 +67,11 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 
 	size := i.Attributes.Size.Machine
 	sizes := map[string]string{
+		"s":       "g1-small",
 		"m":       "e2-custom-8-32768",
 		"l":       "e2-custom-32-131072",
 		"xl":      "n2-custom-64-262144",
+		"s+t4":    "g1-small+nvidia-tesla-t4*1",
 		"m+k80":   "custom-8-53248+nvidia-tesla-k80*1",
 		"l+k80":   "custom-32-131072+nvidia-tesla-k80*4",
 		"xl+k80":  "custom-64-212992-ext+nvidia-tesla-k80*8",

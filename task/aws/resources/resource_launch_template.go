@@ -55,9 +55,11 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 
 	size := l.Attributes.Size.Machine
 	sizes := map[string]string{
+		"s":       "t2.micro",
 		"m":       "m5.2xlarge",
 		"l":       "m5.8xlarge",
 		"xl":      "m5.16xlarge",
+		"s+t4":    "g4dn.xlarge",
 		"m+k80":   "p2.xlarge",
 		"l+k80":   "p2.8xlarge",
 		"xl+k80":  "p2.16xlarge",
