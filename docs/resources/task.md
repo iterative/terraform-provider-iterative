@@ -16,7 +16,7 @@ resource "iterative_task" "example" {
   image       = "ubuntu"  # or "nvidia", ...
   region      = "us-east"
   disk_size   = 30        # GB
-  spot        = 0         # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
+  spot        = 0         # auto-price. Or -1 to disable, or >0 for hourly USD limit
   parallelism = 1
   timeout     = 60*60     # max 1h before forced termination
 
