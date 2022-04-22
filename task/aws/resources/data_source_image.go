@@ -34,7 +34,7 @@ func (i *Image) Read(ctx context.Context) error {
 	image := i.Identifier
 	images := map[string]string{
 		"ubuntu": "ubuntu@099720109477:x86_64:*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*",
-		"nvidia": "ubuntu@898082745236:x86_64:Deep Learning AMI GPU TensorFlow 2.8.0 (Ubuntu 20.04) *",
+		"nvidia": "ubuntu@898082745236:x86_64:Deep Learning AMI GPU CUDA 11.2.1 (Ubuntu 20.04) 20220306",
 	}
 	if val, ok := images[image]; ok {
 		image = val
