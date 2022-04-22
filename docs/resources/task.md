@@ -122,9 +122,11 @@ The Iterative Provider offers some common machine types (medium, large, and extr
 
 | Type      | Minimum CPU cores | Minimum RAM | GPU                 |
 | :-------- | ----------------: | ----------: | :------------------ |
+| `s`       |                 1 |        1 GB | -                   |
 | `m`       |                 8 |       16 GB | -                   |
 | `l`       |                32 |       64 GB | -                   |
 | `xl`      |                64 |      128 GB | -                   |
+| `m+t4`    |                 4 |       16 GB | 1 NVIDIA Tesla T4   |
 | `m+k80`   |                 4 |       53 GB | 1 NVIDIA Tesla K80  |
 | `l+k80`   |                12 |      112 GB | 2 NVIDIA Tesla K80  |
 | `xl+k80`  |                24 |      212 GB | 4 NVIDIA Tesla K80  |

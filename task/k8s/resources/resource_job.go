@@ -58,9 +58,12 @@ type Job struct {
 func (j *Job) Create(ctx context.Context) error {
 	size := j.Attributes.Task.Size.Machine
 	sizes := map[string]string{
+		"s":       "1-1000",
 		"m":       "8-32000",
 		"l":       "32-128000",
 		"xl":      "64-256000",
+		"s+k80":   "2-12000+nvidia-tesla-k80*1",
+		"m+t4":    "4-16000+nvidia-tesla-t4*1",
 		"m+k80":   "4-64000+nvidia-tesla-k80*1",
 		"l+k80":   "32-512000+nvidia-tesla-k80*8",
 		"xl+k80":  "64-768000+nvidia-tesla-k80*16",
