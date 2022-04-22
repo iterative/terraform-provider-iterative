@@ -13,7 +13,6 @@ The table below is a more detailed version of the common choices summarised in [
 | `m`       | `m5.2xlarge`  | `Standard_F8s_v2`      | `e2-custom-8-32768`                             | `cpu: 8`<br>`memory: 32G`                            |
 | `l`       | `m5.8xlarge`  | `Standard_F32s_v2`     | `e2-custom-32-131072`                           | `cpu: 32`<br>`memory: 128G`                          |
 | `xl`      | `m5.16xlarge` | `Standard_F64s_v2`     | `n2-custom-64-262144`                           | `cpu: 64`<br>`memory: 256G`                          |
-| `s+k80`   | -             | -                      | `n1-highmem-2`<br>1 `nvidia-tesla-k80`          | `cpu: 2`<br>`memory: 12G`<br>1 `nvidia-tesla-k80`    |
 | `m+t4`    | `g4dn.xlarge` | `Standard_NC4as_T4_v3` | `n1-standard-4`<br>1 `nvidia-tesla-t4`          | `cpu: 4`<br>`memory: 16G`<br>1 `nvidia-tesla-t4`     |
 | `m+k80`   | `p2.xlarge`   | `Standard_NC6`         | `custom-8-53248`<br>1 `nvidia-tesla-k80`        | `cpu: 4`<br>`memory: 64G`<br>1 `nvidia-tesla-k80`    |
 | `l+k80`   | `p2.8xlarge`  | `Standard_NC12`        | `custom-32-131072`<br>4 `nvidia-tesla-k80`      | `cpu: 32`<br>`memory: 512G`<br>8 `nvidia-tesla-k80`  |
