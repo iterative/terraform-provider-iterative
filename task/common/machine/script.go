@@ -104,6 +104,7 @@ rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
+sudo systemctl disable --now apt-daily.timer
 
 while sleep 5; do
   test -n "$TPI_MACHINE_LOGS" && journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
