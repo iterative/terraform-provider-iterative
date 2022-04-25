@@ -14,16 +14,16 @@ resource "iterative_task" "example" {
   cloud       = "aws"     # or any of: gcp, az, k8s
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"  # or "nvidia", ...
-  region      = "us-east"
+  region      = "us-west" # or "us-east", "eu-west", ...
   disk_size   = 30        # GB
-  spot        = 0         # auto-price. Or -1 to disable, or >0 for hourly USD limit
+  spot        = 0         # auto-price. Default -1 to disable, or >0 for hourly USD limit
   parallelism = 1
-  timeout     = 60*60     # max 1h before forced termination
+  timeout     = 24*60*60  # max 24h before forced termination
 
   environment = { GREETING = "Hello, world!" }
   storage {
-    workdir = "."
-    output  = "results"
+    workdir = "."         # default blank (don't upload)
+    output  = "results"   # default blank (don't upload). Relative to workdir
   }
   script = <<-END
     #!/bin/bash
@@ -232,8 +232,8 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 The Iterative Provider offers some common cloud regions which are roughly the same for all supported clouds.
 
-- `us-east` - United States of America, East.
 - `us-west` - United States of America, West.
+- `us-east` - United States of America, East.
 - `eu-north` - Europe, North.
 - `eu-west` - Europe, West.
 
