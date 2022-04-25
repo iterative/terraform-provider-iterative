@@ -131,7 +131,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 					Mode:       "READ_WRITE",
 					InitializeParams: &compute.AttachedDiskInitializeParams{
 						SourceImage: i.Dependencies.Image.Resource.SelfLink,
-						DiskType: "pd-balanced",
+						DiskType:    "pd-balanced",
 					},
 				},
 			},
