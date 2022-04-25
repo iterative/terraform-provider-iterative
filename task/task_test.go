@@ -132,12 +132,21 @@ func TestTask(t *testing.T) {
 			for assert.NoError(t, newTask.Read(ctx)) {
 				logs, err := newTask.Logs(ctx)
 				require.NoError(t, err)
+				t.Log(logs)
 
 				for _, log := range logs {
 					if strings.Contains(log, oldData) &&
 						strings.Contains(log, newData) {
 						break loop
 					}
+				}
+
+				status, err := newTask.Status(ctx)
+				require.NoError(t, err)
+				t.Log(status)
+
+				if status[common.StatusCodeFailed] > 0 {
+					break
 				}
 
 				time.Sleep(10 * time.Second)
