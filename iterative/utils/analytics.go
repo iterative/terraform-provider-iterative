@@ -1,10 +1,11 @@
-package main
+package utils
 
 import (
 	"bytes"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,27 +16,52 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/shirou/gopsutil/host"
 	"github.com/sirupsen/logrus"
+	"github.com/wessie/appdirs"
 )
+
+var (
+	Version string = "v0.0.0"
+)
+
+func getenv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return defaultValue
+	}
+	return value
+}
+
+func idgen(data string) string {
+	space := uuid.MustParse("c62985c8-2e8c-45fa-93af-4b9f577ed49e")
+	hash := md5.Sum([]byte(data))
+	uuid := uuid.NewSHA1(space, hash[:8]).String()
+	return uuid
+}
 
 func SystemInfo() map[string]interface{} {
 	hostStat, _ := host.Info()
 	return map[string]interface{}{
-		"os":               hostStat.OS,
 		"platform":         hostStat.Platform,
 		"platform_version": hostStat.PlatformVersion,
 	}
 }
 
 func TaskDuration(logs string) float64 {
-	regex := regexp.MustCompile(`\w{3} \d{2} \d{2}:\d{2}:\d{2}`)
+	regex := regexp.MustCompile(`\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 	matches := regex.FindAllString(logs, -1)
 	taskDuration := 0.0
 
 	if len(matches) > 1 {
-		layout := "Mar 07 06:43:27"
+		layout := "2006-01-02 15:04:05"
 		t1, _ := time.Parse(layout, matches[len(matches)-1])
 		t0, _ := time.Parse(layout, matches[0])
 		taskDuration = t1.Sub(t0).Seconds()
+
+		fmt.Println(matches[len(matches)-1])
+		fmt.Println(matches[0])
+		fmt.Println(t1)
+		fmt.Println(t0)
+		fmt.Println(taskDuration)
 	}
 
 	return taskDuration
@@ -47,10 +73,6 @@ func IsCI() bool {
 	}
 
 	return false
-}
-
-func version() string {
-	return "v1.0.0"
 }
 
 func TerraformVersion() string {
@@ -71,70 +93,117 @@ func TerraformVersion() string {
 	return ""
 }
 
-func JitsuUserId() string {
-	hostStat, _ := host.Info()
-	id := hostStat.HostID
-
-	if IsCI() {
-		id = fmt.Sprintf("%s%s%s",
-			os.Getenv("GITHUB_REPOSITORY_OWNER"),
-			os.Getenv("CI_PROJECT_ROOT_NAMESPACE"),
-			os.Getenv("BITBUCKET_WORKSPACE"),
-		)
+func GroupId() string {
+	if !IsCI() {
+		return ""
 	}
 
-	space := uuid.MustParse("c62985c8-2e8c-45fa-93af-4b9f577ed49e")
-	hash := md5.Sum([]byte(id))
-	uuid := uuid.NewSHA1(space, hash[:8]).String()
-	return uuid
+	id := idgen(fmt.Sprintf("%s%s%s%s%s",
+		os.Getenv("GITHUB_SERVER_URL"),
+		os.Getenv("GITHUB_REPOSITORY_OWNER"),
+		os.Getenv("CI_SERVER_URL"),
+		os.Getenv("CI_PROJECT_ROOT_NAMESPACE"),
+		os.Getenv("BITBUCKET_WORKSPACE"),
+	))
+
+	return id
 }
 
-func JitsuResourceData(d *schema.ResourceData) map[string]interface{} {
+func UserId() string {
+	id := uuid.New().String()
+	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
+	new := appdirs.UserConfigDir("telemetry", "iterative", "", false)
+
+	_, errorOld := os.Stat(old)
+	if !os.IsNotExist(errorOld) {
+		os.Rename(old, new)
+	}
+
+	_, errorNew := os.Stat(new)
+	if !os.IsNotExist(errorNew) {
+		dat, _ := ioutil.ReadFile(new)
+		id = string(dat[:])
+	} else {
+		ioutil.WriteFile(new, []byte(id), 0644)
+	}
+
+	if IsCI() {
+		id = idgen(fmt.Sprintf("%s%s%s",
+			os.Getenv("GITHUB_ACTOR"),
+			os.Getenv("GITLAB_USER_ID"),
+			os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"),
+		))
+	}
+
+	return id
+}
+
+func ResourceData(d *schema.ResourceData) map[string]interface{} {
 	if d == nil {
 		return map[string]interface{}{}
 	}
 
+	tpiLogs := d.Get("logs").([]interface{})
 	logs := ""
-	for _, log := range d.Get("logs").([]interface{}) {
+	for _, log := range tpiLogs {
 		logs += log.(string)
 	}
-
+	spot := d.Get("spot").(float64)
 	return map[string]interface{}{
-		"cloud":     d.Get("cloud").(string),
-		"region":    d.Get("region").(string),
-		"machine":   d.Get("machine").(string),
-		"disk_size": d.Get("disk_size").(int),
-		"spot":      d.Get("spot").(float64),
-		"status":    d.Get("status").(map[string]interface{}),
-		"duration":  TaskDuration(logs),
+		"cloud":           d.Get("cloud").(string),
+		"cloud_region":    d.Get("region").(string),
+		"cloud_machine":   d.Get("machine").(string),
+		"cloud_disk_size": d.Get("disk_size").(int),
+		"cloud_spot":      spot,
+		"cloud_spot_auto": spot == 0.0,
+		"task_status":     d.Get("status").(map[string]interface{}),
+		"task_duration":   TaskDuration(logs),
+		"task_resumed":    len(logs) > 1,
 	}
 }
 
-func JitsuEventPayload(eventType string, eventName string, d *schema.ResourceData) map[string]interface{} {
+func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[string]interface{} {
+	systemInfo := SystemInfo()
+
+	extra := ResourceData(d)
+	extra["ci"] = IsCI()
+	err := ""
+	if e != nil {
+		err = e.Error()
+	}
+
 	payload := map[string]interface{}{
-		"event_type":  eventType,
-		"event_name":  eventName,
-		"version":     version(),
-		"tf_version":  TerraformVersion(),
-		"user_id":     JitsuUserId(),
-		"system_info": SystemInfo(),
-		"ci":          IsCI(),
-		"task":        JitsuResourceData(d),
+		"user_id":      UserId(),
+		"group_id":     GroupId(),
+		"action":       action,
+		"interface":    "cli",
+		"tool_name":    "tpi",
+		"tool_source":  "terraform",
+		"tool_version": Version,
+		"os_name":      systemInfo["plattform"],
+		"os_version":   systemInfo["platform_version"],
+		"backend":      extra["cloud"],
+		"error":        err,
+		"extra":        extra,
 	}
 
 	return payload
 }
 
-func SendJitsuEvent(eventType string, eventName string, d *schema.ResourceData) {
+func SendJitsuEvent(action string, e error, d *schema.ResourceData) {
+	if d == nil {
+		return
+	}
+
 	if _, ok := os.LookupEnv("DO_NOT_TRACK"); ok {
 		logrus.Debug("Analytics: DO_NOT_TRACK enabled")
 		return
 	}
 
-	postBody, _ := json.Marshal(JitsuEventPayload(eventType, eventName, d))
+	postBody, _ := json.Marshal(JitsuEventPayload(action, e, d))
 
-	host := "https://0f82a78ac1e6.ngrok.io"
-	token := "s2s.vy0gtflakci9wbwyootfqy.7ztlcr98n9l02b55kktmncg"
+	host := getenv("TPI_ANALYTICS_HOST", "https://telemetry.cml.dev")
+	token := getenv("TPI_ANALYTICS_KEY", "s2s.jtyjusrpsww4k9b76rrjri.bl62fbzrb7nd9n6vn5bpqt")
 	url := host + "/api/v1/s2s/event?ip_policy=strict&token=" + token
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
