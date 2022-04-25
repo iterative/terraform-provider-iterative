@@ -117,7 +117,7 @@ These commands will:
 1. Query the task status from the cloud.
 2. Display the task status.
 
-## Stop Task
+## End Task
 
 ```console
 $ TF_LOG_PROVIDER=INFO terraform destroy

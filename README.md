@@ -126,7 +126,7 @@ TF_LOG_PROVIDER=INFO terraform refresh
 TF_LOG_PROVIDER=INFO terraform show
 ```
 
-### Stop Task
+### End Task
 
 ```
 TF_LOG_PROVIDER=INFO terraform destroy
