@@ -25,3 +25,9 @@ The table below is a more detailed version of the common choices summarised in [
 [az]: https://azure.microsoft.com/en-us/pricing/vm-selector
 [gcp]: https://cloud.google.com/compute/docs/machine-types
 [k8s]: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers
+
+## Pricing
+
+- aws: [on-demand](https://aws.amazon.com/ec2/pricing), [spot](https://aws.amazon.com/ec2/spot/pricing)
+- [az](https://azure.microsoft.com/en-us/pricing/calculator)
+- [gcp](https://cloud.google.com/products/calculator)
