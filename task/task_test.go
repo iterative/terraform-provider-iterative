@@ -76,18 +76,19 @@ func TestTask(t *testing.T) {
 
 			task := common.Task{
 				Size: common.Size{
-					Machine: "m",
+					Machine: "m+t4",
 					Storage: 30,
 				},
 				Environment: common.Environment{
-					Image: "ubuntu",
+					Image: "nvidia",
 					Script: `#!/bin/bash
-					    mkdir cache
-						touch cache/file
-						mkdir output
-						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-						sleep 60
-						cat output/file
+nvidia-smi | grep T4 || exit 1 
+mkdir cache
+touch cache/file
+mkdir output
+echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+sleep 60
+cat output/file
 					`,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
