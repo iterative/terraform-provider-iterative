@@ -44,7 +44,7 @@ There are a several reasons to use TPI instead of other related solutions (custo
 
 [^scalers]: [AWS Auto Scaling Groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html), [Azure VM Scale Sets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets), [GCP managed instance groups](https://cloud.google.com/compute/docs/instance-groups#managed_instance_groups), and [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job).
 
-<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML runners](https://cml.dev/doc/self-hosted-runners), bringing cloud providers to existing CI/CD workflows.
+<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML](https://cml.dev), bringing cloud providers to existing GitHub, GitLab & Bitbucket CI/CD workflows ([repository](https://github.com/iterative/cml)).
 
 ## Usage
 

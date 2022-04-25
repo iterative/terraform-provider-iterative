@@ -40,7 +40,7 @@ There are a several reasons to use TPI instead of other related solutions (custo
 3. **Reproducible, codified environments**:
    Store hardware requirements & pipelines in a single configuration file with the rest of your ML project code.
 
-<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML runners](https://cml.dev/doc/self-hosted-runners), bringing cloud providers to existing CI/CD workflows.
+<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML](https://cml.dev), bringing cloud providers to existing GitHub, GitLab & Bitbucket CI/CD workflows ([repository](https://github.com/iterative/cml)).
 
 ## Links
 
