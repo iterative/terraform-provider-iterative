@@ -82,7 +82,7 @@ func TestTask(t *testing.T) {
 				Environment: common.Environment{
 					Image: "nvidia",
 					Script: `#!/bin/bash
-nvidia-smi | grep T4 || exit 1 
+nvidia-smi | grep T4 || exit 1
 mkdir cache
 touch cache/file
 mkdir output
