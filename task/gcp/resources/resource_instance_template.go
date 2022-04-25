@@ -170,7 +170,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 		},
 	}
 
-	if size := i.Attributes.Size.Storage; size >= 0 {
+	if size := i.Attributes.Size.Storage; size > 0 {
 		definition.Properties.Disks[0].DiskSizeGb.OsDisk.DiskSizeGB = int64(size)
 	}
 

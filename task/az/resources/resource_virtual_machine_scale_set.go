@@ -191,7 +191,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		},
 	}
 
-	if size := v.Attributes.Size.Storage; size >= 0 {
+	if size := v.Attributes.Size.Storage; size > 0 {
 		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.StorageProfile.OsDisk.DiskSizeGB = to.Int32Ptr(int32(size))
 	}
 
