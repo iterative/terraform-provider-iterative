@@ -56,12 +56,6 @@ func TaskDuration(logs string) float64 {
 		t1, _ := time.Parse(layout, matches[len(matches)-1])
 		t0, _ := time.Parse(layout, matches[0])
 		taskDuration = t1.Sub(t0).Seconds()
-
-		fmt.Println(matches[len(matches)-1])
-		fmt.Println(matches[0])
-		fmt.Println(t1)
-		fmt.Println(t0)
-		fmt.Println(taskDuration)
 	}
 
 	return taskDuration
@@ -167,6 +161,8 @@ func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[strin
 
 	extra := ResourceData(d)
 	extra["ci"] = IsCI()
+	extra["terraform_version"] = TerraformVersion()
+
 	err := ""
 	if e != nil {
 		err = e.Error()
