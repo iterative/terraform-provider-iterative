@@ -77,7 +77,7 @@ func TestTask(t *testing.T) {
 			task := common.Task{
 				Size: common.Size{
 					Machine: "m+t4",
-					Storage: 30,
+					Storage: 35,
 				},
 				Environment: common.Environment{
 					Image: "nvidia",
