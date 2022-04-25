@@ -32,7 +32,7 @@ func (i *Image) Read(ctx context.Context) error {
 	image := i.Identifier
 	images := map[string]string{
 		"ubuntu": "ubuntu@ubuntu-os-cloud/ubuntu-2004-lts",
-		"nvidia": "ubuntu@nvidia-ngc-public/nvidia-gpu-cloud-image-20211105",
+		"nvidia": "ubuntu@deeplearning-platform-release/common-cu113-ubuntu-2004",
 	}
 	if val, ok := images[image]; ok {
 		image = val
