@@ -145,7 +145,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 					OsDisk: &compute.VirtualMachineScaleSetOSDisk{
 						Caching:      compute.CachingTypesReadWrite,
 						CreateOption: compute.DiskCreateOptionTypesFromImage,
-						DiskSizeGB:   to.Int32Ptr(int32(v.Attributes.Size.Storage)),
+						//DiskSizeGB:   to.Int32Ptr(int32(v.Attributes.Size.Storage)),
 						ManagedDisk: &compute.VirtualMachineScaleSetManagedDiskParameters{
 							StorageAccountType: compute.StorageAccountTypesStandardLRS,
 						},
