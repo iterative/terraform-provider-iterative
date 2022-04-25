@@ -60,6 +60,6 @@ func TestResourceData(t *testing.T) {
 	assert.Equal(t, spot, data["cloud_spot"].(float64))
 	assert.Equal(t, true, data["cloud_spot_auto"].(bool))
 	assert.Equal(t, status, data["task_status"].(map[string]interface{}))
-	assert.Equal(t, true, data["task_duration"].(float64) > 0.0)
+	assert.Equal(t, 120.0, data["task_duration"].(float64))
 	assert.Equal(t, true, data["task_resumed"].(bool))
 }
