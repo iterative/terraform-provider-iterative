@@ -23,7 +23,7 @@ resource "iterative_task" "example" {
   environment = { GREETING = "Hello, world!" }
   storage {
     workdir = "."         # default blank (don't upload)
-    output  = "results"   # default blank (don't upload). Relative to workdir
+    output  = "results"   # default blank (don't download). Relative to workdir
   }
   script = <<-END
     #!/bin/bash
