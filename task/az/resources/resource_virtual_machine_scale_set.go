@@ -85,7 +85,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	image := v.Attributes.Environment.Image
 	images := map[string]string{
 		"ubuntu": "ubuntu@Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
-		"nvidia": "ubuntu@nvidia:ngc_base_image_version_b:gen2_21-11-0:latest#plan",
+		"nvidia": "ubuntu@nvidia:ngc_base_image_version_b:gen2_21-11-0:21.11.0#plan",
 	}
 	if val, ok := images[image]; ok {
 		image = val
