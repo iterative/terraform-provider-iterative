@@ -96,6 +96,7 @@ This command will:
 1. Create all the required cloud resources (provisioning a `machine` with `disk_size` storage).
 2. Upload the working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
+4. Terminate the `machine` on `script` completion/error.
 
 With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent (`disk_size`) storage will be used to relaunch interrupted tasks.
 
