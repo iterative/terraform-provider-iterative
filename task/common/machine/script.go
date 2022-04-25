@@ -102,7 +102,7 @@ fi
 
 rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 
-echo y | /etc/profile.d/install-driver-prompt.sh # for GCP GPU machines
+yes | /etc/profile.d/install-driver-prompt.sh # for GCP GPU machines
 
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
