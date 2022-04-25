@@ -55,7 +55,7 @@ func resourceTask() *schema.Resource {
 				Type:     schema.TypeInt,
 				ForceNew: true,
 				Optional: true,
-				Default:  35,
+				Default:  50,
 			},
 			"spot": {
 				Type:     schema.TypeFloat,
