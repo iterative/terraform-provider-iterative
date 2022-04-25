@@ -87,7 +87,7 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 						DeleteOnTermination: aws.Bool(true),
 						Encrypted:           aws.Bool(false),
 						//VolumeSize:          aws.Int32(int32(l.Attributes.Size.Storage)),
-						VolumeType:          types.VolumeType("gp2"),
+						VolumeType: types.VolumeType("gp2"),
 					},
 				},
 			},

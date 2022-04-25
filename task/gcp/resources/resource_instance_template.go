@@ -132,7 +132,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 					InitializeParams: &compute.AttachedDiskInitializeParams{
 						SourceImage: i.Dependencies.Image.Resource.SelfLink,
 						//DiskSizeGb:  int64(i.Attributes.Size.Storage),
-						DiskType:    "pd-balanced",
+						DiskType: "pd-balanced",
 					},
 				},
 			},
