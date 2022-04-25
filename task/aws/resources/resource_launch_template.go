@@ -110,7 +110,7 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 	}
 
 	if size := l.Attributes.Size.Storage; size >= 0 {
-		input.LaunchTemplateData.BlockDeviceMappings[0].Ebs.VolumeSize: aws.Int32(int32(size)),
+		input.LaunchTemplateData.BlockDeviceMappings[0].Ebs.VolumeSize = aws.Int32(int32(size))
 	}
 
 	if _, err := l.Client.Services.EC2.CreateLaunchTemplate(ctx, &input); err != nil {
