@@ -131,7 +131,6 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 					Mode:       "READ_WRITE",
 					InitializeParams: &compute.AttachedDiskInitializeParams{
 						SourceImage: i.Dependencies.Image.Resource.SelfLink,
-						//DiskSizeGb:  int64(i.Attributes.Size.Storage),
 						DiskType: "pd-balanced",
 					},
 				},
@@ -169,6 +168,10 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 			},
 			GuestAccelerators: accelerators,
 		},
+	}
+
+	if size := i.Attributes.Size.Storage; size >= 0 {
+		definition.Properties.Disks[0].DiskSizeGb.OsDisk.DiskSizeGB: int64(size),
 	}
 
 	insertOperation, err := i.Client.Services.Compute.InstanceTemplates.Insert(i.Client.Credentials.ProjectID, definition).Do()

@@ -145,7 +145,6 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 					OsDisk: &compute.VirtualMachineScaleSetOSDisk{
 						Caching:      compute.CachingTypesReadWrite,
 						CreateOption: compute.DiskCreateOptionTypesFromImage,
-						//DiskSizeGB:   to.Int32Ptr(int32(v.Attributes.Size.Storage)),
 						ManagedDisk: &compute.VirtualMachineScaleSetManagedDiskParameters{
 							StorageAccountType: compute.StorageAccountTypesStandardLRS,
 						},
@@ -190,6 +189,10 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 				},
 			},
 		},
+	}
+
+	if size := v.Attributes.Size.Storage; size >= 0 {
+		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.StorageProfile.OsDisk.DiskSizeGB: to.Int32Ptr(int32(size)),
 	}
 
 	if plan == "#plan" {
