@@ -241,10 +241,8 @@ func SendJitsuEvent(action string, e error, d *schema.ResourceData) {
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
-	resp, err := client.Post(url, "application/json", bytes.NewBuffer(postBody))
+	_, err := client.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
 		logrus.Info("Analytics: failed sending event")
-	} else {
-		defer resp.Body.Close()
 	}
 }
