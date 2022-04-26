@@ -77,7 +77,7 @@ func (j *Job) Create(ctx context.Context) error {
 	image := j.Attributes.Task.Environment.Image
 	images := map[string]string{
 		"ubuntu": "ubuntu",
-		"nvidia": "nvidia/cuda",
+		"nvidia": "nvidia/cuda:11.3.0-cudnn8-runtime-ubuntu20.04",
 	}
 	if val, ok := images[image]; ok {
 		image = val
@@ -91,7 +91,7 @@ func (j *Job) Create(ctx context.Context) error {
 	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
 	jobAccelerator := match[3]
-	jobGPUType := "kubernetes.io/gpu"
+	jobGPUType := "nvidia.com/gpu"
 	jobGPUCount := match[4]
 
 	// Define the dynamic resource allocation limits for the job pods.

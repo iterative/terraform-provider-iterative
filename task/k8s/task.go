@@ -31,7 +31,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	}
 
 	persistentVolumeClaimStorageClass := ""
-	persistentVolumeClaimSize := uint64(task.Size.Storage)
+	persistentVolumeClaimSize := task.Size.Storage
 	persistentVolumeDirectory := task.Environment.Directory
 
 	match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
@@ -42,7 +42,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 			if err != nil {
 				return nil, err
 			}
-			persistentVolumeClaimSize = uint64(number)
+			persistentVolumeClaimSize = int(number)
 		}
 		persistentVolumeDirectory = match[3]
 	}
