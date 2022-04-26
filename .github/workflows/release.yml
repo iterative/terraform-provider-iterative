@@ -17,7 +17,7 @@ jobs:
       - uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release --rm-dist -ldflags="-X 'terraform-provider-iterative/iterative/utils.Version=${GITHUB_REF##refs/tags/v}'"
+          args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   synchronize:
