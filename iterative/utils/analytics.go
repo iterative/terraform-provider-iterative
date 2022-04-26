@@ -81,6 +81,22 @@ func IsCI() bool {
 	return false
 }
 
+func guessCI() string {
+	if _, ok := os.LookupEnv("GITHUB_SERVER_URL"); ok {
+		return "github"
+	}
+
+	if _, ok := os.LookupEnv("CI_SERVER_URL"); ok {
+		return "gitlab"
+	}
+
+	if _, ok := os.LookupEnv("BITBUCKET_WORKSPACE"); ok {
+		return "bitbucket"
+	}
+
+	return ""
+}
+
 func TerraformVersion() string {
 	var out bytes.Buffer
 	cmd := exec.Command("terraform", "--version")
@@ -180,7 +196,7 @@ func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[strin
 	systemInfo := SystemInfo()
 
 	extra := ResourceData(d)
-	extra["ci"] = IsCI()
+	extra["ci"] = guessCI()
 	extra["terraform_version"] = TerraformVersion()
 
 	err := ""
