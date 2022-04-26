@@ -212,7 +212,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 
 	err := ""
 	if e != nil {
-		err = reflect.TypeOf(e).Name()
+		err = reflect.TypeOf(e).String()
 	}
 
 	payload := map[string]interface{}{
