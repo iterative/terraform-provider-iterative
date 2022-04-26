@@ -43,7 +43,7 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 	}
 
 	size := p.Attributes.Size
-	if size < 0 {
+	if size == 0 {
 		size = 1 // Most StorageClasses disregard size anyway
 	}
 
