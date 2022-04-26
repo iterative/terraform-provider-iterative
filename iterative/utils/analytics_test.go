@@ -8,7 +8,7 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	assert.Equal(t, strings.HasPrefix(Version, "v"), true)
+	assert.Equal(t, Version, "0.0.0")
 }
 
 func TestTerraformVersion(t *testing.T) {
