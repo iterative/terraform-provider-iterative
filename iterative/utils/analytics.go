@@ -233,7 +233,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 	return payload
 }
 
-func SendJitsuEvent(ctx context.Context, action string, e error, extra map[string]interface{}) {
+func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 	for _, prefix := range []string{"ITERATIVE", "DVC"} {
 		if _, ok := os.LookupEnv(prefix + "_NO_ANALYTICS"); ok {
 			logrus.Debugf("analytics: %s_NO_ANALYTICS environment variable is set", prefix)
@@ -242,7 +242,7 @@ func SendJitsuEvent(ctx context.Context, action string, e error, extra map[strin
 	}
 
 	wg.Add(1)
-	ctx, _ = context.WithTimeout(ctx, Timeout)
+	ctx, _ := context.WithTimeout(context.Background(), Timeout)
 	go send(ctx, JitsuEventPayload(action, e, extra))
 }
 
@@ -280,7 +280,7 @@ func WaitForAnalyticsAndHandlePanics() {
 
 	if r != nil {
 		extra := map[string]interface{}{"stack": debug.Stack()}
-		SendJitsuEvent(context.Background(), "panic", fmt.Errorf("panic: %v", r), extra)
+		SendJitsuEvent("panic", fmt.Errorf("panic: %v", r), extra)
 	}
 
 	wg.Wait()
