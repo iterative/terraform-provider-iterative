@@ -2,6 +2,8 @@ package utils
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,6 +14,8 @@ import (
 	"reflect"
 	"regexp"
 	"time"
+	"sync"
+	"runtime/debug"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -22,8 +26,15 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+const (
+	Timeout  = 5 * time.Second
+	Endpoint = "https://telemetry.cml.dev"
+	Token    = "s2s.jtyjusrpsww4k9b76rrjri.bl62fbzrb7nd9n6vn5bpqt"
+)
+
 var (
 	Version string = "0.0.0"
+	wg sync.WaitGroup
 )
 
 func getenv(key, defaultValue string) string {
@@ -193,10 +204,9 @@ func ResourceData(d *schema.ResourceData) map[string]interface{} {
 	}
 }
 
-func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[string]interface{} {
+func JitsuEventPayload(action string, e error, extra map[string]interface{}) map[string]interface{} {
 	systemInfo := SystemInfo()
 
-	extra := ResourceData(d)
 	extra["ci"] = guessCI()
 	extra["terraform_version"] = TerraformVersion()
 
@@ -223,26 +233,59 @@ func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[strin
 	return payload
 }
 
-func SendJitsuEvent(action string, e error, d *schema.ResourceData) {
-	if d == nil {
-		return
+func SendJitsuEvent(ctx context.Context, action string, e error, extra map[string]interface{}) {
+	for _, prefix := range []string{"ITERATIVE", "DVC"} {
+		if _, ok := os.LookupEnv(prefix+"_NO_ANALYTICS"); ok {
+			logrus.Debugf("analytics: %s_NO_ANALYTICS environment variable is set", prefix)
+			return
+		}
 	}
 
-	if _, ok := os.LookupEnv("DO_NOT_TRACK"); ok {
-		logrus.Debug("Analytics: DO_NOT_TRACK enabled")
-		return
-	}
+	wg.Add(1)
+	ctx, _ = context.WithTimeout(ctx, Timeout)
+	go send(ctx, JitsuEventPayload(action, e, extra))
+}
 
-	postBody, _ := json.Marshal(JitsuEventPayload(action, e, d))
+func send(ctx context.Context, event interface{}) error {
+	defer wg.Done()
 
-	host := getenv("TPI_ANALYTICS_HOST", "https://telemetry.cml.dev")
-	token := getenv("TPI_ANALYTICS_KEY", "s2s.jtyjusrpsww4k9b76rrjri.bl62fbzrb7nd9n6vn5bpqt")
-	url := host + "/api/v1/s2s/event?ip_policy=strict&token=" + token
-	client := &http.Client{
-		Timeout: time.Second * 5,
-	}
-	_, err := client.Post(url, "application/json", bytes.NewBuffer(postBody))
+	body, err := json.Marshal(event)
 	if err != nil {
-		logrus.Info("Analytics: failed sending event")
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", getenv("TPI_ANALYTICS_ENDPOINT", Endpoint), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Auth-Token", getenv("TPI_ANALYTICS_TOKEN", Token))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("server returned: " + resp.Status)
+	}
+
+	return nil
+}
+
+func WaitForAnalyticsAndHandlePanics() {
+	r := recover()
+
+	if r != nil {
+		extra := map[string]interface{}{"stack": debug.Stack()}
+		SendJitsuEvent(context.Background(), "panic", fmt.Errorf("panic: %v", r), extra)
+	}
+
+	wg.Wait()
+
+	if r != nil {
+		panic(r)
 	}
 }
