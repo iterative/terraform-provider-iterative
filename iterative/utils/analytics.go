@@ -28,7 +28,7 @@ import (
 
 const (
 	Timeout  = 5 * time.Second
-	Endpoint = "https://telemetry.cml.dev"
+	Endpoint = "https://telemetry.cml.dev?ip_policy=strict"
 	Token    = "s2s.jtyjusrpsww4k9b76rrjri.bl62fbzrb7nd9n6vn5bpqt"
 )
 
