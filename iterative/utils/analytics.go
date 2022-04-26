@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	Version string = "v0.0.0"
+	Version string = "0.0.0"
 )
 
 func getenv(key, defaultValue string) string {
