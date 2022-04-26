@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -241,12 +240,11 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		}
 	}
 
+	go send(JitsuEventPayload(action, e, extra))
 	wg.Add(1)
-	ctx, _ := context.WithTimeout(context.Background(), Timeout)
-	go send(ctx, JitsuEventPayload(action, e, extra))
 }
 
-func send(ctx context.Context, event interface{}) error {
+func send(event interface{}) error {
 	defer wg.Done()
 
 	body, err := json.Marshal(event)
@@ -254,7 +252,7 @@ func send(ctx context.Context, event interface{}) error {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", getenv("TPI_ANALYTICS_ENDPOINT", Endpoint), bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, getenv("TPI_ANALYTICS_ENDPOINT", Endpoint), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -262,7 +260,8 @@ func send(ctx context.Context, event interface{}) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", getenv("TPI_ANALYTICS_TOKEN", Token))
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: Timeout}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
