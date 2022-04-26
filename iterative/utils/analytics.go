@@ -234,9 +234,9 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 }
 
 func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
-	for _, prefix := range []string{"ITERATIVE", "DVC"} {
-		if _, ok := os.LookupEnv(prefix + "_NO_ANALYTICS"); ok {
-			logrus.Debugf("analytics: %s_NO_ANALYTICS environment variable is set", prefix)
+	for _, env := range []string{"DO_NOT_TRACK", "DVC_NO_ANALYTICS"} {
+		if _, ok := os.LookupEnv(env); ok {
+			logrus.Debugf("analytics: %s environment variable is set; doing nothing", env)
 			return
 		}
 	}
