@@ -11,19 +11,19 @@ This resource will:
 
 ```hcl
 resource "iterative_task" "example" {
-  cloud       = "aws"
+  cloud       = "aws"     # or any of: gcp, az, k8s
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
-  image       = "ubuntu"
-  region      = "us-east"
+  image       = "ubuntu"  # or "nvidia", ...
+  region      = "us-west" # or "us-east", "eu-west", ...
   disk_size   = 30        # GB
-  spot        = 0         # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
+  spot        = 0         # auto-price. Default -1 to disable, or >0 for hourly USD limit
   parallelism = 1
-  timeout     = 60*60     # max 1h before forced termination
+  timeout     = 24*60*60  # max 24h before forced termination
 
   environment = { GREETING = "Hello, world!" }
   storage {
-    workdir = "."
-    output  = "results"
+    workdir = "."         # default blank (don't upload)
+    output  = "results"   # default blank (don't download). Relative to workdir
   }
   script = <<-END
     #!/bin/bash
@@ -105,7 +105,7 @@ The above would allow:
 $ terraform output --raw logs
 ```
 
-Finally, JSON output can be parsed using `terraform output --json` and `jq` like this:
+Finally, JSON output can be parsed using `terraform show --json` and `jq` like this:
 
 ```console
 $ terraform show --json | jq --raw-output '
@@ -169,6 +169,7 @@ In addition to generic types, it's possible to specify any machine type supporte
 The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
 - `ubuntu` - Official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image (currently 20.04).
+- `nvidia` - Official [NVIDIA NGC](https://docs.nvidia.com/ngc/ngc-deploy-public-cloud)-based images, typically needing `disk_size = 32` GB or more.
 
 ### Cloud-specific
 
@@ -231,8 +232,8 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 The Iterative Provider offers some common cloud regions which are roughly the same for all supported clouds.
 
-- `us-east` - United States of America, East.
 - `us-west` - United States of America, West.
+- `us-east` - United States of America, East.
 - `eu-north` - Europe, North.
 - `eu-west` - Europe, West.
 
