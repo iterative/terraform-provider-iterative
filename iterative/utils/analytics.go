@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"time"
 
@@ -188,7 +189,7 @@ func ResourceData(d *schema.ResourceData) map[string]interface{} {
 		"cloud_spot_auto": spot == 0.0,
 		"task_status":     d.Get("status").(map[string]interface{}),
 		"task_duration":   TaskDuration(logs),
-		"task_resumed":    len(logs) > 1,
+		"task_resumed":    len(tpiLogs) > 1,
 	}
 }
 
@@ -201,7 +202,7 @@ func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[strin
 
 	err := ""
 	if e != nil {
-		err = e.Error()
+		err = reflect.TypeOf(e).Name()
 	}
 
 	payload := map[string]interface{}{
