@@ -2,7 +2,7 @@ package utils
 
 import (
 	"bytes"
-	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +17,8 @@ import (
 	"github.com/shirou/gopsutil/host"
 	"github.com/sirupsen/logrus"
 	"github.com/wessie/appdirs"
+
+	"golang.org/x/crypto/scrypt"
 )
 
 var (
@@ -31,11 +33,21 @@ func getenv(key, defaultValue string) string {
 	return value
 }
 
-func idgen(data string) string {
-	space := uuid.MustParse("c62985c8-2e8c-45fa-93af-4b9f577ed49e")
-	hash := md5.Sum([]byte(data))
-	uuid := uuid.NewSHA1(space, hash[:8]).String()
-	return uuid
+func deterministic(data string) (*uuid.UUID, error) {
+	ns := uuid.NewSHA1(uuid.NameSpaceDNS, []byte("iterative.ai"))
+
+	seed, err := ns.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+
+	dk, err := scrypt.Key([]byte(data), seed, 1<<16, 8, 1, 8)
+	if err != nil {
+		return nil, err
+	}
+
+	id := uuid.NewSHA1(ns, []byte(hex.EncodeToString(dk)))
+	return &id, nil
 }
 
 func SystemInfo() map[string]interface{} {
@@ -92,7 +104,7 @@ func GroupId() string {
 		return ""
 	}
 
-	id := idgen(fmt.Sprintf("%s%s%s%s%s",
+	id, err := deterministic(fmt.Sprintf("%s%s%s%s%s",
 		os.Getenv("GITHUB_SERVER_URL"),
 		os.Getenv("GITHUB_REPOSITORY_OWNER"),
 		os.Getenv("CI_SERVER_URL"),
@@ -100,7 +112,11 @@ func GroupId() string {
 		os.Getenv("BITBUCKET_WORKSPACE"),
 	))
 
-	return id
+	if err != nil {
+		return ""
+	}
+
+	return id.String()
 }
 
 func UserId() string {
@@ -122,11 +138,15 @@ func UserId() string {
 	}
 
 	if IsCI() {
-		id = idgen(fmt.Sprintf("%s%s%s",
+		uid, err := deterministic(fmt.Sprintf("%s%s%s",
 			os.Getenv("GITHUB_ACTOR"),
 			os.Getenv("GITLAB_USER_ID"),
 			os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"),
 		))
+
+		if err == nil {
+			id = uid.String()
+		}
 	}
 
 	return id
