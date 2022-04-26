@@ -3,9 +3,9 @@ package utils
 import (
 	"bytes"
 	"context"
-	"errors"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,9 +13,9 @@ import (
 	"os/exec"
 	"reflect"
 	"regexp"
-	"time"
-	"sync"
 	"runtime/debug"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,7 +34,7 @@ const (
 
 var (
 	Version string = "0.0.0"
-	wg sync.WaitGroup
+	wg      sync.WaitGroup
 )
 
 func getenv(key, defaultValue string) string {
@@ -235,7 +235,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 
 func SendJitsuEvent(ctx context.Context, action string, e error, extra map[string]interface{}) {
 	for _, prefix := range []string{"ITERATIVE", "DVC"} {
-		if _, ok := os.LookupEnv(prefix+"_NO_ANALYTICS"); ok {
+		if _, ok := os.LookupEnv(prefix + "_NO_ANALYTICS"); ok {
 			logrus.Debugf("analytics: %s_NO_ANALYTICS environment variable is set", prefix)
 			return
 		}
