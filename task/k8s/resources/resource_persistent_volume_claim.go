@@ -41,7 +41,7 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 	if p.Attributes.Many {
 		accessMode = kubernetes_core.ReadWriteMany
 	}
-	
+
 	size := p.Attributes.Size
 	if size < 0 {
 		size = 1 // Most StorageClasses disregard size anyway
