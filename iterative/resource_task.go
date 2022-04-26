@@ -173,12 +173,11 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
-		go utils.SendJitsuEvent("task/apply", err, d)
+		utils.SendJitsuEvent("task/apply", err, d)
 		return diagnostic(diags, err, diag.Error)
 	}
 
 	d.SetId(task.GetIdentifier(ctx).Long())
-
 	if err := task.Create(ctx); err != nil {
 		diags = diagnostic(diags, err, diag.Error)
 		if err := task.Delete(ctx); err != nil {
@@ -189,8 +188,8 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 	}
 
-	go utils.SendJitsuEvent("task/apply", err, d)
-	return diags
+	utils.SendJitsuEvent("task/apply", err, d)
+	return
 }
 
 func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
@@ -266,17 +265,17 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
-		go utils.SendJitsuEvent("task/destroy", err, d)
+		utils.SendJitsuEvent("task/destroy", err, d)
 		return diagnostic(diags, err, diag.Error)
 	}
 
 	if err := task.Delete(ctx); err != nil {
-		go utils.SendJitsuEvent("task/destroy", err, d)
+		utils.SendJitsuEvent("task/destroy", err, d)
 		return diagnostic(diags, err, diag.Error)
 	}
 
-	go utils.SendJitsuEvent("task/destroy", err, d)
-	return diags
+	utils.SendJitsuEvent("task/destroy", err, d)
+	return
 }
 
 func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{}) (task.Task, error) {

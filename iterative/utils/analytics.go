@@ -238,9 +238,13 @@ func SendJitsuEvent(action string, e error, d *schema.ResourceData) {
 	host := getenv("TPI_ANALYTICS_HOST", "https://telemetry.cml.dev")
 	token := getenv("TPI_ANALYTICS_KEY", "s2s.jtyjusrpsww4k9b76rrjri.bl62fbzrb7nd9n6vn5bpqt")
 	url := host + "/api/v1/s2s/event?ip_policy=strict&token=" + token
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
-	if err != nil {
-		logrus.Error("Analytics: failed sending event")
+	client := &http.Client{
+		Timeout: time.Second * 5,
 	}
-	defer resp.Body.Close()
+	resp, err := client.Post(url, "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		logrus.Info("Analytics: failed sending event")
+	} else {
+		defer resp.Body.Close()
+	}
 }
