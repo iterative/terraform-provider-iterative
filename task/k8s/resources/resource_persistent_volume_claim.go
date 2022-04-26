@@ -41,6 +41,11 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 	if p.Attributes.Many {
 		accessMode = kubernetes_core.ReadWriteMany
 	}
+	
+	size := p.Attributes.Size
+	if size < 0 {
+		size = 1 // Most StorageClasses disregard size anyway
+	}
 
 	persistentVolumeClaimInput := kubernetes_core.PersistentVolumeClaim{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
@@ -53,7 +58,7 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 			AccessModes: []kubernetes_core.PersistentVolumeAccessMode{accessMode},
 			Resources: kubernetes_core.ResourceRequirements{
 				Requests: kubernetes_core.ResourceList{
-					kubernetes_core.ResourceStorage: kubernetes_resource.MustParse(strconv.Itoa(int(p.Attributes.Size)) + "G"),
+					kubernetes_core.ResourceStorage: kubernetes_resource.MustParse(strconv.Itoa(int(size)) + "G"),
 				},
 			},
 		},
