@@ -173,7 +173,7 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
-		utils.SendJitsuEvent("task_create", err, d)
+		go utils.SendJitsuEvent("task/apply", err, d)
 		return diagnostic(diags, err, diag.Error)
 	}
 
@@ -189,7 +189,7 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 	}
 
-	utils.SendJitsuEvent("task_create", err, d)
+	go utils.SendJitsuEvent("task/apply", err, d)
 	return diags
 }
 
@@ -266,16 +266,16 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
-		utils.SendJitsuEvent("task_delete", err, d)
+		go utils.SendJitsuEvent("task/destroy", err, d)
 		return diagnostic(diags, err, diag.Error)
 	}
 
 	if err := task.Delete(ctx); err != nil {
-		utils.SendJitsuEvent("task_delete", err, d)
+		go utils.SendJitsuEvent("task/destroy", err, d)
 		return diagnostic(diags, err, diag.Error)
 	}
 
-	utils.SendJitsuEvent("task_delete", err, d)
+	go utils.SendJitsuEvent("task/destroy", err, d)
 	return diags
 }
 
