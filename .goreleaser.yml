@@ -5,7 +5,11 @@ builds:
   flags:
     - -trimpath
   ldflags:
-    - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+    - -s -w
+    - -X terraform-provider-iterative/iterative/utils.Version={{.Version}}
+    - -X main.version={{.Version}}
+    - -X main.commit={{.Commit}}
+    - -X main.date={{.Date}}
   goos:
     # - freebsd
     - windows
