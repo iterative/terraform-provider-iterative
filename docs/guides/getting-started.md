@@ -37,12 +37,12 @@ provider "iterative" {}
 resource "iterative_task" "example" {
   cloud      = "aws" # or any of: gcp, az, k8s
   machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
-  spot       = 0     # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
+  spot       = 0     # auto-price. Default -1 to disable, or >0 for hourly USD limit
   disk_size  = 30    # GB
 
   storage {
-    workdir = "."
-    output  = "results"
+    workdir = "."       # default blank (don't upload)
+    output  = "results" # default blank (don't download). Relative to workdir
   }
   script = <<-END
     #!/bin/bash
@@ -96,6 +96,7 @@ This command will:
 1. Create all the required cloud resources (provisioning a `machine` with `disk_size` storage).
 2. Upload the working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
+4. Terminate the `machine` on `script` completion/error.
 
 With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent (`disk_size`) storage will be used to relaunch interrupted tasks.
 
@@ -117,7 +118,7 @@ These commands will:
 1. Query the task status from the cloud.
 2. Display the task status.
 
-## Stop Task
+## End Task
 
 ```console
 $ TF_LOG_PROVIDER=INFO terraform destroy

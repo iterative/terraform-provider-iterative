@@ -7,7 +7,7 @@ subcategory: Development
 
 The table below is a more detailed version of the common choices summarised in [Task Machine Types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type).
 
-| Type      | [`aws`]       | [`az`]                 | [`gcp`]                                         | [`k8s`]                                              |
+| Type      | [aws]         | [az]                   | [gcp]                                           | [k8s]                                                |
 | :-------- | :------------ | :--------------------- | :---------------------------------------------- | :--------------------------------------------------- |
 | `s`       | `t2.micro`    | `Standard_B1s`         | `g1-small`                                      | `cpu: 1`<br>`memory: 1G`                             |
 | `m`       | `m5.2xlarge`  | `Standard_F8s_v2`      | `e2-custom-8-32768`                             | `cpu: 8`<br>`memory: 32G`                            |
@@ -21,7 +21,13 @@ The table below is a more detailed version of the common choices summarised in [
 | `l+v100`  | `p3.8xlarge`  | `Standard_NC12s_v3`    | `custom-32-262144-ext`<br>4 `nvidia-tesla-v100` | `cpu: 32`<br>`memory: 256G`<br>4 `nvidia-tesla-v100` |
 | `xl+v100` | `p3.16xlarge` | `Standard_NC24s_v3`    | `custom-64-524288-ext`<br>8 `nvidia-tesla-v100` | `cpu: 64`<br>`memory: 512G`<br>8 `nvidia-tesla-v100` |
 
-[`aws`]: https://aws.amazon.com/ec2/instance-explorer
-[`az`]: https://azure.microsoft.com/en-us/pricing/vm-selector
-[`gcp`]: https://cloud.google.com/compute/docs/machine-types
-[`k8s`]: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers
+[aws]: https://aws.amazon.com/ec2/instance-explorer
+[az]: https://azure.microsoft.com/en-us/pricing/vm-selector
+[gcp]: https://cloud.google.com/compute/docs/machine-types
+[k8s]: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers
+
+## Pricing
+
+- aws: [on-demand](https://aws.amazon.com/ec2/pricing), [spot](https://aws.amazon.com/ec2/spot/pricing)
+- [az](https://azure.microsoft.com/en-us/pricing/calculator)
+- [gcp](https://cloud.google.com/products/calculator)

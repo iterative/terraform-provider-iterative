@@ -7,7 +7,7 @@
 
 TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. This CLI tool offers full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
 
-- **Lower cost with spot recovery**: transparent auto-recovery from interrupted low-cost spot/preemptible instances
+- **Lower cost with spot recovery**: transparent data checkpoint/restore & auto-respawning of low-cost spot/preemptible instances
 - **No cloud vendor lock-in**: switch between clouds with just one line thanks to unified abstraction
 - **No waste**: auto-cleanup unused resources (terminate compute instances upon task completion/failure & remove storage upon download of results), pay only for what you use
 - **Developer-first experience**: one-command data sync & code execution with no external server, making the cloud feel like a laptop
@@ -37,8 +37,10 @@ There are a several reasons to use TPI instead of other related solutions (custo
    TPI is a CLI tool, not a running service. It requires no additional orchestrating machine (control plane/head nodes) to schedule/recover/terminate instances. Instead, TPI runs (spot) instances via cloud-native scaling groups ([AWS Auto Scaling Groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html), [Azure VM Scale Sets](https://azure.microsoft.com/en-us/services/virtual-machine-scale-sets), [GCP managed instance groups](https://cloud.google.com/compute/docs/instance-groups#managed_instance_groups), and [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job)), taking care of recovery and termination automatically on the cloud provider's side. This design reduces management overhead & infrastructure costs. You can close your laptop while cloud tasks are running -- auto-recovery happens even if you are offline.
 2. **Unified tool for data science and software development teams**:
    TPI provides consistent tooling for both data scientists and DevOps engineers, improving cross-team collaboration. This simplifies compute management to a single config file, and reduces time to deliver ML models into production.
+3. **Reproducible, codified environments**:
+   Store hardware requirements in a single configuration file alongside the rest of your ML pipeline code.
 
-<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML runners](https://cml.dev/doc/self-hosted-runners), bringing cloud providers to existing CI/CD workflows.
+<img width=24px src="https://static.iterative.ai/logo/cml.svg"/> TPI is used to power [CML](https://cml.dev), bringing cloud providers to existing GitHub, GitLab & Bitbucket CI/CD workflows ([repository](https://github.com/iterative/cml)).
 
 ## Links
 
