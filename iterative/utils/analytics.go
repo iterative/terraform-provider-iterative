@@ -196,7 +196,7 @@ func JitsuEventPayload(action string, e error, d *schema.ResourceData) map[strin
 		"tool_name":    "tpi",
 		"tool_source":  "terraform",
 		"tool_version": Version,
-		"os_name":      systemInfo["plattform"],
+		"os_name":      systemInfo["platform"],
 		"os_version":   systemInfo["platform_version"],
 		"backend":      extra["cloud"],
 		"error":        err,
