@@ -77,7 +77,7 @@ func (j *Job) Create(ctx context.Context) error {
 	image := j.Attributes.Task.Environment.Image
 	images := map[string]string{
 		"ubuntu": "ubuntu",
-		"nvidia": "nvidia/cuda:11.3.0-cudnn8-runtime-ubuntu20.04",
+		"nvidia": "nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu20.04",
 	}
 	if val, ok := images[image]; ok {
 		image = val
