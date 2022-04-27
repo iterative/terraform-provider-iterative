@@ -169,7 +169,7 @@ In addition to generic types, it's possible to specify any machine type supporte
 The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
 - `ubuntu` - Official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image (currently 20.04).
-- `nvidia` - Official [NVIDIA NGC](https://docs.nvidia.com/ngc/ngc-deploy-public-cloud)-based images, typically needing `disk_size = 32` GB or more.
+- `nvidia` - Official Ubuntu LTS with CUDA (currently 11.3) images.
 
 ### Cloud-specific
 
