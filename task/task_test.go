@@ -81,6 +81,7 @@ func TestTask(t *testing.T) {
 				Environment: common.Environment{
 					Image: "nvidia",
 					Script: `#!/bin/sh -e
+						df -h
 						nvidia-smi
 						mkdir --parents cache output
 						touch cache/file
