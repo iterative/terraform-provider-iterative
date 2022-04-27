@@ -103,6 +103,8 @@ resource "iterative_task" "example" {
 
 See [the reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#argument-reference) for the full list of options for `main.tf` -- including more information on [`machine` types](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#machine-type) with and without GPUs.
 
+[![console](https://github.com/iterative/static/raw/main/img/tpi/console.gif)](https://youtu.be/2fEgO8SazSE)
+
 Run this once (in the directory containing `main.tf`) to download the `required_providers`:
 
 ```
