@@ -279,7 +279,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-
+	log.Fatalln(project)
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceName := d.Get("name").(string)
 
