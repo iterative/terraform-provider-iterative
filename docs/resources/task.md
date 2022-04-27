@@ -15,7 +15,7 @@ resource "iterative_task" "example" {
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
   image       = "ubuntu"  # or "nvidia", ...
   region      = "us-west" # or "us-east", "eu-west", ...
-  disk_size   = 30        # GB
+  disk_size   = -1        # GB. Default -1 for automatic
   spot        = 0         # auto-price. Default -1 to disable, or >0 for hourly USD limit
   parallelism = 1
   timeout     = 24*60*60  # max 24h before forced termination
@@ -56,7 +56,7 @@ resource "iterative_task" "example" {
 
 - `region` - (Optional) [Cloud region/zone](#cloud-region) to run the task on.
 - `machine` - (Optional) See [Machine Types](#machine-type) below.
-- `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
+- `disk_size` - (Optional) Size of the ephemeral machine storage in GB. `-1`: automatic based on `image`.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
 - `image` - (Optional) [Machine image](#machine-image) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
