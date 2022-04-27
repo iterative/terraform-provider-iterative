@@ -31,7 +31,7 @@ Supported cloud vendors [include][auth]:
 ![](https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png#gh-light-mode-only)
 ![](https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png#gh-dark-mode-only)
 
-## What's Special
+## Why TPI?
 
 There are a several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
 
