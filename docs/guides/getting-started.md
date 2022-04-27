@@ -66,7 +66,7 @@ See [the reference](https://registry.terraform.io/providers/iterative/iterative/
 
 -> **Note:** The `script` argument must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>), and can take the form of a [heredoc string](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or [a `file()` function](https://www.terraform.io/docs/language/functions/file.html) function (e.g. `file("task_run.sh")`).
 
-[![console](https://static.iterative.ai/img/tpi/console.gif)](https://youtu.be/2fEgO8SazSE)
+[![console](https://github.com/iterative/static/raw/main/img/tpi/console.gif)](https://youtu.be/2fEgO8SazSE)
 
 The project layout should look similar to this:
 
