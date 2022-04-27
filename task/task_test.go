@@ -76,15 +76,14 @@ func TestTask(t *testing.T) {
 
 			task := common.Task{
 				Size: common.Size{
-					Machine: "m",
-					Storage: 30,
+					Machine: "m+t4",
 				},
 				Environment: common.Environment{
-					Image: "ubuntu",
-					Script: `#!/bin/bash
-					    mkdir cache
+					Image: "nvidia",
+					Script: `#!/bin/sh -e
+						nvidia-smi
+						mkdir --parents cache output
 						touch cache/file
-						mkdir output
 						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
 						sleep 60
 						cat output/file
@@ -132,12 +131,21 @@ func TestTask(t *testing.T) {
 			for assert.NoError(t, newTask.Read(ctx)) {
 				logs, err := newTask.Logs(ctx)
 				require.NoError(t, err)
+				t.Log(logs)
 
 				for _, log := range logs {
 					if strings.Contains(log, oldData) &&
 						strings.Contains(log, newData) {
 						break loop
 					}
+				}
+
+				status, err := newTask.Status(ctx)
+				require.NoError(t, err)
+				t.Log(status)
+
+				if status[common.StatusCodeFailed] > 0 {
+					break
 				}
 
 				time.Sleep(10 * time.Second)

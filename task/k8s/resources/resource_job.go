@@ -62,13 +62,13 @@ func (j *Job) Create(ctx context.Context) error {
 		"m":       "8-32000",
 		"l":       "32-128000",
 		"xl":      "64-256000",
-		"m+t4":    "4-16000+nvidia-tesla-t4*1",
-		"m+k80":   "4-64000+nvidia-tesla-k80*1",
-		"l+k80":   "32-512000+nvidia-tesla-k80*8",
-		"xl+k80":  "64-768000+nvidia-tesla-k80*16",
-		"m+v100":  "8-64000+nvidia-tesla-v100*1",
-		"l+v100":  "32-256000+nvidia-tesla-v100*4",
-		"xl+v100": "64-512000+nvidia-tesla-v100*8",
+		"m+t4":    "4-16000+nvidia*1",
+		"m+k80":   "4-64000+nvidia*1",
+		"l+k80":   "32-512000+nvidia*8",
+		"xl+k80":  "64-768000+nvidia*16",
+		"m+v100":  "8-64000+nvidia*1",
+		"l+v100":  "32-256000+nvidia*4",
+		"xl+v100": "64-512000+nvidia*8",
 	}
 	if val, ok := sizes[size]; ok {
 		size = val
@@ -77,7 +77,7 @@ func (j *Job) Create(ctx context.Context) error {
 	image := j.Attributes.Task.Environment.Image
 	images := map[string]string{
 		"ubuntu": "ubuntu",
-		"nvidia": "nvidia/cuda",
+		"nvidia": "nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu20.04",
 	}
 	if val, ok := images[image]; ok {
 		image = val
@@ -91,7 +91,7 @@ func (j *Job) Create(ctx context.Context) error {
 	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
 	jobAccelerator := match[3]
-	jobGPUType := "kubernetes.io/gpu"
+	jobGPUType := "nvidia.com/gpu"
 	jobGPUCount := match[4]
 
 	// Define the dynamic resource allocation limits for the job pods.

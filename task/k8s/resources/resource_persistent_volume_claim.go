@@ -14,7 +14,7 @@ import (
 	"terraform-provider-iterative/task/k8s/client"
 )
 
-func NewPersistentVolumeClaim(client *client.Client, identifier common.Identifier, storageClass string, size uint64, many bool) *PersistentVolumeClaim {
+func NewPersistentVolumeClaim(client *client.Client, identifier common.Identifier, storageClass string, size int, many bool) *PersistentVolumeClaim {
 	p := new(PersistentVolumeClaim)
 	p.Client = client
 	p.Identifier = identifier.Long()
@@ -29,7 +29,7 @@ type PersistentVolumeClaim struct {
 	Identifier string
 	Attributes struct {
 		StorageClass string
-		Size         uint64
+		Size         int
 		Many         bool
 	}
 	Dependencies struct{}
@@ -40,6 +40,11 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 	accessMode := kubernetes_core.ReadWriteOnce
 	if p.Attributes.Many {
 		accessMode = kubernetes_core.ReadWriteMany
+	}
+
+	size := p.Attributes.Size
+	if size <= 0 {
+		size = 1 // Most StorageClasses disregard size anyway
 	}
 
 	persistentVolumeClaimInput := kubernetes_core.PersistentVolumeClaim{
@@ -53,7 +58,7 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 			AccessModes: []kubernetes_core.PersistentVolumeAccessMode{accessMode},
 			Resources: kubernetes_core.ResourceRequirements{
 				Requests: kubernetes_core.ResourceList{
-					kubernetes_core.ResourceStorage: kubernetes_resource.MustParse(strconv.Itoa(int(p.Attributes.Size)) + "G"),
+					kubernetes_core.ResourceStorage: kubernetes_resource.MustParse(strconv.Itoa(size) + "G"),
 				},
 			},
 		},
