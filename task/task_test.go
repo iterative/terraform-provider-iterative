@@ -82,7 +82,7 @@ func TestTask(t *testing.T) {
 					Image: "nvidia",
 					Script: `#!/bin/sh -e
 						nvidia-smi
-						mkdir cache
+						mkdir --parents cache output
 						touch cache/file
 						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
 						sleep 60
