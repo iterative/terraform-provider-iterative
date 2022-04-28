@@ -29,7 +29,7 @@ Supported cloud vendors [include][auth]:
 
 ![](https://static.iterative.ai/img/tpi/high-level-light.png)
 
-## What's Special
+## Why TPI?
 
 There are a several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
 
