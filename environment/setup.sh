@@ -2,7 +2,7 @@
 FILE=/var/log/cml_stack.log
 log_run() {
   printf "tpi:setup.sh: cmd --- %s ---\n" "$1"
-  eval $1
+  eval "$1"
 }
 if [ ! -f "$FILE" ]; then
   DEBIAN_FRONTEND=noninteractive
