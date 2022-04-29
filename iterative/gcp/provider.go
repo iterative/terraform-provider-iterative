@@ -346,21 +346,22 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 			coercedProjectID = fromCredentialsID
 		}
 		credentials.ProjectID = coercedProjectID
-
-		// setup reuse of access_token
-		token, _ := credentials.TokenSource.Token()
-		//if err != nil {
-		//	return "", nil, err
-		//}
-		tokenJSON, _ := json.Marshal(token)
-		//if err != nil {
-		//	return "", nil, err
-		//}
-		os.Setenv("CML_GCP_ACCESS_TOKEN", string(tokenJSON))
 	}
 
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
+	//os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
+}
+
+func ExtractToken(credentials *google.Credentials) ([]byte, error) {
+	token, err := credentials.TokenSource.Token()
+	if err != nil {
+		return nil, err
+	}
+	tokenJSON, err := json.Marshal(token)
+	if err != nil {
+		return nil, err
+	}
+	return tokenJSON, nil
 }
 
 func coerceOIDCCredentials(credentialsJSON []byte) (string, error) {
