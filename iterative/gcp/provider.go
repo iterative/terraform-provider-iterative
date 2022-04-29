@@ -320,7 +320,7 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 		return "", nil, err
 	}
 	var tokenSource oauth2.TokenSource
-	if token, err := reuseToken(); err != nil && token != nil {
+	if token, err := reuseToken(); err == nil && token != nil {
 		tokenSource = oauth2.ReuseTokenSource(token, credentials.TokenSource)
 		os.WriteFile("/tmp/reuse.txt", []byte("yes"), os.ModeAppend)
 	} else {
