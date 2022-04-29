@@ -322,7 +322,6 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	var tokenSource oauth2.TokenSource
 	if token, err := reuseToken(); err == nil && token != nil {
 		tokenSource = oauth2.ReuseTokenSource(token, credentials.TokenSource)
-		os.WriteFile("/tmp/reuse.txt", []byte("yes"), os.ModeAppend)
 	} else {
 		tokenSource = credentials.TokenSource
 	}
@@ -355,7 +354,6 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 		credentials.ProjectID = coercedProjectID
 	}
 
-	//os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
 }
 func reuseToken() (*oauth2.Token, error) {
