@@ -14,7 +14,6 @@ import (
 	"text/template"
 	"time"
 
-	"golang.org/x/oauth2/google"
 	"gopkg.in/alessio/shellescape.v1"
 
 	"terraform-provider-iterative/environment"
@@ -435,13 +434,12 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	}
 
 	var gcpCredentials string
-	var credentials *google.Credentials
+	var gcpToken []byte
 	if credentials, err := gcp.LoadGCPCredentials(); err == nil {
 		gcpCredentials = string(credentials.JSON)
-	}
-	var gcpToken []byte
-	if credentials.ProjectID == "" {
-		gcpToken, _ = gcp.ExtractToken(credentials)
+		if credentials.ProjectID == "" {
+			gcpToken, _ = gcp.ExtractToken(credentials)
+		}
 	}
 
 	data := make(map[string]interface{})
