@@ -319,7 +319,13 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	service, err := gcp_compute.New(oauth2.NewClient(oauth2.NoContext, credentials.TokenSource))
+	var tokenSource oauth2.TokenSource
+	if token, err := reuseToken(); err != nil && token != nil {
+		tokenSource = oauth2.ReuseTokenSource(token, credentials.TokenSource)
+	} else {
+		tokenSource = credentials.TokenSource
+	}
+	service, err := gcp_compute.New(oauth2.NewClient(oauth2.NoContext, tokenSource))
 	if err != nil {
 		return "", nil, err
 	}
@@ -350,6 +356,15 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 
 	//os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
 	return credentials.ProjectID, service, nil
+}
+func reuseToken() (*oauth2.Token, error) {
+	var token *oauth2.Token
+	tokenJSON := os.Getenv("CML_GCP_ACCESS_TOKEN")
+	if len(tokenJSON) == 0 {
+		return nil, nil
+	}
+	err := json.Unmarshal([]byte(tokenJSON), &token)
+	return token, err
 }
 
 func ExtractToken(credentials *google.Credentials) ([]byte, error) {

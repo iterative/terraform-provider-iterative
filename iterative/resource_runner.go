@@ -437,6 +437,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	var gcpToken []byte
 	if credentials, err := gcp.LoadGCPCredentials(); err == nil {
 		gcpCredentials = string(credentials.JSON)
+		// reuse token for oidc
 		if credentials.ProjectID == "" {
 			gcpToken, _ = gcp.ExtractToken(credentials)
 		}
