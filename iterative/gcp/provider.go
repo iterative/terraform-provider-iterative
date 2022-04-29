@@ -279,11 +279,12 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return err
 	}
-	log.Fatalln(project)
+
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceName := d.Get("name").(string)
 
-	service.Instances.Delete(project, instanceZone, instanceName).Do()
+	res, err := service.Instances.Delete(project, instanceZone, instanceName).Do()
+	os.WriteFile("/tmp/delete.txt", []byte(fmt.Sprintf("%s \n %v \n %w", project, res, err)), os.ModeAppend)
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
 	service.Firewalls.Delete(project, instanceName+"-egress").Do()
 
@@ -318,6 +319,8 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	if err != nil {
 		return "", nil, err
 	}
+
+	os.WriteFile("/tmp/auth.txt", json.Marshal(credentials.TokenSource.Token()), os.ModeAppend)
 
 	service, err := gcp_compute.New(oauth2.NewClient(oauth2.NoContext, credentials.TokenSource))
 	if err != nil {
