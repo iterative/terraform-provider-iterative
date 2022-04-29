@@ -319,8 +319,9 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	if err != nil {
 		return "", nil, err
 	}
-
-	os.WriteFile("/tmp/auth.txt", json.Marshal(credentials.TokenSource.Token()), os.ModeAppend)
+	t, _ := credentials.TokenSource.Token()
+	j, _ := json.Marshal(t)
+	os.WriteFile("/tmp/auth.txt", j, os.ModeAppend)
 
 	service, err := gcp_compute.New(oauth2.NewClient(oauth2.NoContext, credentials.TokenSource))
 	if err != nil {
