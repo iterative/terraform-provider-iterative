@@ -284,7 +284,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	instanceName := d.Get("name").(string)
 
 	res, err := service.Instances.Delete(project, instanceZone, instanceName).Do()
-	os.WriteFile("/tmp/delete.txt", []byte(fmt.Sprintf("%s \n %v \n %w", project, res, err)), os.ModeAppend)
+	os.WriteFile("/tmp/delete.txt", []byte(fmt.Sprintf("%s\n%v\n%s\n", project, res, err)), os.ModeAppend)
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
 	service.Firewalls.Delete(project, instanceName+"-egress").Do()
 
@@ -322,6 +322,7 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	var tokenSource oauth2.TokenSource
 	if token, err := reuseToken(); err != nil && token != nil {
 		tokenSource = oauth2.ReuseTokenSource(token, credentials.TokenSource)
+		os.WriteFile("/tmp/reuse.txt", []byte("yes"), os.ModeAppend)
 	} else {
 		tokenSource = credentials.TokenSource
 	}
