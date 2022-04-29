@@ -319,10 +319,6 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	t, _ := credentials.TokenSource.Token()
-	j, _ := json.Marshal(t)
-	os.WriteFile("/tmp/auth.txt", j, os.ModeAppend)
-
 	service, err := gcp_compute.New(oauth2.NewClient(oauth2.NoContext, credentials.TokenSource))
 	if err != nil {
 		return "", nil, err
@@ -350,6 +346,17 @@ func getProjectService() (string, *gcp_compute.Service, error) {
 			coercedProjectID = fromCredentialsID
 		}
 		credentials.ProjectID = coercedProjectID
+
+		// setup reuse of access_token
+		token, _ := credentials.TokenSource.Token()
+		//if err != nil {
+		//	return "", nil, err
+		//}
+		tokenJSON, _ := json.Marshal(token)
+		//if err != nil {
+		//	return "", nil, err
+		//}
+		os.Setenv("CML_GCP_ACCESS_TOKEN", string(tokenJSON))
 	}
 
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS_DATA", string(credentials.JSON))
