@@ -283,8 +283,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceName := d.Get("name").(string)
 
-	res, err := service.Instances.Delete(project, instanceZone, instanceName).Do()
-	os.WriteFile("/tmp/delete.txt", []byte(fmt.Sprintf("%s\n%v\n%s\n", project, res, err)), os.ModeAppend)
+	service.Instances.Delete(project, instanceZone, instanceName).Do()
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
 	service.Firewalls.Delete(project, instanceName+"-egress").Do()
 
