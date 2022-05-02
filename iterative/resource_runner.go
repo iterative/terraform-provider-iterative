@@ -333,6 +333,7 @@ export AZURE_TENANT_ID={{escape .AZURE_TENANT_ID}}
 {{- end}}
 {{- if eq .cloud "gcp"}}
 export GOOGLE_APPLICATION_CREDENTIALS_DATA={{escape .GOOGLE_APPLICATION_CREDENTIALS_DATA}}
+export CML_GCP_ACCESS_TOKEN={{escape .CML_GCP_ACCESS_TOKEN}}
 {{- end}}
 {{- if eq .cloud "kubernetes"}}
 export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
@@ -433,8 +434,13 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	}
 
 	var gcpCredentials string
+	var gcpToken []byte
 	if credentials, err := gcp.LoadGCPCredentials(); err == nil {
 		gcpCredentials = string(credentials.JSON)
+		// reuse token for oidc
+		if credentials.ProjectID == "" {
+			gcpToken, _ = gcp.ExtractToken(credentials)
+		}
 	}
 
 	data := make(map[string]interface{})
@@ -458,6 +464,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["AZURE_SUBSCRIPTION_ID"] = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	data["AZURE_TENANT_ID"] = os.Getenv("AZURE_TENANT_ID")
 	data["GOOGLE_APPLICATION_CREDENTIALS_DATA"] = gcpCredentials
+	data["CML_GCP_ACCESS_TOKEN"] = string(gcpToken)
 	data["KUBERNETES_CONFIGURATION"] = os.Getenv("KUBERNETES_CONFIGURATION")
 	data["container"] = isContainerAvailable(d.Get("cloud").(string))
 	data["setup"] = strings.Replace(environment.SetupScript, "#/bin/sh", "", 1)
