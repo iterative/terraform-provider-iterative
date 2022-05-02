@@ -51,6 +51,12 @@ func resourceTask() *schema.Resource {
 				Optional: true,
 				Default:  "m",
 			},
+			"permission_set": {
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
+			},
 			"disk_size": {
 				Type:     schema.TypeInt,
 				ForceNew: true,
