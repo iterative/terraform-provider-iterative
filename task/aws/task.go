@@ -34,7 +34,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Attributes.Environment.Image,
 	)
-	t.DataSources.IamInstanceProfile = resources.NewIamInstanceProfile(
+	t.DataSources.PermissionSet = resources.NewPermissionSet(
 		t.Client,
 		t.Attributes.PermissionSet,
 	)
@@ -61,7 +61,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Identifier,
 		t.Resources.SecurityGroup,
-		t.DataSources.IamInstanceProfile,
+		t.DataSources.PermissionSet,
 		t.DataSources.Image,
 		t.Resources.KeyPair,
 		t.DataSources.Credentials,
@@ -87,7 +87,7 @@ type Task struct {
 		*resources.DefaultVPCSubnet
 		*resources.Image
 		*resources.Credentials
-		*resources.IamInstanceProfile
+		*resources.PermissionSet
 	}
 	Resources struct {
 		*resources.Bucket
@@ -100,16 +100,16 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
+	logrus.Info("[0/11] Parsing PermissionSet...")
+	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
+		return err
+	}
 	logrus.Info("[1/11] Importing DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
 	logrus.Info("[2/11] Importing DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2.5/11] Importing IAMInstanceProfile...")
-	if err := t.DataSources.IamInstanceProfile.Read(ctx); err != nil {
 		return err
 	}
 	logrus.Info("[3/11] Reading Image...")

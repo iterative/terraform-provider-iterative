@@ -16,7 +16,7 @@ import (
 	"terraform-provider-iterative/task/common/machine"
 )
 
-func NewLaunchTemplate(client *client.Client, identifier common.Identifier, securityGroup *SecurityGroup, permissionSet *IamInstanceProfile, image *Image, keyPair *KeyPair, credentials *Credentials, task common.Task) *LaunchTemplate {
+func NewLaunchTemplate(client *client.Client, identifier common.Identifier, securityGroup *SecurityGroup, permissionSet *PermissionSet, image *Image, keyPair *KeyPair, credentials *Credentials, task common.Task) *LaunchTemplate {
 	l := new(LaunchTemplate)
 	l.Client = client
 	l.Identifier = identifier.Long()
@@ -25,7 +25,7 @@ func NewLaunchTemplate(client *client.Client, identifier common.Identifier, secu
 	l.Dependencies.Image = image
 	l.Dependencies.KeyPair = keyPair
 	l.Dependencies.Credentials = credentials
-	l.Dependencies.IamInstanceProfile = permissionSet
+	l.Dependencies.PermissionSet = permissionSet
 	return l
 }
 
@@ -38,7 +38,7 @@ type LaunchTemplate struct {
 		*SecurityGroup
 		*Image
 		*Credentials
-		*IamInstanceProfile
+		*PermissionSet
 	}
 	Resource *types.LaunchTemplate
 }
@@ -82,7 +82,7 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 			KeyName:            l.Dependencies.KeyPair.Resource.KeyName,
 			InstanceType:       types.InstanceType(size),
 			SecurityGroupIds:   []string{aws.ToString(l.Dependencies.SecurityGroup.Resource.GroupId)},
-			IamInstanceProfile: l.Dependencies.IamInstanceProfile.Resource,
+			IamInstanceProfile: l.Dependencies.PermissionSet.Resource,
 			BlockDeviceMappings: []types.LaunchTemplateBlockDeviceMappingRequest{
 				{
 					DeviceName: aws.String("/dev/sda1"),
