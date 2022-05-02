@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
@@ -45,6 +46,7 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 	c.Services.S3 = s3.NewFromConfig(config)
 	c.Services.STS = sts.NewFromConfig(config)
 	c.Services.AutoScaling = autoscaling.NewFromConfig(config)
+	c.Services.IAM = iam.NewFromConfig(config)
 	return c, nil
 }
 
@@ -59,6 +61,7 @@ type Client struct {
 		S3          *s3.Client
 		STS         *sts.Client
 		AutoScaling *autoscaling.Client
+		IAM         *iam.Client
 	}
 }
 

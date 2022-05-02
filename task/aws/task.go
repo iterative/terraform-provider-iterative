@@ -34,6 +34,10 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Attributes.Environment.Image,
 	)
+	t.DataSources.IamInstanceProfile = resources.NewIamInstanceProfile(
+		t.Client,
+		t.Attributes.PermissionSet,
+	)
 	t.Resources.Bucket = resources.NewBucket(
 		t.Client,
 		t.Identifier,
@@ -57,6 +61,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Identifier,
 		t.Resources.SecurityGroup,
+		t.DataSources.IamInstanceProfile,
 		t.DataSources.Image,
 		t.Resources.KeyPair,
 		t.DataSources.Credentials,
@@ -82,6 +87,7 @@ type Task struct {
 		*resources.DefaultVPCSubnet
 		*resources.Image
 		*resources.Credentials
+		*resources.IamInstanceProfile
 	}
 	Resources struct {
 		*resources.Bucket
@@ -100,6 +106,10 @@ func (t *Task) Create(ctx context.Context) error {
 	}
 	logrus.Info("[2/11] Importing DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[2.5/11] Importing IAMInstanceProfile...")
+	if err := t.DataSources.IamInstanceProfile.Read(ctx); err != nil {
 		return err
 	}
 	logrus.Info("[3/11] Reading Image...")
