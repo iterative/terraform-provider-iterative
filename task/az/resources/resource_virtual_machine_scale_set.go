@@ -21,7 +21,7 @@ import (
 	"terraform-provider-iterative/task/common/machine"
 )
 
-func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, credentials *Credentials, task *common.Task) *VirtualMachineScaleSet {
+func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, permissionSet *PermissionSet, credentials *Credentials, task *common.Task) *VirtualMachineScaleSet {
 	v := new(VirtualMachineScaleSet)
 	v.Client = client
 	v.Identifier = identifier.Long()
@@ -35,6 +35,7 @@ func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifi
 	v.Dependencies.Subnet = subnet
 	v.Dependencies.SecurityGroup = securityGroup
 	v.Dependencies.Credentials = credentials
+	v.Dependencies.PermissionSet = permissionSet
 	return v
 }
 
@@ -57,6 +58,7 @@ type VirtualMachineScaleSet struct {
 		*Subnet
 		*SecurityGroup
 		*Credentials
+		*PermissionSet
 	}
 	Resource *compute.VirtualMachineScaleSet
 }
@@ -130,6 +132,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 			Tier:     to.StringPtr("Standard"),
 			Capacity: to.Int64Ptr(0),
 		},
+		Identity: v.Dependencies.PermissionSet.Resource,
 		VirtualMachineScaleSetProperties: &compute.VirtualMachineScaleSetProperties{
 			UpgradePolicy: &compute.UpgradePolicy{
 				Mode: compute.UpgradeModeManual,
