@@ -23,6 +23,10 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes = task
+	t.DataSources.PermissionSet = resources.NewPermissionSet(
+		t.Client,
+		t.Attributes.PermissionSet,
+	)
 	t.Resources.Bucket = resources.NewBucket(
 		t.Client,
 		t.Identifier,
@@ -105,6 +109,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 			t.Resources.FirewallDenyEgress,
 			t.Resources.FirewallDenyIngress,
 		},
+		t.DataSources.PermissionSet,
 		t.DataSources.Image,
 		t.DataSources.Credentials,
 		t.Attributes,
@@ -126,6 +131,7 @@ type Task struct {
 		*resources.DefaultNetwork
 		*resources.Credentials
 		*resources.Image
+		*resources.PermissionSet
 	}
 	Resources struct {
 		*resources.Bucket
@@ -142,6 +148,10 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
+	logrus.Info("[0/14] Parsing PermissionSet...")
+	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
+		return err
+	}
 	logrus.Info("[1/14] Creating DefaultNetwork...")
 	if err := t.DataSources.DefaultNetwork.Read(ctx); err != nil {
 		return err
