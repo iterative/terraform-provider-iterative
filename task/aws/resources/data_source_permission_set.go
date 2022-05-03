@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 
@@ -33,7 +34,7 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 	}
 	if strings.HasPrefix(nameOrArn, "arn:") {
 		ps.Resource = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
-			Arn: &nameOrArn,
+			Arn: aws.String(nameOrArn),
 		}
 		return nil
 	}

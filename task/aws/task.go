@@ -159,6 +159,10 @@ func (t *Task) Create(ctx context.Context) error {
 
 func (t *Task) Read(ctx context.Context) error {
 	logrus.Info("Reading resources... (this may happen several times)")
+	logrus.Info("[0/9] Parsing PermissionSet...")
+	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
+		return err
+	}
 	logrus.Info("[1/9] Reading DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err

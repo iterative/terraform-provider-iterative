@@ -57,6 +57,10 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Attributes.DirectoryOut = task.Environment.DirectoryOut
 	}
 
+	t.DataSources.PermissionSet = resources.NewPermissionSet(
+		t.Client,
+		t.Attributes.Task.PermissionSet,
+	)
 	t.Resources.ConfigMap = resources.NewConfigMap(
 		t.Client,
 		t.Identifier,

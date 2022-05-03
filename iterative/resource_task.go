@@ -336,8 +336,9 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			},
 			// Egress is open on every port
 		},
-		Spot:        common.Spot(d.Get("spot").(float64)),
-		Parallelism: uint16(d.Get("parallelism").(int)),
+		Spot:          common.Spot(d.Get("spot").(float64)),
+		Parallelism:   uint16(d.Get("parallelism").(int)),
+		PermissionSet: d.Get("permission_set").(string),
 	}
 
 	name := d.Id()
