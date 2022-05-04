@@ -11,7 +11,6 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/aohorodnyk/uid v1.1.0
-	github.com/aws/aws-sdk-go v1.40.27 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.11.0
 	github.com/aws/aws-sdk-go-v2/config v1.8.3
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.14.0
@@ -25,6 +24,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-github/v42 v42.0.0
+	github.com/hashicorp/go-getter v1.5.11 // indirect
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
 	github.com/rclone/rclone v1.57.0
