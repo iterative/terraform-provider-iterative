@@ -20,5 +20,3 @@ jobs:
         languages: go
     - uses: github/codeql-action/autobuild@v2
     - uses: github/codeql-action/analyze@v2
-env:
-  CODEQL_EXTRACTOR_GO_BUILD_TRACING: on
