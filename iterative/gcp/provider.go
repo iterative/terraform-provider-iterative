@@ -384,7 +384,7 @@ func coerceOIDCCredentials(credentialsJSON []byte) (string, error) {
 	}
 
 	if url, ok := credentials["service_account_impersonation_url"].(string); ok {
-		re := regexp.MustCompile("^https://iamcredentials\.googleapis\.com/v1/projects/-/serviceAccounts/.+?@(?P<project>.+)\.iam\.gserviceaccount\.com:generateAccessToken$")
+		re := regexp.MustCompile(`^https://iamcredentials\.googleapis\.com/v1/projects/-/serviceAccounts/.+?@(?P<project>.+)\.iam\.gserviceaccount\.com:generateAccessToken$`)
 		if match := re.FindStringSubmatch(url); match != nil {
 			return match[1], nil
 		}
