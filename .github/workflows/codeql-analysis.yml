@@ -1,8 +1,7 @@
 name: CodeQL
 on:
-  pull_request:
   schedule:
-    - cron: '0 0 * * *'
+  - cron: '0 0 * * *'
 jobs:
   analyze:
     runs-on: ubuntu-latest
