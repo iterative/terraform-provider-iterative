@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go-v2/service/iam"
 
 	"terraform-provider-iterative/task/aws/client"
 )
@@ -26,30 +25,17 @@ type PermissionSet struct {
 }
 
 func (ps *PermissionSet) Read(ctx context.Context) error {
-	nameOrArn := ps.Identifier
-	// "", "arn:*", "name"
-	if nameOrArn == "" {
+	arn := ps.Identifier
+	// "", "arn:*"
+	if arn == "" {
 		ps.Resource = nil
 		return nil
 	}
-	if strings.HasPrefix(nameOrArn, "arn:") {
+	if strings.HasPrefix(arn, "arn:aws:iam:") {
 		ps.Resource = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
-			Arn: aws.String(nameOrArn),
+			Arn: aws.String(arn),
 		}
 		return nil
 	}
-	input := &iam.GetInstanceProfileInput{
-		InstanceProfileName: &nameOrArn,
-	}
-	resp, err := ps.Client.Services.IAM.GetInstanceProfile(ctx, input)
-	if err != nil {
-		return err
-	}
-	if resp == nil {
-		return fmt.Errorf("no IAM Instance Profile with name %s", nameOrArn)
-	}
-	ps.Resource = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
-		Arn: resp.InstanceProfile.Arn,
-	}
-	return nil
+	return fmt.Errorf("invlaid IAM Instance Profile: %s", arn)
 }
