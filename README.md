@@ -109,12 +109,13 @@ Run this once (in the directory containing `main.tf`) to download the `required_
 
 ```
 terraform init
+export TF_LOG_PROVIDER=INFO
 ```
 
 ### Run Task
 
 ```
-TF_LOG_PROVIDER=INFO terraform apply
+terraform apply
 ```
 
 This launches a `machine` in the `cloud`, uploads `workdir`, and runs the `script`. Upon completion (or error), the `machine` is terminated.
@@ -126,14 +127,14 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 Results and logs are periodically synced to persistent cloud storage. To query this status and view logs:
 
 ```
-TF_LOG_PROVIDER=INFO terraform refresh
-TF_LOG_PROVIDER=INFO terraform show
+terraform refresh
+terraform show
 ```
 
 ### End Task
 
 ```
-TF_LOG_PROVIDER=INFO terraform destroy
+terraform destroy
 ```
 
 This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
