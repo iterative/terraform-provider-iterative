@@ -3,7 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strings"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -31,7 +31,8 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 		ps.Resource = nil
 		return nil
 	}
-	if strings.HasPrefix(arn, "arn:aws:iam:") {
+	re := regexp.MustCompile(`arn:aws:iam::[\d]*:instance-profile/[\S]*`)
+	if re.MatchString(arn) {
 		ps.Resource = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
 			Arn: aws.String(arn),
 		}
