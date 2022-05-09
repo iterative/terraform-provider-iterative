@@ -73,7 +73,7 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		message = fmt.Sprintf("\x1b[%dmStatus: queued \x1b[1m•\x1b[0m", colors["DEBUG"])
 
 		if status["succeeded"] != nil && status["succeeded"].(int) >= d.Get("parallelism").(int) {
-			message = fmt.Sprintf("\x1b[%dmStatus: completed succesfully \x1b[1m•\x1b[0m", colors["SUCCESS"])
+			message = fmt.Sprintf("\x1b[%dmStatus: completed successfully \x1b[1m•\x1b[0m", colors["SUCCESS"])
 		}
 		if status["failed"] != nil && status["failed"].(int) > 0 {
 			message = fmt.Sprintf("\x1b[%dmStatus: completed with errors \x1b[1m•\x1b[0m", colors["ERROR"])
@@ -106,7 +106,8 @@ func TpiLogger(d *schema.ResourceData) *logrus.Entry {
 }
 
 func hideUnwantedPrefix(levelText, newPrefix, message string) string {
-	unwantedPrefixLength := len(fmt.Sprintf("yyyy-mm-ddThh:mm:ss.mmmZ [%s] provider.terraform-provider-iterative: [%[1]s]", levelText))
+	timeString := time.Now().Format("2006-01-02T15:04:05.000Z0700")
+	unwantedPrefixLength := len(fmt.Sprintf("%s [%s] provider.terraform-provider-iterative: [%[2]s]", timeString, levelText))
 
 	var output string
 	for _, line := range strings.Split(message, "\n") {

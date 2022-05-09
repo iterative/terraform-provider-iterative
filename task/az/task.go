@@ -94,6 +94,7 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
+	logrus.Info("Creating resources...")
 	logrus.Info("[1/10] Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
@@ -144,6 +145,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
+	logrus.Info("Reading resources... (this may happen several times)")
 	logrus.Info("[1/8] Reading ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Read(ctx); err != nil {
 		return err
@@ -184,6 +186,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
+	logrus.Info("Deleting resources...")
 	logrus.Info("[1/9] Downloading Directory...")
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {

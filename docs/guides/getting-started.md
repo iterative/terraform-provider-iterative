@@ -20,11 +20,11 @@ page_title: Getting Started
     sudo apt-get update && sudo apt-get install terraform
     ```
 
-- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][authentication]
+- Create an account with any supported cloud vendor and expose its [authentication credentials via environment variables][auth]
 
-[authentication]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
+[auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-## Defining a Task
+## Define a Task
 
 In a project root directory, create a file named `main.tf` with the following contents:
 
@@ -33,20 +33,31 @@ terraform {
   required_providers { iterative = { source = "iterative/iterative" } }
 }
 provider "iterative" {}
+
 resource "iterative_task" "example" {
   cloud      = "aws" # or any of: gcp, az, k8s
   machine    = "m"   # medium. Or any of: l, xl, m+k80, xl+v100, ...
-  spot       = 0     # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
-  disk_size  = 30    # GB
+  spot       = 0     # auto-price. Default -1 to disable, or >0 for hourly USD limit
+  disk_size  = -1    # GB. Default -1 for automatic
 
   storage {
-    workdir = "."
-    output  = "results"
+    workdir = "."       # default blank (don't upload)
+    output  = "results" # default blank (don't download). Relative to workdir
   }
   script = <<-END
     #!/bin/bash
-    mkdir results
-    echo "Hello World!" > results/greeting.txt
+
+    # create output directory if needed
+    mkdir -p results
+    # read last result (in case of spot/preemptible instance recovery)
+    if test -f results/epoch.txt; then EPOCH="$(cat results/epoch.txt)"; fi
+    EPOCH=$${EPOCH:-1}  # start from 1 if last result not found
+
+    echo "(re)starting training loop from $EPOCH up to 1337 epochs"
+    for epoch in $(seq $EPOCH 1337); do
+      sleep 1
+      echo "$epoch" | tee results/epoch.txt
+    done
   END
 }
 ```
@@ -55,13 +66,15 @@ See [the reference](https://registry.terraform.io/providers/iterative/iterative/
 
 -> **Note:** The `script` argument must begin with a valid [shebang](<https://en.wikipedia.org/wiki/Shebang_(Unix)>), and can take the form of a [heredoc string](https://www.terraform.io/docs/language/expressions/strings.html#heredoc-strings) or [a `file()` function](https://www.terraform.io/docs/language/functions/file.html) function (e.g. `file("task_run.sh")`).
 
+[![console](https://github.com/iterative/static/raw/main/img/tpi/console.gif)](https://youtu.be/2fEgO8SazSE)
+
 The project layout should look similar to this:
 
 ```
 project/
 ├── main.tf
 └── results/
-    └── greeting.txt (created in the cloud and downloaded locally)
+    └── epoch.txt (created in the cloud and downloaded locally)
 ```
 
 ## Initialise Terraform
@@ -72,7 +85,7 @@ $ terraform init
 
 This command will check `main.tf` and download the required TPI plugin.
 
-~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables][authentication].
+~> **Warning:** None of the subsequent commands will work without first setting some [authentication environment variables][auth].
 
 ## Run Task
 
@@ -82,13 +95,16 @@ $ TF_LOG_PROVIDER=INFO terraform apply
 
 This command will:
 
-1. Create all the required cloud resources.
+1. Create all the required cloud resources (provisioning a `machine` with `disk_size` storage).
 2. Upload the working directory (`workdir`) to the cloud.
 3. Launch the task `script`.
+4. Terminate the `machine` on `script` completion/error.
 
-With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent storage will be used to relaunch interrupted tasks.
+With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persistent (`disk_size`) storage will be used to relaunch interrupted tasks.
 
 -> **Note:** A large `workdir` may take a long time to upload.
+
+~> **Warning:** To take full advantage of spot instance recovery, a `script` should start by cheching the disk for results (recovered from a previous interrupted run).
 
 -> **Note:** The [`id`](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#id) returned by `terraform apply` (i.e. `[id=tpi-···]`) can be used to locate the created cloud resources through the cloud's web console or command–line tool.
 
@@ -104,7 +120,7 @@ These commands will:
 1. Query the task status from the cloud.
 2. Display the task status.
 
-## Stop Task
+## End Task
 
 ```console
 $ TF_LOG_PROVIDER=INFO terraform destroy
@@ -113,9 +129,9 @@ $ TF_LOG_PROVIDER=INFO terraform destroy
 This command will:
 
 1. Download the `output` directory from the cloud.
-2. Delete all the cloud resources created by `terraform apply`.
+2. Delete all the cloud resources created by `terraform apply` (terminating `machine` if it's still running and removing the persistent `disk_size` storage).
 
-In this example, after running `terraform destroy`, the `results` directory should contain a file named `greeting.txt` with the text `Hello, World!`
+In this example, after running `terraform destroy`, the `results` directory should contain a file named `epoch.txt` with the text `1337`.
 
 -> **Note:** A large `output` directory may take a long time to download.
 

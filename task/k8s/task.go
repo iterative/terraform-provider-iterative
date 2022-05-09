@@ -31,7 +31,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	}
 
 	persistentVolumeClaimStorageClass := ""
-	persistentVolumeClaimSize := uint64(task.Size.Storage)
+	persistentVolumeClaimSize := task.Size.Storage
 	persistentVolumeDirectory := task.Environment.Directory
 
 	match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
@@ -42,7 +42,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 			if err != nil {
 				return nil, err
 			}
-			persistentVolumeClaimSize = uint64(number)
+			persistentVolumeClaimSize = int(number)
 		}
 		persistentVolumeDirectory = match[3]
 	}
@@ -96,6 +96,7 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
+	logrus.Info("Creating resources...")
 	logrus.Info("[1/7] Creating ConfigMap...")
 	if err := t.Resources.ConfigMap.Create(ctx); err != nil {
 		return err
@@ -141,6 +142,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
+	logrus.Info("Reading resources... (this may happen several times)")
 	logrus.Info("[1/3] Reading ConfigMap...")
 	if err := t.Resources.ConfigMap.Read(ctx); err != nil {
 		return err
@@ -161,6 +163,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
+	logrus.Info("Deleting resources...")
 	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		os.Setenv("TPI_PULL_MODE", "true")
@@ -273,7 +276,7 @@ func (t *Task) GetAddresses(ctx context.Context) []net.IP {
 }
 
 func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {
-	return nil, common.NotFoundError
+	return nil, common.NotImplementedError
 }
 
 func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {

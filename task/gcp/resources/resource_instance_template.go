@@ -67,9 +67,11 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 
 	size := i.Attributes.Size.Machine
 	sizes := map[string]string{
+		"s":       "g1-small",
 		"m":       "e2-custom-8-32768",
 		"l":       "e2-custom-32-131072",
 		"xl":      "n2-custom-64-262144",
+		"m+t4":    "n1-standard-4+nvidia-tesla-t4*1",
 		"m+k80":   "custom-8-53248+nvidia-tesla-k80*1",
 		"l+k80":   "custom-32-131072+nvidia-tesla-k80*4",
 		"xl+k80":  "custom-64-212992-ext+nvidia-tesla-k80*8",
@@ -129,7 +131,6 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 					Mode:       "READ_WRITE",
 					InitializeParams: &compute.AttachedDiskInitializeParams{
 						SourceImage: i.Dependencies.Image.Resource.SelfLink,
-						DiskSizeGb:  int64(i.Attributes.Size.Storage),
 						DiskType:    "pd-balanced",
 					},
 				},
@@ -167,6 +168,10 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 			},
 			GuestAccelerators: accelerators,
 		},
+	}
+
+	if size := i.Attributes.Size.Storage; size > 0 {
+		definition.Properties.Disks[0].InitializeParams.DiskSizeGb = int64(size)
 	}
 
 	insertOperation, err := i.Client.Services.Compute.InstanceTemplates.Insert(i.Client.Credentials.ProjectID, definition).Do()

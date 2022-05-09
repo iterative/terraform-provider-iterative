@@ -11,23 +11,35 @@ This resource will:
 
 ```hcl
 resource "iterative_task" "example" {
-  cloud       = "aws"
+  cloud       = "aws"     # or any of: gcp, az, k8s
   machine     = "m"       # medium. Or any of: l, xl, m+k80, xl+v100, ...
-  image       = "ubuntu"
-  region      = "us-east"
-  disk_size   = 30        # GB
-  spot        = 0         # auto-price. Or -1 to disable, or >0 to set a hourly USD limit
+  image       = "ubuntu"  # or "nvidia", ...
+  region      = "us-west" # or "us-east", "eu-west", ...
+  disk_size   = -1        # GB. Default -1 for automatic
+  spot        = 0         # auto-price. Default -1 to disable, or >0 for hourly USD limit
   parallelism = 1
-  timeout     = 60*60     # max 1h before forced termination
+  timeout     = 24*60*60  # max 24h before forced termination
 
   environment = { GREETING = "Hello, world!" }
   storage {
-    workdir = "."
-    output  = "results"
+    workdir = "."         # default blank (don't upload)
+    output  = "results"   # default blank (don't download). Relative to workdir
   }
   script = <<-END
     #!/bin/bash
+
+    # create output directory if needed
+    mkdir -p results
     echo "$GREETING" | tee results/$(uuidgen)
+    # read last result (in case of spot/preemptible instance recovery)
+    if test -f results/epoch.txt; then EPOCH="$(cat results/epoch.txt)"; fi
+    EPOCH=$${EPOCH:-1}  # start from 1 if last result not found
+
+    echo "(re)starting training loop from $EPOCH up to 1337 epochs"
+    for epoch in $(seq $EPOCH 1337); do
+      sleep 1
+      echo "$epoch" | tee results/epoch.txt
+    done
   END
   # or: script = file("example.sh")
 }
@@ -42,11 +54,11 @@ resource "iterative_task" "example" {
 
 ### Optional
 
-- `region` - (Optional) [Cloud region/zone](#cloud-regions) to run the task on.
-- `machine` - (Optional) See [Machine Types](#machine-types) below.
-- `disk_size` - (Optional) Size of the ephemeral machine storage in GB.
+- `region` - (Optional) [Cloud region/zone](#cloud-region) to run the task on.
+- `machine` - (Optional) See [Machine Types](#machine-type) below.
+- `disk_size` - (Optional) Size of the ephemeral machine storage in GB. `-1`: automatic based on `image`.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
-- `image` - (Optional) [Machine image](#machine-images) to run the task with.
+- `image` - (Optional) [Machine image](#machine-image) to run the task with.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
@@ -93,7 +105,7 @@ The above would allow:
 $ terraform output --raw logs
 ```
 
-Finally, JSON output can be parsed using `terraform output --json` and `jq` like this:
+Finally, JSON output can be parsed using `terraform show --json` and `jq` like this:
 
 ```console
 $ terraform show --json | jq --raw-output '
@@ -110,9 +122,11 @@ The Iterative Provider offers some common machine types (medium, large, and extr
 
 | Type      | Minimum CPU cores | Minimum RAM | GPU                 |
 | :-------- | ----------------: | ----------: | :------------------ |
+| `s`       |                 1 |        1 GB | -                   |
 | `m`       |                 8 |       16 GB | -                   |
 | `l`       |                32 |       64 GB | -                   |
 | `xl`      |                64 |      128 GB | -                   |
+| `m+t4`    |                 4 |       16 GB | 1 NVIDIA Tesla T4   |
 | `m+k80`   |                 4 |       53 GB | 1 NVIDIA Tesla K80  |
 | `l+k80`   |                12 |      112 GB | 2 NVIDIA Tesla K80  |
 | `xl+k80`  |                24 |      212 GB | 4 NVIDIA Tesla K80  |
@@ -148,13 +162,14 @@ In addition to generic types, it's possible to specify any machine type supporte
 
 -> **Note:** `{accelerator}` will be transformed into a node selector requesting `accelerator={accelerator}` and `{count}` will be configured as the **limits** count for `kubernetes.io/gpu`.
 
-## Machine Images
+## Machine Image
 
 ### Generic
 
 The Iterative Provider offers some common machine images which are roughly the same for all supported clouds.
 
 - `ubuntu` - Official [Ubuntu LTS](https://wiki.ubuntu.com/LTS) image (currently 20.04).
+- `nvidia` - Official Ubuntu LTS with NVIDIA GPU drivers and CUDA toolkit (currently 11.3).
 
 ### Cloud-specific
 
@@ -211,14 +226,14 @@ See https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findima
 
 - `{image}` - Any [container image](https://kubernetes.io/docs/concepts/containers/images/#image-names).
 
-## Cloud Regions
+## Cloud Region
 
 ### Generic
 
 The Iterative Provider offers some common cloud regions which are roughly the same for all supported clouds.
 
-- `us-east` - United States of America, East.
 - `us-west` - United States of America, West.
+- `us-east` - United States of America, East.
 - `eu-north` - Europe, North.
 - `eu-west` - Europe, West.
 

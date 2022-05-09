@@ -1,6 +1,6 @@
 module terraform-provider-iterative
 
-go 1.14
+go 1.16
 
 require (
 	github.com/Azure/azure-sdk-for-go v58.1.0+incompatible
@@ -25,6 +25,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-getter v1.5.11 // indirect
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
 	github.com/rclone/rclone v1.57.0

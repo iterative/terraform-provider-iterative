@@ -2,6 +2,8 @@
 FILE=/var/log/cml_stack.log
 if [ ! -f "$FILE" ]; then
   DEBIAN_FRONTEND=noninteractive
+  PS4='tpi:setup.sh: '
+  set -x
   echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
 
   sudo apt remove unattended-upgrades
@@ -19,14 +21,15 @@ if [ ! -f "$FILE" ]; then
   sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
   sudo apt update && sudo apt-get install -y terraform
 
-  curl -sL https://deb.nodesource.com/setup_12.x | sudo bash
+  curl -sL https://deb.nodesource.com/setup_16.x | sudo bash
   sudo apt update && sudo apt-get install -y nodejs
 
   sudo apt install -y ubuntu-drivers-common
   sudo ubuntu-drivers autoinstall
 
-  sudo curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login
-  sudo chmod 755 /usr/bin/docker-credential-ecr-login
+  get_ecr_helper="curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login"
+  chmod_ecr_help="chmod 755 /usr/bin/docker-credential-ecr-login"
+  sudo systemd-run --same-dir --no-block --service-type=exec bash -c "$get_ecr_help && $chmod_ecr_help"
 
   curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
   curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list

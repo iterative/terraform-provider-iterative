@@ -85,7 +85,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	image := v.Attributes.Environment.Image
 	images := map[string]string{
 		"ubuntu": "ubuntu@Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest",
-		"nvidia": "ubuntu@nvidia:ngc_base_image_version_b:gen2_21-11-0:latest#plan",
+		"nvidia": "ubuntu@microsoft-dsvm:ubuntu-2004:2004-gen2:latest",
 	}
 	if val, ok := images[image]; ok {
 		image = val
@@ -105,9 +105,11 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 
 	size := v.Attributes.Size.Machine
 	sizes := map[string]string{
+		"s":       "Standard_B1s",
 		"m":       "Standard_F8s_v2",
 		"l":       "Standard_F32s_v2",
 		"xl":      "Standard_F64s_v2",
+		"m+t4":    "Standard_NC4as_T4_v3",
 		"m+k80":   "Standard_NC6",
 		"l+k80":   "Standard_NC12",
 		"xl+k80":  "Standard_NC24",
@@ -143,7 +145,6 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 					OsDisk: &compute.VirtualMachineScaleSetOSDisk{
 						Caching:      compute.CachingTypesReadWrite,
 						CreateOption: compute.DiskCreateOptionTypesFromImage,
-						DiskSizeGB:   to.Int32Ptr(int32(v.Attributes.Size.Storage)),
 						ManagedDisk: &compute.VirtualMachineScaleSetManagedDiskParameters{
 							StorageAccountType: compute.StorageAccountTypesStandardLRS,
 						},
@@ -188,6 +189,10 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 				},
 			},
 		},
+	}
+
+	if size := v.Attributes.Size.Storage; size > 0 {
+		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.StorageProfile.OsDisk.DiskSizeGB = to.Int32Ptr(int32(size))
 	}
 
 	if plan == "#plan" {

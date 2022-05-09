@@ -55,7 +55,7 @@ func resourceTask() *schema.Resource {
 				Type:     schema.TypeInt,
 				ForceNew: true,
 				Optional: true,
-				Default:  30,
+				Default:  -1,
 			},
 			"spot": {
 				Type:     schema.TypeFloat,
@@ -202,22 +202,23 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diagnostic(diags, err, diag.Warning)
 	}
 
-	keyPair, err := task.GetKeyPair(ctx)
-	if err != nil {
-		return diagnostic(diags, err, diag.Warning)
-	}
+	if keyPair, err := task.GetKeyPair(ctx); err != nil {
+		if err != common.NotImplementedError {
+			return diagnostic(diags, err, diag.Warning)
+		}
+	} else {
+		publicKey, err := keyPair.PublicString()
+		if err != nil {
+			return diagnostic(diags, err, diag.Warning)
+		}
+		d.Set("ssh_public_key", publicKey)
 
-	publicKey, err := keyPair.PublicString()
-	if err != nil {
-		return diagnostic(diags, err, diag.Warning)
+		privateKey, err := keyPair.PrivateString()
+		if err != nil {
+			return diagnostic(diags, err, diag.Warning)
+		}
+		d.Set("ssh_private_key", privateKey)
 	}
-	d.Set("ssh_public_key", publicKey)
-
-	privateKey, err := keyPair.PrivateString()
-	if err != nil {
-		return diagnostic(diags, err, diag.Warning)
-	}
-	d.Set("ssh_private_key", privateKey)
 
 	var addresses []string
 	for _, address := range task.GetAddresses(ctx) {

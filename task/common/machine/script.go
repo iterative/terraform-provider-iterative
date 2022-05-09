@@ -60,7 +60,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   After=default.target
 [Service]
   Type=simple
-  ExecStart=/usr/bin/tpi-task
+  ExecStart=-/usr/bin/tpi-task
   ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
@@ -102,14 +102,17 @@ fi
 
 rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 
+yes | /etc/profile.d/install-driver-prompt.sh # for GCP GPU machines
+
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
+sudo systemctl disable --now apt-daily.timer
 
 while sleep 5; do
-  journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
-  journalctl --unit tpi-task > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
+  test -n "$TPI_MACHINE_LOGS" && journalctl > "$TPI_LOG_DIRECTORY/machine-$TPI_MACHINE_IDENTITY"
+  journalctl --all --no-hostname --output=short-iso --quiet --unit=tpi-task --utc | sed 's/^\([0-9-]*\)T\([0-9:]*\)+0000 \S*: \(.*\)/\1 \2 \3/g' > "$TPI_LOG_DIRECTORY/task-$TPI_MACHINE_IDENTITY"
   NEW_TPI_LOG_DIRECTORY_HASH="$(md5sum "$TPI_LOG_DIRECTORY"/*)"
-  if [[ "$NEW_TPI_LOG_DIRECTORY_HASH" != "$TPI_LOG_DIRECTORY_HASH" ]]; then
+  if test "$NEW_TPI_LOG_DIRECTORY_HASH" != "$TPI_LOG_DIRECTORY_HASH"; then
     TPI_LOG_DIRECTORY_HASH="$NEW_TPI_LOG_DIRECTORY_HASH"
     rclone sync "$TPI_LOG_DIRECTORY" "$RCLONE_REMOTE/reports"
   fi
@@ -117,7 +120,7 @@ done &
 
 while sleep 10; do
   NEW_TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%%T@\n" | sort | tail -1)"
-  if [[ "$NEW_TPI_DATA_DIRECTORY_EPOCH" != "$TPI_DATA_DIRECTORY_EPOCH" ]]; then
+  if test "$NEW_TPI_DATA_DIRECTORY_EPOCH" != "$TPI_DATA_DIRECTORY_EPOCH"; then
     TPI_DATA_DIRECTORY_EPOCH="$NEW_TPI_DATA_DIRECTORY_EPOCH"
     rclone sync "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
   fi
