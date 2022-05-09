@@ -67,18 +67,15 @@ type PermissionSet struct {
 
 func (ps *PermissionSet) Read(ctx context.Context) error {
 	permissionSet := ps.Identifier
-	// permissionSet = "service_account@gcp_email.com,scopes=s1,s2,s3"
 	if permissionSet == "" {
 		ps.Resource = nil
 		return nil
 	}
 	sStr := strings.Split(permissionSet, ",")
-	// sStr = ["SA email", "scopes=s1", "s2", ...]
 	if len(sStr) == 1 {
 		return fmt.Errorf("at least one scope is required")
 	}
 	sStr[1] = strings.Split(sStr[1], "=")[1]
-	// sStr = ["SA email", "s1", "s2", ...]
 	ps.Resource = []*compute.ServiceAccount{
 		{
 			Email:  sStr[0],

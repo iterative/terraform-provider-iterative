@@ -23,9 +23,6 @@ type PermissionSet struct {
 }
 
 func (ps *PermissionSet) Read(ctx context.Context) error {
-	// https://pkg.go.dev/github.com/Azure/azure-sdk-for-go@v58.1.0+incompatible/services/compute/mgmt/2020-06-30/compute#VirtualMachineScaleSetIdentity
-	// https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
-	// https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp
 	if ps.Identifier != "" {
 		return fmt.Errorf("not yet implemented")
 	}

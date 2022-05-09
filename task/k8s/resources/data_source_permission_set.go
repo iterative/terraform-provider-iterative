@@ -25,18 +25,10 @@ type PermissionSet struct {
 
 func (ps *PermissionSet) Read(ctx context.Context) error {
 	ps.Resource.flag = true
-
-	// https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-	// https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-
 	if ps.Identifier == "" {
 		ps.Resource.ServiceAccountName = ""
 		ps.Resource.AutomountServiceAccountToken = nil
 		return nil
 	}
 	return fmt.Errorf("not yet implemented")
-	//ps.Resource.ServiceAccountName = ps.Identifier
-	//ps.Resource.flag = true
-	//ps.Resource.AutomountServiceAccountToken = &ps.Resource.flag
-	//return nil
 }
