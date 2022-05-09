@@ -8,7 +8,7 @@ Environment variables are the only supported authentication method, and should b
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS_DATA="$(cat service_account.json)"
-export TF_LOG_PROVIDER=INFO 
+export TF_LOG_PROVIDER=INFO
 terraform apply
 ```
 
