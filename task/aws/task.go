@@ -100,53 +100,53 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	logrus.Info("[0/11] Parsing PermissionSet...")
+	logrus.Info("[1/12] Parsing PermissionSet...")
 	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[1/11] Importing DefaultVPC...")
+	logrus.Info("[2/12] Importing DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[2/11] Importing DefaultVPCSubnet...")
+	logrus.Info("[3/12] Importing DefaultVPCSubnet...")
 	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[3/11] Reading Image...")
+	logrus.Info("[4/12] Reading Image...")
 	if err := t.DataSources.Image.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[4/11] Creating Bucket...")
+	logrus.Info("[5/12] Creating Bucket...")
 	if err := t.Resources.Bucket.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[5/11] Creating SecurityGroup...")
+	logrus.Info("[6/12] Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[6/11] Creating KeyPair...")
+	logrus.Info("[7/12] Creating KeyPair...")
 	if err := t.Resources.KeyPair.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[7/11] Reading Credentials...")
+	logrus.Info("[8/12] Reading Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[8/11] Creating LaunchTemplate...")
+	logrus.Info("[9/12] Creating LaunchTemplate...")
 	if err := t.Resources.LaunchTemplate.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[9/11] Creating AutoScalingGroup...")
+	logrus.Info("[10/12] Creating AutoScalingGroup...")
 	if err := t.Resources.AutoScalingGroup.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[10/11] Uploading Directory...")
+	logrus.Info("[11/12] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	logrus.Info("[11/11] Starting task...")
+	logrus.Info("[12/12] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
@@ -159,10 +159,6 @@ func (t *Task) Create(ctx context.Context) error {
 
 func (t *Task) Read(ctx context.Context) error {
 	logrus.Info("Reading resources... (this may happen several times)")
-	logrus.Info("[0/9] Parsing PermissionSet...")
-	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
-		return err
-	}
 	logrus.Info("[1/9] Reading DefaultVPC...")
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
