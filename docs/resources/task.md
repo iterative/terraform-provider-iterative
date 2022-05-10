@@ -264,7 +264,7 @@ A set of "permissions" assigned to the `task` instance, format depends on the cl
 
 #### Amazon Web Services
 
-The `arn` for of your instance profile see:
+An [instance profile `arn`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), e.g.:
 `permission_set = "arn:aws:iam:1234567890:instance-profile/rolename"`
 
 #### Google Cloud Platform
