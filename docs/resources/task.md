@@ -269,9 +269,8 @@ The `arn` for of your instance profile see:
 
 #### Google Cloud Platform
 
-A service account email and a list of scopes:
+A service account email and a [list of scopes](https://cloud.google.com/sdk/gcloud/reference/alpha/compute/instances/set-scopes#--scopes), e.g.:
 `permission_set = "sa-name@project_id.iam.gserviceaccount.com,scopes=storage-rw"`
-check [here](https://cloud.google.com/sdk/gcloud/reference/alpha/compute/instances/set-scopes#--scopes) for a full list of scopes and the accepted shorthand alias
 
 #### Microsoft Azure
 
