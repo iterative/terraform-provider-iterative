@@ -34,6 +34,15 @@ type StatusReport struct {
 	Code   string
 }
 
+func init() {
+	operations.SyncPrintf = func(format string, a ...interface{}) {
+		logrus.Debugf(format, a...)
+	}
+	fs.LogPrint = func(level fs.LogLevel, text string) {
+		logrus.Debug(text)
+	}
+}
+
 func Reports(ctx context.Context, remote, prefix string) ([]string, error) {
 	remoteFileSystem, err := fs.NewFs(ctx, remote)
 	if err != nil {
