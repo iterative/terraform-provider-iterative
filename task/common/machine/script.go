@@ -104,7 +104,7 @@ rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
 
 yes | /etc/profile.d/install-driver-prompt.sh # for GCP GPU machines
 
-# FIX NVIDIA APT GPG KEYS (https://github.com/NVIDIA/cuda-repo-management/issues/1#issuecomment-1111490201) 🤬 
+# FIX NVIDIA APT GPG KEYS (https://github.com/NVIDIA/cuda-repo-management/issues/1#issuecomment-1111490201) 🤬
 if test -f /etc/apt/sources.list.d/cuda.list; then
   for list in cuda nvidia-ml; do mv /etc/apt/sources.list.d/$list.list{,.backup}; done
   apt-get update
@@ -114,7 +114,7 @@ if test -f /etc/apt/sources.list.d/cuda.list; then
   apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/7fa2af80.pub
   for list in cuda nvidia-ml; do mv /etc/apt/sources.list.d/$list.list{.backup,}; done
 fi
-  
+
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
 sudo systemctl disable --now apt-daily.timer
