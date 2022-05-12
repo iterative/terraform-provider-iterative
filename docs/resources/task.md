@@ -274,11 +274,11 @@ A service account email and a [list of scopes](https://cloud.google.com/sdk/gclo
 
 #### Microsoft Azure
 
-Not yet implemented
+[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/559)
 
 #### Kubernetes
 
-Not yet implemented
+[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/560)
 
 ## Known Issues
 
