@@ -180,7 +180,7 @@ style C fill:#7B61FF,stroke:#333333,color:#000000
 
 ## Future Plans
 
-TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org).
+TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org). Plus of course more examples for Data Scientists and Machine Learning Engineers - from Jupyter, VSCode, and Codespaces to improving the live logging/monitoring/reporting experience.
 
 ## Help
 
