@@ -139,6 +139,11 @@ terraform destroy
 
 This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
 
+## Example Projects
+
+- [Run Jupyter & TensorBoard in the cloud with one command](https://github.com/iterative/blog-tpi-jupyter)
+- [Move local ML experiments to the cloud](https://github.com/iterative/blog-tpi-bees)
+
 ## How it Works
 
 This diagram may help to see what TPI does under-the-hood:
@@ -175,7 +180,7 @@ style C fill:#7B61FF,stroke:#333333,color:#000000
 
 ## Future Plans
 
-TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org).
+TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org). Plus of course more examples for Data Scientists and Machine Learning Engineers - from Jupyter, VSCode, and Codespaces to improving the live logging/monitoring/reporting experience.
 
 ## Help
 
