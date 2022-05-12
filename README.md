@@ -139,6 +139,11 @@ terraform destroy
 
 This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
 
+## Example Projects
+
+- [Run Jupyter & TensorBoard in the cloud with one command](https://github.com/iterative/blog-tpi-jupyter)
+- [Move local ML experiments to the cloud](https://github.com/iterative/blog-tpi-bees)
+
 ## How it Works
 
 This diagram may help to see what TPI does under-the-hood:
