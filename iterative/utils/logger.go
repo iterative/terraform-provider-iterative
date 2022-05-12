@@ -100,9 +100,9 @@ func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func TpiLogger(d *schema.ResourceData) *logrus.Entry {
-	logrus.SetFormatter(&tpiFormatter{})
-
-	return logrus.WithFields(logrus.Fields{"d": d})
+	logger := logrus.New()
+	logger.SetFormatter(&tpiFormatter{})
+	return logger.WithFields(logrus.Fields{"d": d})
 }
 
 func hideUnwantedPrefix(levelText, newPrefix, message string) string {
