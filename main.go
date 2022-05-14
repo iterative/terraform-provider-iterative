@@ -12,9 +12,12 @@ import (
 	"terraform-provider-iterative/iterative"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
+
+	"terraform-provider-iterative/cmd"
 )
 
 func main() {
+	// FIXME: relocate this block to the new command-line tool
 	if identifier := os.Getenv("TPI_TASK_IDENTIFIER"); identifier != "" {
 		provider := os.Getenv("TPI_TASK_CLOUD_PROVIDER")
 		region := os.Getenv("TPI_TASK_CLOUD_REGION")
@@ -24,6 +27,12 @@ func main() {
 		} else {
 			log.Printf("[INFO] Done!\n")
 		}
+		return
+	}
+	// END FIXME
+
+	if os.Getenv(plugin.Handshake.MagicCookieKey) != plugin.Handshake.MagicCookieValue {
+		cmd.Execute()
 		return
 	}
 

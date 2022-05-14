@@ -1,0 +1,52 @@
+package delete
+
+import (
+	"context"
+
+	"github.com/spf13/cobra"
+
+	"terraform-provider-iterative/task"
+	"terraform-provider-iterative/task/common"
+)
+
+var (
+	workdir string
+	output string
+)
+
+func New(cloud *common.Cloud) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete <name>",
+		Short: "Delete a task",
+		Long: ``,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd, args, cloud)
+		},
+	}
+
+	cmd.Flags().StringVar(&workdir, "workdir", ".", "working directory to upload")
+	cmd.Flags().StringVar(&output, "output", "", "output directory, relative to workdir")
+
+	return cmd
+}
+
+
+func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+	cfg := common.Task{
+		Environment: common.Environment{
+			Directory:    workdir,
+			DirectoryOut: output,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Delete)
+	defer cancel()
+
+	tsk, err := task.New(ctx, *cloud, common.Identifier(args[0]), cfg)
+	if err != nil {
+		return err
+	}
+
+	return tsk.Delete(ctx)
+}
