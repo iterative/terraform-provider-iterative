@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aohorodnyk/uid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,6 +24,9 @@ var (
 )
 
 func resourceTask() *schema.Resource {
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&utils.TpiFormatter{})
+
 	return &schema.Resource{
 		CreateContext: resourceTaskCreate,
 		DeleteContext: resourceTaskDelete,
@@ -163,12 +167,11 @@ func resourceTask() *schema.Resource {
 }
 
 func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
-	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Creation"))
+	logrus.Info(fmt.Sprintf(logTpl, "Creation"))
 
 	spot := d.Get("spot").(float64)
 	if spot > 0 {
-		logger.Warn(fmt.Sprintf("Setting a maximum price `spot=%f` USD/h. Consider using auto-pricing (`spot=0`) instead.", spot))
+		logrus.Warn(fmt.Sprintf("Setting a maximum price `spot=%f` USD/h. Consider using auto-pricing (`spot=0`) instead.", spot))
 	}
 
 	task, err := resourceTaskBuild(ctx, d, m)
@@ -250,7 +253,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("logs", logs)
 	d.SetId(task.GetIdentifier(ctx).Long())
 
-	logger := utils.TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
 	logger.Info("instance")
 	logger.Info("logs")
 	logger.Info("status")
@@ -259,8 +262,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
-	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Destruction"))
+	logrus.Info(fmt.Sprintf(logTpl, "Destruction"))
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
