@@ -3,8 +3,8 @@ package utils
 import (
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/sirupsen/logrus"
 )
 
 func TestState(t *testing.T) {
