@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
 	"github.com/Azure/go-autorest/autorest"
@@ -10,6 +11,24 @@ import (
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
 )
+
+func ListResourceGroups(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+	ids := []common.Identifier{}
+
+    for page, err := client.Services.Groups.List(ctx, "", nil); page.NotDone(); err = page.Next() {
+        if err != nil {
+            return nil, err
+        }
+
+        for _, group := range page.Values() {
+            if id := common.Identifier(*group.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+				ids = append(ids, id)
+			}
+        }
+    }
+
+	return ids, nil
+}
 
 func NewResourceGroup(client *client.Client, identifier common.Identifier) *ResourceGroup {
 	r := new(ResourceGroup)

@@ -15,6 +15,21 @@ import (
 	"terraform-provider-iterative/task/common/ssh"
 )
 
+func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {
+	switch cloud.Provider {
+	case common.ProviderAWS:
+		return aws.List(ctx, cloud)
+	case common.ProviderAZ:
+		return az.List(ctx, cloud)
+	case common.ProviderGCP:
+		return gcp.List(ctx, cloud)
+	case common.ProviderK8S:
+		return k8s.List(ctx, cloud)
+	default:
+		return nil, fmt.Errorf("unknown provider: %#v", cloud.Provider)
+	}
+}
+
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (Task, error) {
 	if identifier == "" {
 		return nil, errors.New("identifier must not be empty")

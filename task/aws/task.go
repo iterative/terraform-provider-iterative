@@ -13,6 +13,15 @@ import (
 	"terraform-provider-iterative/task/common/ssh"
 )
 
+func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {
+	client, err := client.New(ctx, cloud, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resources.ListBuckets(ctx, client)
+}
+
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
 	client, err := client.New(ctx, cloud, task.Tags)
 	if err != nil {

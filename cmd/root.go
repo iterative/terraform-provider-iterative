@@ -14,6 +14,7 @@ import (
 
 	"terraform-provider-iterative/cmd/create"
 	"terraform-provider-iterative/cmd/delete"
+	"terraform-provider-iterative/cmd/list"
 	"terraform-provider-iterative/cmd/read"
 )
 
@@ -63,6 +64,7 @@ func init() {
 	for _, newFunc := range []func(cloud *common.Cloud) *cobra.Command {
 		create.New,
 		delete.New,
+		list.New,
 		read.New,
 	}{
 		cmd := newFunc(&cloud)

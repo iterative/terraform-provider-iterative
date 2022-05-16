@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/aws/smithy-go"
 
@@ -13,6 +14,22 @@ import (
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
 )
+
+func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+	output, err := client.Services.S3.ListBuckets(ctx, &s3.ListBucketsInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	ids := []common.Identifier{}
+	for _, b := range output.Buckets {
+		if id := common.Identifier(*b.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+			ids = append(ids, id)
+		}
+	}
+
+	return ids, nil
+}
 
 func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
 	b := new(Bucket)

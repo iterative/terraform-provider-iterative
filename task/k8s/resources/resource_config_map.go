@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"strings"
 
 	kubernetes_core "k8s.io/api/core/v1"
 	kubernetes_errors "k8s.io/apimachinery/pkg/api/errors"
@@ -11,6 +12,23 @@ import (
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/k8s/client"
 )
+
+func ListConfigMaps(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+
+	cmaps, err := client.Services.Core.ConfigMaps(client.Namespace).List(ctx, kubernetes_meta.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	ids := []common.Identifier{}
+	for _, cmap := range cmaps.Items {
+		if id := common.Identifier(cmap.ObjectMeta.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+			ids = append(ids, id)
+		}
+	}
+	
+	return ids, nil
+}
 
 func NewConfigMap(client *client.Client, identifier common.Identifier, data map[string]string) *ConfigMap {
 	c := new(ConfigMap)
