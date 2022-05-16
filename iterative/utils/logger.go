@@ -12,13 +12,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var colors = map[string]int {
-	"DEBUG": 34,
-	"INFO": 36,
-	"WARNING": 33,
-	"ERROR": 31,
-	"FATAL": 31,
-	"SUCCESS": 32,
+var colors = map[string]int{
+	"DEBUG":      34,
+	"INFO":       36,
+	"WARNING":    33,
+	"ERROR":      31,
+	"FATAL":      31,
+	"SUCCESS":    32,
 	"foreground": 35,
 }
 
@@ -41,7 +41,7 @@ func (f *TpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 			return nil, errors.New("wrong schema logging mode")
 		}
 	}
-	
+
 	newPrefix := fmt.Sprintf("\x1b[%dmTPI [%s]\x1b[0m", levelColor, levelText)
 	return []byte(hideUnwantedPrefix(levelText, newPrefix, message)), nil
 }
