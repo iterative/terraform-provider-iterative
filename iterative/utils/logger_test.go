@@ -3,6 +3,7 @@ package utils
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -16,7 +17,8 @@ func TestState(t *testing.T) {
 		},
 	})
 
-	logger := TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
+	logrus.SetFormatter(&TpiFormatter{})
 	logger.Info("status")
 }
 
@@ -30,7 +32,8 @@ func TestState2(t *testing.T) {
 		},
 	})
 
-	logger := TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
+	logrus.SetFormatter(&TpiFormatter{})
 	logger.Info("status")
 }
 
@@ -44,7 +47,8 @@ func TestState3(t *testing.T) {
 		},
 	})
 
-	logger := TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
+	logrus.SetFormatter(&TpiFormatter{})
 	logger.Info("status")
 }
 
@@ -57,7 +61,8 @@ func TestLogs(t *testing.T) {
 		"logs": logs,
 	})
 
-	logger := TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
+	logrus.SetFormatter(&TpiFormatter{})
 	logger.Info("logs")
 }
 
@@ -70,7 +75,8 @@ func TestMachine(t *testing.T) {
 		"region":  "us-west",
 	})
 
-	logger := TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
+	logrus.SetFormatter(&TpiFormatter{})
 	logger.Info("instance")
 }
 
