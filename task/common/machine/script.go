@@ -145,16 +145,15 @@ done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),
 		base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(variables.Enrich()))),
-    base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(*credentials))),
+		base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(*credentials))),
 		timeoutString)
 }
 
-
 func systemdEscapeEnvironmentFile(input map[string]string) string {
-  var result string
-  for name, value := range input {
-    escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
-    result += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
-  }
-  return result
+	var result string
+	for name, value := range input {
+		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
+		result += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+	}
+	return result
 }
