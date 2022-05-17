@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+  "github.com/alessio/shellescape"
+
 	"terraform-provider-iterative/task/common"
 )
 
@@ -16,10 +18,21 @@ func Script(script string, credentials *map[string]string, variables common.Vari
 		timeoutString = "infinity"
 	}
 
+  environment := ""
+  for name, value := range variables.Enrich() {
+		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
+		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+	}
+
+  exportCredentials := ""
+  for name, value := range *credentials {
+		exportCredentials += "export " + shellescape.Quote(name+"="+value) + "\n"
+	}
+
 	return fmt.Sprintf(
 		`#!/bin/bash
-sudo mkdir --parents /tmp/tpi-task
-chmod u=rwx,g=rwx,o=rwx /tmp/tpi-task
+sudo mkdir --parents /var/cache/task/directory
+chmod u=rwx,g=rwx,o=rwx /var/cache/task/directory
 
 base64 --decode << END | sudo tee /usr/bin/tpi-task > /dev/null
 %s
@@ -29,7 +42,7 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
 sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
-source /tmp/tpi-credentials
+source /var/cache/task/credentials
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
@@ -37,29 +50,24 @@ fi
 END
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
-sudo tee /usr/bin/tpi-environment << 'END'
-#!/bin/bash
+base64 --decode << END | sudo tee /var/cache/task/variables > /dev/null
+%s
+END
+base64 --decode << END | sudo tee /var/cache/task/credentials > /dev/null
+%s
+END
+chmod u=rw,g=,o= /var/cache/task/variables
+chmod u=rw,g=,o= /var/cache/task/credentials
+
 while IFS= read -rd $'\0' variable; do
   export "$(perl -0777p -e 's/\\"/"/g;' -e 's/(.+?)="(.+)"/$1=$2/sg' <<< "$variable")"
-done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' "$1")
-END
-chmod u=rwx,g=rx,o=rx /usr/bin/tpi-environment
-
-base64 --decode << END | sudo tee /tmp/tpi-variables > /dev/null
-%s
-END
-base64 --decode << END | sudo tee /tmp/tpi-credentials > /dev/null
-%s
-END
-chmod u=rw,g=,o= /tmp/tpi-variables
-chmod u=rw,g=,o= /tmp/tpi-credentials
+done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' /var/cache/task/variables)
 
 TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
-TPI_DATA_DIRECTORY="/tmp/tpi-task"
+TPI_DATA_DIRECTORY="/var/cache/task/directory"
 
-source /usr/bin/tpi-environment /tmp/tpi-variables
-source /usr/bin/tpi-environment /tmp/tpi-credentials
+source /var/cache/task/credentials
 
 sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Unit]
@@ -67,11 +75,11 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-/bin/bash -lc 'exec /usr/bin/tpi-task'
-  ExecStop=/bin/bash -c 'source /usr/bin/tpi-environment /tmp/tpi-credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStop=/bin/bash -c 'source /var/cache/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
-  EnvironmentFile=/tmp/tpi-variables
-  WorkingDirectory=/tmp/tpi-task
+  EnvironmentFile=/var/cache/task/variables
+  WorkingDirectory=/var/cache/task/directory
   TimeoutStartSec=%s
   TimeoutStopSec=infinity
 [Install]
@@ -106,7 +114,7 @@ if ! command -v rclone 2>&1 > /dev/null; then
   rm --recursive rclone-*-linux-amd64*
 fi
 
-rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
+rclone copy "$RCLONE_REMOTE/data" /var/cache/task/directory
 
 yes | /etc/profile.d/install-driver-prompt.sh # for GCP GPU machines
 
@@ -144,16 +152,7 @@ while sleep 10; do
 done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),
-		base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(variables.Enrich()))),
-		base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(*credentials))),
+		base64.StdEncoding.EncodeToString([]byte(environment)),
+		base64.StdEncoding.EncodeToString([]byte(exportCredentials)),
 		timeoutString)
-}
-
-func systemdEscapeEnvironmentFile(input map[string]string) string {
-	var result string
-	for name, value := range input {
-		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
-		result += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
-	}
-	return result
 }
