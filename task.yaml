@@ -1,2 +1,8 @@
-provider: k8s
+provider: aws
 name: something
+region: us-west-1
+machine: g2.2xlarge
+script: |
+  ls
+  date
+  echo "yes"

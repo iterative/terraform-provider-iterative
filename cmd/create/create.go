@@ -5,11 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alessio/shellescape"
 	"github.com/aohorodnyk/uid"
-	"github.com/spf13/cobra"
 	"github.com/sirupsen/logrus"
-
-	"gopkg.in/alessio/shellescape.v1"
+	"github.com/spf13/cobra"
 
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
@@ -22,6 +21,7 @@ var (
 	image string
 	workdir string
 	output string
+	script string
 	environment map[string]string
 	timeout int
 )
@@ -31,7 +31,6 @@ func New(cloud *common.Cloud) *cobra.Command {
 		Use:   "create [command...]",
 		Short: "Create a task",
 		Long: ``,
-		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd, args, cloud)
 		},
@@ -43,6 +42,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd.Flags().StringVar(&image, "image", "ubuntu", "machine image")
 	cmd.Flags().StringVar(&workdir, "workdir", ".", "working directory to upload")
 	cmd.Flags().StringVar(&output, "output", "", "output directory to download")
+	cmd.Flags().StringVar(&script, "script", "", "script to run")
 	cmd.Flags().StringToStringVar(&environment, "environment", map[string]string{}, "environment variables")
 	cmd.Flags().IntVar(&timeout, "timeout", 24 * 60 * 60, "timeout")
 
@@ -50,7 +50,6 @@ func New(cloud *common.Cloud) *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
-	logrus.Info(environment)
 	variables := make(map[string]*string)
 	for name, value := range environment {
 		variables[name] = nil
@@ -59,13 +58,10 @@ func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 		}
 	}
 
-	script := strings.Join(args, " ")
 	if !strings.HasPrefix(script, "#!") {
-		script = "#!/bin/sh\n"
-		for _, arg := range args {
-			script += shellescape.Quote(arg) + " "
-		}
+		script = "#!/bin/sh\n"+script
 	}
+	script += "\n"+shellescape.QuoteCommand(args)
 
 	cfg := common.Task{
 		Size: common.Size{
