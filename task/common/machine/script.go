@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-  "github.com/alessio/shellescape"
+	"github.com/alessio/shellescape"
 
 	"terraform-provider-iterative/task/common"
 )
@@ -18,14 +18,14 @@ func Script(script string, credentials *map[string]string, variables common.Vari
 		timeoutString = "infinity"
 	}
 
-  environment := ""
-  for name, value := range variables.Enrich() {
+	environment := ""
+	for name, value := range variables.Enrich() {
 		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
 		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
 	}
 
-  exportCredentials := ""
-  for name, value := range *credentials {
+	exportCredentials := ""
+	for name, value := range *credentials {
 		exportCredentials += "export " + shellescape.Quote(name+"="+value) + "\n"
 	}
 
