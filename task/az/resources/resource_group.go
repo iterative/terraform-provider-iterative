@@ -21,7 +21,7 @@ func ListResourceGroups(ctx context.Context, client *client.Client) ([]common.Id
         }
 
         for _, group := range page.Values() {
-            if id := common.Identifier(*group.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+            if id, err := common.ParseIdentifier(*group.Name); err == nil {
 				ids = append(ids, id)
 			}
         }

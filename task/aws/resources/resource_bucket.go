@@ -23,7 +23,7 @@ func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifie
 
 	ids := []common.Identifier{}
 	for _, b := range output.Buckets {
-		if id := common.Identifier(*b.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+		if id, err := common.ParseIdentifier(*b.Name); err == nil {
 			ids = append(ids, id)
 		}
 	}

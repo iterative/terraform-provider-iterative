@@ -14,7 +14,6 @@ import (
 )
 
 func ListConfigMaps(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
-
 	cmaps, err := client.Services.Core.ConfigMaps(client.Namespace).List(ctx, kubernetes_meta.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -22,7 +21,7 @@ func ListConfigMaps(ctx context.Context, client *client.Client) ([]common.Identi
 
 	ids := []common.Identifier{}
 	for _, cmap := range cmaps.Items {
-		if id := common.Identifier(cmap.ObjectMeta.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+		if id, err := common.ParseIdentifier(cmap.ObjectMeta.Name); err == nil {
 			ids = append(ids, id)
 		}
 	}

@@ -17,7 +17,7 @@ func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifie
 
 	page := func(buckets *storage.Buckets) error {
 		for _, bucket := range buckets.Items {
-			if id := common.Identifier(bucket.Name); strings.HasPrefix(string(id), "tpi-") && !strings.HasPrefix(string(id), "tpi-tpi-"){
+			if id, err := common.ParseIdentifier(bucket.Name); err == nil {
 				ids = append(ids, id)
 			}
 		}
