@@ -58,12 +58,8 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 	if i.Attributes.Environment.Variables == nil {
 		i.Attributes.Environment.Variables = make(map[string]*string)
 	}
-	for name, value := range *i.Dependencies.Credentials.Resource {
-		valueCopy := value
-		i.Attributes.Environment.Variables[name] = &valueCopy
-	}
 
-	script := machine.Script(i.Attributes.Environment.Script, i.Attributes.Environment.Variables, i.Attributes.Environment.Timeout)
+	script := machine.Script(i.Attributes.Environment.Script, i.Dependencies.Credentials.Resource, i.Attributes.Environment.Variables, i.Attributes.Environment.Timeout)
 
 	size := i.Attributes.Size.Machine
 	sizes := map[string]string{

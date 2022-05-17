@@ -10,11 +10,17 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func Script(script string, variables common.Variables, timeout time.Duration) string {
-	var environment string
+func Script(script string, credentials *map[string]string, variables common.Variables, timeout time.Duration) string {
+	var environmentFile string
 	for name, value := range variables.Enrich() {
 		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
-		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+		environmentFile += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+	}
+
+  var credentialsFile string
+	for name, value := range *credentials {
+		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
+		credentialsFile += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
 	}
 
 	timeoutString := strconv.Itoa(int(timeout / time.Second))
@@ -35,6 +41,7 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
 sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
+source /tmp/tpi-credentials
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
@@ -42,18 +49,29 @@ fi
 END
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
-base64 --decode << END | sudo tee /tmp/tpi-environment > /dev/null
-%s
-END
-chmod u=rw,g=,o= /tmp/tpi-environment
-
+sudo tee /usr/bin/tpi-environment << 'END'
+#!/bin/bash
 while IFS= read -rd $'\0' variable; do
   export "$(perl -0777p -e 's/\\"/"/g;' -e 's/(.+?)="(.+)"/$1=$2/sg' <<< "$variable")"
-done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' /tmp/tpi-environment)
+done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' "$1")
+END
+chmod u=rwx,g=rx,o=rx /usr/bin/tpi-environment
+
+base64 --decode << END | sudo tee /tmp/tpi-variables > /dev/null
+%s
+END
+base64 --decode << END | sudo tee /tmp/tpi-credentials > /dev/null
+%s
+END
+chmod u=rw,g=,o= /tmp/tpi-variables
+chmod u=rw,g=,o= /tmp/tpi-credentials
 
 TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
 TPI_DATA_DIRECTORY="/tmp/tpi-task"
+
+source /usr/bin/tpi-environment /tmp/tpi-variables
+source /usr/bin/tpi-environment /tmp/tpi-credentials
 
 sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Unit]
@@ -61,10 +79,10 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-/usr/bin/tpi-task
-  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStop=/bin/bash -c 'source /usr/bin/tpi-environment /tmp/tpi-credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
-  EnvironmentFile=/tmp/tpi-environment
+  EnvironmentFile=/tmp/tpi-variables
   WorkingDirectory=/tmp/tpi-task
   TimeoutStartSec=%s
   TimeoutStopSec=infinity
@@ -138,6 +156,7 @@ while sleep 10; do
 done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),
-		base64.StdEncoding.EncodeToString([]byte(environment)),
+		base64.StdEncoding.EncodeToString([]byte(environmentFile)),
+    base64.StdEncoding.EncodeToString([]byte(credentialsFile)),
 		timeoutString)
 }
