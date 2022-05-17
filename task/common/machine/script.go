@@ -11,18 +11,6 @@ import (
 )
 
 func Script(script string, credentials *map[string]string, variables common.Variables, timeout time.Duration) string {
-	var environmentFile string
-	for name, value := range variables.Enrich() {
-		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
-		environmentFile += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
-	}
-
-  var credentialsFile string
-	for name, value := range *credentials {
-		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
-		credentialsFile += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
-	}
-
 	timeoutString := strconv.Itoa(int(timeout / time.Second))
 	if timeout <= 0 {
 		timeoutString = "infinity"
@@ -156,7 +144,17 @@ while sleep 10; do
 done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),
-		base64.StdEncoding.EncodeToString([]byte(environmentFile)),
-    base64.StdEncoding.EncodeToString([]byte(credentialsFile)),
+		base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(variables.Enrich()))),
+    base64.StdEncoding.EncodeToString([]byte(systemdEscapeEnvironmentFile(*credentials))),
 		timeoutString)
+}
+
+
+func systemdEscapeEnvironmentFile(input map[string]string) string {
+  var result string
+  for name, value := range input {
+    escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
+    result += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
+  }
+  return result
 }
