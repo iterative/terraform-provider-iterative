@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"strings"
 
 	kubernetes_core "k8s.io/api/core/v1"
 	kubernetes_errors "k8s.io/apimachinery/pkg/api/errors"

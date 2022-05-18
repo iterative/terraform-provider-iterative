@@ -10,13 +10,18 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+type Options struct{
+}
+
 func New(cloud *common.Cloud) *cobra.Command {
+	o := Options{}
+
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List tasks",
 		Long: ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd, args, cloud)
+			return o.Run(cmd, args, cloud)
 		},
 	}
 
@@ -24,7 +29,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 }
 
 
-func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Read)
 	defer cancel()
 

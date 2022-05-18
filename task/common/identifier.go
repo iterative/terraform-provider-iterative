@@ -25,19 +25,22 @@ func ParseIdentifier(identifier string) (Identifier, error) {
 	re := regexp.MustCompile(`(?s)^tpi-([a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)-([a-z0-9]+)-([a-z0-9]+)$`)
 
 	if match := re.FindStringSubmatch(string(identifier)); len(match) > 0 && hash(match[1]+match[2], shortLength/2) == match[3] {
-		return NewIdentifier(match[1]), nil
+		return Identifier(match[1]), nil
 	}
 
 	return Identifier(""), ErrWrongIdentifier
 }
 
+func NewIdentifier(identifier string) Identifier {
+	if id, err := ParseIdentifier(identifier); err == nil {
+		return id
+	}
+	return Identifier(identifier)
+}
+
 func (i Identifier) Long() string {
 	name := normalize(string(i), maximumLongLength-shortLength-uint32(len("tpi---")))
 	digest := hash(string(i), shortLength/2)
-
-	if id, err := ParseIdentifier(i); err == nil {
-		return id
-	}
 
 	return fmt.Sprintf("tpi-%s-%s-%s", name, digest, hash(name+digest, shortLength/2))
 }

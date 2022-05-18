@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/aws/smithy-go"
 

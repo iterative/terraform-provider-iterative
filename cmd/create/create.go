@@ -14,50 +14,53 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-var (
-	machine string
-	storage int
-	spot bool
-	image string
-	workdir string
-	output string
-	script string
-	environment map[string]string
-	timeout int
-)
+type Options struct {
+	Machine string
+	Storage int
+	Spot bool
+	Image string
+	Workdir string
+	Output string
+	Script string
+	Environment map[string]string
+	Timeout int
+}
 
 func New(cloud *common.Cloud) *cobra.Command {
+	o := Options{}
+
 	cmd := &cobra.Command{
 		Use:   "create [command...]",
 		Short: "Create a task",
 		Long: ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd, args, cloud)
+			return o.Run(cmd, args, cloud)
 		},
 	}
 
-	cmd.Flags().StringVar(&machine, "machine", "m", "machine type")
-	cmd.Flags().IntVar(&storage, "disk", -1, "disk size in gigabytes")
-	cmd.Flags().BoolVar(&spot, "spot", false, "use spot instances")
-	cmd.Flags().StringVar(&image, "image", "ubuntu", "machine image")
-	cmd.Flags().StringVar(&workdir, "workdir", ".", "working directory to upload")
-	cmd.Flags().StringVar(&output, "output", "", "output directory to download")
-	cmd.Flags().StringVar(&script, "script", "", "script to run")
-	cmd.Flags().StringToStringVar(&environment, "environment", map[string]string{}, "environment variables")
-	cmd.Flags().IntVar(&timeout, "timeout", 24 * 60 * 60, "timeout")
+	cmd.Flags().StringVar(&o.Machine, "machine", "m", "machine type")
+	cmd.Flags().IntVar(&o.Storage, "disk", -1, "disk size in gigabytes")
+	cmd.Flags().BoolVar(&o.Spot, "spot", false, "use spot instances")
+	cmd.Flags().StringVar(&o.Image, "image", "ubuntu", "machine image")
+	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
+	cmd.Flags().StringVar(&o.Output, "output", "", "output directory to download")
+	cmd.Flags().StringVar(&o.Script, "script", "", "script to run")
+	cmd.Flags().StringToStringVar(&o.Environment, "environment", map[string]string{}, "environment variables")
+	cmd.Flags().IntVar(&o.Timeout, "timeout", 24 * 60 * 60, "timeout")
 
 	return cmd
 }
 
-func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
-	variables := make(map[string]*string)
-	for name, value := range environment {
+func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+	var variables map[string]*string
+	for name, value := range o.Environment {
 		variables[name] = nil
 		if value != "" {
 			variables[name] = &value
 		}
 	}
 
+	script := o.Script
 	if !strings.HasPrefix(script, "#!") {
 		script = "#!/bin/sh\n"+script
 	}
@@ -65,16 +68,16 @@ func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 
 	cfg := common.Task{
 		Size: common.Size{
-			Machine: machine,
-			Storage: storage,
+			Machine: o.Machine,
+			Storage: o.Storage,
 		},
 		Environment: common.Environment{
-			Image:        image,
-			Script:       script,
+			Image:        o.Image,
+			Script:       o.Script,
 			Variables:    variables,
-			Directory:    workdir,
-			DirectoryOut: output,
-			Timeout:      time.Duration(timeout) * time.Second,
+			Directory:    o.Workdir,
+			DirectoryOut: o.Output,
+			Timeout:      time.Duration(o.Timeout) * time.Second,
 		},
 		Firewall: common.Firewall{
 			Ingress: common.FirewallRule{
@@ -84,7 +87,7 @@ func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 		Parallelism: uint16(1),
 	}
 
-	if spot {
+	if o.Spot {
 		cfg.Spot = common.Spot(common.SpotEnabled)
 	} else {
 		cfg.Spot = common.Spot(common.SpotDisabled)

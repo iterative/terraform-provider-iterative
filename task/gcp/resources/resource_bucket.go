@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"

@@ -12,21 +12,26 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+type Options struct{
+}
+
 func New(cloud *common.Cloud) *cobra.Command {
+	o := Options{}
+
 	cmd := &cobra.Command{
 		Use:   "read <name>",
 		Short: "Display the status of a task",
 		Long: ``,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd, args, cloud)
+			return o.Run(cmd, args, cloud)
 		},
 	}
 
 	return cmd
 }
 
-func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 	cfg := common.Task{
 		Environment: common.Environment{
 			Image: "ubuntu",

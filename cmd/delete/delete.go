@@ -9,34 +9,36 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-var (
-	workdir string
-	output string
-)
+type Options struct {
+	Workdir string
+	Output string
+}
 
 func New(cloud *common.Cloud) *cobra.Command {
+	o := Options{}
+
 	cmd := &cobra.Command{
 		Use:   "delete <name>",
 		Short: "Delete a task",
 		Long: ``,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd, args, cloud)
+			return o.Run(cmd, args, cloud)
 		},
 	}
 
-	cmd.Flags().StringVar(&workdir, "workdir", ".", "working directory to upload")
-	cmd.Flags().StringVar(&output, "output", "", "output directory, relative to workdir")
+	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
+	cmd.Flags().StringVar(&o.Output, "output", "", "output directory, relative to workdir")
 
 	return cmd
 }
 
 
-func run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 	cfg := common.Task{
 		Environment: common.Environment{
-			Directory:    workdir,
-			DirectoryOut: output,
+			Directory:    o.Workdir,
+			DirectoryOut: o.Output,
 		},
 	}
 
