@@ -70,8 +70,8 @@ TPI_DATA_DIRECTORY="/opt/task/directory"
 TPI_START_COMMAND="/bin/bash -lc 'exec /usr/bin/tpi-task'"
 TPI_REMAINING_TIMEOUT=$((%s-$(date +%%s)))
 if (( TPI_REMAINING_TIMEOUT < 1 )); then
-  TPI_START_COMMAND="/bin/bash -c 'echo timed out && exit 64'"
-  TPI_REMAINING_TIMEOUT=infinity
+  TPI_START_COMMAND="/bin/bash -c 'sleep infinity'"
+  TPI_REMAINING_TIMEOUT=1
 fi
 
 source /opt/task/credentials
