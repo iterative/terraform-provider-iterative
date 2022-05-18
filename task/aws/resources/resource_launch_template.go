@@ -45,12 +45,8 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 	if l.Attributes.Environment.Variables == nil {
 		l.Attributes.Environment.Variables = make(map[string]*string)
 	}
-	for name, value := range *l.Dependencies.Credentials.Resource {
-		valueCopy := value
-		l.Attributes.Environment.Variables[name] = &valueCopy
-	}
 
-	script := machine.Script(l.Attributes.Environment.Script, l.Attributes.Environment.Variables, l.Attributes.Environment.Timeout)
+	script := machine.Script(l.Attributes.Environment.Script, l.Dependencies.Credentials.Resource, l.Attributes.Environment.Variables, l.Attributes.Environment.Timeout)
 	userData := base64.StdEncoding.EncodeToString([]byte(script))
 
 	size := l.Attributes.Size.Machine

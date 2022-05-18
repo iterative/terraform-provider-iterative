@@ -75,12 +75,8 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	if v.Attributes.Environment.Variables == nil {
 		v.Attributes.Environment.Variables = make(map[string]*string)
 	}
-	for name, value := range *v.Dependencies.Credentials.Resource {
-		valueCopy := value
-		v.Attributes.Environment.Variables[name] = &valueCopy
-	}
 
-	script := machine.Script(v.Attributes.Environment.Script, v.Attributes.Environment.Variables, v.Attributes.Environment.Timeout)
+	script := machine.Script(v.Attributes.Environment.Script, v.Dependencies.Credentials.Resource, v.Attributes.Environment.Variables, v.Attributes.Environment.Timeout)
 
 	image := v.Attributes.Environment.Image
 	images := map[string]string{
