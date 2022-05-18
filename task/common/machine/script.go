@@ -13,7 +13,7 @@ import (
 )
 
 func Script(script string, credentials *map[string]string, variables common.Variables, timeout time.Duration) string {
-	timeoutString := strconv.Itoa(int(timeout / time.Second))
+	timeoutString := strconv.Itoa(int(time.Now().Add(timeout) / time.Second))
 	if timeout <= 0 {
 		timeoutString = "infinity"
 	}
@@ -67,6 +67,13 @@ TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
 TPI_DATA_DIRECTORY="/opt/task/directory"
 
+TPI_START_COMMAND="/bin/bash -lc 'exec /usr/bin/tpi-task'"
+TPI_REMAINING_TIMEOUT=$((%s-$(date +%%s)))
+if (( TPI_REMAINING_TIMEOUT < 1 )); then
+  TPI_START_COMMAND="/bin/bash -c 'echo timed out && exit 64'"
+  TPI_REMAINING_TIMEOUT=infinity
+fi
+
 source /opt/task/credentials
 
 sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
@@ -74,13 +81,13 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   After=default.target
 [Service]
   Type=simple
-  ExecStart=-/bin/bash -lc 'exec /usr/bin/tpi-task'
+  ExecStart=-$TPI_START_COMMAND
   ExecStop=/bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
   EnvironmentFile=/opt/task/variables
   WorkingDirectory=/opt/task/directory
-  TimeoutStartSec=%s
+  TimeoutStartSec=$TPI_REMAINING_TIMEOUT
   TimeoutStopSec=infinity
 [Install]
   WantedBy=default.target
