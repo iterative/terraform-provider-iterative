@@ -13,7 +13,7 @@ import (
 )
 
 func Script(script string, credentials *map[string]string, variables common.Variables, timeout time.Duration) string {
-	timeoutString := strconv.Itoa(int(time.Now().Add(timeout) / time.Second))
+	timeoutString := strconv.Itoa(int(time.Now().Add(timeout).Unix()))
 	if timeout <= 0 {
 		timeoutString = "infinity"
 	}
