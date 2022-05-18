@@ -68,10 +68,10 @@ TPI_LOG_DIRECTORY="$(mktemp --directory)"
 TPI_DATA_DIRECTORY="/opt/task/directory"
 
 TPI_START_COMMAND="/bin/bash -lc 'exec /usr/bin/tpi-task'"
-TPI_REMAINING_TIMEOUT=$((%s-$(date +%%s)))
-if (( TPI_REMAINING_TIMEOUT < 1 )); then
+TPI_REMAINING_RUN_TIME=$((%s-$(date +%%s)))
+if (( TPI_REMAINING_RUN_TIME < 1 )); then
   TPI_START_COMMAND="/bin/bash -c 'sleep infinity'"
-  TPI_REMAINING_TIMEOUT=1
+  TPI_REMAINING_RUN_TIME=1
 fi
 
 source /opt/task/credentials
@@ -87,8 +87,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   Environment=HOME=/root
   EnvironmentFile=/opt/task/variables
   WorkingDirectory=/opt/task/directory
-  TimeoutStartSec=$TPI_REMAINING_TIMEOUT
-  TimeoutStopSec=infinity
+  RuntimeMaxSec=$TPI_REMAINING_RUN_TIME
 [Install]
   WantedBy=default.target
 END
