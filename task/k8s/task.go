@@ -57,6 +57,10 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Attributes.DirectoryOut = task.Environment.DirectoryOut
 	}
 
+	t.DataSources.PermissionSet = resources.NewPermissionSet(
+		t.Client,
+		t.Attributes.Task.PermissionSet,
+	)
 	t.Resources.ConfigMap = resources.NewConfigMap(
 		t.Client,
 		t.Identifier,
@@ -74,6 +78,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Identifier,
 		t.Resources.PersistentVolumeClaim,
 		t.Resources.ConfigMap,
+		t.DataSources.PermissionSet,
 		t.Attributes.Task,
 	)
 	return t, nil
@@ -87,8 +92,10 @@ type Task struct {
 		Directory    string
 		DirectoryOut string
 	}
-	DataSources struct{}
-	Resources   struct {
+	DataSources struct {
+		*resources.PermissionSet
+	}
+	Resources struct {
 		*resources.ConfigMap
 		*resources.PersistentVolumeClaim
 		*resources.Job
@@ -97,11 +104,15 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	logrus.Info("[1/7] Creating ConfigMap...")
+	logrus.Info("[1/8] Parsing PermissionSet...")
+	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[2/8] Creating ConfigMap...")
 	if err := t.Resources.ConfigMap.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[2/7] Creating PersistentVolumeClaim...")
+	logrus.Info("[3/8] Creating PersistentVolumeClaim...")
 	if err := t.Resources.PersistentVolumeClaim.Create(ctx); err != nil {
 		return err
 	}
@@ -110,19 +121,19 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
 
-		logrus.Info("[3/7] Deleting Job...")
+		logrus.Info("[4/8] Deleting Job...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
-		logrus.Info("[4/7] Creating ephemeral Job to upload directory...")
+		logrus.Info("[5/8] Creating ephemeral Job to upload directory...")
 		if err := t.Resources.Job.Create(ctx); err != nil {
 			return err
 		}
-		logrus.Info("[5/7] Uploading Directory...")
+		logrus.Info("[6/8] Uploading Directory...")
 		if err := t.Push(ctx, t.Attributes.Directory); err != nil {
 			return err
 		}
-		logrus.Info("[6/7] Deleting ephemeral Job to upload directory...")
+		logrus.Info("[7/8] Deleting ephemeral Job to upload directory...")
 		if err := t.Resources.Job.Delete(ctx); err != nil {
 			return err
 		}
@@ -130,7 +141,7 @@ func (t *Task) Create(ctx context.Context) error {
 		os.Unsetenv("TPI_TRANSFER_MODE")
 	}
 
-	logrus.Info("[7/7] Creating Job...")
+	logrus.Info("[8/8] Creating Job...")
 	if err := t.Resources.Job.Create(ctx); err != nil {
 		return err
 	}

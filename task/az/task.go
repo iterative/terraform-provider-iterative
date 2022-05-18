@@ -23,6 +23,10 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes = task
+	t.DataSources.PermissionSet = resources.NewPermissionSet(
+		t.Client,
+		t.Attributes.PermissionSet,
+	)
 	t.Resources.ResourceGroup = resources.NewResourceGroup(
 		t.Client,
 		t.Identifier,
@@ -69,6 +73,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Resources.ResourceGroup,
 		t.Resources.Subnet,
 		t.Resources.SecurityGroup,
+		t.DataSources.PermissionSet,
 		t.DataSources.Credentials,
 		&t.Attributes,
 	)
@@ -81,6 +86,7 @@ type Task struct {
 	Attributes  common.Task
 	DataSources struct {
 		*resources.Credentials
+		*resources.PermissionSet
 	}
 	Resources struct {
 		*resources.ResourceGroup

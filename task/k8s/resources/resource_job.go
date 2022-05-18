@@ -27,12 +27,13 @@ import (
 	"terraform-provider-iterative/task/k8s/client"
 )
 
-func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, task common.Task) *Job {
+func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {
 	j := new(Job)
 	j.Client = client
 	j.Identifier = identifier.Long()
 	j.Dependencies.PersistentVolumeClaim = persistentVolumeClaim
 	j.Dependencies.ConfigMap = configMap
+	j.Dependencies.PermissionSet = permissionSet
 	j.Attributes.Task = task
 	j.Attributes.Parallelism = task.Parallelism
 	return j
@@ -51,6 +52,7 @@ type Job struct {
 	Dependencies struct {
 		*PersistentVolumeClaim
 		*ConfigMap
+		*PermissionSet
 	}
 	Resource *kubernetes_batch.Job
 }
@@ -232,7 +234,9 @@ func (j *Job) Create(ctx context.Context) error {
 							VolumeMounts: jobVolumeMounts,
 						},
 					},
-					Volumes: jobVolumes,
+					Volumes:                      jobVolumes,
+					ServiceAccountName:           j.Dependencies.PermissionSet.Resource.ServiceAccountName,
+					AutomountServiceAccountToken: j.Dependencies.PermissionSet.Resource.AutomountServiceAccountToken,
 				},
 			},
 		},

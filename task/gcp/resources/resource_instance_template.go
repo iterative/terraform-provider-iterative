@@ -17,11 +17,12 @@ import (
 	"terraform-provider-iterative/task/gcp/client"
 )
 
-func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {
+func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, permissionSet *PermissionSet, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {
 	i := new(InstanceTemplate)
 	i.Client = client
 	i.Identifier = identifier.Long()
 	i.Attributes = task
+	i.Dependencies.PermissionSet = permissionSet
 	i.Dependencies.Credentials = credentials
 	i.Dependencies.DefaultNetwork = defaultNetwork
 	i.Dependencies.FirewallRules = firewallRules
@@ -38,6 +39,7 @@ type InstanceTemplate struct {
 		FirewallRules []*FirewallRule
 		*Image
 		*Credentials
+		*PermissionSet
 	}
 	Resource *compute.InstanceTemplate
 }
@@ -142,6 +144,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 					},
 				},
 			},
+			ServiceAccounts: i.Dependencies.PermissionSet.Resource,
 			Tags: &compute.Tags{
 				Items: firewallRules,
 			},

@@ -59,6 +59,7 @@ resource "iterative_task" "example" {
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB. `-1`: automatic based on `image`.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
 - `image` - (Optional) [Machine image](#machine-image) to run the task with.
+- `permission_set` - (Optional) See [Permission Set](#permission-set) below.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
@@ -256,6 +257,28 @@ In addition to generic regions, it's possible to specify any cloud region suppor
 ### Kubernetes
 
 The `region` attribute is ignored.
+
+## Permission Set
+
+A set of "permissions" assigned to the `task` instance, format depends on the cloud provider
+
+#### Amazon Web Services
+
+An [instance profile `arn`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), e.g.:
+`permission_set = "arn:aws:iam:1234567890:instance-profile/rolename"`
+
+#### Google Cloud Platform
+
+A service account email and a [list of scopes](https://cloud.google.com/sdk/gcloud/reference/alpha/compute/instances/set-scopes#--scopes), e.g.:
+`permission_set = "sa-name@project_id.iam.gserviceaccount.com,scopes=storage-rw"`
+
+#### Microsoft Azure
+
+[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/559)
+
+#### Kubernetes
+
+[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/560)
 
 ## Known Issues
 
