@@ -28,8 +28,10 @@ Supported cloud vendors [include][auth]:
 [k8s]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication#kubernetes
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-![](https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png#gh-light-mode-only)
-![](https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png#gh-dark-mode-only)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png">
+  <img src="https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png">
+</picture>
 
 ## Why TPI?
 
