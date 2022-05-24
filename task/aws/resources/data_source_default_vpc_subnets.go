@@ -37,7 +37,6 @@ func (d *DefaultVPCSubnets) Read(ctx context.Context) error {
 				Name:   aws.String("default-for-az"),
 				Values: []string{"true"},
 			},
-			
 		},
 	}
 
@@ -52,7 +51,6 @@ func (d *DefaultVPCSubnets) Read(ctx context.Context) error {
 			d.Resource = append(d.Resource, &s)
 		}
 	}
-
 
 	if len(d.Resource) < 1 {
 		return common.NotFoundError
