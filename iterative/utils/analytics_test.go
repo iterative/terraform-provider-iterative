@@ -32,8 +32,9 @@ func TestUserId(t *testing.T) {
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
 	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 
+	userId := "a7140860-ace7-5e2a-be2b-e078074a06fd"
 	data := map[string]interface{}{
-		"user_id": "1234",
+		"user_id": userId,
 	}
 	json, _ := json.MarshalIndent(data, "", " ")
 
@@ -41,12 +42,14 @@ func TestUserId(t *testing.T) {
 	_ = ioutil.WriteFile(old, json, 0644)
 
 	id := UserId()
-	fmt.Println(id)
-	assert.Equal(t, id == "1234", true)
+	assert.Equal(t, len(id) == 36, true)
 
-	fmt.Println(new)
-	_, err := os.Stat(new)
-	assert.Equal(t, !os.IsNotExist(err), true)
+	if !IsCI() {
+		assert.Equal(t, userId == id, true)
+
+		_, err := os.Stat(new)
+		assert.Equal(t, !os.IsNotExist(err), true)
+	}
 }
 
 func TestResourceData(t *testing.T) {
