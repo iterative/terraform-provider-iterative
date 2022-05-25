@@ -1,10 +1,15 @@
 package utils
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wessie/appdirs"
 )
 
 func TestVersion(t *testing.T) {
@@ -23,8 +28,22 @@ func TestSystemInfo(t *testing.T) {
 }
 
 func TestUserId(t *testing.T) {
+	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
+	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
+
+	data := map[string]interface{}{
+		"user_id": "1234",
+	}
+	json, _ := json.MarshalIndent(data, "", " ")
+
+	os.MkdirAll(filepath.Dir(old), 0644)
+	_ = ioutil.WriteFile(old, json, 0644)
+
 	id := UserId()
-	assert.Equal(t, len(id) == 36, true)
+	assert.Equal(t, id == "1234", true)
+
+	_, err := os.Stat(new)
+	assert.Equal(t, !os.IsNotExist(err), true)
 }
 
 func TestResourceData(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime/debug"
@@ -147,23 +148,6 @@ func GroupId() string {
 }
 
 func UserId() string {
-	id := uuid.New().String()
-	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
-	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
-
-	_, errorOld := os.Stat(old)
-	if !os.IsNotExist(errorOld) {
-		os.Rename(old, new)
-	}
-
-	_, errorNew := os.Stat(new)
-	if !os.IsNotExist(errorNew) {
-		dat, _ := ioutil.ReadFile(new)
-		id = string(dat[:])
-	} else {
-		ioutil.WriteFile(new, []byte(id), 0644)
-	}
-
 	if IsCI() {
 		uid, err := deterministic(fmt.Sprintf("%s%s%s",
 			os.Getenv("GITHUB_ACTOR"),
@@ -172,8 +156,36 @@ func UserId() string {
 		))
 
 		if err == nil {
-			id = uid.String()
+			return uid.String()
 		}
+	}
+
+	id := uuid.New().String()
+	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
+	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
+
+	_, errorNew := os.Stat(new)
+
+	if os.IsNotExist(errorNew) {
+		_, errorOld := os.Stat(old)
+		if !os.IsNotExist(errorOld) {
+			jsonFile, jsonErr := os.Open(old)
+
+			if jsonErr == nil {
+				byteValue, _ := ioutil.ReadAll(jsonFile)
+				var data map[string]interface{}
+				json.Unmarshal([]byte(byteValue), &data)
+				id = data["user_id"].(string)
+
+				defer jsonFile.Close()
+			}
+		}
+
+		os.MkdirAll(filepath.Dir(new), 0644)
+		ioutil.WriteFile(new, []byte(id), 0644)
+	} else {
+		dat, _ := ioutil.ReadFile(new)
+		id = string(dat[:])
 	}
 
 	return id
