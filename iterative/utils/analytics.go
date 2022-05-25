@@ -149,7 +149,7 @@ func GroupId() string {
 func UserId() string {
 	id := uuid.New().String()
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
-	new := appdirs.UserConfigDir("telemetry", "iterative", "", false)
+	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 
 	_, errorOld := os.Stat(old)
 	if !os.IsNotExist(errorOld) {
@@ -233,7 +233,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 }
 
 func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
-	for _, env := range []string{"DO_NOT_TRACK", "DVC_NO_ANALYTICS"} {
+	for _, env := range []string{"DVC_NO_ANALYTICS"} {
 		if _, ok := os.LookupEnv(env); ok {
 			logrus.Debugf("analytics: %s environment variable is set; doing nothing", env)
 			return

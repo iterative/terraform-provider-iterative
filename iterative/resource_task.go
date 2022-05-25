@@ -195,26 +195,31 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 
 	if err := task.Read(ctx); err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 
 	if keyPair, err := task.GetKeyPair(ctx); err != nil {
 		if err != common.NotImplementedError {
+			utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 			return diagnostic(diags, err, diag.Warning)
 		}
 	} else {
 		publicKey, err := keyPair.PublicString()
 		if err != nil {
+			utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 			return diagnostic(diags, err, diag.Warning)
 		}
 		d.Set("ssh_public_key", publicKey)
 
 		privateKey, err := keyPair.PrivateString()
 		if err != nil {
+			utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 			return diagnostic(diags, err, diag.Warning)
 		}
 		d.Set("ssh_private_key", privateKey)
@@ -239,13 +244,14 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	status, err := task.Status(ctx)
 	if err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 	d.Set("status", status)
 
 	logs, err := task.Logs(ctx)
 	if err != nil {
-
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 
@@ -257,6 +263,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger.Info("logs")
 	logger.Info("status")
 
+	utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 	return diags
 }
 
