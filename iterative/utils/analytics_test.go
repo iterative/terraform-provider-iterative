@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -40,6 +41,7 @@ func TestUserId(t *testing.T) {
 	_ = ioutil.WriteFile(old, json, 0644)
 
 	id := UserId()
+	fmt.Println(id)
 	assert.Equal(t, id == "1234", true)
 
 	_, err := os.Stat(new)
