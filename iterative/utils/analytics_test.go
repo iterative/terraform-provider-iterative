@@ -44,6 +44,7 @@ func TestUserId(t *testing.T) {
 	fmt.Println(id)
 	assert.Equal(t, id == "1234", true)
 
+	fmt.Println(new)
 	_, err := os.Stat(new)
 	assert.Equal(t, !os.IsNotExist(err), true)
 }
