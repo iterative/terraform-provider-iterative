@@ -31,7 +31,7 @@ func TestUserId(t *testing.T) {
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
 	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 
-	userId := "a7140860-ace7-5e2a-be2b-e078074a06fd"
+	userId := "00000000-0000-0000-0000-000000000000"
 	data := map[string]interface{}{
 		"user_id": userId,
 	}
