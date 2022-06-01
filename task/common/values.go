@@ -50,6 +50,7 @@ type Task struct {
 	PermissionSet string
 	Spot          Spot
 	Parallelism   uint16
+	Indexed       bool
 	Tags          map[string]string // Deprecated
 
 	Addresses []net.IP

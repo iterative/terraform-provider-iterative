@@ -36,6 +36,7 @@ func NewJob(client *client.Client, identifier common.Identifier, persistentVolum
 	j.Dependencies.PermissionSet = permissionSet
 	j.Attributes.Task = task
 	j.Attributes.Parallelism = task.Parallelism
+	j.Attributes.Indexed = task.Indexed
 	return j
 }
 
@@ -45,6 +46,7 @@ type Job struct {
 	Attributes struct {
 		Task        common.Task
 		Parallelism uint16
+		Indexed     bool
 		Addresses   []net.IP
 		Status      common.Status
 		Events      []common.Event
@@ -118,6 +120,13 @@ func (j *Job) Create(ctx context.Context) error {
 	jobBackoffLimit := int32(math.MaxInt32)
 	jobCompletions := int32(j.Attributes.Task.Parallelism)
 	jobParallelism := int32(j.Attributes.Task.Parallelism)
+
+	var jobCompletionMode kubernetes_batch.CompletionMode
+	if j.Attributes.Indexed {
+		jobCompletionMode = kubernetes_batch.CompletionMode(kubernetes_batch.IndexedCompletion)
+	} else {
+		jobCompletionMode = kubernetes_batch.CompletionMode(kubernetes_batch.NonIndexedCompletion)
+	}
 
 	jobActiveDeadlineSeconds := int64(j.Attributes.Task.Environment.Timeout / time.Second)
 
@@ -204,6 +213,7 @@ func (j *Job) Create(ctx context.Context) error {
 			BackoffLimit:          &jobBackoffLimit,
 			Completions:           &jobCompletions,
 			Parallelism:           &jobParallelism,
+			CompletionMode:        &jobCompletionMode,
 			// We don't want jobs to delete themselves upon completion, because
 			// that would also mean losing logs before users check them.
 			// TTLSecondsAfterFinished: &jobTTLSecondsAfterFinished,
