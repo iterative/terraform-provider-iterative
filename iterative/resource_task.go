@@ -156,6 +156,14 @@ func resourceTask() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"tags": {
+				Type:     schema.TypeMap,
+				ForceNew: true,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"timeout": {
 				Type:     schema.TypeInt,
 				ForceNew: true,
@@ -283,6 +291,11 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{}) (task.Task, error) {
+	tags := make(map[string]string)
+	for name, value := range d.Get("tags").(map[string]interface{}) {
+		tags[name] = value.(string)
+	}
+
 	v := make(map[string]*string)
 	for name, value := range d.Get("environment").(map[string]interface{}) {
 		v[name] = nil
@@ -309,6 +322,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			Update: d.Timeout(schema.TimeoutUpdate),
 			Delete: d.Timeout(schema.TimeoutDelete),
 		},
+		Tags: tags,
 	}
 
 	directory := ""
