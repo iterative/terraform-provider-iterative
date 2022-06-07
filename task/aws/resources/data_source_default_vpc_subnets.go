@@ -45,6 +45,7 @@ func (d *DefaultVPCSubnets) Read(ctx context.Context) error {
 		return err
 	}
 
+	d.Resource = nil
 	for _, subnet := range subnets.Subnets {
 		s := subnet
 		if aws.ToInt32(s.AvailableIpAddressCount) > 0 && aws.ToBool(s.MapPublicIpOnLaunch) {
