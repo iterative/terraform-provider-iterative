@@ -26,7 +26,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.DataSources.DefaultVPC = resources.NewDefaultVPC(
 		t.Client,
 	)
-	t.DataSources.DefaultVPCSubnet = resources.NewDefaultVPCSubnet(
+	t.DataSources.DefaultVPCSubnets = resources.NewDefaultVPCSubnets(
 		t.Client,
 		t.DataSources.DefaultVPC,
 	)
@@ -70,7 +70,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.Resources.AutoScalingGroup = resources.NewAutoScalingGroup(
 		t.Client,
 		t.Identifier,
-		t.DataSources.DefaultVPCSubnet,
+		t.DataSources.DefaultVPCSubnets,
 		t.Resources.LaunchTemplate,
 		&t.Attributes.Parallelism,
 		t.Attributes.Spot,
@@ -84,7 +84,7 @@ type Task struct {
 	Attributes  common.Task
 	DataSources struct {
 		*resources.DefaultVPC
-		*resources.DefaultVPCSubnet
+		*resources.DefaultVPCSubnets
 		*resources.Image
 		*resources.Credentials
 		*resources.PermissionSet
@@ -108,8 +108,8 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[3/12] Importing DefaultVPCSubnet...")
-	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
+	logrus.Info("[3/12] Importing DefaultVPCSubnets...")
+	if err := t.DataSources.DefaultVPCSubnets.Read(ctx); err != nil {
 		return err
 	}
 	logrus.Info("[4/12] Reading Image...")
@@ -163,8 +163,8 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[2/9] Reading DefaultVPCSubnet...")
-	if err := t.DataSources.DefaultVPCSubnet.Read(ctx); err != nil {
+	logrus.Info("[2/9] Reading DefaultVPCSubnets...")
+	if err := t.DataSources.DefaultVPCSubnets.Read(ctx); err != nil {
 		return err
 	}
 	logrus.Info("[3/9] Reading Image...")
