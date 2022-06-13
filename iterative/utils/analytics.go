@@ -90,6 +90,10 @@ func IsCI() bool {
 		return true
 	}
 
+	if len(guessCI()) > 0 {
+		return true
+	}
+
 	return false
 }
 
@@ -104,6 +108,10 @@ func guessCI() string {
 
 	if _, ok := os.LookupEnv("BITBUCKET_WORKSPACE"); ok {
 		return "bitbucket"
+	}
+
+	if _, ok := os.LookupEnv("TF_BUILD"); ok {
+		return "azure"
 	}
 
 	return ""
@@ -132,14 +140,22 @@ func GroupId() string {
 		return ""
 	}
 
-	id, err := deterministic(fmt.Sprintf("%s%s%s%s%s",
-		os.Getenv("GITHUB_SERVER_URL"),
-		os.Getenv("GITHUB_REPOSITORY_OWNER"),
-		os.Getenv("CI_SERVER_URL"),
-		os.Getenv("CI_PROJECT_ROOT_NAMESPACE"),
-		os.Getenv("BITBUCKET_WORKSPACE"),
-	))
+	rawId := "CI"
+	ci := guessCI()
 
+	if ci == "github" {
+		rawId = fmt.Sprintf("%s/%s",
+			os.Getenv("GITHUB_SERVER_URL"),
+			os.Getenv("GITHUB_REPOSITORY_OWNER"))
+	} else if ci == "gitlab" {
+		rawId = fmt.Sprintf("%s/%s",
+			os.Getenv("CI_SERVER_URL"),
+			os.Getenv("CI_PROJECT_ROOT_NAMESPACE"))
+	} else if ci == "bitbucket" {
+		rawId = os.Getenv("BITBUCKET_WORKSPACE")
+	}
+
+	id, err := deterministic(rawId)
 	if err != nil {
 		return ""
 	}
@@ -149,25 +165,47 @@ func GroupId() string {
 
 func UserId() string {
 	if IsCI() {
-		uid, err := deterministic(fmt.Sprintf("%s%s%s",
-			os.Getenv("GITHUB_ACTOR"),
-			os.Getenv("GITLAB_USER_ID"),
-			os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"),
-		))
+		ci := guessCI()
+		var rawId string
 
-		if err == nil {
-			return uid.String()
+		if ci == "github" {
+			rawId = os.Getenv("GITHUB_ACTOR")
+		} else if ci == "gitlab" {
+			rawId = fmt.Sprintf("%s %s %s",
+				os.Getenv("GITLAB_USER_NAME"),
+				os.Getenv("GITLAB_USER_LOGIN"),
+				os.Getenv("GITLAB_USER_ID"))
+		} else if ci == "bitbucket" {
+			rawId = os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID")
+		} else {
+			var out bytes.Buffer
+			cmd := exec.Command("git", "log", "-1", "--pretty=format:'%ae'")
+			cmd.Stdout = &out
+
+			err := cmd.Run()
+			if err != nil {
+				return ""
+			}
+
+			rawId = out.String()
 		}
+
+		id, err := deterministic(rawId)
+		if err != nil {
+			return ""
+		}
+
+		return id.String()
 	}
 
 	id := uuid.New().String()
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
-	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
+	_, errorOld := os.Stat(old)
 
+	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 	_, errorNew := os.Stat(new)
 
 	if os.IsNotExist(errorNew) {
-		_, errorOld := os.Stat(old)
 		if !os.IsNotExist(errorOld) {
 			jsonFile, jsonErr := os.Open(old)
 
@@ -186,6 +224,15 @@ func UserId() string {
 	} else {
 		dat, _ := ioutil.ReadFile(new)
 		id = string(dat[:])
+	}
+
+	if os.IsNotExist(errorOld) {
+		os.MkdirAll(filepath.Dir(old), 0644)
+		data := map[string]interface{}{
+			"user_id": id,
+		}
+		file, _ := json.MarshalIndent(data, "", " ")
+		ioutil.WriteFile(old, file, 0644)
 	}
 
 	return id
