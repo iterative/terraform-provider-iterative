@@ -23,7 +23,7 @@ func TestTerraformVersion(t *testing.T) {
 
 func TestSystemInfo(t *testing.T) {
 	info := SystemInfo()
-	assert.NotNil(t, info["platform"])
+	assert.NotNil(t, info["os_name"])
 	assert.NotNil(t, info["platform_version"])
 }
 
