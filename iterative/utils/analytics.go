@@ -65,7 +65,7 @@ func deterministic(data string) (*uuid.UUID, error) {
 func SystemInfo() map[string]interface{} {
 	hostStat, _ := host.Info()
 	return map[string]interface{}{
-		"platform":         hostStat.Platform,
+		"os_name":          hostStat.OS,
 		"platform_version": hostStat.PlatformVersion,
 	}
 }
@@ -281,7 +281,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 		"tool_name":    "tpi",
 		"tool_source":  "terraform",
 		"tool_version": Version,
-		"os_name":      systemInfo["platform"],
+		"os_name":      systemInfo["os_name"],
 		"os_version":   systemInfo["platform_version"],
 		"backend":      extra["cloud"],
 		"error":        err,
