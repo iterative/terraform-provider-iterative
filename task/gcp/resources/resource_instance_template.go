@@ -17,11 +17,12 @@ import (
 	"terraform-provider-iterative/task/gcp/client"
 )
 
-func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {
+func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, permissionSet *PermissionSet, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {
 	i := new(InstanceTemplate)
 	i.Client = client
 	i.Identifier = identifier.Long()
 	i.Attributes = task
+	i.Dependencies.PermissionSet = permissionSet
 	i.Dependencies.Credentials = credentials
 	i.Dependencies.DefaultNetwork = defaultNetwork
 	i.Dependencies.FirewallRules = firewallRules
@@ -38,6 +39,7 @@ type InstanceTemplate struct {
 		FirewallRules []*FirewallRule
 		*Image
 		*Credentials
+		*PermissionSet
 	}
 	Resource *compute.InstanceTemplate
 }
@@ -58,12 +60,8 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 	if i.Attributes.Environment.Variables == nil {
 		i.Attributes.Environment.Variables = make(map[string]*string)
 	}
-	for name, value := range *i.Dependencies.Credentials.Resource {
-		valueCopy := value
-		i.Attributes.Environment.Variables[name] = &valueCopy
-	}
 
-	script := machine.Script(i.Attributes.Environment.Script, i.Attributes.Environment.Variables, i.Attributes.Environment.Timeout)
+	script := machine.Script(i.Attributes.Environment.Script, i.Dependencies.Credentials.Resource, i.Attributes.Environment.Variables, i.Attributes.Environment.Timeout)
 
 	size := i.Attributes.Size.Machine
 	sizes := map[string]string{
@@ -146,6 +144,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 					},
 				},
 			},
+			ServiceAccounts: i.Dependencies.PermissionSet.Resource,
 			Tags: &compute.Tags{
 				Items: firewallRules,
 			},

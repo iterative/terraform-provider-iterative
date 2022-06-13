@@ -47,3 +47,6 @@ There are a several reasons to use TPI instead of other related solutions (custo
 - [Getting Started](https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/getting-started)
   - [Authentication][auth]
 - [Full reference](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task)
+- Example Projects
+  - [Run Jupyter & TensorBoard in the cloud with one command](https://github.com/iterative/blog-tpi-jupyter)
+  - [Move local ML experiments to the cloud](https://github.com/iterative/blog-tpi-bees)

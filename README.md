@@ -28,8 +28,10 @@ Supported cloud vendors [include][auth]:
 [k8s]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication#kubernetes
 [auth]: https://registry.terraform.io/providers/iterative/iterative/latest/docs/guides/authentication
 
-![](https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png#gh-light-mode-only)
-![](https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png#gh-dark-mode-only)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/iterative/static/raw/main/img/tpi/high-level-dark.png">
+  <img src="https://github.com/iterative/static/raw/main/img/tpi/high-level-light.png">
+</picture>
 
 ## Why TPI?
 
@@ -109,12 +111,13 @@ Run this once (in the directory containing `main.tf`) to download the `required_
 
 ```
 terraform init
+export TF_LOG_PROVIDER=INFO
 ```
 
 ### Run Task
 
 ```
-TF_LOG_PROVIDER=INFO terraform apply
+terraform apply
 ```
 
 This launches a `machine` in the `cloud`, uploads `workdir`, and runs the `script`. Upon completion (or error), the `machine` is terminated.
@@ -126,17 +129,22 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 Results and logs are periodically synced to persistent cloud storage. To query this status and view logs:
 
 ```
-TF_LOG_PROVIDER=INFO terraform refresh
-TF_LOG_PROVIDER=INFO terraform show
+terraform refresh
+terraform show
 ```
 
 ### End Task
 
 ```
-TF_LOG_PROVIDER=INFO terraform destroy
+terraform destroy
 ```
 
 This terminates the `machine` (if still running), downloads `output`, and removes the persistent `disk_size` storage.
+
+## Example Projects
+
+- [Run Jupyter & TensorBoard in the cloud with one command](https://github.com/iterative/blog-tpi-jupyter)
+- [Move local ML experiments to the cloud](https://github.com/iterative/blog-tpi-bees)
 
 ## How it Works
 
@@ -174,7 +182,7 @@ style C fill:#7B61FF,stroke:#333333,color:#000000
 
 ## Future Plans
 
-TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org).
+TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org). Plus of course more examples for Data Scientists and Machine Learning Engineers - from Jupyter, VSCode, and Codespaces to improving the live logging/monitoring/reporting experience.
 
 ## Help
 

@@ -12,97 +12,38 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var baseTimestamp = time.Now()
-var colors = make(map[string]int)
+var colors = map[string]int{
+	"DEBUG":      34,
+	"INFO":       36,
+	"WARNING":    33,
+	"ERROR":      31,
+	"FATAL":      31,
+	"SUCCESS":    32,
+	"foreground": 35,
+}
 
-type basicFormatter struct{}
+type TpiFormatter struct{}
 
-func (f *basicFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+func (f *TpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	levelText := strings.ToUpper(entry.Level.String())
 	levelColor := colors[levelText]
-	newPrefix := fmt.Sprintf("\x1b[%dmTPI [%s]\x1b[0m", levelColor, levelText)
-	return []byte(hideUnwantedPrefix(levelText, newPrefix, entry.Message)), nil
-}
-
-func init() {
-	colors["DEBUG"] = 34
-	colors["INFO"] = 36
-	colors["WARNING"] = 33
-	colors["ERROR"] = 31
-	colors["FATAL"] = 31
-	colors["SUCCESS"] = 32
-	colors["foreground"] = 35
-
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&basicFormatter{})
-}
-
-type tpiFormatter struct{}
-
-func (f *tpiFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	data := make(logrus.Fields)
-	for k, v := range entry.Data {
-		data[k] = v
-	}
-
-	if data["d"] == nil {
-		return nil, errors.New("ResourceData is not available")
-	}
-
-	d := data["d"].(*schema.ResourceData)
 	message := entry.Message
-	levelText := strings.ToUpper(entry.Level.String())
-	levelColor := colors[levelText]
 
-	if message == "instance" {
-		cloud := d.Get("cloud").(string)
-		machine := d.Get("machine").(string)
-		region := d.Get("region").(string)
-		spot := d.Get("spot").(float64)
-
-		spottext := ""
-		if spot > 0 {
-			spottext = fmt.Sprintf("(Spot %f/h)", spot)
-		}
-		message = fmt.Sprintf("%s %s%s in %s", cloud, machine, spottext, region)
-	}
-
-	if message == "status" {
-		status := d.Get("status").(map[string]interface{})
-
-		message = fmt.Sprintf("\x1b[%dmStatus: queued \x1b[1m•\x1b[0m", colors["DEBUG"])
-
-		if status["succeeded"] != nil && status["succeeded"].(int) >= d.Get("parallelism").(int) {
-			message = fmt.Sprintf("\x1b[%dmStatus: completed successfully \x1b[1m•\x1b[0m", colors["SUCCESS"])
-		}
-		if status["failed"] != nil && status["failed"].(int) > 0 {
-			message = fmt.Sprintf("\x1b[%dmStatus: completed with errors \x1b[1m•\x1b[0m", colors["ERROR"])
-		}
-		if status["running"] != nil && status["running"].(int) >= d.Get("parallelism").(int) {
-			message = fmt.Sprintf("\x1b[%dmStatus: running \x1b[1m•\x1b[0m", colors["WARNING"])
-		}
-	}
-
-	if message == "logs" {
-		message = ""
-		logs := d.Get("logs").([]interface{})
-		for index, log := range logs {
-			prefix := fmt.Sprintf("\n\x1b[%dmLOG %d >> ", colors["foreground"], index)
-			message += strings.Trim(strings.ReplaceAll("\n"+strings.Trim(log.(string), "\n"), "\n", prefix), "\n")
-			if index+1 < len(logs) {
-				message += "\n"
-			}
+	if d, ok := entry.Data["d"].(*schema.ResourceData); ok {
+		switch message {
+		case "instance":
+			message = formatSchemaInstance(d)
+		case "status":
+			message = formatSchemaStatus(d)
+		case "logs":
+			message = formatSchemaLogs(d)
+		default:
+			return nil, errors.New("wrong schema logging mode")
 		}
 	}
 
 	newPrefix := fmt.Sprintf("\x1b[%dmTPI [%s]\x1b[0m", levelColor, levelText)
 	return []byte(hideUnwantedPrefix(levelText, newPrefix, message)), nil
-}
-
-func TpiLogger(d *schema.ResourceData) *logrus.Entry {
-	logrus.SetFormatter(&tpiFormatter{})
-
-	return logrus.WithFields(logrus.Fields{"d": d})
 }
 
 func hideUnwantedPrefix(levelText, newPrefix, message string) string {
@@ -112,9 +53,52 @@ func hideUnwantedPrefix(levelText, newPrefix, message string) string {
 	var output string
 	for _, line := range strings.Split(message, "\n") {
 		formattedLine := fmt.Sprintf("[%s]\r%s %s", levelText, newPrefix, line)
-		padding := strings.Repeat(" ", int(math.Max(float64(unwantedPrefixLength-len(stripansi.Strip(line))), 0)))
+		padding := strings.Repeat(" ", int(math.Max(float64(unwantedPrefixLength-len([]rune(stripansi.Strip(line)))), 0)))
 		output += formattedLine + padding + "\n"
 	}
 
 	return output
+}
+
+func formatSchemaInstance(d *schema.ResourceData) string {
+	cloud := d.Get("cloud").(string)
+	machine := d.Get("machine").(string)
+	region := d.Get("region").(string)
+	spot := d.Get("spot").(float64)
+
+	spottext := ""
+	if spot > 0 {
+		spottext = fmt.Sprintf("(Spot %f/h)", spot)
+	}
+	return fmt.Sprintf("%s %s%s in %s", cloud, machine, spottext, region)
+}
+
+func formatSchemaStatus(d *schema.ResourceData) string {
+	status := d.Get("status").(map[string]interface{})
+
+	message := fmt.Sprintf("\x1b[%dmStatus: queued \x1b[1m•\x1b[0m", colors["DEBUG"])
+	if status["succeeded"] != nil && status["succeeded"].(int) >= d.Get("parallelism").(int) {
+		message = fmt.Sprintf("\x1b[%dmStatus: completed successfully \x1b[1m•\x1b[0m", colors["SUCCESS"])
+	}
+	if status["failed"] != nil && status["failed"].(int) > 0 {
+		message = fmt.Sprintf("\x1b[%dmStatus: completed with errors \x1b[1m•\x1b[0m", colors["ERROR"])
+	}
+	if status["running"] != nil && status["running"].(int) >= d.Get("parallelism").(int) {
+		message = fmt.Sprintf("\x1b[%dmStatus: running \x1b[1m•\x1b[0m", colors["WARNING"])
+	}
+	return message
+}
+
+func formatSchemaLogs(d *schema.ResourceData) string {
+	logs := d.Get("logs").([]interface{})
+
+	message := ""
+	for index, log := range logs {
+		prefix := fmt.Sprintf("\n\x1b[%dmLOG %d >> ", colors["foreground"], index)
+		message += strings.Trim(strings.ReplaceAll("\n"+strings.Trim(log.(string), "\n"), "\n", prefix), "\n")
+		if index+1 < len(logs) {
+			message += "\n"
+		}
+	}
+	return message
 }

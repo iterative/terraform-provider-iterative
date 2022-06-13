@@ -47,6 +47,7 @@ type Task struct {
 	Size
 	Environment
 	Firewall
+	PermissionSet string
 	Spot
 	Parallelism uint16
 	Tags        map[string]string // Deprecated

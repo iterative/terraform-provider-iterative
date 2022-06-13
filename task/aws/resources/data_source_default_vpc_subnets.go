@@ -11,27 +11,31 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func NewDefaultVPCSubnet(client *client.Client, defaultVpc *DefaultVPC) *DefaultVPCSubnet {
-	d := new(DefaultVPCSubnet)
+func NewDefaultVPCSubnets(client *client.Client, defaultVpc *DefaultVPC) *DefaultVPCSubnets {
+	d := new(DefaultVPCSubnets)
 	d.Client = client
 	d.Dependencies.DefaultVPC = defaultVpc
 	return d
 }
 
-type DefaultVPCSubnet struct {
+type DefaultVPCSubnets struct {
 	Client       *client.Client
-	Resource     *types.Subnet
+	Resource     []*types.Subnet
 	Dependencies struct {
 		*DefaultVPC
 	}
 }
 
-func (d *DefaultVPCSubnet) Read(ctx context.Context) error {
+func (d *DefaultVPCSubnets) Read(ctx context.Context) error {
 	input := ec2.DescribeSubnetsInput{
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("vpc-id"),
 				Values: []string{aws.ToString(d.Dependencies.DefaultVPC.Resource.VpcId)},
+			},
+			{
+				Name:   aws.String("default-for-az"),
+				Values: []string{"true"},
 			},
 		},
 	}
@@ -41,16 +45,17 @@ func (d *DefaultVPCSubnet) Read(ctx context.Context) error {
 		return err
 	}
 
-	if len(subnets.Subnets) < 1 {
-		return common.NotFoundError
-	}
-
+	d.Resource = nil
 	for _, subnet := range subnets.Subnets {
-		if aws.ToInt32(subnet.AvailableIpAddressCount) > 0 && aws.ToBool(subnet.MapPublicIpOnLaunch) {
-			d.Resource = &subnet
-			return nil
+		s := subnet
+		if aws.ToInt32(s.AvailableIpAddressCount) > 0 && aws.ToBool(s.MapPublicIpOnLaunch) {
+			d.Resource = append(d.Resource, &s)
 		}
 	}
 
-	return common.NotFoundError
+	if len(d.Resource) < 1 {
+		return common.NotFoundError
+	}
+
+	return nil
 }

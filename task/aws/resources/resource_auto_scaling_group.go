@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/smithy-go"
@@ -20,13 +21,13 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnet, launchTemplate *LaunchTemplate, parallelism *uint16, spot common.Spot) *AutoScalingGroup {
+func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnets, launchTemplate *LaunchTemplate, parallelism *uint16, spot common.Spot) *AutoScalingGroup {
 	a := new(AutoScalingGroup)
 	a.Client = client
 	a.Identifier = identifier.Long()
 	a.Attributes.Parallelism = parallelism
 	a.Attributes.Spot = float64(spot)
-	a.Dependencies.DefaultVPCSubnet = subnet
+	a.Dependencies.DefaultVPCSubnets = subnet
 	a.Dependencies.LaunchTemplate = launchTemplate
 	return a
 }
@@ -42,7 +43,7 @@ type AutoScalingGroup struct {
 		Events      []common.Event
 	}
 	Dependencies struct {
-		*DefaultVPCSubnet
+		*DefaultVPCSubnets
 		*LaunchTemplate
 	}
 	Resource *types.AutoScalingGroup
@@ -57,6 +58,11 @@ func (a *AutoScalingGroup) Create(ctx context.Context) error {
 		fallthrough
 	case spot == 0:
 		onDemandPercentage = 0
+	}
+
+	var subnets []string
+	for _, subnet := range a.Dependencies.DefaultVPCSubnets.Resource {
+		subnets = append(subnets, aws.ToString(subnet.SubnetId))
 	}
 
 	input := autoscaling.CreateAutoScalingGroupInput{
@@ -78,7 +84,7 @@ func (a *AutoScalingGroup) Create(ctx context.Context) error {
 				},
 			},
 		},
-		VPCZoneIdentifier: a.Dependencies.DefaultVPCSubnet.Resource.SubnetId,
+		VPCZoneIdentifier: aws.String(strings.Join(subnets, ",")),
 	}
 
 	if _, err := a.Client.Services.AutoScaling.CreateAutoScalingGroup(ctx, &input); err != nil {

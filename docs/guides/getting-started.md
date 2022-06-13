@@ -81,6 +81,7 @@ project/
 
 ```console
 $ terraform init
+$ export TF_LOG_PROVIDER=INFO
 ```
 
 This command will check `main.tf` and download the required TPI plugin.
@@ -90,7 +91,7 @@ This command will check `main.tf` and download the required TPI plugin.
 ## Run Task
 
 ```console
-$ TF_LOG_PROVIDER=INFO terraform apply
+$ terraform apply
 ```
 
 This command will:
@@ -110,9 +111,11 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 
 ## Query Status
 
+-> **Note:** Ensure that `TF_LOG_PROVIDER=INFO` is set to properly view logs.
+
 ```console
-$ TF_LOG_PROVIDER=INFO terraform refresh
-$ TF_LOG_PROVIDER=INFO terraform show
+$ terraform refresh
+$ terraform show
 ```
 
 These commands will:
@@ -123,7 +126,7 @@ These commands will:
 ## End Task
 
 ```console
-$ TF_LOG_PROVIDER=INFO terraform destroy
+$ terraform destroy
 ```
 
 This command will:
