@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -248,10 +247,21 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	var logError error
 	var logEvents string
-
+	cloud := d.Get("cloud").(string)
+	ip := d.Get("instance_ip").(string)
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
 
-		logEvents, logError = resourceLogsTimed(ctx, d, m)
+		switch cloud {
+		case "kubernetes":
+			logEvents, logError = resourceMachineLogs(ctx, d, m)
+		default:
+			logEvents, logError = utils.RunCommand("journalctl --unit cml --no-pager",
+				2*time.Second,
+				net.JoinHostPort(ip, "22"),
+				"ubuntu",
+				d.Get("ssh_private").(string))
+		}
+
 		if logError != nil {
 			log.Printf("[DEBUG] Connection errors: %#v", logError)
 		} else {
@@ -279,47 +289,6 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	return diags
-}
-
-type resourceLogsResult struct {
-	logEvents string
-	logError  error
-}
-
-func resourceLogsTimed(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
-	result := make(chan resourceLogsResult, 1)
-	go func() {
-		result <- resourceLogs(ctx, d, m)
-	}()
-	select {
-	case <-time.After(20 * time.Second):
-		return "", errors.New("Resource Logs Timed Out")
-	case result := <-result:
-		return result.logEvents, result.logError
-	}
-}
-
-func resourceLogs(ctx context.Context, d *schema.ResourceData, m interface{}) resourceLogsResult {
-	var logError error
-	var logEvents string
-	cloud := d.Get("cloud").(string)
-	ip := d.Get("instance_ip").(string)
-
-	switch cloud {
-	case "kubernetes":
-		logEvents, logError = resourceMachineLogs(ctx, d, m)
-	default:
-		logEvents, logError = utils.RunCommand("journalctl --unit cml --no-pager",
-			2*time.Second,
-			net.JoinHostPort(ip, "22"),
-			"ubuntu",
-			d.Get("ssh_private").(string))
-	}
-
-	return resourceLogsResult{
-		logEvents: logEvents,
-		logError:  logError,
-	}
 }
 
 func resourceRunnerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
