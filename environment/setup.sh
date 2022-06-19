@@ -29,14 +29,14 @@ if [ ! -f "$FILE" ]; then
   sudo apt update && sudo apt-get install -y nodejs
 
   sudo apt install -y ubuntu-drivers-common
-  if ubuntu-drivers devices | grep 'NVIDIA' > /dev/null; then 
+  if ubuntu-drivers devices | grep 'NVIDIA' >/dev/null; then
     sudo ubuntu-drivers install
-    
+
     curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
     curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
     sudo apt update && sudo apt install -y nvidia-docker2
     sudo systemctl restart docker
   fi
-  
+
   echo OK | sudo tee "$FILE"
 fi
