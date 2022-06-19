@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -31,7 +32,7 @@ func resourceRunner() *schema.Resource {
 		DeleteContext: resourceRunnerDelete,
 		ReadContext:   resourceMachineRead,
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
 			Update: schema.DefaultTimeout(10 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
@@ -247,27 +248,19 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	var logError error
 	var logEvents string
-	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		switch cloud := d.Get("cloud").(string); cloud {
-		case "kubernetes":
-			logEvents, logError = resourceMachineLogs(ctx, d, m)
-		default:
-			logEvents, logError = utils.RunCommand("journalctl --unit cml --no-pager",
-				2*time.Second,
-				net.JoinHostPort(d.Get("instance_ip").(string), "22"),
-				"ubuntu",
-				d.Get("ssh_private").(string))
-		}
 
-		log.Printf("[DEBUG] Collected log events: %#v", logEvents)
-		log.Printf("[DEBUG] Connection errors: %#v", logError)
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
 
+		logEvents, logError = resourceLogsTimed(ctx, d, m)
 		if logError != nil {
-			return resource.RetryableError(fmt.Errorf("Waiting for the machine to accept connections... %s", logError))
-		} else if utils.HasStatus(logEvents, "terminated") {
-			return resource.NonRetryableError(fmt.Errorf("Failed to launch the runner!"))
-		} else if utils.HasStatus(logEvents, "ready") {
-			return nil
+			log.Printf("[DEBUG] Connection errors: %#v", logError)
+		} else {
+			log.Printf("[DEBUG] Collected log events: %#v", logEvents)
+			if utils.HasStatus(logEvents, "terminated") {
+				return resource.NonRetryableError(fmt.Errorf("Failed to launch the runner!"))
+			} else if utils.HasStatus(logEvents, "ready") {
+				return nil
+			}
 		}
 
 		return resource.RetryableError(fmt.Errorf("Waiting for the runner to be ready..."))
@@ -286,6 +279,47 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	return diags
+}
+
+type resourceLogsResult struct {
+	logEvents string
+	logError  error
+}
+
+func resourceLogsTimed(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+	result := make(chan resourceLogsResult, 1)
+	go func() {
+		result <- resourceLogs(ctx, d, m)
+	}()
+	select {
+	case <-time.After(20 * time.Second):
+		return "", errors.New("Resource Logs Timed Out")
+	case result := <-result:
+		return result.logEvents, result.logError
+	}
+}
+
+func resourceLogs(ctx context.Context, d *schema.ResourceData, m interface{}) resourceLogsResult {
+	var logError error
+	var logEvents string
+	cloud := d.Get("cloud").(string)
+	ip := d.Get("instance_ip").(string)
+
+	switch cloud {
+	case "kubernetes":
+		logEvents, logError = resourceMachineLogs(ctx, d, m)
+	default:
+		logEvents, logError = utils.RunCommand("journalctl --unit cml --no-pager",
+			2*time.Second,
+			net.JoinHostPort(ip, "22"),
+			"ubuntu",
+			d.Get("ssh_private").(string))
+	}
+
+	return resourceLogsResult{
+		logEvents: logEvents,
+		logError:  logError,
+	}
 }
 
 func resourceRunnerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -374,9 +408,11 @@ EOF'
 {{- if .cloud}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service
-{{- if .instance_gpu}}
-nvidia-smi &>/dev/null || reboot
-{{- end}}
+
+if ubuntu-drivers devices | grep 'NVIDIA' > /dev/null; then
+  (sudo modprobe nvidia && sudo nvidia-smi) || sudo reboot
+fi
+
 sudo systemctl start cml.service
 {{- end}}
 
