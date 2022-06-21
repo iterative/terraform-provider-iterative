@@ -378,7 +378,7 @@ EOF'
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service
 
-if ubuntu-drivers devices | grep 'NVIDIA' >/dev/null; then
+if ubuntu-drivers devices | grep -q NVIDIA; then
   (sudo modprobe nvidia && sudo nvidia-smi) || sudo reboot
 fi
 
