@@ -29,7 +29,7 @@ if [ ! -f "$FILE" ]; then
   sudo apt update && sudo apt-get install -y nodejs
 
   sudo apt install -y ubuntu-drivers-common
-  if ubuntu-drivers devices | grep 'NVIDIA' >/dev/null; then
+  if ubuntu-drivers devices | grep -q NVIDIA; then
     sudo ubuntu-drivers install
 
     curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
