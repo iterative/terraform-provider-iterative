@@ -27,7 +27,7 @@ type Options struct {
 }
 
 func Execute() {
-	cmd :=  New()
+	cmd := New()
 	err := cmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -52,7 +52,7 @@ func New() *cobra.Command {
 		Long: `Task is a command-line tool that allows
 	data scientists to run code in the cloud.`,
 	}
-	
+
 	cmd.AddCommand(create.New(&o.Cloud))
 	cmd.AddCommand(delete.New(&o.Cloud))
 	cmd.AddCommand(list.New(&o.Cloud))
@@ -74,7 +74,7 @@ func New() *cobra.Command {
 		o.Cloud.Provider = common.Provider(o.Provider)
 		o.Cloud.Region = common.Region(o.Region)
 	})
-	
+
 	cwd, err := os.Getwd()
 	cobra.CheckErr(err)
 	viper.AddConfigPath(cwd)

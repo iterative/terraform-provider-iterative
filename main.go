@@ -11,7 +11,7 @@ import (
 	"terraform-provider-iterative/cmd"
 )
 
-func main() {	
+func main() {
 	if os.Getenv(plugin.Handshake.MagicCookieKey) != plugin.Handshake.MagicCookieValue {
 		cmd.Execute()
 		return
@@ -23,4 +23,3 @@ func main() {
 		},
 	})
 }
-

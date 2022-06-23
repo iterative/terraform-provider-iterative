@@ -16,11 +16,11 @@ func New(cloud *common.Cloud) *cobra.Command {
 	o := Options{}
 
 	cmd := &cobra.Command{
-		Use:   "stop <name>",
-		Short: "Stop a task, leaving supporting resources (e.g. storage) intact",
-		Long:  ``,
+		Use:    "stop <name>",
+		Short:  "Stop a task, leaving supporting resources (e.g. storage) intact",
+		Long:   ``,
 		Hidden: true,
-		Args:  cobra.ExactArgs(1),
+		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.Run(cmd, args, cloud)
 		},
