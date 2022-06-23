@@ -24,7 +24,7 @@ func ListConfigMaps(ctx context.Context, client *client.Client) ([]common.Identi
 			ids = append(ids, id)
 		}
 	}
-	
+
 	return ids, nil
 }
 

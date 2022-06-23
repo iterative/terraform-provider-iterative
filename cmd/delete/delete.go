@@ -11,7 +11,7 @@ import (
 
 type Options struct {
 	Workdir string
-	Output string
+	Output  string
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -20,7 +20,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete <name>",
 		Short: "Delete a task",
-		Long: ``,
+		Long:  ``,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.Run(cmd, args, cloud)
@@ -32,7 +32,6 @@ func New(cloud *common.Cloud) *cobra.Command {
 
 	return cmd
 }
-
 
 func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 	cfg := common.Task{
