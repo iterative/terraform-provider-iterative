@@ -86,9 +86,9 @@ func TaskDuration(logs string) float64 {
 }
 
 func IsCI() bool {
-    _, ciIsSet := os.LookupEnv("CI")
-    _, tfBuildIsSet := os.LookupEnv("TF_BUILD")
-    if ciIsSet || tfBuildIsSet {
+	_, ciIsSet := os.LookupEnv("CI")
+	_, tfBuildIsSet := os.LookupEnv("TF_BUILD")
+	if ciIsSet || tfBuildIsSet {
 		return true
 	}
 
