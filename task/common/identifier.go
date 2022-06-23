@@ -2,9 +2,9 @@ package common
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
-	"errors"
 	"strings"
 
 	"crypto/sha256"

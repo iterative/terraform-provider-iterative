@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/sirupsen/logrus"
-	
+
 	"terraform-provider-iterative/task/common"
 
 	"terraform-provider-iterative/cmd/create"
@@ -27,18 +27,18 @@ data scientists to run code in the cloud.`,
 }
 
 var (
-	cfgFile string
-	region string
+	cfgFile  string
+	region   string
 	provider string
-	log string
+	log      string
 )
 
 var cloud = common.Cloud{
 	Timeouts: common.Timeouts{
-		Create: 15*time.Minute,
-		Read:   3*time.Minute,
-		Update: 3*time.Minute,
-		Delete: 15*time.Minute,
+		Create: 15 * time.Minute,
+		Read:   3 * time.Minute,
+		Update: 3 * time.Minute,
+		Delete: 15 * time.Minute,
 	},
 }
 
@@ -84,12 +84,12 @@ func init() {
 								"machine",
 								"name",
 								"parallelism",
-								"permission_set" ,
+								"permission_set",
 								"script",
 								"spot",
-								"disk_size" ,
+								"disk_size",
 								"timeout",
-							}{
+							} {
 								if value, ok := options[option]; ok {
 									viper.Set(strings.ReplaceAll(option, "_", "-"), value)
 								}
@@ -97,7 +97,7 @@ func init() {
 							for _, option := range []string{
 								"tags",
 								"environment",
-							}{
+							} {
 								if value, ok := options[option]; ok {
 									for _, nestedBlock := range value.([]map[string]interface{}) {
 										viper.Set(option, nestedBlock)
@@ -137,15 +137,15 @@ func init() {
 			}
 		})
 	}
-	
-	cobra.OnInitialize(func(){
+
+	cobra.OnInitialize(func() {
 		switch log {
 		case "info":
 			logrus.SetLevel(logrus.InfoLevel)
 		case "debug":
 			logrus.SetLevel(logrus.DebugLevel)
 		}
-		
+
 		cloud.Provider = common.Provider(provider)
 		cloud.Region = common.Region(region)
 	})

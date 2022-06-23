@@ -3,14 +3,14 @@ package list
 import (
 	"context"
 
-	"github.com/spf13/cobra"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
-type Options struct{
+type Options struct {
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -19,7 +19,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List tasks",
-		Long: ``,
+		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.Run(cmd, args, cloud)
 		},
@@ -27,7 +27,6 @@ func New(cloud *common.Cloud) *cobra.Command {
 
 	return cmd
 }
-
 
 func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Read)

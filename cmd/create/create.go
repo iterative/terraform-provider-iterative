@@ -14,19 +14,19 @@ import (
 )
 
 type Options struct {
-	Environment map[string]string
-	Image string
-	Machine string
-	Name string
-	Output string
-	Parallelism int
+	Environment   map[string]string
+	Image         string
+	Machine       string
+	Name          string
+	Output        string
+	Parallelism   int
 	PermissionSet string
-	Script string
-	Spot bool
-	Storage int
-	Tags map[string]string
-	Timeout int
-	Workdir string
+	Script        string
+	Spot          bool
+	Storage       int
+	Tags          map[string]string
+	Timeout       int
+	Workdir       string
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -35,7 +35,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create [command...]",
 		Short: "Create a task",
-		Long: ``,
+		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.Run(cmd, args, cloud)
 		},
@@ -52,9 +52,9 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd.Flags().BoolVar(&o.Spot, "spot", false, "use spot instances")
 	cmd.Flags().IntVar(&o.Storage, "disk-size", -1, "disk size in gigabytes")
 	cmd.Flags().StringToStringVar(&o.Tags, "tags", map[string]string{}, "resource tags")
-	cmd.Flags().IntVar(&o.Timeout, "timeout", 24 * 60 * 60, "timeout")
+	cmd.Flags().IntVar(&o.Timeout, "timeout", 24*60*60, "timeout")
 	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
-		
+
 	return cmd
 }
 
@@ -69,9 +69,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 
 	script := o.Script
 	if !strings.HasPrefix(script, "#!") {
-		script = "#!/bin/sh\n"+script
+		script = "#!/bin/sh\n" + script
 	}
-	script += "\n"+shellescape.QuoteCommand(args)
+	script += "\n" + shellescape.QuoteCommand(args)
 
 	cfg := common.Task{
 		Size: common.Size{
