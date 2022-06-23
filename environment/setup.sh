@@ -1,7 +1,7 @@
 #/bin/sh
 FILE=/var/log/cml_stack.log
 if [ ! -f "$FILE" ]; then
-  DEBIAN_FRONTEND=noninteractive
+  export DEBIAN_FRONTEND=noninteractive
   PS4='tpi:setup.sh: '
   set -x
   echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
