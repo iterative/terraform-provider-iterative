@@ -124,9 +124,9 @@ func (j *Job) Create(ctx context.Context) error {
 	var jobCompletions *int32 = nil
 	if j.Attributes.Completions > 0 {
 		jobCompletions = &(j.Attributes.Completions)
-		jobCompletionMode = kubernetes_batch.CompletionMode(kubernetes_batch.IndexedCompletion)
+		jobCompletionMode = kubernetes_batch.IndexedCompletion
 	} else {
-		jobCompletionMode = kubernetes_batch.CompletionMode(kubernetes_batch.NonIndexedCompletion)
+		jobCompletionMode = kubernetes_batch.NonIndexedCompletion
 	}
 
 	jobActiveDeadlineSeconds := int64(j.Attributes.Task.Environment.Timeout / time.Second)
