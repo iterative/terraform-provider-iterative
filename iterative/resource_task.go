@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aohorodnyk/uid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,6 +23,9 @@ var (
 )
 
 func resourceTask() *schema.Resource {
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&utils.TpiFormatter{})
+
 	return &schema.Resource{
 		CreateContext: resourceTaskCreate,
 		DeleteContext: resourceTaskDelete,
@@ -50,6 +53,12 @@ func resourceTask() *schema.Resource {
 				ForceNew: true,
 				Optional: true,
 				Default:  "m",
+			},
+			"permission_set": {
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "",
 			},
 			"disk_size": {
 				Type:     schema.TypeInt,
@@ -146,6 +155,14 @@ func resourceTask() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"tags": {
+				Type:     schema.TypeMap,
+				ForceNew: true,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"timeout": {
 				Type:     schema.TypeInt,
 				ForceNew: true,
@@ -163,12 +180,11 @@ func resourceTask() *schema.Resource {
 }
 
 func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
-	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Creation"))
+	logrus.Info(fmt.Sprintf(logTpl, "Creation"))
 
 	spot := d.Get("spot").(float64)
 	if spot > 0 {
-		logger.Warn(fmt.Sprintf("Setting a maximum price `spot=%f` USD/h. Consider using auto-pricing (`spot=0`) instead.", spot))
+		logrus.Warn(fmt.Sprintf("Setting a maximum price `spot=%f` USD/h. Consider using auto-pricing (`spot=0`) instead.", spot))
 	}
 
 	task, err := resourceTaskBuild(ctx, d, m)
@@ -250,7 +266,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("logs", logs)
 	d.SetId(task.GetIdentifier(ctx).Long())
 
-	logger := utils.TpiLogger(d)
+	logger := logrus.WithFields(logrus.Fields{"d": d})
 	logger.Info("instance")
 	logger.Info("logs")
 	logger.Info("status")
@@ -259,8 +275,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
-	logger := utils.TpiLogger(d)
-	logger.Info(fmt.Sprintf(logTpl, "Destruction"))
+	logrus.Info(fmt.Sprintf(logTpl, "Destruction"))
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
@@ -275,6 +290,11 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{}) (task.Task, error) {
+	tags := make(map[string]string)
+	for name, value := range d.Get("tags").(map[string]interface{}) {
+		tags[name] = value.(string)
+	}
+
 	v := make(map[string]*string)
 	for name, value := range d.Get("environment").(map[string]interface{}) {
 		v[name] = nil
@@ -301,6 +321,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			Update: d.Timeout(schema.TimeoutUpdate),
 			Delete: d.Timeout(schema.TimeoutDelete),
 		},
+		Tags: tags,
 	}
 
 	directory := ""
@@ -330,26 +351,31 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			},
 			// Egress is open on every port
 		},
-		Spot:        common.Spot(d.Get("spot").(float64)),
-		Parallelism: uint16(d.Get("parallelism").(int)),
+		Spot:          common.Spot(d.Get("spot").(float64)),
+		Parallelism:   uint16(d.Get("parallelism").(int)),
+		PermissionSet: d.Get("permission_set").(string),
 	}
 
-	name := d.Id()
-	if name == "" {
-		if identifier := d.Get("name").(string); identifier != "" {
-			name = common.NewIdentifier(identifier).Long()
-		} else if identifier := os.Getenv("GITHUB_RUN_ID"); identifier != "" {
-			name = common.NewIdentifier(identifier).Long()
-		} else if identifier := os.Getenv("CI_PIPELINE_ID"); identifier != "" {
-			name = common.NewIdentifier(identifier).Long()
-		} else if identifier := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); identifier != "" {
-			name = common.NewIdentifier(identifier).Long()
+	id, err := common.ParseIdentifier(d.Id())
+	if err != nil {
+		if name := d.Get("name").(string); name != "" {
+			if newId, err := common.ParseIdentifier(name); err == nil {
+				id = newId
+			} else {
+				id = common.NewIdentifier(name)
+			}
+		} else if name := os.Getenv("GITHUB_RUN_ID"); name != "" {
+			id = common.NewIdentifier(name)
+		} else if name := os.Getenv("CI_PIPELINE_ID"); name != "" {
+			id = common.NewIdentifier(name)
+		} else if name := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); name != "" {
+			id = common.NewIdentifier(name)
 		} else {
-			name = uid.NewProvider36Size(8).MustGenerate().String()
+			id = common.NewRandomIdentifier()
 		}
 	}
 
-	return task.New(ctx, c, common.NewIdentifier(name), t)
+	return task.New(ctx, c, id, t)
 }
 
 func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.Diagnostics {

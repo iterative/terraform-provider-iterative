@@ -59,11 +59,13 @@ resource "iterative_task" "example" {
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB. `-1`: automatic based on `image`.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
 - `image` - (Optional) [Machine image](#machine-image) to run the task with.
+- `permission_set` - (Optional) See [Permission Set](#permission-set) below.
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
+- `tags` - (Optional) Map of tags for the created cloud resources.
 - `name` - (Optional) _Discouraged and may be removed in future - change the resource name instead, i.e. `resource "iterative_task" "some_other_example_name"`._ Deterministic task name (e.g. `name="Hello, World!"` always produces `id="tpi-hello-world-5kz6ldls-57wo7rsp"`).
 
 -> **Note:** `output` is relative to `workdir`, so `storage { workdir = "foo", output = "bar" }` means "upload `./foo/`, change working directory to the uploaded folder, run `script`, and download `bar` (i.e. `./foo/bar`)".
@@ -256,6 +258,28 @@ In addition to generic regions, it's possible to specify any cloud region suppor
 ### Kubernetes
 
 The `region` attribute is ignored.
+
+## Permission Set
+
+A set of "permissions" assigned to the `task` instance, format depends on the cloud provider
+
+#### Amazon Web Services
+
+An [instance profile `arn`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), e.g.:
+`permission_set = "arn:aws:iam:1234567890:instance-profile/rolename"`
+
+#### Google Cloud Platform
+
+A service account email and a [list of scopes](https://cloud.google.com/sdk/gcloud/reference/alpha/compute/instances/set-scopes#--scopes), e.g.:
+`permission_set = "sa-name@project_id.iam.gserviceaccount.com,scopes=storage-rw"`
+
+#### Microsoft Azure
+
+[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/559)
+
+#### Kubernetes
+
+[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/560)
 
 ## Known Issues
 

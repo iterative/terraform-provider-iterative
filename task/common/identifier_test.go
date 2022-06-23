@@ -10,14 +10,6 @@ import (
 func TestIdentifier(t *testing.T) {
 	name := gofakeit.NewCrypto().Sentence(512)
 
-	t.Run("idempotence", func(t *testing.T) {
-		identifier := NewIdentifier(name)
-
-		once := identifier.Long()
-		twice := NewIdentifier(once).Long()
-		require.Equal(t, once, twice)
-	})
-
 	t.Run("stability", func(t *testing.T) {
 		identifier := NewIdentifier(name)
 
@@ -43,5 +35,9 @@ func TestIdentifier(t *testing.T) {
 
 		require.Equal(t, "tpi-test-3z4xlzwq-3u0vweb4", identifier.Long())
 		require.Equal(t, "3z4xlzwq3u0vweb4", identifier.Short())
+
+		parsed, err := ParseIdentifier(identifier.Long())
+		require.Equal(t, parsed, identifier)
+		require.NoError(t, err)
 	})
 }

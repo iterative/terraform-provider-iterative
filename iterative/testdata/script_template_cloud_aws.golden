@@ -18,6 +18,10 @@ if [ ! -f "$FILE" ]; then
   sudo usermod -aG docker ubuntu
   sudo setfacl --modify user:ubuntu:rw /var/run/docker.sock
 
+  get_ecr_helper="curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login"
+  chmod_ecr_help="chmod 755 /usr/bin/docker-credential-ecr-login"
+  sudo systemd-run --same-dir --no-block --service-type=exec bash -c "$get_ecr_help && $chmod_ecr_help"
+
   curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
   sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
   sudo apt update && sudo apt-get install -y terraform
@@ -26,16 +30,14 @@ if [ ! -f "$FILE" ]; then
   sudo apt update && sudo apt-get install -y nodejs
 
   sudo apt install -y ubuntu-drivers-common
-  sudo ubuntu-drivers autoinstall
+  if ubuntu-drivers devices | grep -q NVIDIA; then
+    sudo ubuntu-drivers install
 
-  get_ecr_helper="curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login"
-  chmod_ecr_help="chmod 755 /usr/bin/docker-credential-ecr-login"
-  sudo systemd-run --same-dir --no-block --service-type=exec bash -c "$get_ecr_help && $chmod_ecr_help"
-
-  curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-  curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-  sudo apt update && sudo apt install -y nvidia-docker2
-  sudo systemctl restart docker
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+    curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+    sudo apt update && sudo apt install -y nvidia-docker2
+    sudo systemctl restart docker
+  fi
 
   echo OK | sudo tee "$FILE"
 fi
@@ -73,5 +75,9 @@ sudo bash -c 'cat << EOF > /etc/systemd/system/cml.service
 EOF'
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service
-nvidia-smi &>/dev/null || reboot
+
+if ubuntu-drivers devices | grep -q NVIDIA; then
+  (sudo modprobe nvidia && sudo nvidia-smi) || sudo reboot
+fi
+
 sudo systemctl start cml.service

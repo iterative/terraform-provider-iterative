@@ -22,7 +22,7 @@ func TestTask(t *testing.T) {
 		t.Skip("go test -short detected, skipping smoke tests")
 	}
 
-	testIdentifier := os.Getenv("SMOKE_TEST_IDENTIFIER")
+	testName := os.Getenv("SMOKE_TEST_IDENTIFIER")
 	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
 
 	enableAWS := os.Getenv("SMOKE_TEST_ENABLE_AWS") != ""

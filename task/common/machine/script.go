@@ -7,25 +7,32 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alessio/shellescape"
+
 	"terraform-provider-iterative/task/common"
 )
 
-func Script(script string, variables common.Variables, timeout time.Duration) string {
-	var environment string
+func Script(script string, credentials *map[string]string, variables common.Variables, timeout time.Duration) string {
+	timeoutString := strconv.Itoa(int(time.Now().Add(timeout).Unix()))
+	if timeout <= 0 {
+		timeoutString = "infinity"
+	}
+
+	environment := ""
 	for name, value := range variables.Enrich() {
 		escaped := strings.ReplaceAll(value, `"`, `\"`) // FIXME: \" edge cases.
 		environment += fmt.Sprintf("%s=\"%s\"\n", name, escaped)
 	}
 
-	timeoutString := strconv.Itoa(int(timeout / time.Second))
-	if timeout <= 0 {
-		timeoutString = "infinity"
+	exportCredentials := ""
+	for name, value := range *credentials {
+		exportCredentials += "export " + shellescape.Quote(name+"="+value) + "\n"
 	}
 
 	return fmt.Sprintf(
 		`#!/bin/bash
-sudo mkdir --parents /tmp/tpi-task
-chmod u=rwx,g=rwx,o=rwx /tmp/tpi-task
+sudo mkdir --parents /opt/task/directory
+chmod u=rwx,g=rwx,o=rwx /opt/task/directory
 
 base64 --decode << END | sudo tee /usr/bin/tpi-task > /dev/null
 %s
@@ -35,39 +42,53 @@ chmod u=rwx,g=rx,a=rx /usr/bin/tpi-task
 sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
 sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
+source /opt/task/credentials
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
-(systemctl is-system-running | grep stopping) || tpi --stop;
+(systemctl is-system-running | grep stopping) || tpi stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
 END
+
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
-base64 --decode << END | sudo tee /tmp/tpi-environment > /dev/null
+base64 --decode << END | sudo tee /opt/task/variables > /dev/null
 %s
 END
-chmod u=rw,g=,o= /tmp/tpi-environment
+base64 --decode << END | sudo tee /opt/task/credentials > /dev/null
+%s
+END
+chmod u=rw,g=,o= /opt/task/variables
+chmod u=rw,g=,o= /opt/task/credentials
 
 while IFS= read -rd $'\0' variable; do
   export "$(perl -0777p -e 's/\\"/"/g;' -e 's/(.+?)="(.+)"/$1=$2/sg' <<< "$variable")"
-done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' /tmp/tpi-environment)
+done < <(perl -0777pe 's/\n*(.+?=".*?((?<!\\)"|\\\\"))\n*/$1\x00/sg' /opt/task/variables)
 
 TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
-TPI_DATA_DIRECTORY="/tmp/tpi-task"
+TPI_DATA_DIRECTORY="/opt/task/directory"
+
+TPI_START_COMMAND="/bin/bash -lc 'exec /usr/bin/tpi-task'"
+TPI_REMAINING_RUN_TIME=$((%s-$(date +%%s)))
+if (( TPI_REMAINING_RUN_TIME < 1 )); then
+  TPI_START_COMMAND="/bin/bash -c 'sleep infinity'"
+  TPI_REMAINING_RUN_TIME=1
+fi
+
+source /opt/task/credentials
 
 sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Unit]
   After=default.target
 [Service]
   Type=simple
-  ExecStart=-/usr/bin/tpi-task
-  ExecStop=/bin/bash -c 'systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStart=-$TPI_START_COMMAND
+  ExecStop=/bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
-  EnvironmentFile=/tmp/tpi-environment
-  WorkingDirectory=/tmp/tpi-task
-  TimeoutStartSec=%s
-  TimeoutStopSec=infinity
+  EnvironmentFile=/opt/task/variables
+  WorkingDirectory=/opt/task/directory
+  RuntimeMaxSec=$TPI_REMAINING_RUN_TIME
 [Install]
   WantedBy=default.target
 END
@@ -100,7 +121,7 @@ if ! command -v rclone 2>&1 > /dev/null; then
   rm --recursive rclone-*-linux-amd64*
 fi
 
-rclone copy "$RCLONE_REMOTE/data" /tmp/tpi-task
+rclone copy "$RCLONE_REMOTE/data" /opt/task/directory
 
 yes | /etc/profile.d/install-driver-prompt.sh # for GCP GPU machines
 
@@ -139,5 +160,6 @@ done &
 `,
 		base64.StdEncoding.EncodeToString([]byte(script)),
 		base64.StdEncoding.EncodeToString([]byte(environment)),
+		base64.StdEncoding.EncodeToString([]byte(exportCredentials)),
 		timeoutString)
 }

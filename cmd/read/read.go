@@ -41,7 +41,12 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Read)
 	defer cancel()
 
-	tsk, err := task.New(ctx, *cloud, common.Identifier(args[0]), cfg)
+	id, err := common.ParseIdentifier(args[0])
+	if err != nil {
+		return err
+	}
+
+	tsk, err := task.New(ctx, *cloud, id, cfg)
 	if err != nil {
 		return err
 	}

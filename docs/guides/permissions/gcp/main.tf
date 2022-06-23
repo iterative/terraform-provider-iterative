@@ -54,6 +54,7 @@ resource "google_project_iam_custom_role" "task" {
     "compute.instances.setServiceAccount",
     "compute.instances.setTags",
     "compute.machineTypes.get",
+    "compute.networks.create",
     "compute.networks.get",
     "compute.networks.updatePolicy",
     "compute.subnetworks.use",

@@ -19,47 +19,62 @@ import (
 	"terraform-provider-iterative/cmd/read"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "task",
-	Short: "Run code in the cloud",
-	Long: `Task is a command-line tool that allows
-data scientists to run code in the cloud.`,
-}
-
-var (
-	cfgFile  string
-	region   string
-	provider string
-	log      string
-)
-
-var cloud = common.Cloud{
-	Timeouts: common.Timeouts{
-		Create: 15 * time.Minute,
-		Read:   3 * time.Minute,
-		Update: 3 * time.Minute,
-		Delete: 15 * time.Minute,
-	},
+type Options struct {
+	Region   string
+	Provider string
+	Log      string
+	common.Cloud
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	cmd :=  New()
+	err := cmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(create.New(&cloud))
-	rootCmd.AddCommand(delete.New(&cloud))
-	rootCmd.AddCommand(list.New(&cloud))
-	rootCmd.AddCommand(read.New(&cloud))
+func New() *cobra.Command {
+	o := Options{
+		Cloud: common.Cloud{
+			Timeouts: common.Timeouts{
+				Create: 15 * time.Minute,
+				Read:   3 * time.Minute,
+				Update: 3 * time.Minute,
+				Delete: 15 * time.Minute,
+			},
+		},
+	}
 
-	rootCmd.MarkPersistentFlagRequired("cloud")
-	rootCmd.PersistentFlags().StringVar(&provider, "cloud", "", "cloud provider")
-	rootCmd.PersistentFlags().StringVar(&log, "log", "info", "log level")
-	rootCmd.PersistentFlags().StringVar(&region, "region", "us-east", "cloud region")
+	cmd := &cobra.Command{
+		Use:   "task",
+		Short: "Run code in the cloud",
+		Long: `Task is a command-line tool that allows
+	data scientists to run code in the cloud.`,
+	}
+	
+	cmd.AddCommand(create.New(&o.Cloud))
+	cmd.AddCommand(delete.New(&o.Cloud))
+	cmd.AddCommand(list.New(&o.Cloud))
+	cmd.AddCommand(read.New(&o.Cloud))
 
+	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
+	cmd.PersistentFlags().StringVar(&o.Log, "log", "info", "log level")
+	cmd.PersistentFlags().StringVar(&o.Region, "region", "us-east", "cloud region")
+	cobra.CheckErr(cmd.MarkPersistentFlagRequired("cloud"))
+
+	cobra.OnInitialize(func() {
+		switch o.Log {
+		case "info":
+			logrus.SetLevel(logrus.InfoLevel)
+		case "debug":
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+
+		o.Cloud.Provider = common.Provider(o.Provider)
+		o.Cloud.Region = common.Region(o.Region)
+	})
+	
 	cwd, err := os.Getwd()
 	cobra.CheckErr(err)
 	viper.AddConfigPath(cwd)
@@ -80,11 +95,14 @@ func init() {
 					for _, block := range task {
 						for _, options := range block.([]map[string]interface{}) {
 							for _, option := range []string{
+								"cloud",
 								"image",
+								"log",
 								"machine",
 								"name",
 								"parallelism",
 								"permission_set",
+								"region",
 								"script",
 								"spot",
 								"disk_size",
@@ -121,32 +139,22 @@ func init() {
 		}
 	}
 
-	for _, cmd := range append(rootCmd.Commands(), rootCmd) {
-		viper.BindPFlags(cmd.Flags())
-		viper.BindPFlags(cmd.PersistentFlags())
+	for _, cmd := range append(cmd.Commands(), cmd) {
+		cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
+		cobra.CheckErr(viper.BindPFlags(cmd.PersistentFlags()))
 
 		cmd.Flags().VisitAll(func(f *pflag.Flag) {
 			if val := viper.GetString(f.Name); viper.IsSet(f.Name) && val != "" {
-				cmd.Flags().Set(f.Name, val)
+				cobra.CheckErr(cmd.Flags().Set(f.Name, val))
 			}
 		})
 
 		cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 			if val := viper.GetString(f.Name); viper.IsSet(f.Name) && val != "" {
-				cmd.PersistentFlags().Set(f.Name, val)
+				cobra.CheckErr(cmd.PersistentFlags().Set(f.Name, val))
 			}
 		})
 	}
 
-	cobra.OnInitialize(func() {
-		switch log {
-		case "info":
-			logrus.SetLevel(logrus.InfoLevel)
-		case "debug":
-			logrus.SetLevel(logrus.DebugLevel)
-		}
-
-		cloud.Provider = common.Provider(provider)
-		cloud.Region = common.Region(region)
-	})
+	return cmd
 }

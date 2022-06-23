@@ -59,7 +59,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 }
 
 func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
-	var variables map[string]*string
+	variables := make(map[string]*string)
 	for name, value := range o.Environment {
 		variables[name] = nil
 		if value != "" {
@@ -80,7 +80,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		},
 		Environment: common.Environment{
 			Image:        o.Image,
-			Script:       o.Script,
+			Script:       script,
 			Variables:    variables,
 			Directory:    o.Workdir,
 			DirectoryOut: o.Output,

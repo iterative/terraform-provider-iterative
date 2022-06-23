@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -64,7 +65,7 @@ func RunCommand(command string, timeout time.Duration, hostAddress string, userN
 		Timeout:         timeout,
 	}
 
-	client, err := ssh.Dial("tcp", hostAddress, configuration)
+	client, err := dialWithDeadline("tcp", hostAddress, configuration)
 	if err != nil {
 		return "", err
 	}
@@ -82,4 +83,22 @@ func RunCommand(command string, timeout time.Duration, hostAddress string, userN
 	}
 
 	return string(output), nil
+}
+
+func dialWithDeadline(network string, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
+	conn, err := net.DialTimeout(network, addr, config.Timeout)
+	if err != nil {
+		return nil, err
+	}
+	if config.Timeout > 0 {
+		conn.SetReadDeadline(time.Now().Add(config.Timeout))
+	}
+	c, chans, reqs, err := ssh.NewClientConn(conn, addr, config)
+	if err != nil {
+		return nil, err
+	}
+	if config.Timeout > 0 {
+		conn.SetReadDeadline(time.Time{})
+	}
+	return ssh.NewClient(c, chans, reqs), nil
 }

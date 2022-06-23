@@ -32,9 +32,6 @@ func ParseIdentifier(identifier string) (Identifier, error) {
 }
 
 func NewIdentifier(identifier string) Identifier {
-	if id, err := ParseIdentifier(identifier); err == nil {
-		return id
-	}
 	return Identifier(identifier)
 }
 

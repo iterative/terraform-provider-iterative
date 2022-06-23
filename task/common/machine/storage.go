@@ -101,6 +101,8 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 			} else {
 				initialStatus[common.StatusCodeFailed] += 1
 			}
+		} else if statusReport.Result == "timeout" {
+			initialStatus[common.StatusCodeFailed] += 1
 		}
 	}
 	return initialStatus, nil

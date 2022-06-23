@@ -31,7 +31,7 @@ func resourceRunner() *schema.Resource {
 		DeleteContext: resourceRunnerDelete,
 		ReadContext:   resourceMachineRead,
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
 			Update: schema.DefaultTimeout(10 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
@@ -247,27 +247,30 @@ func resourceRunnerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	var logError error
 	var logEvents string
-	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		switch cloud := d.Get("cloud").(string); cloud {
+	cloud := d.Get("cloud").(string)
+	ip := d.Get("instance_ip").(string)
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
+
+		switch cloud {
 		case "kubernetes":
 			logEvents, logError = resourceMachineLogs(ctx, d, m)
 		default:
 			logEvents, logError = utils.RunCommand("journalctl --unit cml --no-pager",
 				2*time.Second,
-				net.JoinHostPort(d.Get("instance_ip").(string), "22"),
+				net.JoinHostPort(ip, "22"),
 				"ubuntu",
 				d.Get("ssh_private").(string))
 		}
 
-		log.Printf("[DEBUG] Collected log events: %#v", logEvents)
-		log.Printf("[DEBUG] Connection errors: %#v", logError)
-
 		if logError != nil {
-			return resource.RetryableError(fmt.Errorf("Waiting for the machine to accept connections... %s", logError))
-		} else if utils.HasStatus(logEvents, "terminated") {
-			return resource.NonRetryableError(fmt.Errorf("Failed to launch the runner!"))
-		} else if utils.HasStatus(logEvents, "ready") {
-			return nil
+			log.Printf("[DEBUG] Connection errors: %#v", logError)
+		} else {
+			log.Printf("[DEBUG] Collected log events: %#v", logEvents)
+			if utils.HasStatus(logEvents, "terminated") {
+				return resource.NonRetryableError(fmt.Errorf("Failed to launch the runner!"))
+			} else if utils.HasStatus(logEvents, "ready") {
+				return nil
+			}
 		}
 
 		return resource.RetryableError(fmt.Errorf("Waiting for the runner to be ready..."))
@@ -374,9 +377,11 @@ EOF'
 {{- if .cloud}}
 sudo systemctl daemon-reload
 sudo systemctl enable cml.service
-{{- if .instance_gpu}}
-nvidia-smi &>/dev/null || reboot
-{{- end}}
+
+if ubuntu-drivers devices | grep -q NVIDIA; then
+  (sudo modprobe nvidia && sudo nvidia-smi) || sudo reboot
+fi
+
 sudo systemctl start cml.service
 {{- end}}
 
