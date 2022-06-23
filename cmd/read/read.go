@@ -20,7 +20,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "read <name>",
-		Short: "Display the status of a task",
+		Short: "Read the status of a task",
 		Long: ``,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

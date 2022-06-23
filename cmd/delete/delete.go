@@ -27,8 +27,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
 	cmd.Flags().StringVar(&o.Output, "output", "", "output directory, relative to workdir")
+	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory")
 
 	return cmd
 }

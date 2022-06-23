@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -54,11 +55,16 @@ func init() {
 	rootCmd.AddCommand(list.New(&cloud))
 	rootCmd.AddCommand(read.New(&cloud))
 
+	rootCmd.MarkPersistentFlagRequired("cloud")
+	rootCmd.PersistentFlags().StringVar(&provider, "cloud", "", "cloud provider")
+	rootCmd.PersistentFlags().StringVar(&log, "log", "info", "log level")
+	rootCmd.PersistentFlags().StringVar(&region, "region", "us-east", "cloud region")
+
 	cwd, err := os.Getwd()
 	cobra.CheckErr(err)
 	viper.AddConfigPath(cwd)
-	viper.SetConfigType("yaml")
-	viper.SetConfigName("task.yaml")
+	viper.SetConfigType("hcl")
+	viper.SetConfigName("main.tf")
 	viper.SetEnvPrefix("task")
 	viper.AutomaticEnv()
 
@@ -66,7 +72,56 @@ func init() {
 		fmt.Println("Reading configuration from", viper.ConfigFileUsed())
 	}
 
-	for _, cmd := range rootCmd.Commands() {
+	// https://github.com/spf13/viper/issues/1350; should be done using viper.Sub("resource.0...")
+	if resources := viper.Get("resource"); resources != nil {
+		for _, resource := range resources.([]map[string]interface{}) {
+			if tasks, ok := resource["iterative_task"]; ok {
+				for _, task := range tasks.([]map[string]interface{}) {
+					for _, block := range task {
+						for _, options := range block.([]map[string]interface{}) {
+							for _, option := range []string{
+								"image",
+								"machine",
+								"name",
+								"parallelism",
+								"permission_set" ,
+								"script",
+								"spot",
+								"disk_size" ,
+								"timeout",
+							}{
+								if value, ok := options[option]; ok {
+									viper.Set(strings.ReplaceAll(option, "_", "-"), value)
+								}
+							}
+							for _, option := range []string{
+								"tags",
+								"environment",
+							}{
+								if value, ok := options[option]; ok {
+									for _, nestedBlock := range value.([]map[string]interface{}) {
+										viper.Set(option, nestedBlock)
+									}
+								}
+							}
+							if value, ok := options["storage"]; ok {
+								for _, nestedBlock := range value.([]map[string]interface{}) {
+									if value, ok := nestedBlock["output"]; ok {
+										viper.Set("output", value)
+									}
+									if value, ok := nestedBlock["workdir"]; ok {
+										viper.Set("workdir", value)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for _, cmd := range append(rootCmd.Commands(), rootCmd) {
 		viper.BindPFlags(cmd.Flags())
 		viper.BindPFlags(cmd.PersistentFlags())
 
@@ -93,22 +148,5 @@ func init() {
 		
 		cloud.Provider = common.Provider(provider)
 		cloud.Region = common.Region(region)
-	})
-
-	rootCmd.PersistentFlags().StringVar(&log, "log", "info", "log level")
-	rootCmd.PersistentFlags().StringVar(&region, "region", "us-east", "cloud region")
-	rootCmd.PersistentFlags().StringVar(&provider, "provider", "", "cloud provider")
-	rootCmd.MarkPersistentFlagRequired("provider")
-
-	rootCmd.Flags().VisitAll(func(f *pflag.Flag) {
-		if viper.IsSet(f.Name) && viper.GetString(f.Name) != "" {
-			rootCmd.Flags().Set(f.Name, viper.GetString(f.Name))
-		}
-	})
-
-	rootCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-		if viper.IsSet(f.Name) && viper.GetString(f.Name) != "" {
-			rootCmd.PersistentFlags().Set(f.Name, viper.GetString(f.Name))
-		}
 	})
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/alessio/shellescape"
-	"github.com/aohorodnyk/uid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -15,15 +14,19 @@ import (
 )
 
 type Options struct {
-	Machine string
-	Storage int
-	Spot bool
-	Image string
-	Workdir string
-	Output string
-	Script string
 	Environment map[string]string
+	Image string
+	Machine string
+	Name string
+	Output string
+	Parallelism int
+	PermissionSet string
+	Script string
+	Spot bool
+	Storage int
+	Tags map[string]string
 	Timeout int
+	Workdir string
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -38,16 +41,20 @@ func New(cloud *common.Cloud) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Machine, "machine", "m", "machine type")
-	cmd.Flags().IntVar(&o.Storage, "disk", -1, "disk size in gigabytes")
-	cmd.Flags().BoolVar(&o.Spot, "spot", false, "use spot instances")
-	cmd.Flags().StringVar(&o.Image, "image", "ubuntu", "machine image")
-	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
-	cmd.Flags().StringVar(&o.Output, "output", "", "output directory to download")
-	cmd.Flags().StringVar(&o.Script, "script", "", "script to run")
 	cmd.Flags().StringToStringVar(&o.Environment, "environment", map[string]string{}, "environment variables")
+	cmd.Flags().StringVar(&o.Image, "image", "ubuntu", "machine image")
+	cmd.Flags().StringVar(&o.Machine, "machine", "m", "machine type")
+	cmd.Flags().StringVar(&o.Name, "name", "", "deterministic name")
+	cmd.Flags().StringVar(&o.Output, "output", "", "output directory to download")
+	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
+	cmd.Flags().StringVar(&o.PermissionSet, "permission-set", "", "permission set")
+	cmd.Flags().StringVar(&o.Script, "script", "", "script to run")
+	cmd.Flags().BoolVar(&o.Spot, "spot", false, "use spot instances")
+	cmd.Flags().IntVar(&o.Storage, "disk-size", -1, "disk size in gigabytes")
+	cmd.Flags().StringToStringVar(&o.Tags, "tags", map[string]string{}, "resource tags")
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 24 * 60 * 60, "timeout")
-
+	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
+		
 	return cmd
 }
 
@@ -93,12 +100,12 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		cfg.Spot = common.Spot(common.SpotDisabled)
 	}
 
-	name := common.Identifier(uid.NewProvider36Size(8).MustGenerate().String())
+	id := common.NewRandomIdentifier()
 
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Create)
 	defer cancel()
 
-	tsk, err := task.New(ctx, *cloud, name, cfg)
+	tsk, err := task.New(ctx, *cloud, id, cfg)
 	if err != nil {
 		return err
 	}
@@ -113,6 +120,5 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	logrus.Info(name)
 	return nil
 }

@@ -337,19 +337,19 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 	name := d.Id()
 	if name == "" {
 		if identifier := d.Get("name").(string); identifier != "" {
-			name = identifier
+			name = common.NewIdentifier(identifier).Long()
 		} else if identifier := os.Getenv("GITHUB_RUN_ID"); identifier != "" {
-			name = identifier
+			name = common.NewIdentifier(identifier).Long()
 		} else if identifier := os.Getenv("CI_PIPELINE_ID"); identifier != "" {
-			name = identifier
+			name = common.NewIdentifier(identifier).Long()
 		} else if identifier := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); identifier != "" {
-			name = identifier
+			name = common.NewIdentifier(identifier).Long()
 		} else {
 			name = uid.NewProvider36Size(8).MustGenerate().String()
 		}
 	}
 
-	return task.New(ctx, c, common.Identifier(name), t)
+	return task.New(ctx, c, common.NewIdentifier(name), t)
 }
 
 func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.Diagnostics {

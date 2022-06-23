@@ -22,7 +22,7 @@ func main() {
 		provider := os.Getenv("TPI_TASK_CLOUD_PROVIDER")
 		region := os.Getenv("TPI_TASK_CLOUD_REGION")
 		log.Printf("[INFO] Stopping task %s...\n", identifier)
-		if err := stop(context.TODO(), provider, region, common.Identifier(identifier)); err != nil {
+		if err := stop(context.TODO(), provider, region, common.NewIdentifier(identifier)); err != nil {
 			log.Printf("[INFO] Failed to stop task: %s\n", err.Error())
 		} else {
 			log.Printf("[INFO] Done!\n")

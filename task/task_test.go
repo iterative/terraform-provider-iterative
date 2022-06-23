@@ -39,8 +39,8 @@ func TestTask(t *testing.T) {
 		common.ProviderK8S: enableK8S || enableALL,
 	}
 
-	if testIdentifier == "" {
-		testIdentifier = "smoke test"
+	if testName == "" {
+		testName = "smoke test"
 	}
 
 	for provider, enabled := range providers {
@@ -72,7 +72,7 @@ func TestTask(t *testing.T) {
 				},
 			}
 
-			identifier := common.Identifier(testIdentifier)
+			identifier := common.NewIdentifier(testName)
 
 			task := common.Task{
 				Size: common.Size{

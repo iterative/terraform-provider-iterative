@@ -38,6 +38,10 @@ func NewIdentifier(identifier string) Identifier {
 	return Identifier(identifier)
 }
 
+func NewRandomIdentifier() Identifier {
+	return NewIdentifier(uid.NewProvider36Size(8).MustGenerate().String())
+}
+
 func (i Identifier) Long() string {
 	name := normalize(string(i), maximumLongLength-shortLength-uint32(len("tpi---")))
 	digest := hash(string(i), shortLength/2)
