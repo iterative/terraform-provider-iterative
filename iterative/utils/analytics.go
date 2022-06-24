@@ -90,11 +90,7 @@ func IsCI() bool {
 		return true
 	}
 
-	if len(guessCI()) > 0 {
-		return true
-	}
-
-	return false
+	return len(guessCI()) > 0
 }
 
 func guessCI() string {
