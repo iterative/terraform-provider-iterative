@@ -299,7 +299,13 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		}
 	}
 
-	go send(JitsuEventPayload(action, e, extra))
+	payload := JitsuEventPayload(action, e, extra)
+	if payload["user_id"] == "do-not-track" {
+		logrus.Debugf("analytics: user_id %s is set; doing nothing", payload["user_id"])
+		return
+	}
+
+	go send(payload)
 	wg.Add(1)
 }
 
