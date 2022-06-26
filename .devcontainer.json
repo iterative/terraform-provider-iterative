@@ -1,7 +1,8 @@
 {
   "name": "terraform",
   "extensions": ["hashicorp.terraform"],
-  "postCreateCommand": "/bin/bash -c 'curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - && sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\" && sudo apt-get update && sudo apt-get install packer terraform'",
+  "postCreateCommand": "go install github.com/hashicorp/terraform@v1 github.com/hashicorp/packer@v1 github.com/automation-co/husky@v0.2 && husky init",
+  "image": "mcr.microsoft.com/vscode/devcontainers/go:1",
   "hostRequirements": {
      "cpus": 4,
      "memory": "8gb",

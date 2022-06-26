@@ -190,11 +190,11 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
+		utils.SendJitsuEvent("task/apply", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Error)
 	}
 
 	d.SetId(task.GetIdentifier(ctx).Long())
-
 	if err := task.Create(ctx); err != nil {
 		diags = diagnostic(diags, err, diag.Error)
 		if err := task.Delete(ctx); err != nil {
@@ -205,32 +205,38 @@ func resourceTaskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 	}
 
+	utils.SendJitsuEvent("task/apply", err, utils.ResourceData(d))
 	return
 }
 
 func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 
 	if err := task.Read(ctx); err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 
 	if keyPair, err := task.GetKeyPair(ctx); err != nil {
 		if err != common.NotImplementedError {
+			utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 			return diagnostic(diags, err, diag.Warning)
 		}
 	} else {
 		publicKey, err := keyPair.PublicString()
 		if err != nil {
+			utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 			return diagnostic(diags, err, diag.Warning)
 		}
 		d.Set("ssh_public_key", publicKey)
 
 		privateKey, err := keyPair.PrivateString()
 		if err != nil {
+			utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 			return diagnostic(diags, err, diag.Warning)
 		}
 		d.Set("ssh_private_key", privateKey)
@@ -255,12 +261,14 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	status, err := task.Status(ctx)
 	if err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 	d.Set("status", status)
 
 	logs, err := task.Logs(ctx)
 	if err != nil {
+		utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Warning)
 	}
 
@@ -272,6 +280,7 @@ func resourceTaskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger.Info("logs")
 	logger.Info("status")
 
+	utils.SendJitsuEvent("task/read", err, utils.ResourceData(d))
 	return diags
 }
 
@@ -280,13 +289,16 @@ func resourceTaskDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	task, err := resourceTaskBuild(ctx, d, m)
 	if err != nil {
+		utils.SendJitsuEvent("task/destroy", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Error)
 	}
 
 	if err := task.Delete(ctx); err != nil {
+		utils.SendJitsuEvent("task/destroy", err, utils.ResourceData(d))
 		return diagnostic(diags, err, diag.Error)
 	}
 
+	utils.SendJitsuEvent("task/destroy", err, utils.ResourceData(d))
 	return
 }
 

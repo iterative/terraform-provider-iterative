@@ -10,11 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
 	"terraform-provider-iterative/iterative"
+	"terraform-provider-iterative/iterative/utils"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
 func main() {
+	defer utils.WaitForAnalyticsAndHandlePanics()
+
 	if identifier := os.Getenv("TPI_TASK_IDENTIFIER"); identifier != "" {
 		provider := os.Getenv("TPI_TASK_CLOUD_PROVIDER")
 		region := os.Getenv("TPI_TASK_CLOUD_REGION")
