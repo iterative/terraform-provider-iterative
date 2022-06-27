@@ -86,10 +86,6 @@ func TaskDuration(logs string) float64 {
 }
 
 func IsCI() bool {
-	if _, ok := os.LookupEnv("CI"); ok {
-		return true
-	}
-
 	return len(guessCI()) > 0
 }
 
@@ -108,6 +104,10 @@ func guessCI() string {
 
 	if _, ok := os.LookupEnv("TF_BUILD"); ok {
 		return "azure"
+	}
+
+	if _, ok := os.LookupEnv("CI"); ok {
+		return "unknown"
 	}
 
 	return ""
