@@ -38,7 +38,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 	}
 
 	for _, id := range lst {
-		logrus.Info(id)
+		logrus.Info(id.Long())
 	}
 
 	return nil
