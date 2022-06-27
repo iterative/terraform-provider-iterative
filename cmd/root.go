@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -83,8 +82,10 @@ func New() *cobra.Command {
 	viper.SetEnvPrefix("task")
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Reading configuration from", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			logrus.Errorf("error reading configuration from %s: %s", viper.ConfigFileUsed(), err.Error())
+		}
 	}
 
 	// https://github.com/spf13/viper/issues/1350; should be done using viper.Sub("resource.0...")

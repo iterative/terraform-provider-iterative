@@ -102,6 +102,14 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 
 	id := common.NewRandomIdentifier()
 
+	if o.Name != "" {
+		if identifier, err := common.ParseIdentifier(o.Name); err == nil {
+			id = identifier
+		} else {
+			id = common.NewIdentifier(o.Name)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Create)
 	defer cancel()
 
