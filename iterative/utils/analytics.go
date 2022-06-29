@@ -115,27 +115,24 @@ func guessCI() string {
 	return ""
 }
 
-func TerraformVersion() string {
+func TerraformVersion() (string, error) {
 	var out bytes.Buffer
 	cmd := exec.Command("terraform", "--version")
 	cmd.Stdout = &out
 
 	err := cmd.Run()
-
-	if err == nil {
-		regex := regexp.MustCompile(`v\d+\.\d+\.\d+`)
-		version := regex.FindString(out.String())
-		return version
-	} else {
-		logrus.Error("Analytics: Failed extracting terraform version")
+	if err != nil {
+		return "", err
 	}
 
-	return ""
+	regex := regexp.MustCompile(`v\d+\.\d+\.\d+`)
+	version := regex.FindString(out.String())
+	return version, nil
 }
 
-func GroupId() string {
+func GroupId() (string, error) {
 	if !IsCI() {
-		return ""
+		return "", nil
 	}
 
 	rawId := "CI"
@@ -155,13 +152,13 @@ func GroupId() string {
 
 	id, err := deterministic(rawId)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return id.String()
+	return id.String(), nil
 }
 
-func UserId() string {
+func UserId() (string, error) {
 	if IsCI() {
 		ci := guessCI()
 		var rawId string
@@ -170,7 +167,7 @@ func UserId() string {
 			client := github.NewClient(nil)
 			user, _, err := client.Users.Get(context.Background(), os.Getenv("GITHUB_ACTOR"))
 			if err != nil {
-				return ""
+				return "", err
 			}
 			name := ""
 			if user.Name != nil {
@@ -192,7 +189,7 @@ func UserId() string {
 
 			err := cmd.Run()
 			if err != nil {
-				return ""
+				return "", err
 			}
 
 			rawId = out.String()
@@ -200,10 +197,10 @@ func UserId() string {
 
 		id, err := deterministic(rawId)
 		if err != nil {
-			return ""
+			return "", err
 		}
 
-		return id.String()
+		return id.String(), nil
 	}
 
 	id := uuid.New().String()
@@ -216,21 +213,25 @@ func UserId() string {
 	if os.IsNotExist(errorNew) {
 		if !os.IsNotExist(errorOld) {
 			jsonFile, jsonErr := os.Open(old)
-
-			if jsonErr == nil {
-				byteValue, _ := ioutil.ReadAll(jsonFile)
-				var data map[string]interface{}
-				json.Unmarshal([]byte(byteValue), &data)
-				id = data["user_id"].(string)
-
-				defer jsonFile.Close()
+			if jsonErr != nil {
+				return "", jsonErr
 			}
+
+			byteValue, _ := ioutil.ReadAll(jsonFile)
+			var data map[string]interface{}
+			json.Unmarshal([]byte(byteValue), &data)
+			id = data["user_id"].(string)
+
+			defer jsonFile.Close()
 		}
 
 		os.MkdirAll(filepath.Dir(new), 0644)
 		ioutil.WriteFile(new, []byte(id), 0644)
 	} else {
-		dat, _ := ioutil.ReadFile(new)
+		dat, err := ioutil.ReadFile(new)
+		if err != nil {
+			return "", err
+		}
 		id = string(dat[:])
 	}
 
@@ -239,11 +240,14 @@ func UserId() string {
 		data := map[string]interface{}{
 			"user_id": id,
 		}
-		file, _ := json.MarshalIndent(data, "", " ")
+		file, err := json.MarshalIndent(data, "", " ")
+		if err != nil {
+			return "", err
+		}
 		ioutil.WriteFile(old, file, 0644)
 	}
 
-	return id
+	return id, nil
 }
 
 func ResourceData(d *schema.ResourceData) map[string]interface{} {
@@ -270,20 +274,35 @@ func ResourceData(d *schema.ResourceData) map[string]interface{} {
 	}
 }
 
-func JitsuEventPayload(action string, e error, extra map[string]interface{}) map[string]interface{} {
+func JitsuEventPayload(action string, e error, extra map[string]interface{}) (map[string]interface{}, error) {
 	systemInfo := SystemInfo()
-
-	extra["ci"] = guessCI()
-	extra["terraform_version"] = TerraformVersion()
 
 	err := ""
 	if e != nil {
 		err = reflect.TypeOf(e).String()
 	}
 
+	userId, uErr := UserId()
+	if uErr != nil {
+		return nil, uErr
+	}
+
+	groupId, gErr := GroupId()
+	if gErr != nil {
+		return nil, gErr
+	}
+
+	tfVer, tfVerErr := TerraformVersion()
+	if tfVerErr != nil {
+		return nil, tfVerErr
+	}
+
+	extra["ci"] = guessCI()
+	extra["terraform_version"] = tfVer
+
 	payload := map[string]interface{}{
-		"user_id":      UserId(),
-		"group_id":     GroupId(),
+		"user_id":      userId,
+		"group_id":     groupId,
 		"action":       action,
 		"interface":    "cli",
 		"tool_name":    "tpi",
@@ -296,7 +315,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) map
 		"extra":        extra,
 	}
 
-	return payload
+	return payload, nil
 }
 
 func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
@@ -307,7 +326,12 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		}
 	}
 
-	payload := JitsuEventPayload(action, e, extra)
+	payload, err := JitsuEventPayload(action, e, extra)
+	if err != nil {
+		logrus.Debugf("analytics: Failure generating Jitsu Event Payload; doing nothing")
+		return
+	}
+
 	if payload["user_id"] == "do-not-track" {
 		logrus.Debugf("analytics: user_id %s is set; doing nothing", payload["user_id"])
 		return
