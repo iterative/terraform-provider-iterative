@@ -37,7 +37,7 @@ func TestUserId(t *testing.T) {
 	}
 	json, _ := json.MarshalIndent(data, "", " ")
 
-	os.MkdirAll(filepath.Dir(old), 0644)
+	_ = os.MkdirAll(filepath.Dir(old), 0644)
 	_ = ioutil.WriteFile(old, json, 0644)
 
 	id, _ := UserId()

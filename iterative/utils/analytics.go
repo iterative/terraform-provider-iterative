@@ -217,16 +217,28 @@ func UserId() (string, error) {
 				return "", jsonErr
 			}
 
-			byteValue, _ := ioutil.ReadAll(jsonFile)
+			byteValue, err := ioutil.ReadAll(jsonFile)
+			if err != nil {
+				return "", err
+			}
 			var data map[string]interface{}
-			json.Unmarshal([]byte(byteValue), &data)
+			err = json.Unmarshal([]byte(byteValue), &data)
+			if err != nil {
+				return "", err
+			}
 			id = data["user_id"].(string)
 
 			defer jsonFile.Close()
 		}
 
-		os.MkdirAll(filepath.Dir(new), 0644)
-		ioutil.WriteFile(new, []byte(id), 0644)
+		err := os.MkdirAll(filepath.Dir(new), 0644)
+		if err != nil {
+			return "", err
+		}
+		err = ioutil.WriteFile(new, []byte(id), 0644)
+		if err != nil {
+			return "", err
+		}
 	} else {
 		dat, err := ioutil.ReadFile(new)
 		if err != nil {
@@ -236,7 +248,10 @@ func UserId() (string, error) {
 	}
 
 	if os.IsNotExist(errorOld) && id != "do-not-track" {
-		os.MkdirAll(filepath.Dir(old), 0644)
+		err := os.MkdirAll(filepath.Dir(old), 0644)
+		if err != nil {
+			return "", err
+		}
 		data := map[string]interface{}{
 			"user_id": id,
 		}
@@ -244,7 +259,10 @@ func UserId() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		ioutil.WriteFile(old, file, 0644)
+		err = ioutil.WriteFile(old, file, 0644)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return id, nil
