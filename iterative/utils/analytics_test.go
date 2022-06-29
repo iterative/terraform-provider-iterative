@@ -17,7 +17,7 @@ func TestVersion(t *testing.T) {
 }
 
 func TestTerraformVersion(t *testing.T) {
-	ver := TerraformVersion()
+	ver, _ := TerraformVersion()
 	assert.Equal(t, strings.HasPrefix(ver, "v"), true)
 }
 
@@ -40,7 +40,7 @@ func TestUserId(t *testing.T) {
 	os.MkdirAll(filepath.Dir(old), 0644)
 	_ = ioutil.WriteFile(old, json, 0644)
 
-	id := UserId()
+	id, _ := UserId()
 	assert.Equal(t, len(id) == 36, true)
 
 	if !IsCI() {
