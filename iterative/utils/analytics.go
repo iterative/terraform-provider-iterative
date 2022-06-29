@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -17,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/go-github/v45/github"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/shirou/gopsutil/host"
@@ -165,7 +167,17 @@ func UserId() string {
 		var rawId string
 
 		if ci == "github" {
-			rawId = os.Getenv("GITHUB_ACTOR")
+			client := github.NewClient(nil)
+			user, _, err := client.Users.Get(context.Background(), os.Getenv("GITHUB_ACTOR"))
+			if err != nil {
+				return ""
+			}
+			name := ""
+			if user.Name != nil {
+				name = *user.Name
+			}
+
+			rawId = fmt.Sprintf("%s %s %d", name, *user.Login, *user.ID)
 		} else if ci == "gitlab" {
 			rawId = fmt.Sprintf("%s %s %s",
 				os.Getenv("GITLAB_USER_NAME"),
