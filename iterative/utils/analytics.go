@@ -222,7 +222,7 @@ func UserId() string {
 		id = string(dat[:])
 	}
 
-	if os.IsNotExist(errorOld) {
+	if os.IsNotExist(errorOld) && id != "do-not-track" {
 		os.MkdirAll(filepath.Dir(old), 0644)
 		data := map[string]interface{}{
 			"user_id": id,
