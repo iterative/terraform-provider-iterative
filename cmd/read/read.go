@@ -13,6 +13,7 @@ import (
 )
 
 type Options struct {
+	Parallelism   int
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -27,6 +28,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 			return o.Run(cmd, args, cloud)
 		},
 	}
+
+	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
 
 	return cmd
 }
@@ -72,8 +75,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 	}
 
 	for index, log := range logs {
-		prefix := fmt.Sprintf("\n\x1b[%dmLOG %d >> ", 35, index)
-		logrus.Info(strings.Trim(strings.ReplaceAll("\n"+strings.Trim(log, "\n"), "\n", prefix), "\n"))
+		for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
+			logrus.Infof("\x1b[%dmLOG %d >> %s", 35, index, line)
+		}
 	}
 
 	status, err := tsk.Status(ctx)
@@ -81,16 +85,15 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	parallelism := 1 // FIXME: hardcoded
 	message := fmt.Sprintf("\x1b[%dmStatus: queued \x1b[1m•\x1b[0m", 34)
 
-	if status["succeeded"] >= parallelism {
+	if status["succeeded"] >= o.Parallelism {
 		message = fmt.Sprintf("\x1b[%dmStatus: completed successfully \x1b[1m•\x1b[0m", 32)
 	}
 	if status["failed"] > 0 {
 		message = fmt.Sprintf("\x1b[%dmStatus: completed with errors \x1b[1m•\x1b[0m", 31)
 	}
-	if status["running"] >= parallelism {
+	if status["running"] >= o.Parallelism {
 		message = fmt.Sprintf("\x1b[%dmStatus: running \x1b[1m•\x1b[0m", 33)
 	}
 
