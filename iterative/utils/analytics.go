@@ -355,7 +355,7 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		return
 	}
 
-	go send(payload)
+	go send(payload) //nolint:errcheck
 	wg.Add(1)
 }
 
