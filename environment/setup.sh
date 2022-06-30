@@ -11,7 +11,7 @@ if [ ! -f "$FILE" ]; then
 
   sudo add-apt-repository universe -y
   sudo add-apt-repository ppa:git-core/ppa -y
-  sudo apt update && sudo apt-get install -y software-properties-common build-essential git
+  sudo apt update && sudo apt-get install -y software-properties-common build-essential git acpid
 
   sudo curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
   sudo usermod -aG docker ubuntu
