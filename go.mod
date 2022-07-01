@@ -25,11 +25,14 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-github/v42 v42.0.0
+	github.com/google/go-github/v45 v45.2.0
+	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-getter v1.5.11 // indirect
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
 	github.com/rclone/rclone v1.57.0
 	github.com/sebdah/goldie/v2 v2.5.3
+	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
@@ -38,6 +41,11 @@ require (
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	google.golang.org/api v0.74.0
+	github.com/wessie/appdirs v0.0.0-20141031215813-6573e894f8e2
+	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
+	google.golang.org/api v0.54.0
 	gopkg.in/alessio/shellescape.v1 v1.0.0-20170105083845-52074bc9df61
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
