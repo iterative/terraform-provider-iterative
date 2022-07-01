@@ -11,6 +11,25 @@ import (
 	"terraform-provider-iterative/task/gcp/client"
 )
 
+func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+	ids := []common.Identifier{}
+
+	page := func(buckets *storage.Buckets) error {
+		for _, bucket := range buckets.Items {
+			if id, err := common.ParseIdentifier(bucket.Name); err == nil {
+				ids = append(ids, id)
+			}
+		}
+		return nil
+	}
+
+	if err := client.Services.Storage.Buckets.List(client.Credentials.ProjectID).Pages(ctx, page); err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
 func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
 	b := new(Bucket)
 	b.Client = client

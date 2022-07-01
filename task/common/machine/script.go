@@ -46,8 +46,9 @@ source /opt/task/credentials
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
-(systemctl is-system-running | grep stopping) || tpi --stop;
+(systemctl is-system-running | grep stopping) || tpi stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
 END
+
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
 base64 --decode << END | sudo tee /opt/task/variables > /dev/null

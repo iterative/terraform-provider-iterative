@@ -11,6 +11,24 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+func ListResourceGroups(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+	ids := []common.Identifier{}
+
+	for page, err := client.Services.Groups.List(ctx, "", nil); page.NotDone(); err = page.Next() {
+		if err != nil {
+			return nil, err
+		}
+
+		for _, group := range page.Values() {
+			if id, err := common.ParseIdentifier(*group.Name); err == nil {
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	return ids, nil
+}
+
 func NewResourceGroup(client *client.Client, identifier common.Identifier) *ResourceGroup {
 	r := new(ResourceGroup)
 	r.Client = client

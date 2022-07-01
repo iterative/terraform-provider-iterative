@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -13,18 +14,32 @@ import (
 
 type Identifier string
 
+var ErrWrongIdentifier = errors.New("wrong identifier")
+
 const (
 	maximumLongLength = 50
 	shortLength       = 16
 )
 
-func (i Identifier) Long() string {
+func ParseIdentifier(identifier string) (Identifier, error) {
 	re := regexp.MustCompile(`(?s)^tpi-([a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)-([a-z0-9]+)-([a-z0-9]+)$`)
 
-	if match := re.FindStringSubmatch(string(i)); len(match) > 0 && hash(match[1]+match[2], shortLength/2) == match[3] {
-		return match[0]
+	if match := re.FindStringSubmatch(string(identifier)); len(match) > 0 && hash(match[1]+match[2], shortLength/2) == match[3] {
+		return Identifier(match[1]), nil
 	}
 
+	return Identifier(""), ErrWrongIdentifier
+}
+
+func NewIdentifier(identifier string) Identifier {
+	return Identifier(identifier)
+}
+
+func NewRandomIdentifier() Identifier {
+	return NewIdentifier(uid.NewProvider36Size(8).MustGenerate().String())
+}
+
+func (i Identifier) Long() string {
 	name := normalize(string(i), maximumLongLength-shortLength-uint32(len("tpi---")))
 	digest := hash(string(i), shortLength/2)
 
