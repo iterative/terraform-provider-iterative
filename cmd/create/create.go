@@ -95,19 +95,17 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		Parallelism: uint16(1),
 	}
 
+	cfg.Spot = common.Spot(common.SpotDisabled)
 	if o.Spot {
 		cfg.Spot = common.Spot(common.SpotEnabled)
-	} else {
-		cfg.Spot = common.Spot(common.SpotDisabled)
 	}
 
 	id := common.NewRandomIdentifier()
 
 	if o.Name != "" {
+		id = common.NewIdentifier(o.Name)
 		if identifier, err := common.ParseIdentifier(o.Name); err == nil {
 			id = identifier
-		} else {
-			id = common.NewIdentifier(o.Name)
 		}
 	}
 
