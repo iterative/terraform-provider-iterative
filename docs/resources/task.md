@@ -18,7 +18,7 @@ resource "iterative_task" "example" {
   disk_size   = -1        # GB. Default -1 for automatic
   spot        = 0         # auto-price. Default -1 to disable, or >0 for hourly USD limit
   parallelism = 1
-  timeout     = 24*60*60  # max 24h before forced termination
+  timeout     = 86400     # max 24h before forced termination
 
   environment = { GREETING = "Hello, world!" }
   storage {

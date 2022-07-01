@@ -12,6 +12,22 @@ import (
 	"terraform-provider-iterative/task/k8s/client"
 )
 
+func ListConfigMaps(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+	cmaps, err := client.Services.Core.ConfigMaps(client.Namespace).List(ctx, kubernetes_meta.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	ids := []common.Identifier{}
+	for _, cmap := range cmaps.Items {
+		if id, err := common.ParseIdentifier(cmap.ObjectMeta.Name); err == nil {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids, nil
+}
+
 func NewConfigMap(client *client.Client, identifier common.Identifier, data map[string]string) *ConfigMap {
 	c := new(ConfigMap)
 	c.Client = client

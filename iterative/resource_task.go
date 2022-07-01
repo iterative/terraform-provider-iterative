@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aohorodnyk/uid"
 	"github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -369,22 +368,26 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		PermissionSet: d.Get("permission_set").(string),
 	}
 
-	name := d.Id()
-	if name == "" {
-		if identifier := d.Get("name").(string); identifier != "" {
-			name = identifier
-		} else if identifier := os.Getenv("GITHUB_RUN_ID"); identifier != "" {
-			name = identifier
-		} else if identifier := os.Getenv("CI_PIPELINE_ID"); identifier != "" {
-			name = identifier
-		} else if identifier := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); identifier != "" {
-			name = identifier
+	id, err := common.ParseIdentifier(d.Id())
+	if err != nil {
+		if name := d.Get("name").(string); name != "" {
+			if newId, err := common.ParseIdentifier(name); err == nil {
+				id = newId
+			} else {
+				id = common.NewIdentifier(name)
+			}
+		} else if name := os.Getenv("GITHUB_RUN_ID"); name != "" {
+			id = common.NewIdentifier(name)
+		} else if name := os.Getenv("CI_PIPELINE_ID"); name != "" {
+			id = common.NewIdentifier(name)
+		} else if name := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); name != "" {
+			id = common.NewIdentifier(name)
 		} else {
-			name = uid.NewProvider36Size(8).MustGenerate().String()
+			id = common.NewRandomIdentifier()
 		}
 	}
 
-	return task.New(ctx, c, common.Identifier(name), t)
+	return task.New(ctx, c, id, t)
 }
 
 func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.Diagnostics {

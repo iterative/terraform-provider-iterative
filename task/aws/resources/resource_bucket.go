@@ -14,6 +14,22 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
+	output, err := client.Services.S3.ListBuckets(ctx, &s3.ListBucketsInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	ids := []common.Identifier{}
+	for _, b := range output.Buckets {
+		if id, err := common.ParseIdentifier(*b.Name); err == nil {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids, nil
+}
+
 func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
 	b := new(Bucket)
 	b.Client = client
