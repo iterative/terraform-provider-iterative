@@ -1,15 +1,16 @@
 #!/bin/sh
 sudo systemctl is-enabled cml.service && return 0
+PS4='tpi:setup.sh: '
+set -x
+
+export DEBIAN_FRONTEND=noninteractive
+echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
+
+sudo apt remove unattended-upgrades
+systemctl disable apt-daily-upgrade.service
+  
 FILE=/var/log/cml_stack.log
 if [ ! -f "$FILE" ]; then
-  export DEBIAN_FRONTEND=noninteractive
-  PS4='tpi:setup.sh: '
-  set -x
-  echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
-
-  sudo apt remove unattended-upgrades
-  systemctl disable apt-daily-upgrade.service
-
   sudo add-apt-repository universe -y
   sudo add-apt-repository ppa:git-core/ppa -y
   sudo apt update && sudo apt-get install -y software-properties-common build-essential git acpid
@@ -48,6 +49,8 @@ sudo tee /usr/bin/cml.sh << 'EOF'
 export AWS_SECRET_ACCESS_KEY='0 value with "quotes" and spaces'
 export AWS_ACCESS_KEY_ID='1 value with "quotes" and spaces'
 export AWS_SESSION_TOKEN='2 value with "quotes" and spaces'
+
+while test -f /var/lib/dpkg/lock; do sleep 1; done
 
 HOME="$(mktemp -d)" exec $(which cml-runner || echo $(which cml-internal || echo cml) runner) \
    --name '10 value with "quotes" and spaces' \
