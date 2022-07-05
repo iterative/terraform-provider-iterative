@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "extensions": ["hashicorp.terraform", "golang.Go"],
+  "extensions": ["golang.Go", "hashicorp.terraform"],
   "postCreateCommand": "for tool in packer_1.8.2 terraform_1.2.4; do curl https://releases.hashicorp.com/${tool%_*}/${tool#*_}/${tool}_linux_amd64.zip | zcat | dd of=/usr/bin/${tool%_*} && chmod 755 /usr/bin/${tool%_*}; done",
   "image": "mcr.microsoft.com/vscode/devcontainers/go:1",
   "hostRequirements": {
