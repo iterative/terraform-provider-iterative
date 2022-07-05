@@ -49,7 +49,7 @@ sudo tee /usr/bin/cml.sh << 'EOF'
 export GOOGLE_APPLICATION_CREDENTIALS_DATA=''
 export CML_GCP_ACCESS_TOKEN=''
 
-while lsof /var/lib/dpkg/lock; do sleep 1; done
+while ! lsof /var/lib/dpkg/lock; do sleep 1; done
 
 HOME="$(mktemp -d)" exec $(which cml-runner || echo $(which cml-internal || echo cml) runner) \
    --name '10 value with "quotes" and spaces' \
