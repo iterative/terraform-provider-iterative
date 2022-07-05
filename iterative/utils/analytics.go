@@ -158,6 +158,47 @@ func GroupId() (string, error) {
 	return id.String(), nil
 }
 
+func readId(fname string) (string, error) {
+	jsonFile, jsonErr := os.Open(fname)
+	if jsonErr != nil {
+		return "", jsonErr
+	}
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return "", err
+	}
+	var data map[string]interface{}
+	err = json.Unmarshal([]byte(byteValue), &data)
+	if err != nil {
+		return "", err
+	}
+	id := data["user_id"].(string)
+
+	defer jsonFile.Close()
+
+	return id, nil
+}
+
+func writeId(fname string, id string) (error) {
+	err := os.MkdirAll(filepath.Dir(fname), 0644)
+	if err != nil {
+		return err
+	}
+	data := map[string]interface{}{
+		"user_id": id,
+	}
+	file, err := json.MarshalIndent(data, "", " ")
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(fname, file, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func UserId() (string, error) {
 	if IsCI() {
 		ci := guessCI()
@@ -212,54 +253,29 @@ func UserId() (string, error) {
 
 	if os.IsNotExist(errorNew) {
 		if !os.IsNotExist(errorOld) {
-			jsonFile, jsonErr := os.Open(old)
-			if jsonErr != nil {
-				return "", jsonErr
-			}
-
-			byteValue, err := ioutil.ReadAll(jsonFile)
+			id, err := readId(old)
 			if err != nil {
 				return "", err
 			}
-			var data map[string]interface{}
-			err = json.Unmarshal([]byte(byteValue), &data)
-			if err != nil {
-				return "", err
-			}
-			id = data["user_id"].(string)
-
-			defer jsonFile.Close()
 		}
 
 		err := os.MkdirAll(filepath.Dir(new), 0644)
 		if err != nil {
 			return "", err
 		}
-		err = ioutil.WriteFile(new, []byte(id), 0644)
+		err = writeId(new, id)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		dat, err := ioutil.ReadFile(new)
+		id, err := readId(new)
 		if err != nil {
 			return "", err
 		}
-		id = string(dat[:])
 	}
 
 	if os.IsNotExist(errorOld) && id != "do-not-track" {
-		err := os.MkdirAll(filepath.Dir(old), 0644)
-		if err != nil {
-			return "", err
-		}
-		data := map[string]interface{}{
-			"user_id": id,
-		}
-		file, err := json.MarshalIndent(data, "", " ")
-		if err != nil {
-			return "", err
-		}
-		err = ioutil.WriteFile(old, file, 0644)
+		err := writeId(old, id)
 		if err != nil {
 			return "", err
 		}
