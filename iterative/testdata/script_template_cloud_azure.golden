@@ -51,7 +51,7 @@ export AZURE_CLIENT_SECRET='4 value with "quotes" and spaces'
 export AZURE_SUBSCRIPTION_ID='5 value with "quotes" and spaces'
 export AZURE_TENANT_ID='6 value with "quotes" and spaces'
 
-while test -f /var/lib/dpkg/lock; do sleep 1; done
+while ! lsof /var/lib/dpkg/lock; do sleep 1; done
 
 HOME="$(mktemp -d)" exec $(which cml-runner || echo $(which cml-internal || echo cml) runner) \
    --name '10 value with "quotes" and spaces' \
