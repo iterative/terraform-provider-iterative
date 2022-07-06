@@ -47,21 +47,21 @@ func getenv(key, defaultValue string) string {
 	return value
 }
 
-func deterministic(data string) (*uuid.UUID, error) {
+func deterministic(data string) (string, error) {
 	ns := uuid.NewSHA1(uuid.NameSpaceDNS, []byte("iterative.ai"))
 
 	seed, err := ns.MarshalBinary()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	dk, err := scrypt.Key([]byte(data), seed, 1<<16, 8, 1, 8)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	id := uuid.NewSHA1(ns, []byte(hex.EncodeToString(dk)))
-	return &id, nil
+	return id.String(), nil
 }
 
 func SystemInfo() map[string]interface{} {
@@ -155,7 +155,7 @@ func GroupId() (string, error) {
 		return "", err
 	}
 
-	return id.String(), nil
+	return id, nil
 }
 
 func readId(path string) (string, error) {
@@ -169,17 +169,17 @@ func readId(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	var data map[string]interface{}
-	
+
 	if err := json.Unmarshal([]byte(bytes), &data); err != nil {
 		return "", err
 	}
-	
+
 	if id, ok := data["user_id"].(string); ok {
 		return id, nil
 	}
-	
+
 	return "", errors.New("user_id not found or not a string")
 }
 
@@ -187,18 +187,20 @@ func writeId(path string, id string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
 		return err
 	}
-	
+
 	data := map[string]string{"user_id": id}
-	
+
 	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
-	
+
 	return ioutil.WriteFile(path, bytes, 0644)
 }
 
 func UserId() (string, error) {
+	var id string
+	var err error
 	if IsCI() {
 		ci := guessCI()
 		var rawId string
@@ -240,10 +242,10 @@ func UserId() (string, error) {
 			return "", err
 		}
 
-		return id.String(), nil
+		return id, nil
 	}
 
-	id := uuid.New().String()
+	id = uuid.New().String()
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
 	_, errorOld := os.Stat(old)
 
@@ -252,7 +254,7 @@ func UserId() (string, error) {
 
 	if os.IsNotExist(errorNew) {
 		if !os.IsNotExist(errorOld) {
-			id, err := readId(old)
+			id, err = readId(old)
 			if err != nil {
 				return "", err
 			}
@@ -267,7 +269,7 @@ func UserId() (string, error) {
 			return "", err
 		}
 	} else {
-		id, err := readId(new)
+		id, err = readId(new)
 		if err != nil {
 			return "", err
 		}
