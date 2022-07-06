@@ -163,6 +163,7 @@ func readId(fname string) (string, error) {
 	if jsonErr != nil {
 		return "", jsonErr
 	}
+	defer jsonFile.Close()
 
 	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
@@ -174,8 +175,6 @@ func readId(fname string) (string, error) {
 		return "", err
 	}
 	id := data["user_id"].(string)
-
-	defer jsonFile.Close()
 
 	return id, nil
 }
