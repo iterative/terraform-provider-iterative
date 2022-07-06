@@ -343,6 +343,8 @@ export KUBERNETES_CONFIGURATION={{escape .KUBERNETES_CONFIGURATION}}
 {{- end}}
 {{- end}}
 
+while lsof /var/lib/dpkg/lock; do sleep 1; done
+
 {{- if .runner_startup_script}}
 {{.runner_startup_script}}
 {{- end}}

@@ -1,14 +1,15 @@
 #/bin/sh
+PS4='tpi:setup.sh: '
+set -x
+
+export DEBIAN_FRONTEND=noninteractive
+echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
+
+sudo apt remove unattended-upgrades
+systemctl disable apt-daily-upgrade.service
+  
 FILE=/var/log/cml_stack.log
 if [ ! -f "$FILE" ]; then
-  export DEBIAN_FRONTEND=noninteractive
-  PS4='tpi:setup.sh: '
-  set -x
-  echo "APT::Get::Assume-Yes \"true\";" | sudo tee -a /etc/apt/apt.conf.d/90assumeyes
-
-  sudo apt remove unattended-upgrades
-  systemctl disable apt-daily-upgrade.service
-
   sudo add-apt-repository universe -y
   sudo add-apt-repository ppa:git-core/ppa -y
   sudo apt update && sudo apt-get install -y software-properties-common build-essential git acpid
