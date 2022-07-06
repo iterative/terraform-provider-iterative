@@ -14,7 +14,7 @@ variables {
 
 variables {
   aws_build_region       = "us-west-1"
-  aws_build_instance     = "g2.2xlarge"
+  aws_build_instance     = "g4dn.xlarge"
   aws_build_ubuntu_image = "*ubuntu-*-18.04-amd64-server-*"
 }
 
