@@ -1,7 +1,8 @@
 {
   "name": "terraform",
-  "extensions": ["hashicorp.terraform"],
-  "postCreateCommand": "/bin/bash -c 'curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - && sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\" && sudo apt-get update && sudo apt-get install packer terraform'",
+  "extensions": ["golang.Go", "hashicorp.terraform"],
+  "postCreateCommand": "for tool in packer_1.8.2 terraform_1.2.4; do curl https://releases.hashicorp.com/${tool%_*}/${tool#*_}/${tool}_linux_amd64.zip | zcat | dd of=/usr/bin/${tool%_*} && chmod 755 /usr/bin/${tool%_*} & done; wait",
+  "image": "mcr.microsoft.com/vscode/devcontainers/go:1",
   "hostRequirements": {
      "cpus": 4,
      "memory": "8gb",
