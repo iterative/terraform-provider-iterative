@@ -158,44 +158,44 @@ func GroupId() (string, error) {
 	return id.String(), nil
 }
 
-func readId(fname string) (string, error) {
-	jsonFile, jsonErr := os.Open(fname)
-	if jsonErr != nil {
-		return "", jsonErr
+func readId(path string) (string, error) {
+	file, err := os.Open(path)
+	if file != nil {
+		return "", err
 	}
-	defer jsonFile.Close()
+	defer file.Close()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		return "", err
 	}
+	
 	var data map[string]interface{}
-	err = json.Unmarshal([]byte(byteValue), &data)
-	if err != nil {
+	
+	if err := json.Unmarshal([]byte(bytes), &data); err != nil {
 		return "", err
 	}
-	id := data["user_id"].(string)
-
-	return id, nil
+	
+	if id, ok := data["user_id"].(string); ok {
+		return id, nil
+	}
+	
+	return "", errors.New("user_id not found or not a string")
 }
 
-func writeId(fname string, id string) (error) {
-	err := os.MkdirAll(filepath.Dir(fname), 0644)
+func writeId(path string, id string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
+		return err
+	}
+	
+	data := map[string]string{"user_id": id}
+	
+	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
-	data := map[string]interface{}{
-		"user_id": id,
-	}
-	file, err := json.MarshalIndent(data, "", " ")
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(fname, file, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+	
+	return ioutil.WriteFile(path, bytes, 0644)
 }
 
 func UserId() (string, error) {
