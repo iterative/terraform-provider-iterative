@@ -14,6 +14,7 @@ import (
 
 	"terraform-provider-iterative/cmd/create"
 	"terraform-provider-iterative/cmd/delete"
+	"terraform-provider-iterative/cmd/fakecs"
 	"terraform-provider-iterative/cmd/list"
 	"terraform-provider-iterative/cmd/read"
 	"terraform-provider-iterative/cmd/stop"
@@ -58,6 +59,7 @@ func New() *cobra.Command {
 	cmd.AddCommand(list.New(&o.Cloud))
 	cmd.AddCommand(read.New(&o.Cloud))
 	cmd.AddCommand(stop.New(&o.Cloud))
+	cmd.AddCommand(fakecs.New(&o.Cloud))
 
 	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
 	cmd.PersistentFlags().StringVar(&o.Log, "log", "info", "log level")
