@@ -4,6 +4,8 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -123,7 +125,29 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		}
 		return err
 	}
-	//fmt.Println(o.Script)
 	fmt.Println(id.Long())
+	for i := 0; i < 5; i++ {
+		logrus.Info("waiting 30s")
+		time.Sleep(30 * time.Second)
+		if err := tsk.Read(ctx); err != nil {
+			logrus.Warn("Failed to read task")
+			return err
+		}
+		logs, _ := tsk.Logs(ctx)
+		for _, log := range logs {
+			for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
+				temp := line[20:]
+				if temp == "***READY***" {
+					// exec code --remote ssh-remote+ubuntu@${iterative_task.vscode.addresses[0]} /home/ubuntu/magnetic-tiles-defect"
+					fmt.Println("running: ", fmt.Sprintf("code --remote ssh-remote+ubuntu@%s /home/ubuntu/cml", tsk.GetAddresses(ctx)[0]))
+					cmd := exec.Command("code", "--remote", fmt.Sprintf("ssh-remote+ubuntu@%s", tsk.GetAddresses(ctx)[0]), "/home/ubuntu/cml")
+					err := cmd.Run()
+					fmt.Println(id.Long())
+					return err
+				}
+			}
+		}
+		fmt.Println("not ready")
+	}
 	return nil
 }
