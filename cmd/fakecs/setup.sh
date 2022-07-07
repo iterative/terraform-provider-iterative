@@ -62,8 +62,8 @@ echo "$GITHUB_PAT" | gh auth login --hostname github.com --with-token
 gh auth setup-git
 
 # Clone repo
-git clone https://github.com/iterative/cml.git
-cd cml
+git clone https://github.com/GIT_ORG/GIT_REPO.git
+cd GIT_REPO
 
 if [ ! -e ".devcontainer.json" ]; then
     echo "found dev container, use that."

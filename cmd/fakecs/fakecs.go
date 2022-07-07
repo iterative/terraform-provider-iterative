@@ -32,6 +32,7 @@ type Options struct {
 	Tags          map[string]string
 	Timeout       int
 	Workdir       string
+	Repo          string
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -60,6 +61,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 			return o.Run(cmd, args, cloud)
 		},
 	}
+	cmd.Flags().StringVar(&o.Repo, "repo", "iterative/cml", "GitHub repo to clone")
 
 	return cmd
 }
@@ -72,7 +74,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 			variables[name] = &value
 		}
 	}
-
+	gitOrg := strings.Split(o.Repo, "/")[0]
+	gitRepo := strings.Split(o.Repo, "/")[1]
+	script := strings.ReplaceAll(strings.ReplaceAll(SetupScript, "GIT_ORG", gitOrg), "GIT_REPO", gitRepo)
 	cfg := common.Task{
 		Size: common.Size{
 			Machine: o.Machine,
@@ -80,7 +84,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		},
 		Environment: common.Environment{
 			Image:        o.Image,
-			Script:       o.Script,
+			Script:       script,
 			Variables:    variables,
 			Directory:    o.Workdir,
 			DirectoryOut: o.Output,
@@ -139,8 +143,8 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 				temp := line[20:]
 				if temp == "***READY***" {
 					// exec code --remote ssh-remote+ubuntu@${iterative_task.vscode.addresses[0]} /home/ubuntu/magnetic-tiles-defect"
-					fmt.Println("running: ", fmt.Sprintf("code --remote ssh-remote+ubuntu@%s /home/ubuntu/cml", tsk.GetAddresses(ctx)[0]))
-					cmd := exec.Command("code", "--remote", fmt.Sprintf("ssh-remote+ubuntu@%s", tsk.GetAddresses(ctx)[0]), "/home/ubuntu/cml")
+					fmt.Println("running: ", fmt.Sprintf("code --remote ssh-remote+ubuntu@%s /home/ubuntu/%s", tsk.GetAddresses(ctx)[0], gitRepo))
+					cmd := exec.Command("code", "--remote", fmt.Sprintf("ssh-remote+ubuntu@%s", tsk.GetAddresses(ctx)[0]), fmt.Sprintf("/home/ubuntu/%s", gitRepo))
 					err := cmd.Run()
 					fmt.Println(id.Long())
 					return err
