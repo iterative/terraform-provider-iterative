@@ -45,7 +45,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 		Name:          "",
 		Output:        "",
 		Parallelism:   1,
-		PermissionSet: "",
+		PermissionSet: "arn:aws:iam::342840881361:instance-profile/tpi-vscode-example",
 		Script:        SetupScript,
 		Spot:          false,
 		Storage:       -1,
@@ -95,7 +95,8 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 				Ports: &[]uint16{22},
 			},
 		},
-		Parallelism: uint16(1),
+		Parallelism:   uint16(1),
+		PermissionSet: o.PermissionSet,
 	}
 
 	cfg.Spot = common.Spot(common.SpotDisabled)
