@@ -131,7 +131,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 	fmt.Println(id.Long())
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 8; i++ {
 		logrus.Info("waiting 30s")
 		time.Sleep(30 * time.Second)
 		if err := tsk.Read(ctx); err != nil {

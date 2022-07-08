@@ -48,11 +48,13 @@ gh_email=$(echo "$gh_user_json" | jq .email | tr -d \")
 curl "https://github.com/$gh_username.keys" >> "/home/ubuntu/.ssh/authorized_keys"
 
 # basic reqs
-apt-get install -y build-essential python-is-python3 python3-pip python3-virtualenv virtualenv pipenv nvtop > main_apt_install.log
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+apt-get install -y build-essential python-is-python3 python3-pip pipenv nvtop > main_apt_install.log
 # change user
 su - ubuntu <<EOS
 cd ~
+# install poetry here
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
 # basic git setup from GitHub user/email
 git config --global user.name "$gh_name"
 git config --global user.email "$gh_email"
