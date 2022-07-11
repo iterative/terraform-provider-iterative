@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -252,8 +253,8 @@ func UserId() (string, error) {
 	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 	_, errorNew := os.Stat(new)
 
-	if os.IsNotExist(errorNew) {
-		if !os.IsNotExist(errorOld) {
+	if errors.Is(errorNew, fs.ErrNotExist) {
+		if !errors.Is(errorOld, fs.ErrNotExist) {
 			id, err = readId(old)
 			if err != nil {
 				return "", err
