@@ -48,7 +48,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 		PermissionSet: "arn:aws:iam::342840881361:instance-profile/tpi-vscode-example",
 		Script:        SetupScript,
 		Spot:          false,
-		Storage:       -1,
+		Storage:       100,
 		Timeout:       24 * 60 * 60,
 		Workdir:       "",
 	}
