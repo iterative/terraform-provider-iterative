@@ -174,7 +174,12 @@ func readId(path string) (string, error) {
 	var data map[string]interface{}
 
 	if err := json.Unmarshal([]byte(bytes), &data); err != nil {
-		return "", err
+		uid, uidError := uuid.FromBytes(bytes)
+		if uidError != nil {
+			return "", fmt.Errorf("failed parsing user_id as json and plaintext: %w", uidError)
+		}
+		logrus.Tracef("found old format telemtry uid, json err: %w", err)
+		return uid.String(), nil
 	}
 
 	if id, ok := data["user_id"].(string); ok {
