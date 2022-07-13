@@ -178,7 +178,7 @@ func readId(path string) (string, error) {
 		if uidError != nil {
 			return "", fmt.Errorf("failed parsing user_id as json and plaintext: %w", uidError)
 		}
-		logrus.Tracef("found old format telemtry uid, json err: %w", err)
+		logrus.Traceln(fmt.Errorf("found old format telemtry uid, json err: %w", err))
 		return uid.String(), nil
 	}
 
