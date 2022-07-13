@@ -266,10 +266,6 @@ func UserId() (string, error) {
 			}
 		}
 
-		err := os.MkdirAll(filepath.Dir(new), 0644)
-		if err != nil {
-			return "", err
-		}
 		err = writeId(new, id)
 		if err != nil {
 			return "", err
