@@ -386,13 +386,13 @@ func send(event interface{}) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, getenv("TPI_ANALYTICS_ENDPOINT", Endpoint), bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, getenv("ITERATIVE_ANALYTICS_ENDPOINT", Endpoint), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Token", getenv("TPI_ANALYTICS_TOKEN", Token))
+	req.Header.Set("X-Auth-Token", getenv("ITERATIVE_ANALYTICS_TOKEN", Token))
 
 	client := &http.Client{Timeout: Timeout}
 	resp, err := client.Do(req)
