@@ -20,7 +20,7 @@ if [ ! -f "$FILE" ]; then
 
   get_ecr_helper="curl https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login --output /usr/bin/docker-credential-ecr-login"
   chmod_ecr_helper="chmod 755 /usr/bin/docker-credential-ecr-login"
-  sudo systemd-run --same-dir --no-block --service-type=exec bash -c "$get_ecr_helper && $chmod_ecr_helper"
+  sudo systemd-run --no-block bash -c "$get_ecr_helper && $chmod_ecr_helper"
 
   curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
   sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
