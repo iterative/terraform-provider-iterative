@@ -41,7 +41,7 @@ func NewRandomIdentifier() Identifier {
 
 func (i Identifier) Long() string {
 	name := normalize(string(i), maximumLongLength-shortLength-uint32(len("tpi---")))
-	digest := hash(string(i), shortLength/2)
+	digest := hash(name, shortLength/2)
 
 	return fmt.Sprintf("tpi-%s-%s-%s", name, digest, hash(name+digest, shortLength/2))
 }
