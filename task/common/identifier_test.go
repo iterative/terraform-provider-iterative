@@ -11,10 +11,11 @@ func TestIdentifier(t *testing.T) {
 	name := gofakeit.NewCrypto().Sentence(512)
 
 	t.Run("stability", func(t *testing.T) {
-		identifier := NewIdentifier(name)
+		identifierOne := NewIdentifier(name)
+		identifierTwo := NewIdentifier(name)
 
-		require.Equal(t, identifier.Long(), identifier.Long())
-		require.Equal(t, identifier.Short(), identifier.Short())
+		require.Equal(t, identifierOne.Long(), identifierTwo.Long())
+		require.Equal(t, identifierOne.Short(), identifierTwo.Short())
 	})
 
 	t.Run("homogeneity", func(t *testing.T) {
