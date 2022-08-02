@@ -9,13 +9,21 @@ import (
 
 func TestIdentifier(t *testing.T) {
 	name := gofakeit.NewCrypto().Sentence(512)
-
 	t.Run("stability", func(t *testing.T) {
 		identifierOne := NewIdentifier(name)
 		identifierTwo := NewIdentifier(name)
 
 		require.Equal(t, identifierOne.Long(), identifierTwo.Long())
 		require.Equal(t, identifierOne.Short(), identifierTwo.Short())
+	})
+
+	t.Run("consistent", func(t *testing.T) {
+		identifier := NewIdentifier("5299fe10-79e9-4c3b-b15e-036e8e60ab6c")
+		parsed, err := ParseIdentifier(identifier.Long())
+
+		require.NoError(t, err)
+		require.Equal(t, identifier.Long(), parsed.Long())
+		require.Equal(t, identifier.Short(), parsed.Short())
 	})
 
 	t.Run("homogeneity", func(t *testing.T) {
