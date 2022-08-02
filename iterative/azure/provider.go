@@ -29,6 +29,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	customData := d.Get("startup_script").(string)
 	region := GetRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
+	userAssignedIdentities := getUserAssignedIdentityMap(d.Get("instance_permission_set").(string))
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
 	spot := d.Get("spot").(bool)
@@ -199,7 +200,10 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	vmClient, _ := getVMClient(subscriptionID)
 	vmSettings := compute.VirtualMachine{
-		Tags:     metadata,
+		Tags: metadata,
+		Identity: &compute.VirtualMachineIdentity{
+			UserAssignedIdentities: userAssignedIdentities,
+		},
 		Location: to.StringPtr(region),
 		VirtualMachineProperties: &compute.VirtualMachineProperties{
 			HardwareProfile: &compute.HardwareProfile{
@@ -358,6 +362,27 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 	client.AddToUserAgent("iterative-provider")
 
 	return client, err
+}
+
+// getUserAssignedIdentityMap generates a map of user-assigned identity values from a comma-separated
+// list of ARM resource ids.
+func getUserAssignedIdentityMap(identitiesRaw string) map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue {
+	if len(strings.TrimSpace(identitiesRaw)) == 0 {
+		return nil
+	}
+	identities := strings.Split(identitiesRaw, ",")
+	identityMap := map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue{}
+	for _, identity := range identities {
+		identity = strings.TrimSpace(identity)
+		if len(identity) == 0 {
+			continue
+		}
+		identityMap[identity] = &compute.VirtualMachineIdentityUserAssignedIdentitiesValue{}
+	}
+	if len(identityMap) == 0 {
+		return nil
+	}
+	return identityMap
 }
 
 //GetRegion maps region to real cloud regions
