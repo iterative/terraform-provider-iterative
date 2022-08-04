@@ -50,7 +50,7 @@ func TestUserId(t *testing.T) {
 	if !IsCI() {
 		assert.Equal(t, userId, id)
 		_, err := os.Stat(new)
-		assert.True(t, !os.IsNotExist(err))
+		assert.False(t, os.IsNotExist(err))
 	}
 }
 
