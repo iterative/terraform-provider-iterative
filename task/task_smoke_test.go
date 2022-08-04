@@ -1,4 +1,4 @@
-//go:build smoke_tests
+//go:build smoke
 
 package task
 
@@ -19,7 +19,9 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func TestTaskSmokeTest(t *testing.T) {
+// TestTaskSmoke runs smoke tests with specified infrastructure providers.
+// Cloud provider access credentials (provided as environment variables) are required.
+func TestTaskSmoke(t *testing.T) {
 	testName := os.Getenv("SMOKE_TEST_IDENTIFIER")
 	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
 
