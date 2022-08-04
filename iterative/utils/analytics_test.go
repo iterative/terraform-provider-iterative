@@ -39,17 +39,16 @@ func TestUserId(t *testing.T) {
 	}
 	json, _ := json.MarshalIndent(data, "", " ")
 	err := os.MkdirAll(filepath.Dir(old), 0755)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	err = ioutil.WriteFile(old, json, 0644)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	id, err := UserId()
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, id, 36)
 
 	if !IsCI() {
 		assert.Equal(t, userId, id)
-
 		_, err := os.Stat(new)
 		assert.True(t, !os.IsNotExist(err))
 	}
