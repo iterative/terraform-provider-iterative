@@ -18,7 +18,7 @@ test:
 	go test ./... ${TESTARGS} -timeout=30s -parallel=4 -short
 
 smoke:
-	go test ./task -v ${TESTARGS} -timeout=30m -count=1
+	go test ./task -v ${TESTARGS} -timeout=30m -count=1 -tags=smoke_tests
 
 sweep:
 	SMOKE_TEST_SWEEP=true go test ./task -v ${TESTARGS} -timeout=30m -count=1

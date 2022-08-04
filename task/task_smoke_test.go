@@ -1,3 +1,5 @@
+//go:build smoke_tests
+
 package task
 
 import (
@@ -17,7 +19,7 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func TestTask(t *testing.T) {
+func TestTaskSmokeTest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("go test -short detected, skipping smoke tests")
 	}
