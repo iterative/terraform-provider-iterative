@@ -20,10 +20,6 @@ import (
 )
 
 func TestTaskSmokeTest(t *testing.T) {
-	if testing.Short() {
-		t.Skip("go test -short detected, skipping smoke tests")
-	}
-
 	testName := os.Getenv("SMOKE_TEST_IDENTIFIER")
 	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
 
