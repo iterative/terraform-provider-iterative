@@ -190,7 +190,7 @@ func readId(path string) (string, error) {
 }
 
 func writeId(path string, id string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
