@@ -45,7 +45,7 @@ func TestIdentifier(t *testing.T) {
 		require.Equal(t, "3z4xlzwq3u0vweb4", identifier.Short())
 
 		parsed, err := ParseIdentifier(identifier.Long())
-		require.Equal(t, parsed, identifier)
 		require.NoError(t, err)
+		require.Equal(t, parsed, identifier)
 	})
 }
