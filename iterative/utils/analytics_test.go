@@ -13,12 +13,12 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	assert.Equal(t, Version, "0.0.0")
+	assert.Equal(t, "0.0.0", Version)
 }
 
 func TestTerraformVersion(t *testing.T) {
 	ver, _ := TerraformVersion()
-	assert.Equal(t, strings.HasPrefix(ver, "v"), true)
+	assert.True(t, strings.HasPrefix(ver, "v"))
 }
 
 func TestSystemInfo(t *testing.T) {
@@ -45,13 +45,13 @@ func TestUserId(t *testing.T) {
 
 	id, err := UserId()
 	assert.Nil(t, err)
-	assert.Equal(t, len(id) == 36, true)
+	assert.Len(t, id, 36)
 
 	if !IsCI() {
-		assert.Equal(t, userId == id, true)
+		assert.Equal(t, userId, id)
 
 		_, err := os.Stat(new)
-		assert.Equal(t, !os.IsNotExist(err), true)
+		assert.True(t, !os.IsNotExist(err))
 	}
 }
 
