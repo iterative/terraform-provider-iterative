@@ -13,12 +13,12 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	assert.Equal(t, Version, "0.0.0")
+	assert.Equal(t, "0.0.0", Version)
 }
 
 func TestTerraformVersion(t *testing.T) {
 	ver, _ := TerraformVersion()
-	assert.Equal(t, strings.HasPrefix(ver, "v"), true)
+	assert.True(t, strings.HasPrefix(ver, "v"))
 }
 
 func TestSystemInfo(t *testing.T) {
@@ -28,6 +28,8 @@ func TestSystemInfo(t *testing.T) {
 }
 
 func TestUserId(t *testing.T) {
+	tempHome := t.TempDir()
+	os.Setenv("XDG_CONFIG_HOME", tempHome)
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
 	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 
@@ -36,18 +38,19 @@ func TestUserId(t *testing.T) {
 		"user_id": userId,
 	}
 	json, _ := json.MarshalIndent(data, "", " ")
+	err := os.MkdirAll(filepath.Dir(old), 0755)
+	assert.NoError(t, err)
+	err = ioutil.WriteFile(old, json, 0644)
+	assert.NoError(t, err)
 
-	_ = os.MkdirAll(filepath.Dir(old), 0644)
-	_ = ioutil.WriteFile(old, json, 0644)
-
-	id, _ := UserId()
-	assert.Equal(t, len(id) == 36, true)
+	id, err := UserId()
+	assert.NoError(t, err)
+	assert.Len(t, id, 36)
 
 	if !IsCI() {
-		assert.Equal(t, userId == id, true)
-
+		assert.Equal(t, userId, id)
 		_, err := os.Stat(new)
-		assert.Equal(t, !os.IsNotExist(err), true)
+		assert.False(t, os.IsNotExist(err))
 	}
 }
 

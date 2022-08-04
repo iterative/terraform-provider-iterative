@@ -161,7 +161,7 @@ func GroupId() (string, error) {
 
 func readId(path string) (string, error) {
 	file, err := os.Open(path)
-	if file != nil {
+	if err != nil {
 		return "", err
 	}
 	defer file.Close()
@@ -190,7 +190,7 @@ func readId(path string) (string, error) {
 }
 
 func writeId(path string, id string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
