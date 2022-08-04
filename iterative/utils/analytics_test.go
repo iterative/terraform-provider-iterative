@@ -28,6 +28,8 @@ func TestSystemInfo(t *testing.T) {
 }
 
 func TestUserId(t *testing.T) {
+	tempHome := t.TempDir()
+	os.Setenv("XDG_CONFIG_HOME", tempHome)
 	old := appdirs.UserConfigDir("dvc/user_id", "iterative", "", false)
 	new := appdirs.UserConfigDir("iterative/telemetry", "", "", false)
 
@@ -36,11 +38,13 @@ func TestUserId(t *testing.T) {
 		"user_id": userId,
 	}
 	json, _ := json.MarshalIndent(data, "", " ")
+	err := os.MkdirAll(filepath.Dir(old), 0755)
+	assert.Nil(t, err)
+	err = ioutil.WriteFile(old, json, 0644)
+	assert.Nil(t, err)
 
-	_ = os.MkdirAll(filepath.Dir(old), 0644)
-	_ = ioutil.WriteFile(old, json, 0644)
-
-	id, _ := UserId()
+	id, err := UserId()
+	assert.Nil(t, err)
 	assert.Equal(t, len(id) == 36, true)
 
 	if !IsCI() {
