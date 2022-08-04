@@ -161,7 +161,7 @@ func GroupId() (string, error) {
 
 func readId(path string) (string, error) {
 	file, err := os.Open(path)
-	if file != nil {
+	if err != nil {
 		return "", err
 	}
 	defer file.Close()
