@@ -293,7 +293,6 @@ func (t *Task) Delete(ctx context.Context) error {
 			}
 		}
 		logrus.Info("[2/11] Emptying Bucket...")
-		// TODO: t.DataSources.Credentials.Resource may be nil, check first.
 		if err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
 			return err
 		}
@@ -343,7 +342,6 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 
-	// TODO: t.DataSources.Credentials.Resource may be nil, check first.
 	return machine.Logs(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
 }
 
@@ -352,7 +350,6 @@ func (t *Task) Pull(ctx context.Context, destination, include string) error {
 		return err
 	}
 
-	// TODO: t.DataSources.Credentials.Resource may be nil, check first.
 	return machine.Transfer(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", destination, include)
 }
 
@@ -361,7 +358,6 @@ func (t *Task) Push(ctx context.Context, source string) error {
 		return err
 	}
 
-	// TODO: t.DataSources.Credentials.Resource may be nil, check first.
 	return machine.Transfer(ctx, source, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", "**")
 }
 
@@ -390,7 +386,6 @@ func (t *Task) Status(ctx context.Context) (common.Status, error) {
 		return nil, err
 	}
 
-	// TODO: t.DataSources.Credentials.Resource may be nil, check first.
 	return machine.Status(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"], t.Attributes.Status)
 }
 
