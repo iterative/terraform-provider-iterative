@@ -62,9 +62,10 @@ func New(cloud *common.Cloud) *cobra.Command {
 func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
 	variables := make(map[string]*string)
 	for name, value := range o.Environment {
+		name = strings.ToUpper(name)
 		variables[name] = nil
-		if value != "" {
-			variables[name] = &value
+		if copy := value; value != "" {
+			variables[name] = &copy
 		}
 	}
 
