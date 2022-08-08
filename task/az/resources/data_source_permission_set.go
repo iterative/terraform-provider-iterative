@@ -12,7 +12,15 @@ import (
 )
 
 // validateARMID is a regular expression for validating user-assigned identity ids.
-var validateARMID = regexp.MustCompile("/subscriptions/.*/resourceGroups/.*/providers/Microsoft.ManagedIdentity/userAssignedIdentities/.*")
+var validateARMID = regexp.MustCompile(`^/subscriptions/(\w{8}-\w{4}-\w{4}-\w{4}-\w{12})/resourceGroups/(.*)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/(.*)`)
+
+// ValidateARMID validates the user-assigned identity value.
+func ValidateARMID(id string) error {
+	if !validateARMID.MatchString(id) {
+		return fmt.Errorf("invalid user-assigned identity id: %q", id)
+	}
+	return nil
+}
 
 func NewPermissionSet(client *client.Client, identifer string) *PermissionSet {
 	ps := new(PermissionSet)
@@ -35,9 +43,10 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 		if identity == "" {
 			continue
 		}
-		if !validateARMID.MatchString(identity) {
-			return fmt.Errorf("invalid user-assigned identity id: %q", identity)
+		if err := ValidateARMID(identity); err != nil {
+			return err
 		}
+
 		identityMap[identity] = &compute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{}
 	}
 	if len(identityMap) == 0 {

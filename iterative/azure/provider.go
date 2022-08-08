@@ -16,6 +16,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	azresources "terraform-provider-iterative/task/az/resources"
 )
 
 //ResourceMachineCreate creates AWS instance
@@ -29,11 +31,15 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	customData := d.Get("startup_script").(string)
 	region := GetRegion(d.Get("region").(string))
 	instanceType := getInstanceType(d.Get("instance_type").(string), d.Get("instance_gpu").(string))
-	userAssignedIdentities := getUserAssignedIdentityMap(d.Get("instance_permission_set").(string))
 	keyPublic := d.Get("ssh_public").(string)
 	hddSize := int32(d.Get("instance_hdd_size").(int))
 	spot := d.Get("spot").(bool)
 	spotPrice := d.Get("spot_price").(float64)
+
+	userAssignedIdentities, err := getUserAssignedIdentityMap(d.Get("instance_permission_set").(string))
+	if err != nil {
+		return err
+	}
 
 	metadata := map[string]*string{}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
@@ -367,9 +373,9 @@ func getVMClient(subscriptionID string) (compute.VirtualMachinesClient, error) {
 
 // getUserAssignedIdentityMap generates a map of user-assigned identity values from a comma-separated
 // list of ARM resource ids.
-func getUserAssignedIdentityMap(identitiesRaw string) map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue {
+func getUserAssignedIdentityMap(identitiesRaw string) (map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue, error) {
 	if len(strings.TrimSpace(identitiesRaw)) == 0 {
-		return nil
+		return nil, nil
 	}
 	identities := strings.Split(identitiesRaw, ",")
 	identityMap := map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue{}
@@ -378,12 +384,15 @@ func getUserAssignedIdentityMap(identitiesRaw string) map[string]*compute.Virtua
 		if len(identity) == 0 {
 			continue
 		}
+		if err := azresources.ValidateARMID(identity); err != nil {
+			return nil, err
+		}
 		identityMap[identity] = &compute.VirtualMachineIdentityUserAssignedIdentitiesValue{}
 	}
 	if len(identityMap) == 0 {
-		return nil
+		return nil, nil
 	}
-	return identityMap
+	return identityMap, nil
 }
 
 //GetRegion maps region to real cloud regions
