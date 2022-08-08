@@ -20,6 +20,7 @@ func TestScript(t *testing.T) {
 echo "done"
 `[:1]
 	output, err := machine.Script(script, nil, nil, nil)
+	require.NoError(t, err)
 	g.Assert(t, "machine_script_minimal", []byte(output))
 
 	// Test script generation with full parameters.
