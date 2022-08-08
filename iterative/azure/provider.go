@@ -203,6 +203,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Tags: metadata,
 		Identity: &compute.VirtualMachineIdentity{
 			UserAssignedIdentities: userAssignedIdentities,
+			Type:                   compute.ResourceIdentityTypeSystemAssignedUserAssigned,
 		},
 		Location: to.StringPtr(region),
 		VirtualMachineProperties: &compute.VirtualMachineProperties{

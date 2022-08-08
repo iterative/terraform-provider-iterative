@@ -46,6 +46,7 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 	}
 	ps.Resource = &compute.VirtualMachineScaleSetIdentity{
 		UserAssignedIdentities: identityMap,
+		Type:                   compute.ResourceIdentityTypeSystemAssignedUserAssigned,
 	}
 	return nil
 }
