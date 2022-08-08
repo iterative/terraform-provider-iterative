@@ -110,58 +110,47 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	// Define a list of steps to execute. If we adopt this pattern, we
-	// can declare a named type for the step definition.
-	steps := []struct {
-		description string
-		run         func(context.Context) error
-	}{{
-		description: "Parsing PermissionSet",
-		run:         t.DataSources.PermissionSet.Read,
-	}, {
-		description: "Creating ResourceGroup",
-		run:         t.Resources.ResourceGroup.Create,
-	}, {
-		description: "Creating StorageAccount",
-		run:         t.Resources.StorageAccount.Create,
-	}, {
-		description: "Creating BlobContainer",
-		run:         t.Resources.BlobContainer.Create,
-	}, {
-		description: "Creating Credentials",
-		run:         t.DataSources.Credentials.Read,
-	}, {
-		description: "Creating VirtualNetwork",
-		run:         t.Resources.VirtualNetwork.Create,
-	}, {
-		description: "Creating SecurityGroup",
-		run:         t.Resources.SecurityGroup.Create,
-	}, {
-		description: "Creating Subnet",
-		run:         t.Resources.Subnet.Create,
-	}, {
-		description: "Creating VirtualMachineScaleSet",
-		run:         t.Resources.VirtualMachineScaleSet.Create,
-	}, {
-		description: "Uploading Directory",
-		run: func(ctx context.Context) error {
-			// TODO: this could be cleaned up to line up with other steps better.
-			if t.Attributes.Environment.Directory != "" {
-				return t.Push(ctx, t.Attributes.Environment.Directory)
-			}
-			return nil
-		},
-	}, {
-		description: "Starting task",
-		run:         t.Start,
-	}}
-
-	totalSteps := len(steps)
-	for i, step := range steps {
-		logrus.Infof("[%d/%d] %s...", i+1, totalSteps, step.description)
-		if err := step.run(ctx); err != nil {
+	logrus.Info("[1/10] Creating ResourceGroup...")
+	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[2/10] Creating StorageAccount...")
+	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[3/10] Creating BlobContainer...")
+	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[4/10] Creating Credentials...")
+	if err := t.DataSources.Credentials.Read(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[5/10] Creating VirtualNetwork...")
+	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[6/10] Creating SecurityGroup...")
+	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[7/10] Creating Subnet...")
+	if err := t.Resources.Subnet.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[8/10] Creating VirtualMachineScaleSet...")
+	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[9/10] Uploading Directory...")
+	if t.Attributes.Environment.Directory != "" {
+		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
+	}
+	logrus.Info("[10/10] Starting task...")
+	if err := t.Start(ctx); err != nil {
+		return err
 	}
 	logrus.Info("Creation completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
