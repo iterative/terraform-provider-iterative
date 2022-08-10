@@ -44,13 +44,13 @@ type Event struct {
 type Storage struct{}
 
 type Task struct {
-	Size
-	Environment
-	Firewall
+	Size          Size
+	Environment   Environment
+	Firewall      Firewall
 	PermissionSet string
-	Spot
-	Parallelism uint16
-	Tags        map[string]string // Deprecated
+	Spot          Spot
+	Parallelism   uint16
+	Tags          map[string]string // Deprecated
 
 	Addresses []net.IP
 	Status    Status
@@ -72,9 +72,9 @@ type FirewallRule struct {
 }
 
 type Environment struct {
-	Image  string
-	Script string
-	Variables
+	Image        string
+	Script       string
+	Variables    Variables
 	Timeout      time.Duration
 	Directory    string
 	DirectoryOut string
