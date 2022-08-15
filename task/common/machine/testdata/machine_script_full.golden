@@ -37,7 +37,7 @@ TPI_LOG_DIRECTORY="$(mktemp --directory)"
 TPI_DATA_DIRECTORY="/opt/task/directory"
 
 TPI_START_COMMAND="/bin/bash -lc 'exec /usr/bin/tpi-task'"
-TPI_REMAINING_RUN_TIME=$((1659919333-$(date +%%s)))
+TPI_REMAINING_RUN_TIME=$((1659919333-$(date +%s)))
 if (( TPI_REMAINING_RUN_TIME < 1 )); then
   TPI_START_COMMAND="/bin/bash -c 'sleep infinity'"
   TPI_REMAINING_RUN_TIME=1
@@ -119,7 +119,7 @@ while sleep 5; do
 done &
 
 while sleep 10; do
-  NEW_TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%%T@\n" | sort | tail -1)"
+  NEW_TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%T@\n" | sort | tail -1)"
   if test "$NEW_TPI_DATA_DIRECTORY_EPOCH" != "$TPI_DATA_DIRECTORY_EPOCH"; then
     TPI_DATA_DIRECTORY_EPOCH="$NEW_TPI_DATA_DIRECTORY_EPOCH"
     rclone sync "$TPI_DATA_DIRECTORY" "$RCLONE_REMOTE/data"
