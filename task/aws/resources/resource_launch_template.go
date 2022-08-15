@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/aws/smithy-go"
 
@@ -48,7 +50,11 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 		l.Attributes.Environment.Variables = make(map[string]*string)
 	}
 
-	script := machine.Script(l.Attributes.Environment.Script, l.Dependencies.Credentials.Resource, l.Attributes.Environment.Variables, l.Attributes.Environment.Timeout)
+	timeout := time.Now().Add(l.Attributes.Environment.Timeout)
+	script, err := machine.Script(l.Attributes.Environment.Script, l.Dependencies.Credentials.Resource, l.Attributes.Environment.Variables, &timeout)
+	if err != nil {
+		return fmt.Errorf("failed to render machine script: %w", err)
+	}
 	userData := base64.StdEncoding.EncodeToString([]byte(script))
 
 	size := l.Attributes.Size.Machine
@@ -112,7 +118,7 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 		input.LaunchTemplateData.BlockDeviceMappings[0].Ebs.VolumeSize = aws.Int32(int32(size))
 	}
 
-	if _, err := l.Client.Services.EC2.CreateLaunchTemplate(ctx, &input); err != nil {
+	if _, err = l.Client.Services.EC2.CreateLaunchTemplate(ctx, &input); err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "InvalidLaunchTemplateName.AlreadyExistsException" {
 			return l.Read(ctx)

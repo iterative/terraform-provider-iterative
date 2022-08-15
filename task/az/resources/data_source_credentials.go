@@ -29,7 +29,7 @@ type Credentials struct {
 		*StorageAccount
 		*BlobContainer
 	}
-	Resource *map[string]string
+	Resource map[string]string
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
@@ -51,7 +51,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 
 	subscriptionID := c.Client.Settings.GetSubscriptionID()
 
-	c.Resource = &map[string]string{
+	c.Resource = map[string]string{
 		"AZURE_CLIENT_ID":         credentials.ClientID,
 		"AZURE_CLIENT_SECRET":     credentials.ClientSecret,
 		"AZURE_SUBSCRIPTION_ID":   subscriptionID,

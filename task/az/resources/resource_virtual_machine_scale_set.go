@@ -78,7 +78,11 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		v.Attributes.Environment.Variables = make(map[string]*string)
 	}
 
-	script := machine.Script(v.Attributes.Environment.Script, v.Dependencies.Credentials.Resource, v.Attributes.Environment.Variables, v.Attributes.Environment.Timeout)
+	timeout := time.Now().Add(v.Attributes.Environment.Timeout)
+	script, err := machine.Script(v.Attributes.Environment.Script, v.Dependencies.Credentials.Resource, v.Attributes.Environment.Variables, &timeout)
+	if err != nil {
+		return fmt.Errorf("failed to render machine script: %w", err)
+	}
 
 	image := v.Attributes.Environment.Image
 	images := map[string]string{

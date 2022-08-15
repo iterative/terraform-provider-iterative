@@ -61,7 +61,11 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 		i.Attributes.Environment.Variables = make(map[string]*string)
 	}
 
-	script := machine.Script(i.Attributes.Environment.Script, i.Dependencies.Credentials.Resource, i.Attributes.Environment.Variables, i.Attributes.Environment.Timeout)
+	timeout := time.Now().Add(i.Attributes.Environment.Timeout)
+	script, err := machine.Script(i.Attributes.Environment.Script, i.Dependencies.Credentials.Resource, i.Attributes.Environment.Variables, &timeout)
+	if err != nil {
+		return fmt.Errorf("failed to render machine script: %w", err)
+	}
 
 	size := i.Attributes.Size.Machine
 	sizes := map[string]string{
