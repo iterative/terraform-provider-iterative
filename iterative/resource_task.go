@@ -147,12 +147,6 @@ func resourceTask() *schema.Resource {
 				Optional: true,
 				Default:  1,
 			},
-			"completions": {
-				Type:     schema.TypeInt,
-				ForceNew: true,
-				Optional: true,
-				Default:  0,
-			},
 			"environment": {
 				Type:     schema.TypeMap,
 				ForceNew: true,
@@ -371,7 +365,6 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		},
 		Spot:          common.Spot(d.Get("spot").(float64)),
 		Parallelism:   uint16(d.Get("parallelism").(int)),
-		Completions:   uint16(d.Get("completions").(int)),
 		PermissionSet: d.Get("permission_set").(string),
 	}
 
