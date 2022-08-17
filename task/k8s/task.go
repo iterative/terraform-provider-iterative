@@ -113,45 +113,42 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	logrus.Info("[1/8] Parsing PermissionSet...")
-	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2/8] Creating ConfigMap...")
-	if err := t.Resources.ConfigMap.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[3/8] Creating PersistentVolumeClaim...")
-	if err := t.Resources.PersistentVolumeClaim.Create(ctx); err != nil {
-		return err
-	}
+	steps := []common.Step{{
+		Description: "Parsing PermissionSet...",
+		Action:      t.DataSources.PermissionSet.Read,
+	}, {
+		Description: "Creating ConfigMap...",
+		Action:      t.Resources.ConfigMap.Create,
+	}, {
+		Description: "Creating PersistentVolumeClaim...",
+		Action:      t.Resources.PersistentVolumeClaim.Create,
+	}}
 
 	if t.Attributes.Directory != "" {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
-
-		logrus.Info("[4/8] Deleting Job...")
-		if err := t.Resources.Job.Delete(ctx); err != nil {
-			return err
-		}
-		logrus.Info("[5/8] Creating ephemeral Job to upload directory...")
-		if err := t.Resources.Job.Create(ctx); err != nil {
-			return err
-		}
-		logrus.Info("[6/8] Uploading Directory...")
-		if err := t.Push(ctx, t.Attributes.Directory); err != nil {
-			return err
-		}
-		logrus.Info("[7/8] Deleting ephemeral Job to upload directory...")
-		if err := t.Resources.Job.Delete(ctx); err != nil {
-			return err
-		}
-
-		os.Unsetenv("TPI_TRANSFER_MODE")
+		steps = append(steps, []common.Step{{
+			Description: "Deleting Job...",
+			Action:      t.Resources.Job.Delete,
+		}, {
+			Description: "Creating ephemeral Job to upload directory...",
+			Action:      t.Resources.Job.Create,
+		}, {
+			Description: "Uploading Directory...",
+			Action: func(ctx context.Context) error {
+				return t.Push(ctx, t.Attributes.Directory)
+			},
+		}, {
+			Description: "Deleting ephemeral Job to upload directory...",
+			Action:      t.Resources.Job.Delete,
+		}}...)
 	}
 
-	logrus.Info("[8/8] Creating Job...")
-	if err := t.Resources.Job.Create(ctx); err != nil {
+	steps = append(steps, common.Step{
+		Description: "Creating Job...",
+		Action:      t.Resources.Job.Create,
+	})
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Creation completed")
@@ -163,16 +160,17 @@ func (t *Task) Create(ctx context.Context) error {
 
 func (t *Task) Read(ctx context.Context) error {
 	logrus.Info("Reading resources... (this may happen several times)")
-	logrus.Info("[1/3] Reading ConfigMap...")
-	if err := t.Resources.ConfigMap.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2/3] Reading PersistentVolumeClaim...")
-	if err := t.Resources.PersistentVolumeClaim.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[3/3] Reading Job...")
-	if err := t.Resources.Job.Read(ctx); err != nil {
+	steps := []common.Step{{
+		Description: "Reading ConfigMap...",
+		Action:      t.Resources.ConfigMap.Read,
+	}, {
+		Description: "Reading PersistentVolumeClaim...",
+		Action:      t.Resources.PersistentVolumeClaim.Read,
+	}, {
+		Description: "Reading Job...",
+		Action:      t.Resources.Job.Read,
+	}}
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Read completed")
@@ -184,44 +182,44 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	logrus.Info("Deleting resources...")
+	steps := []common.Step{}
 	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
 		os.Setenv("TPI_TRANSFER_MODE", "true")
 		os.Setenv("TPI_PULL_MODE", "true")
 		defer os.Unsetenv("TPI_TRANSFER_MODE")
 		defer os.Unsetenv("TPI_PULL_MODE")
 
-		logrus.Info("[1/7] Deleting Job...")
-		if err := t.Resources.Job.Delete(ctx); err != nil {
-			return err
-		}
-		logrus.Info("[2/7] Creating ephemeral Job to retrieve directory...")
-		if err := t.Resources.Job.Create(ctx); err != nil {
-			return err
-		}
-		logrus.Info("[3/7] Downloading Directory...")
-		if err := t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut); err != nil {
-			return err
-		}
-
-		logrus.Info("[4/7] Deleting ephemeral Job to retrieve directory...")
-		if err := t.Resources.Job.Create(ctx); err != nil {
-			return err
-		}
+		steps = []common.Step{{
+			Description: "Deleting Job...",
+			Action:      t.Resources.Job.Delete,
+		}, {
+			Description: "Creating ephemeral Job to retrieve directory...",
+			Action:      t.Resources.Job.Create,
+		}, {
+			Description: "Downloading Directory...",
+			Action: func(ctx context.Context) error {
+				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
+			},
+		}, {
+			Description: "Deleting ephemeral Job to retrieve directory...",
+			Action:      t.Resources.Job.Create,
+		}}
 
 		os.Unsetenv("TPI_TRANSFER_MODE")
 		os.Unsetenv("TPI_PULL_MODE")
 	}
 
-	logrus.Info("[5/7] Deleting Job...")
-	if err := t.Resources.Job.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/7] Deleting PersistentVolumeClaim...")
-	if err := t.Resources.PersistentVolumeClaim.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/7] Deleting ConfigMap...")
-	if err := t.Resources.ConfigMap.Delete(ctx); err != nil {
+	steps = append(steps, []common.Step{{
+		Description: "Deleting Job...",
+		Action:      t.Resources.Job.Delete,
+	}, {
+		Description: "Deleting PersistentVolumeClaim...",
+		Action:      t.Resources.PersistentVolumeClaim.Delete,
+	}, {
+		Description: "Deleting ConfigMap...",
+		Action:      t.Resources.ConfigMap.Delete,
+	}}...)
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Deletion completed")

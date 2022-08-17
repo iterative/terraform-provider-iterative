@@ -109,54 +109,51 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	logrus.Info("[1/12] Parsing PermissionSet...")
-	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2/12] Importing DefaultVPC...")
-	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[3/12] Importing DefaultVPCSubnets...")
-	if err := t.DataSources.DefaultVPCSubnets.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[4/12] Reading Image...")
-	if err := t.DataSources.Image.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[5/12] Creating Bucket...")
-	if err := t.Resources.Bucket.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/12] Creating SecurityGroup...")
-	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/12] Creating KeyPair...")
-	if err := t.Resources.KeyPair.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[8/12] Reading Credentials...")
-	if err := t.DataSources.Credentials.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[9/12] Creating LaunchTemplate...")
-	if err := t.Resources.LaunchTemplate.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[10/12] Creating AutoScalingGroup...")
-	if err := t.Resources.AutoScalingGroup.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[11/12] Uploading Directory...")
+	steps := []common.Step{{
+		Description: "Parsing PermissionSet...",
+		Action:      t.DataSources.PermissionSet.Read,
+	}, {
+		Description: "Importing DefaultVPC...",
+		Action:      t.DataSources.DefaultVPC.Read,
+	}, {
+		Description: "Importing DefaultVPCSubnets...",
+		Action:      t.DataSources.DefaultVPCSubnets.Read,
+	}, {
+		Description: "Reading Image...",
+		Action:      t.DataSources.Image.Read,
+	}, {
+		Description: "Creating Bucket...",
+		Action:      t.Resources.Bucket.Create,
+	}, {
+		Description: "Creating SecurityGroup...",
+		Action:      t.Resources.SecurityGroup.Create,
+	}, {
+		Description: "Creating KeyPair...",
+		Action:      t.Resources.KeyPair.Create,
+	}, {
+		Description: "Reading Credentials...",
+		Action:      t.DataSources.Credentials.Read,
+	}, {
+		Description: "Creating LaunchTemplate...",
+		Action:      t.Resources.LaunchTemplate.Create,
+	}, {
+		Description: "Creating AutoScalingGroup...",
+		Action:      t.Resources.AutoScalingGroup.Create,
+	}}
+
 	if t.Attributes.Environment.Directory != "" {
-		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
-			return err
-		}
+		steps = append(steps, common.Step{
+			Description: "Uploading Directory...",
+			Action: func(ctx context.Context) error {
+				return t.Push(ctx, t.Attributes.Environment.Directory)
+			},
+		})
 	}
-	logrus.Info("[12/12] Starting task...")
-	if err := t.Start(ctx); err != nil {
+	steps = append(steps, common.Step{
+		Description: "Starting task...",
+		Action:      t.Start,
+	})
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Creation completed")
@@ -168,41 +165,36 @@ func (t *Task) Create(ctx context.Context) error {
 
 func (t *Task) Read(ctx context.Context) error {
 	logrus.Info("Reading resources... (this may happen several times)")
-	logrus.Info("[1/9] Reading DefaultVPC...")
-	if err := t.DataSources.DefaultVPC.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2/9] Reading DefaultVPCSubnets...")
-	if err := t.DataSources.DefaultVPCSubnets.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[3/9] Reading Image...")
-	if err := t.DataSources.Image.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[4/9] Reading Bucket...")
-	if err := t.Resources.Bucket.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[5/9] Reading SecurityGroup...")
-	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/9] Reading KeyPair...")
-	if err := t.Resources.KeyPair.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/9] Reading Credentials...")
-	if err := t.DataSources.Credentials.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[8/9] Reading LaunchTemplate...")
-	if err := t.Resources.LaunchTemplate.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[9/9] Reading AutoScalingGroup...")
-	if err := t.Resources.AutoScalingGroup.Read(ctx); err != nil {
-		return err
+	steps := []common.Step{{
+		Description: "Reading DefaultVPC...",
+		Action:      t.DataSources.DefaultVPC.Read,
+	}, {
+		Description: "Reading DefaultVPCSubnets...",
+		Action:      t.DataSources.DefaultVPCSubnets.Read,
+	}, {
+		Description: "Reading Image...",
+		Action:      t.DataSources.Image.Read,
+	}, {
+		Description: "Reading Bucket...",
+		Action:      t.Resources.Bucket.Read,
+	}, {
+		Description: "Reading SecurityGroup...",
+		Action:      t.Resources.SecurityGroup.Read,
+	}, {
+		Description: "Reading KeyPair...",
+		Action:      t.Resources.KeyPair.Read,
+	}, {
+		Description: "Reading Credentials...",
+		Action:      t.DataSources.Credentials.Read,
+	}, {
+		Description: "Reading LaunchTemplate...",
+		Action:      t.Resources.LaunchTemplate.Read,
+	}, {
+		Description: "Reading AutoScalingGroup...",
+		Action:      t.Resources.AutoScalingGroup.Read,
+	}}
+	if err := common.RunSteps(ctx, steps); err != nil {
+		return nil
 	}
 	logrus.Info("Read completed")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses

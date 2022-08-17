@@ -110,46 +110,44 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	logrus.Info("[1/10] Creating ResourceGroup...")
-	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2/10] Creating StorageAccount...")
-	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[3/10] Creating BlobContainer...")
-	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[4/10] Creating Credentials...")
-	if err := t.DataSources.Credentials.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[5/10] Creating VirtualNetwork...")
-	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/10] Creating SecurityGroup...")
-	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/10] Creating Subnet...")
-	if err := t.Resources.Subnet.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[8/10] Creating VirtualMachineScaleSet...")
-	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[9/10] Uploading Directory...")
+	steps := []common.Step{{
+		Description: "Creating ResourceGroup...",
+		Action:      t.Resources.ResourceGroup.Create,
+	}, {
+		Description: "Creating StorageAccount...",
+		Action:      t.Resources.StorageAccount.Create,
+	}, {
+		Description: "Creating BlobContainer...",
+		Action:      t.Resources.BlobContainer.Create,
+	}, {
+		Description: "Creating Credentials...",
+		Action:      t.DataSources.Credentials.Read,
+	}, {
+		Description: "Creating VirtualNetwork...",
+		Action:      t.Resources.VirtualNetwork.Create,
+	}, {
+		Description: "Creating SecurityGroup...",
+		Action:      t.Resources.SecurityGroup.Create,
+	}, {
+		Description: "Creating Subnet...",
+		Action:      t.Resources.Subnet.Create,
+	}, {
+		Description: "Creating VirtualMachineScaleSet...",
+		Action:      t.Resources.VirtualMachineScaleSet.Create,
+	}}
 	if t.Attributes.Environment.Directory != "" {
-		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
-			return err
-		}
+		steps = append(steps, common.Step{
+		Description: "Uploading Directory...",
+		Action: func(ctx context.Context) error {
+				return t.Push(ctx, t.Attributes.Environment.Directory)
+		},
+		})
 	}
-	logrus.Info("[10/10] Starting task...")
-	if err := t.Start(ctx); err != nil {
+	steps = append(steps, common.Step{
+		Description: "Starting task...",
+		Action:      t.Start,
+	})
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Creation completed")
@@ -161,36 +159,32 @@ func (t *Task) Create(ctx context.Context) error {
 
 func (t *Task) Read(ctx context.Context) error {
 	logrus.Info("Reading resources... (this may happen several times)")
-	logrus.Info("[1/8] Reading ResourceGroup...")
-	if err := t.Resources.ResourceGroup.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[2/8] Reading StorageAccount...")
-	if err := t.Resources.StorageAccount.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[3/8] Reading BlobContainer...")
-	if err := t.Resources.BlobContainer.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[4/8] Reading Credentials...")
-	if err := t.DataSources.Credentials.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[5/8] Reading VirtualNetwork...")
-	if err := t.Resources.VirtualNetwork.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/8] Reading SecurityGroup...")
-	if err := t.Resources.SecurityGroup.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/8] Reading Subnet...")
-	if err := t.Resources.Subnet.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[8/8] Reading VirtualMachineScaleSet...")
-	if err := t.Resources.VirtualMachineScaleSet.Read(ctx); err != nil {
+	steps := []common.Step{{
+		Description: "Reading ResourceGroup...",
+		Action:      t.Resources.ResourceGroup.Read,
+	}, {
+		Description: "Reading StorageAccount...",
+		Action:      t.Resources.StorageAccount.Read,
+	}, {
+		Description: "Reading BlobContainer...",
+		Action:      t.Resources.BlobContainer.Read,
+	}, {
+		Description: "Reading Credentials...",
+		Action:      t.DataSources.Credentials.Read,
+	}, {
+		Description: "Reading VirtualNetwork...",
+		Action:      t.Resources.VirtualNetwork.Read,
+	}, {
+		Description: "Reading SecurityGroup...",
+		Action:      t.Resources.SecurityGroup.Read,
+	}, {
+		Description: "Reading Subnet...",
+		Action:      t.Resources.Subnet.Read,
+	}, {
+		Description: "Reading VirtualMachineScaleSet...",
+		Action:      t.Resources.VirtualMachineScaleSet.Read,
+	}}
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Read completed")
@@ -202,45 +196,53 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	logrus.Info("Deleting resources...")
-	logrus.Info("[1/9] Downloading Directory...")
+	steps := []common.Step{}
+
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
-			if err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
-				return err
-			}
-		}
-		logrus.Info("[2/9] Emptying Bucket...")
-
-		if err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
-			return err
-		}
-	}
-	logrus.Info("[3/9] Deleting VirtualMachineScaleSet...")
-	if err := t.Resources.VirtualMachineScaleSet.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[4/9] Deleting Subnet...")
-	if err := t.Resources.Subnet.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[5/9] Deleting SecurityGroup...")
-	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/9] Deleting VirtualNetwork...")
-	if err := t.Resources.VirtualNetwork.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/9] Deleting BlobContainer...")
-	if err := t.Resources.BlobContainer.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[8/9] Deleting StorageAccount...")
-	if err := t.Resources.StorageAccount.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[9/9] Deleting ResourceGroup...")
-	if err := t.Resources.ResourceGroup.Delete(ctx); err != nil {
+			steps = []common.Step{{
+				Description: 	"Downloading Directory...",
+				Action: func(ctx context.Context)error {
+					err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
+					if err != nil && err != common.NotFoundError {
+						return err
+					}
+					return nil
+				},
+			}, {
+				Description: "Emptying Bucket...",
+				Action: func(ctx context.Context)error {
+					err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
+					if err != nil && err != common.NotFoundError {
+						return err
+					}
+					return nil
+				},
+			}}
+		}}
+	steps = append(steps, []common.Step{{
+		Description: "Deleting VirtualMachineScaleSet...",
+		Action: t.Resources.VirtualMachineScaleSet.Delete,
+	},{
+		Description: "Deleting Subnet...",
+		Action: t.Resources.Subnet.Delete,
+	}, {
+		Description: "Deleting SecurityGroup...",
+		Action: t.Resources.SecurityGroup.Delete,
+	}, {
+		Description: "Deleting VirtualNetwork...",
+		Action: t.Resources.VirtualNetwork.Delete,
+	}, {
+		Description: "Deleting BlobContainer...",
+		Action: t.Resources.BlobContainer.Delete,
+	}, {
+		Description: "Deleting StorageAccount...",
+		Action: t.Resources.StorageAccount.Delete,
+	}, {
+		Description: "Deleting ResourceGroup...",
+		Action: t.Resources.ResourceGroup.Delete,
+	}}...)
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Deletion completed")
