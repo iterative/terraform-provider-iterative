@@ -205,41 +205,49 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	logrus.Info("Deleting resources...")
-	logrus.Info("[1/8] Downloading Directory...")
+	steps := []common.Step{}
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
-			if err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut); err != nil && err != common.NotFoundError {
-				return err
-			}
+			steps = []common.Step{{
+				Description: "Downloading Directory...",
+				Action: func(ctx context.Context) error {
+					err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
+					if err != nil && err != common.NotFoundError {
+						return err
+					}
+					return nil
+				}}}
 		}
-		logrus.Info("[2/8] Emptying Bucket...")
-
-		if err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]); err != nil && err != common.NotFoundError {
-			return err
-		}
+		steps = append(steps, common.Step{
+			Description: "Emptying Bucket...",
+			Action: func(ctx context.Context) error {
+				err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
+				if err != nil && err != common.NotFoundError {
+					return err
+				}
+				return nil
+			}})
 	}
-	logrus.Info("[3/8] Deleting AutoScalingGroup...")
-	if err := t.Resources.AutoScalingGroup.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[4/8] Deleting LaunchTemplate...")
-	if err := t.Resources.LaunchTemplate.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[5/8] Deleting KeyPair...")
-	if err := t.Resources.KeyPair.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[6/8] Deleting SecurityGroup...")
-	if err := t.Resources.SecurityGroup.Delete(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[7/8] Reading Credentials...")
-	if err := t.DataSources.Credentials.Read(ctx); err != nil {
-		return err
-	}
-	logrus.Info("[8/8] Deleting Bucket...")
-	if err := t.Resources.Bucket.Delete(ctx); err != nil {
+	steps = append(steps, []common.Step{{
+		Description: "Deleting AutoScalingGroup...",
+		Action:      t.Resources.AutoScalingGroup.Delete,
+	}, {
+		Description: "Deleting LaunchTemplate...",
+		Action:      t.Resources.LaunchTemplate.Delete,
+	}, {
+		Description: "Deleting KeyPair...",
+		Action:      t.Resources.KeyPair.Delete,
+	}, {
+		Description: "Deleting SecurityGroup...",
+		Action:      t.Resources.SecurityGroup.Delete,
+	}, {
+		Description: "Reading Credentials...",
+		Action:      t.DataSources.Credentials.Read,
+	}, {
+		Description: "Deleting Bucket...",
+		Action:      t.Resources.Bucket.Delete,
+	}}...)
+	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
 	logrus.Info("Deletion completed")
