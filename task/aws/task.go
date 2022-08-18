@@ -194,7 +194,7 @@ func (t *Task) Read(ctx context.Context) error {
 		Action:      t.Resources.AutoScalingGroup.Read,
 	}}
 	if err := common.RunSteps(ctx, steps); err != nil {
-		return nil
+		return err
 	}
 	logrus.Info("Read completed")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
