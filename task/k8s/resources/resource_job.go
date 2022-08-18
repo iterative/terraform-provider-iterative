@@ -119,6 +119,13 @@ func (j *Job) Create(ctx context.Context) error {
 	jobCompletions := int32(j.Attributes.Task.Parallelism)
 	jobParallelism := int32(j.Attributes.Task.Parallelism)
 
+	var jobCompletionMode kubernetes_batch.CompletionMode
+	if jobParallelism > 1 {
+		jobCompletionMode = kubernetes_batch.IndexedCompletion
+	} else {
+		jobCompletionMode = kubernetes_batch.NonIndexedCompletion
+	}
+
 	jobActiveDeadlineSeconds := int64(j.Attributes.Task.Environment.Timeout / time.Second)
 
 	jobEnvironment := []kubernetes_core.EnvVar{}
@@ -204,6 +211,7 @@ func (j *Job) Create(ctx context.Context) error {
 			BackoffLimit:          &jobBackoffLimit,
 			Completions:           &jobCompletions,
 			Parallelism:           &jobParallelism,
+			CompletionMode:        &jobCompletionMode,
 			// We don't want jobs to delete themselves upon completion, because
 			// that would also mean losing logs before users check them.
 			// TTLSecondsAfterFinished: &jobTTLSecondsAfterFinished,
