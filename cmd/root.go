@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -143,20 +144,24 @@ func New() *cobra.Command {
 	}
 
 	for _, cmd := range append(cmd.Commands(), cmd) {
-		cobra.CheckErr(viper.BindPFlags(cmd.Flags()))
-		cobra.CheckErr(viper.BindPFlags(cmd.PersistentFlags()))
-
-		cmd.Flags().VisitAll(func(f *pflag.Flag) {
-			if val := viper.GetString(f.Name); viper.IsSet(f.Name) && val != "" {
-				cobra.CheckErr(cmd.Flags().Set(f.Name, val))
-			}
-		})
-
-		cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-			if val := viper.GetString(f.Name); viper.IsSet(f.Name) && val != "" {
-				cobra.CheckErr(cmd.PersistentFlags().Set(f.Name, val))
-			}
-		})
+		for _, flagSet := range []*pflag.FlagSet{
+			cmd.PersistentFlags(),
+			cmd.Flags(),
+		} {
+			cobra.CheckErr(viper.BindPFlags(flagSet))
+			flagSet.VisitAll(func(f *pflag.Flag) {
+				if viper.IsSet(f.Name) {
+					switch val := viper.Get(f.Name).(type) {
+					case map[string]interface{}:
+						for k, v := range val {
+							cobra.CheckErr(flagSet.Set(f.Name, fmt.Sprintf("%s=%s", k, v)))
+						}
+					default:
+						cobra.CheckErr(flagSet.Set(f.Name, viper.GetString(f.Name)))
+					}
+				}
+			})
+		}
 	}
 
 	return cmd

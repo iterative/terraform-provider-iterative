@@ -22,7 +22,7 @@ type Credentials struct {
 	Dependencies struct {
 		*Bucket
 	}
-	Resource *map[string]string
+	Resource map[string]string
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
@@ -40,7 +40,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 		c.Dependencies.Bucket.Identifier,
 	)
 
-	c.Resource = &map[string]string{
+	c.Resource = map[string]string{
 		"AWS_ACCESS_KEY_ID":       credentials.AccessKeyID,
 		"AWS_SECRET_ACCESS_KEY":   credentials.SecretAccessKey,
 		"AWS_SESSION_TOKEN":       credentials.SessionToken,

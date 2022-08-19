@@ -23,7 +23,7 @@ type Credentials struct {
 	Dependencies struct {
 		*Bucket
 	}
-	Resource *map[string]string
+	Resource map[string]string
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
@@ -38,7 +38,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 		c.Dependencies.Bucket.Identifier,
 	)
 
-	c.Resource = &map[string]string{
+	c.Resource = map[string]string{
 		"GOOGLE_APPLICATION_CREDENTIALS_DATA": credentials,
 		"RCLONE_REMOTE":                       connectionString,
 		"TPI_TASK_CLOUD_PROVIDER":             string(c.Client.Cloud.Provider),
