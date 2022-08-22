@@ -93,7 +93,8 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 				Ports: &[]uint16{22},
 			},
 		},
-		Parallelism: uint16(1),
+		Parallelism:   uint16(1),
+		PermissionSet: o.PermissionSet,
 	}
 
 	cfg.Spot = common.Spot(common.SpotDisabled)

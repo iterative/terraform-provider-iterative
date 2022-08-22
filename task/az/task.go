@@ -110,45 +110,49 @@ type Task struct {
 
 func (t *Task) Create(ctx context.Context) error {
 	logrus.Info("Creating resources...")
-	logrus.Info("[1/10] Creating ResourceGroup...")
+	logrus.Info("[1/11] Creating PermissionSet...")
+	if err := t.DataSources.PermissionSet.Read(ctx); err != nil {
+		return err
+	}
+	logrus.Info("[2/11] Creating ResourceGroup...")
 	if err := t.Resources.ResourceGroup.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[2/10] Creating StorageAccount...")
+	logrus.Info("[3/11] Creating StorageAccount...")
 	if err := t.Resources.StorageAccount.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[3/10] Creating BlobContainer...")
+	logrus.Info("[4/11] Creating BlobContainer...")
 	if err := t.Resources.BlobContainer.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[4/10] Creating Credentials...")
+	logrus.Info("[5/11] Creating Credentials...")
 	if err := t.DataSources.Credentials.Read(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[5/10] Creating VirtualNetwork...")
+	logrus.Info("[6/11] Creating VirtualNetwork...")
 	if err := t.Resources.VirtualNetwork.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[6/10] Creating SecurityGroup...")
+	logrus.Info("[7/11] Creating SecurityGroup...")
 	if err := t.Resources.SecurityGroup.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[7/10] Creating Subnet...")
+	logrus.Info("[8/11] Creating Subnet...")
 	if err := t.Resources.Subnet.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[8/10] Creating VirtualMachineScaleSet...")
+	logrus.Info("[9/11] Creating VirtualMachineScaleSet...")
 	if err := t.Resources.VirtualMachineScaleSet.Create(ctx); err != nil {
 		return err
 	}
-	logrus.Info("[9/10] Uploading Directory...")
+	logrus.Info("[10/11] Uploading Directory...")
 	if t.Attributes.Environment.Directory != "" {
 		if err := t.Push(ctx, t.Attributes.Environment.Directory); err != nil {
 			return err
 		}
 	}
-	logrus.Info("[10/10] Starting task...")
+	logrus.Info("[11/11] Starting task...")
 	if err := t.Start(ctx); err != nil {
 		return err
 	}
