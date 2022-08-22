@@ -11,6 +11,8 @@ import (
 	"terraform-provider-iterative/task/aws/client"
 )
 
+var validateARN = regexp.MustCompile(`arn:aws:iam::[\d]*:instance-profile/[\S]*`)
+
 func NewPermissionSet(client *client.Client, identifier string) *PermissionSet {
 	ps := new(PermissionSet)
 	ps.Client = client
@@ -31,12 +33,11 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 		ps.Resource = nil
 		return nil
 	}
-	re := regexp.MustCompile(`arn:aws:iam::[\d]*:instance-profile/[\S]*`)
-	if re.MatchString(arn) {
-		ps.Resource = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
-			Arn: aws.String(arn),
-		}
-		return nil
+	if !validateARN.MatchString(arn) {
+		return fmt.Errorf("invalid IAM Instance Profile: %s", arn)
 	}
-	return fmt.Errorf("invlaid IAM Instance Profile: %s", arn)
+	ps.Resource = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+		Arn: aws.String(arn),
+	}
+	return nil
 }

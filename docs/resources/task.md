@@ -274,8 +274,8 @@ A service account email and a [list of scopes](https://cloud.google.com/sdk/gclo
 `permission_set = "sa-name@project_id.iam.gserviceaccount.com,scopes=storage-rw"`
 
 #### Microsoft Azure
-
-[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/559)
+A comma-separated list of [user-assigned identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) ARM resource ids, e.g.:
+`permission_set = "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}"`
 
 #### Kubernetes
 

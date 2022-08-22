@@ -181,7 +181,7 @@ func resourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	cloud := d.Get("cloud").(string)
 
-	if len(d.Get("instance_permission_set").(string)) > 0 && (cloud == "azure" || cloud == "kubernetes") {
+	if len(d.Get("instance_permission_set").(string)) > 0 && (cloud == "kubernetes") {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("instance_permission_set is not yet supported in " + cloud),
