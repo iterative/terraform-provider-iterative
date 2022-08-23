@@ -125,22 +125,23 @@ func (t *Task) Create(ctx context.Context) error {
 	}}
 
 	if t.Attributes.Directory != "" {
-		os.Setenv("TPI_TRANSFER_MODE", "true")
-		defer os.Unsetenv("TPI_TRANSFER_MODE")
+		env := map[string]string{
+			"TPI_TRANSFER_MODE": "true",
+		}
 		steps = append(steps, []common.Step{{
 			Description: "Deleting Job...",
-			Action:      t.Resources.Job.Delete,
+			Action:      withEnv(env, t.Resources.Job.Delete),
 		}, {
 			Description: "Creating ephemeral Job to upload directory...",
-			Action:      t.Resources.Job.Create,
+			Action:      withEnv(env, t.Resources.Job.Create),
 		}, {
 			Description: "Uploading Directory...",
-			Action: func(ctx context.Context) error {
+			Action: withEnv(env, func(ctx context.Context) error {
 				return t.Push(ctx, t.Attributes.Directory)
-			},
+			}),
 		}, {
 			Description: "Deleting ephemeral Job to upload directory...",
-			Action:      t.Resources.Job.Delete,
+			Action:      withEnv(env, t.Resources.Job.Delete),
 		}}...)
 	}
 
@@ -184,29 +185,26 @@ func (t *Task) Delete(ctx context.Context) error {
 	logrus.Info("Deleting resources...")
 	steps := []common.Step{}
 	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
-		os.Setenv("TPI_TRANSFER_MODE", "true")
-		os.Setenv("TPI_PULL_MODE", "true")
-		defer os.Unsetenv("TPI_TRANSFER_MODE")
-		defer os.Unsetenv("TPI_PULL_MODE")
+		env := map[string]string{
+			"TPI_TRANSFER_MODE": "true",
+			"TPI_PULL_MODE":     "true",
+		}
 
 		steps = []common.Step{{
 			Description: "Deleting Job...",
-			Action:      t.Resources.Job.Delete,
+			Action:      withEnv(env, t.Resources.Job.Delete),
 		}, {
 			Description: "Creating ephemeral Job to retrieve directory...",
-			Action:      t.Resources.Job.Create,
+			Action:      withEnv(env, t.Resources.Job.Create),
 		}, {
 			Description: "Downloading Directory...",
-			Action: func(ctx context.Context) error {
+			Action: withEnv(env, func(ctx context.Context) error {
 				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
-			},
+			}),
 		}, {
 			Description: "Deleting ephemeral Job to retrieve directory...",
-			Action:      t.Resources.Job.Create,
+			Action:      withEnv(env, t.Resources.Job.Delete),
 		}}
-
-		os.Unsetenv("TPI_TRANSFER_MODE")
-		os.Unsetenv("TPI_PULL_MODE")
 	}
 
 	steps = append(steps, []common.Step{{
@@ -299,4 +297,15 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 
 func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
 	return t.Identifier
+}
+
+// withEnv runs the specified action with the environment variables set.
+func withEnv(env map[string]string, action func(context.Context) error) func(context.Context) error {
+	return func(ctx context.Context) error {
+		for key, value := range env {
+			os.Setenv(key, value)
+			defer os.Unsetenv(key)
+		}
+		return action(ctx)
+	}
 }
