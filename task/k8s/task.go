@@ -202,8 +202,9 @@ func (t *Task) Delete(ctx context.Context) error {
 				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
 			}),
 		}, {
+			// WTH?
 			Description: "Deleting ephemeral Job to retrieve directory...",
-			Action:      withEnv(env, t.Resources.Job.Delete),
+			Action:      withEnv(env, t.Resources.Job.Create),
 		}}
 	}
 
