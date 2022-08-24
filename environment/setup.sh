@@ -20,6 +20,9 @@ if [ ! -f "$FILE" ]; then
 
   sudo curl --max-time 10 --output /usr/bin/docker-credential-ecr-login https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.5.0/linux-amd64/docker-credential-ecr-login
   sudo chmod a+x /usr/bin/docker-credential-ecr-login
+    
+  curl -fsSL --max-time 10 https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v2.1.5/docker-credential-gcr_linux_amd64-2.1.5.tar.gz | sudo tar xz docker-credential-gcr
+  sudo mv docker-credential-gcr /usr/bin/docker-credential-gcr
 
   curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
   sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
