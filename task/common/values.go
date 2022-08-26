@@ -41,7 +41,15 @@ type Event struct {
 	Code        string
 	Description []string
 }
-type Storage struct{}
+type RemoteStorage struct {
+	// Container stores the id of the container to be used.
+	Container string
+	// Path stores the subdirectory inside the container.
+	Path string
+	// Config stores provider-specific configuration keys for accessing the pre-allocated
+	// storage container.
+	Config map[string]string
+}
 
 type Task struct {
 	Size          Size
@@ -51,6 +59,8 @@ type Task struct {
 	Spot          Spot
 	Parallelism   uint16
 	Tags          map[string]string // Deprecated
+
+	RemoteStorage *RemoteStorage
 
 	Addresses []net.IP
 	Status    Status

@@ -138,6 +138,26 @@ func resourceTask() *schema.Resource {
 							Optional: true,
 							Default:  "",
 						},
+						"container": {
+							Type:     schema.TypeString,
+							ForceNew: true,
+							Optional: true,
+							Default:  "",
+						},
+						"container_path": {
+							Type:     schema.TypeString,
+							ForceNew: true,
+							Optional: true,
+							Default:  "",
+						},
+						"container_opts": {
+							Type:     schema.TypeMap,
+							ForceNew: true,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 					},
 				},
 			},
@@ -338,10 +358,31 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 
 	directory := ""
 	directory_out := ""
+
+	var remoteStorage *common.RemoteStorage
 	if d.Get("storage").(*schema.Set).Len() > 0 {
 		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
 		directory = storage["workdir"].(string)
 		directory_out = storage["output"].(string)
+
+		// Propagate configuration for pre-allocated storage container.
+		container := storage["container"].(string)
+		containerPath := storage["container_path"].(string)
+		remoteConfig := storage["container_ops"].(map[string]interface{})
+		if container != "" {
+			remoteStorage = &common.RemoteStorage{
+				Container: container,
+				Path:      containerPath,
+				Config:    map[string]string{},
+			}
+		}
+		var ok bool
+		for key, value := range remoteConfig {
+			if remoteStorage.Config[key], ok = value.(string); !ok {
+				return nil, fmt.Errorf("invalid value for remote config key %q: %v", key, value)
+			}
+		}
+
 	}
 
 	t := common.Task{
@@ -363,6 +404,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			},
 			// Egress is open on every port
 		},
+		RemoteStorage: remoteStorage,
 		Spot:          common.Spot(d.Get("spot").(float64)),
 		Parallelism:   uint16(d.Get("parallelism").(int)),
 		PermissionSet: d.Get("permission_set").(string),
