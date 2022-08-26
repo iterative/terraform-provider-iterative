@@ -4,23 +4,26 @@ import (
 	"context"
 	"fmt"
 	"path"
-
-	"terraform-provider-iterative/task/common"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+
+	"terraform-provider-iterative/task/common"
 )
 
 // NewExistingS3Bucket returns a new data source refering to a pre-allocated
 // S3 bucket.
 func NewExistingS3Bucket(client S3Client, credentials aws.Credentials, id string, region string, path string) *ExistingS3Bucket {
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
 	return &ExistingS3Bucket{
 		client:      client,
 		credentials: credentials,
 		region:      region,
-
-		id:   id,
-		path: path,
+		id:          id,
+		path:        path,
 	}
 }
 
@@ -53,11 +56,12 @@ func (b *ExistingS3Bucket) Read(ctx context.Context) error {
 func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error) {
 	containerPath := path.Join(b.id, b.path)
 	connectionString := fmt.Sprintf(
-		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s",
+		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s/%s",
 		b.region,
 		b.credentials.AccessKeyID,
 		b.credentials.SecretAccessKey,
 		b.credentials.SessionToken,
+		b.id,
 		containerPath)
 	return connectionString, nil
 }
