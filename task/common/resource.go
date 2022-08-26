@@ -18,3 +18,11 @@ type Resource interface {
 	Create(ctx context.Context) error
 	Delete(ctx context.Context) error
 }
+
+// StorageCredentials is an interface implemented by data sources and resources
+// that provide access to cloud storage buckets.
+type StorageCredentials interface {
+	// ConnectionString returns the connection string necessary to access
+	// an S3 bucket.
+	ConnectionString(ctx context.Context) (string, error)
+}

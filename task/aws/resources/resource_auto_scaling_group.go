@@ -8,13 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/smithy-go"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-
+	"github.com/aws/smithy-go"
 	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/aws/client"

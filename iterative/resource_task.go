@@ -368,7 +368,6 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		// Propagate configuration for pre-allocated storage container.
 		container := storage["container"].(string)
 		containerPath := storage["container_path"].(string)
-		remoteConfig := storage["container_ops"].(map[string]interface{})
 		if container != "" {
 			remoteStorage = &common.RemoteStorage{
 				Container: container,
@@ -376,10 +375,13 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 				Config:    map[string]string{},
 			}
 		}
-		var ok bool
-		for key, value := range remoteConfig {
-			if remoteStorage.Config[key], ok = value.(string); !ok {
-				return nil, fmt.Errorf("invalid value for remote config key %q: %v", key, value)
+		if storage["container_opts"] != nil {
+			remoteConfig := storage["container_opts"].(map[string]interface{})
+			var ok bool
+			for key, value := range remoteConfig {
+				if remoteStorage.Config[key], ok = value.(string); !ok {
+					return nil, fmt.Errorf("invalid value for remote config key %q: %v", key, value)
+				}
 			}
 		}
 

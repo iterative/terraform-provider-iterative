@@ -3,12 +3,12 @@ package resources
 import (
 	"context"
 	"errors"
-
-	"github.com/aws/smithy-go"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
@@ -153,6 +153,24 @@ func (b *Bucket) Delete(ctx context.Context) error {
 	return nil
 }
 
+// ConnectionString implements BucketCredentials.
+// The method returns the rclone connection string for the specific bucket.
+func (b *Bucket) ConnectionString(ctx context.Context) (string, error) {
+	credentials, err := b.Client.Config.Credentials.Retrieve(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	connectionString := fmt.Sprintf(
+		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s",
+		b.Client.Region,
+		credentials.AccessKeyID,
+		credentials.SecretAccessKey,
+		credentials.SessionToken,
+		b.Identifier)
+	return connectionString, nil
+}
+
 // errorCodeIs checks if the provided error is an AWS API error
 // and its error code matches the supplied value.
 func errorCodeIs(err error, code string) bool {
@@ -162,3 +180,6 @@ func errorCodeIs(err error, code string) bool {
 	}
 	return false
 }
+
+// build-time check to ensure Bucket implements BucketCredentials.
+var _ common.StorageCredentials = (*Bucket)(nil)
