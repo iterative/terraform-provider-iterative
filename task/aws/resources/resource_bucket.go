@@ -14,6 +14,12 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+const (
+	errNoSuchBucket            = "NoSuchBucket"
+	errNotFound                = "NotFound"
+	errBucketAlreadyOwnedByYou = "BucketAlreadyOwnedByYou"
+)
+
 func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifier, error) {
 	output, err := client.Services.S3.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
@@ -55,8 +61,7 @@ func (b *Bucket) Create(ctx context.Context) error {
 	}
 
 	if _, err := b.Client.Services.S3.CreateBucket(ctx, &createInput); err != nil {
-		var e smithy.APIError
-		if errors.As(err, &e) && e.ErrorCode() == "BucketAlreadyOwnedByYou" {
+		if errorCodeIs(err, errBucketAlreadyOwnedByYou) {
 			return b.Read(ctx)
 		}
 		return err
@@ -79,8 +84,7 @@ func (b *Bucket) Read(ctx context.Context) error {
 	}
 
 	if _, err := b.Client.Services.S3.HeadBucket(ctx, &input); err != nil {
-		var e smithy.APIError
-		if errors.As(err, &e) && e.ErrorCode() == "NotFound" {
+		if errorCodeIs(err, errNotFound) {
 			return common.NotFoundError
 		}
 		return err
@@ -101,13 +105,11 @@ func (b *Bucket) Delete(ctx context.Context) error {
 
 	for paginator := s3.NewListObjectsV2Paginator(b.Client.Services.S3, &listInput); paginator.HasMorePages(); {
 		page, err := paginator.NextPage(ctx)
-
+		if errorCodeIs(err, errNoSuchBucket) {
+			b.Resource = nil
+			return nil
+		}
 		if err != nil {
-			var e smithy.APIError
-			if errors.As(err, &e) && e.ErrorCode() == "NoSuchBucket" {
-				b.Resource = nil
-				return nil
-			}
 			return err
 		}
 
@@ -139,10 +141,24 @@ func (b *Bucket) Delete(ctx context.Context) error {
 	}
 
 	_, err := b.Client.Services.S3.DeleteBucket(ctx, &deleteInput)
+	if errorCodeIs(err, errNoSuchBucket) {
+		b.Resource = nil
+		return nil
+	}
 	if err != nil {
 		return err
 	}
 
 	b.Resource = nil
 	return nil
+}
+
+// errorCodeIs checks if the provided error is an AWS API error
+// and its error code matches the supplied value.
+func errorCodeIs(err error, code string) bool {
+	var e smithy.APIError
+	if errors.As(err, &e) {
+		return e.ErrorCode() == code
+	}
+	return false
 }
