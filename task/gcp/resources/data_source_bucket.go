@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+<<<<<<< HEAD
 	"path"
+=======
+	"strings"
+>>>>>>> 120934c (Existing bucket support for gcp.)
 
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
@@ -15,6 +19,9 @@ import (
 
 // NewExistingBucket creates a new data source referring to a pre-allocated GCP storage bucket.
 func NewExistingBucket(client *client.Client, id string, path string) *ExistingBucket {
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
 	return &ExistingBucket{
 		client: client,
 
@@ -58,8 +65,7 @@ func (b *ExistingBucket) ConnectionString(ctx context.Context) (string, error) {
 	connStr := fmt.Sprintf(
 		":googlecloudstorage,service_account_credentials='%s':%s",
 		credentials,
-		containerPath,
-	)
+		containerPath)
 
 	return connStr, nil
 }
