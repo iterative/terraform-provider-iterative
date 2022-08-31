@@ -3,13 +3,12 @@ package resources
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/gcp/client"
 )
 
-func NewCredentials(client *client.Client, identifier common.Identifier, bucket *Bucket) *Credentials {
+func NewCredentials(client *client.Client, identifier common.Identifier, bucket common.StorageCredentials) *Credentials {
 	c := new(Credentials)
 	c.Client = client
 	c.Identifier = identifier.Long()
@@ -21,7 +20,7 @@ type Credentials struct {
 	Client       *client.Client
 	Identifier   string
 	Dependencies struct {
-		*Bucket
+		Bucket common.StorageCredentials
 	}
 	Resource map[string]string
 }
@@ -32,12 +31,10 @@ func (c *Credentials) Read(ctx context.Context) error {
 	}
 	credentials := string(c.Client.Credentials.JSON)
 
-	connectionString := fmt.Sprintf(
-		":googlecloudstorage,service_account_credentials='%s':%s",
-		credentials,
-		c.Dependencies.Bucket.Identifier,
-	)
-
+	connectionString, err := c.Dependencies.Bucket.ConnectionString(ctx)
+	if err != nil {
+		return err
+	}
 	c.Resource = map[string]string{
 		"GOOGLE_APPLICATION_CREDENTIALS_DATA": credentials,
 		"RCLONE_REMOTE":                       connectionString,

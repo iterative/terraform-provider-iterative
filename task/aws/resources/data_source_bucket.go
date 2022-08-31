@@ -51,7 +51,7 @@ func (b *ExistingS3Bucket) Read(ctx context.Context) error {
 	return nil
 }
 
-// ConnectionString implements BucketCredentials.
+// ConnectionString implements common.StorageCredentials.
 // The method returns the rclone connection string for the specific bucket.
 func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error) {
 	credentials, err := b.client.Config.Credentials.Retrieve(ctx)
