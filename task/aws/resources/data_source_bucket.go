@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -54,7 +53,6 @@ func (b *ExistingS3Bucket) Read(ctx context.Context) error {
 // ConnectionString implements common.StorageCredentials.
 // The method returns the rclone connection string for the specific bucket.
 func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error) {
-	containerPath := path.Join(b.id, b.path)
 	connectionString := fmt.Sprintf(
 		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s/%s",
 		b.region,
@@ -62,7 +60,7 @@ func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error)
 		b.credentials.SecretAccessKey,
 		b.credentials.SessionToken,
 		b.id,
-		containerPath)
+		b.path)
 	return connectionString, nil
 }
 
