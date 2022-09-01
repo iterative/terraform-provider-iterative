@@ -3,7 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strings"
+	"path"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
@@ -16,9 +16,6 @@ import (
 // NewExistingS3Bucket returns a new data source refering to a pre-allocated
 // S3 bucket.
 func NewExistingS3Bucket(client *client.Client, id string, path string) *ExistingS3Bucket {
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
 	return &ExistingS3Bucket{
 		client: client,
 
@@ -58,15 +55,14 @@ func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error)
 	if err != nil {
 		return "", err
 	}
-
+	containerPath := path.Join(b.id, b.path)
 	connectionString := fmt.Sprintf(
-		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s/%s",
+		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s",
 		b.client.Region,
 		credentials.AccessKeyID,
 		credentials.SecretAccessKey,
 		credentials.SessionToken,
-		b.id,
-		b.path)
+		containerPath)
 	return connectionString, nil
 }
 
