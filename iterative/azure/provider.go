@@ -207,10 +207,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	vmClient, _ := getVMClient(subscriptionID)
 	vmSettings := compute.VirtualMachine{
 		Tags: metadata,
-		Identity: &compute.VirtualMachineIdentity{
-			UserAssignedIdentities: userAssignedIdentities,
-			Type:                   compute.ResourceIdentityTypeSystemAssignedUserAssigned,
-		},
 		Location: to.StringPtr(region),
 		VirtualMachineProperties: &compute.VirtualMachineProperties{
 			HardwareProfile: &compute.HardwareProfile{
@@ -259,6 +255,13 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				},
 			},
 		},
+	}
+	
+	if userAssignedIdentities != nil {
+		vmSettings.Identity = &compute.VirtualMachineIdentity{
+			UserAssignedIdentities: userAssignedIdentities,
+			Type:                   compute.ResourceIdentityTypeSystemAssignedUserAssigned,
+		}
 	}
 
 	if spot {
