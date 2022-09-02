@@ -72,7 +72,7 @@ func TestTaskSmoke(t *testing.T) {
 				},
 			}
 
-			identifier := common.NewIdentifier(testName)
+			identifier := common.NewDeterministicIdentifier(testName)
 
 			task := common.Task{
 				Size: common.Size{
