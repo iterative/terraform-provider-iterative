@@ -14,6 +14,8 @@ import (
 	"terraform-provider-iterative/task/common/ssh"
 )
 
+const s3_region = "s3_region"
+
 func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {
 	client, err := client.New(ctx, cloud, nil)
 	if err != nil {
@@ -56,9 +58,16 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		if containerPath == "" {
 			containerPath = string(t.Identifier)
 		}
+		// Container config may override the s3 region.
+		region, ok := task.RemoteStorage.Config[s3_region]
+		if !ok {
+			region = t.Client.Region
+		}
 		bucket := resources.NewExistingS3Bucket(
-			t.Client,
+			t.Client.Services.S3,
+			t.Client.Credentials(),
 			task.RemoteStorage.Container,
+			region,
 			containerPath)
 		t.DataSources.Bucket = bucket
 		bucketCredentials = bucket
@@ -255,15 +264,17 @@ func (t *Task) Delete(ctx context.Context) error {
 					return nil
 				}}}
 		}
-		steps = append(steps, common.Step{
-			Description: "Emptying Bucket...",
-			Action: func(ctx context.Context) error {
-				err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
-				if err != nil && err != common.NotFoundError {
-					return err
-				}
-				return nil
-			}})
+		if t.Resources.Bucket != nil {
+			steps = append(steps, common.Step{
+				Description: "Emptying Bucket...",
+				Action: func(ctx context.Context) error {
+					err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
+					if err != nil && err != common.NotFoundError {
+						return err
+					}
+					return nil
+				}})
+		}
 	}
 	steps = append(steps, []common.Step{{
 		Description: "Deleting AutoScalingGroup...",

@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"path"
 
-	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 // NewExistingS3Bucket returns a new data source refering to a pre-allocated
 // S3 bucket.
-func NewExistingS3Bucket(client *client.Client, id string, path string) *ExistingS3Bucket {
+func NewExistingS3Bucket(client S3Client, credentials aws.Credentials, id string, region string, path string) *ExistingS3Bucket {
 	return &ExistingS3Bucket{
-		client: client,
+		client:      client,
+		credentials: credentials,
+		region:      region,
 
 		id:   id,
 		path: path,
@@ -26,11 +26,12 @@ func NewExistingS3Bucket(client *client.Client, id string, path string) *Existin
 
 // ExistingS3Bucket identifies an existing S3 bucket.
 type ExistingS3Bucket struct {
-	client *client.Client
+	client      S3Client
+	credentials aws.Credentials
 
-	resource *types.Bucket
-	id       string
-	path     string
+	id     string
+	region string
+	path   string
 }
 
 // Read verifies the specified S3 bucket is accessible.
@@ -38,33 +39,33 @@ func (b *ExistingS3Bucket) Read(ctx context.Context) error {
 	input := s3.HeadBucketInput{
 		Bucket: aws.String(b.id),
 	}
-	if _, err := b.client.Services.S3.HeadBucket(ctx, &input); err != nil {
+	if _, err := b.client.HeadBucket(ctx, &input); err != nil {
 		if errorCodeIs(err, errNotFound) {
 			return common.NotFoundError
 		}
 		return err
 	}
-	b.resource = &types.Bucket{Name: aws.String(b.id)}
 	return nil
 }
 
 // ConnectionString implements common.StorageCredentials.
 // The method returns the rclone connection string for the specific bucket.
 func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error) {
-	credentials, err := b.client.Config.Credentials.Retrieve(ctx)
-	if err != nil {
-		return "", err
-	}
 	containerPath := path.Join(b.id, b.path)
 	connectionString := fmt.Sprintf(
 		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s",
-		b.client.Region,
-		credentials.AccessKeyID,
-		credentials.SecretAccessKey,
-		credentials.SessionToken,
+		b.region,
+		b.credentials.AccessKeyID,
+		b.credentials.SecretAccessKey,
+		b.credentials.SessionToken,
 		containerPath)
 	return connectionString, nil
 }
 
 // build-time check to ensure Bucket implements BucketCredentials.
 var _ common.StorageCredentials = (*ExistingS3Bucket)(nil)
+
+// S3Client defines the functions of the AWS S3 API used.
+type S3Client interface {
+	HeadBucket(context.Context, *s3.HeadBucketInput, ...func(*s3.Options)) (*s3.HeadBucketOutput, error)
+}
