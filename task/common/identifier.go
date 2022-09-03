@@ -68,9 +68,9 @@ func (i Identifier) Short() string {
 }
 
 // hash deterministically generates a Base36 digest of `size`
-// characters using the provided salt.
-func hash(salt string, size uint8) string {
-	digest := sha256.Sum256([]byte(salt))
+// characters using the provided seed.
+func hash(seed string, size uint8) string {
+	digest := sha256.Sum256([]byte(seed))
 	random := uid.NewRandCustom(bytes.NewReader(digest[:]))
 	encoder := uid.NewEncoderBase36()
 	provider := uid.NewProviderCustom(sha256.Size, random, encoder)
