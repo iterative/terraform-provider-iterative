@@ -35,11 +35,17 @@ func ParseIdentifier(identifier string) (Identifier, error) {
 	return Identifier{}, ErrWrongIdentifier
 }
 
+// NewDeterministicIdentifier returns a new deterministic Identifier, using the
+// provided name as a seed. Repeated calls to this function are guaranteed to
+// generate the same Identifier.
 func NewDeterministicIdentifier(name string) Identifier {
 	seed := normalize(name, nameLength)
 	return Identifier{name: name, salt: hash(seed, shortLength/2)}
 }
 
+// NewRandomIdentifier returns a new random Identifier. Repeated calls to this
+// function are guaranteed to generate different Identifiers, as long as there
+// are no collisions.
 func NewRandomIdentifier(name string) Identifier {
 	seed := uid.NewProvider36Size(8).MustGenerate().String()
 	if name == "" {
