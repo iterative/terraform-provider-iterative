@@ -63,6 +63,8 @@ resource "iterative_task" "example" {
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
+- `storage.container` - (Optional) Pre-allocated container to use for storage of task data, results and status.
+- `storage.container_path` - (Optional) Subdirectory in pre-allocated container to use for storage. If omitted, the task's identifier will be used.
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
 - `tags` - (Optional) Map of tags for the created cloud resources.
