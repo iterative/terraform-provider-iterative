@@ -49,7 +49,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	}
 }
 
-// Task defines the interface implemented by provided-specific task resources.
+// Task defines the interface implemented by provider-specific task resources.
 type Task interface {
 	common.Resource
 
