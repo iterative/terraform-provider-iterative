@@ -3,20 +3,16 @@ package resources
 import (
 	"context"
 	"errors"
-	"fmt"
-
-	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
 )
 
-func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount, blobContainer *BlobContainer) *Credentials {
+func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, blobContainer *BlobContainer) *Credentials {
 	c := new(Credentials)
 	c.Client = client
 	c.Identifier = identifier.Long()
 	c.Dependencies.ResourceGroup = resourceGroup
-	c.Dependencies.StorageAccount = storageAccount
 	c.Dependencies.BlobContainer = blobContainer
 	return c
 }
@@ -25,21 +21,13 @@ type Credentials struct {
 	Client       *client.Client
 	Identifier   string
 	Dependencies struct {
-		*ResourceGroup
-		*StorageAccount
-		*BlobContainer
+		ResourceGroup *ResourceGroup
+		BlobContainer common.StorageCredentials
 	}
 	Resource map[string]string
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
-	connectionString := fmt.Sprintf(
-		":azureblob,account='%s',key='%s':%s",
-		c.Dependencies.StorageAccount.Identifier,
-		to.String(c.Dependencies.StorageAccount.Attributes.Value),
-		c.Dependencies.BlobContainer.Identifier,
-	)
-
 	credentials, err := c.Client.Settings.GetClientCredentials()
 	if err != nil {
 		return err
@@ -47,6 +35,11 @@ func (c *Credentials) Read(ctx context.Context) error {
 
 	if len(credentials.ClientSecret) == 0 {
 		return errors.New("unable to find client secret")
+	}
+
+	connectionString, err := c.Dependencies.BlobContainer.ConnectionString(ctx)
+	if err != nil {
+		return err
 	}
 
 	subscriptionID := c.Client.Settings.GetSubscriptionID()
