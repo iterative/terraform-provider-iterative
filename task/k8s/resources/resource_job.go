@@ -337,7 +337,7 @@ func (j *Job) Delete(ctx context.Context) error {
 
 func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	pods, err := j.Client.Services.Core.Pods(j.Client.Namespace).List(ctx, kubernetes_meta.ListOptions{
-		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.GetObjectMeta().GetLabels()["controller-uid"]),
+		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.Spec.Selector.MatchLabels["controller-uid"]),
 	})
 	if err != nil {
 		return nil, err
