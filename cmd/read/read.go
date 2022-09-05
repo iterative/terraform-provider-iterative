@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"terraform-provider-iterative/task"
@@ -13,7 +12,10 @@ import (
 )
 
 type Options struct {
-	Parallelism   int
+	Parallelism int
+	Status      bool
+	Events      bool
+	Logs        bool
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -30,6 +32,10 @@ func New(cloud *common.Cloud) *cobra.Command {
 	}
 
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
+	cmd.Flags().BoolVar(&o.Status, "status", false, "Read status")
+	cmd.Flags().BoolVar(&o.Events, "events", false, "Read events")
+	cmd.Flags().BoolVar(&o.Logs, "logs", false, "Read logs")
+	cmd.MarkFlagsMutuallyExclusive("status", "events", "logs")
 
 	return cmd
 }
@@ -58,45 +64,50 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	var events []string
-	for _, event := range tsk.Events(ctx) {
-		events = append(events, fmt.Sprintf(
-			"%s: %s\n%s",
-			event.Time.Format("2006-01-02 15:04:05"),
-			event.Code,
-			strings.Join(event.Description, "\n"),
-		))
-	}
-	logrus.Info(events)
-
-	logs, err := tsk.Logs(ctx)
-	if err != nil {
-		return err
-	}
-
-	for index, log := range logs {
-		for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
-			logrus.Infof("\x1b[%dmLOG %d >> %s", 35, index, line)
+	switch {
+	case o.Events:
+		var events []string
+		for _, event := range tsk.Events(ctx) {
+			events = append(events, fmt.Sprintf(
+				"%s: %s\n%s",
+				event.Time.Format("2006-01-02 15:04:05"),
+				event.Code,
+				strings.Join(event.Description, "\n"),
+			))
 		}
+
+		fmt.Println(events)
+	case o.Logs:
+		logs, err := tsk.Logs(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, log := range logs {
+			for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
+				fmt.Println(line)
+			}
+		}
+	case o.Status:
+		status, err := tsk.Status(ctx)
+		if err != nil {
+			return err
+		}
+
+		message := "queued"
+
+		if status["succeeded"] >= o.Parallelism {
+			message = "succeeded"
+		}
+		if status["failed"] > 0 {
+			message = "failed"
+		}
+		if status["running"] >= o.Parallelism {
+			message = "running"
+		}
+
+		fmt.Println(message)
 	}
 
-	status, err := tsk.Status(ctx)
-	if err != nil {
-		return err
-	}
-
-	message := fmt.Sprintf("\x1b[%dmStatus: queued \x1b[1m•\x1b[0m", 34)
-
-	if status["succeeded"] >= o.Parallelism {
-		message = fmt.Sprintf("\x1b[%dmStatus: completed successfully \x1b[1m•\x1b[0m", 32)
-	}
-	if status["failed"] > 0 {
-		message = fmt.Sprintf("\x1b[%dmStatus: completed with errors \x1b[1m•\x1b[0m", 31)
-	}
-	if status["running"] >= o.Parallelism {
-		message = fmt.Sprintf("\x1b[%dmStatus: running \x1b[1m•\x1b[0m", 33)
-	}
-
-	logrus.Info(message)
 	return nil
 }

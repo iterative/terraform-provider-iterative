@@ -16,7 +16,7 @@ type Step struct {
 func RunSteps(ctx context.Context, steps []Step) error {
 	total := len(steps)
 	for i, step := range steps {
-		logrus.Infof("[%d/%d] %s...", i+1, total, step.Description)
+		logrus.Infof("[%d/%d] %s", i+1, total, step.Description)
 		if err := step.Action(ctx); err != nil {
 			return err
 		}

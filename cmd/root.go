@@ -73,6 +73,11 @@ func New() *cobra.Command {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 
+		logrus.SetFormatter(&logrus.TextFormatter{
+			ForceColors:      true,
+			DisableTimestamp: true,
+		})
+
 		o.Cloud.Provider = common.Provider(o.Provider)
 		o.Cloud.Region = common.Region(o.Region)
 	})
