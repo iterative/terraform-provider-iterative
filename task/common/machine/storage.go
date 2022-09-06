@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -197,4 +200,40 @@ func progress(interval time.Duration) func() {
 	return func() {
 		done <- true
 	}
+}
+
+type RcloneBackend string
+
+const (
+	RcloneBackendAzureBlob = "azureblob"
+)
+
+// RcloneConnection is used to construct an rclone connection string.
+type RcloneConnection struct {
+	Backend   RcloneBackend
+	Config    map[string]string
+	Container string
+	Path      string
+}
+
+// String returns a generate rclone connection string.
+func (r RcloneConnection) String() string {
+	var opts []string
+	for key, val := range r.Config {
+		opts = append(opts, fmt.Sprintf("%s='%s'", key, val))
+	}
+	var connOpts string
+	if len(opts) > 0 {
+		// Sort the config elements to make the result stable in tests.
+		sort.Strings(opts)
+		connOpts = "," + strings.Join(opts, ",")
+	}
+	var pth string
+	if r.Path != "" {
+		pth = path.Clean(r.Path)
+		if pth[0] != '/' {
+			pth = "/" + pth
+		}
+	}
+	return fmt.Sprintf(":%s%s:%s%s", r.Backend, connOpts, r.Container, pth)
 }
