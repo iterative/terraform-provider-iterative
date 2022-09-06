@@ -202,6 +202,20 @@ func progress(interval time.Duration) func() {
 	}
 }
 
+// CheckStorage checks access to the storage by attempting to read it.
+func CheckStorage(ctx context.Context, remoteConn RcloneConnection) error {
+	remote, err := fs.NewFs(ctx, remoteConn.String())
+	if err != nil {
+		return err
+	}
+
+	_, err = remote.List(ctx, "")
+	if err != nil && err != fs.ErrorDirNotFound {
+		return fmt.Errorf("failed to access remote storage: %w", err)
+	}
+	return nil
+}
+
 type RcloneBackend string
 
 const (

@@ -40,22 +40,31 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Identifier,
 	)
-	t.Resources.StorageAccount = resources.NewStorageAccount(
-		t.Client,
-		t.Identifier,
-		t.Resources.ResourceGroup,
-	)
-	t.Resources.BlobContainer = resources.NewBlobContainer(
-		t.Client,
-		t.Identifier,
-		t.Resources.ResourceGroup,
-		t.Resources.StorageAccount,
-	)
+	var bucketCredentials common.StorageCredentials
+	if task.RemoteStorage != nil {
+		bucket := resources.NewExistingBlobContainer(t.Client, *task.RemoteStorage)
+		t.DataSources.BlobContainer = bucket
+		bucketCredentials = bucket
+	} else {
+		t.Resources.StorageAccount = resources.NewStorageAccount(
+			t.Client,
+			t.Identifier,
+			t.Resources.ResourceGroup,
+		)
+		blobContainer := resources.NewBlobContainer(
+			t.Client,
+			t.Identifier,
+			t.Resources.ResourceGroup,
+			t.Resources.StorageAccount,
+		)
+		t.Resources.BlobContainer = blobContainer
+		bucketCredentials = blobContainer
+	}
 	t.DataSources.Credentials = resources.NewCredentials(
 		t.Client,
 		t.Identifier,
 		t.Resources.ResourceGroup,
-		t.Resources.BlobContainer,
+		bucketCredentials,
 	)
 	t.Resources.VirtualNetwork = resources.NewVirtualNetwork(
 		t.Client,
@@ -95,6 +104,7 @@ type Task struct {
 	DataSources struct {
 		Credentials   *resources.Credentials
 		PermissionSet *resources.PermissionSet
+		BlobContainer *resources.ExistingBlobContainer
 	}
 	Resources struct {
 		ResourceGroup          *resources.ResourceGroup
@@ -112,13 +122,23 @@ func (t *Task) Create(ctx context.Context) error {
 	steps := []common.Step{{
 		Description: "Creating ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Create,
-	}, {
-		Description: "Creating StorageAccount...",
-		Action:      t.Resources.StorageAccount.Create,
-	}, {
-		Description: "Creating BlobContainer...",
-		Action:      t.Resources.BlobContainer.Create,
-	}, {
+	}}
+	if t.Resources.BlobContainer != nil {
+		steps = append(steps, []common.Step{{
+			Description: "Creating StorageAccount...",
+			Action:      t.Resources.StorageAccount.Create,
+		}, {
+			Description: "Creating BlobContainer...",
+			Action:      t.Resources.BlobContainer.Create,
+		}}...)
+	} else if t.DataSources.BlobContainer != nil {
+		steps = append(steps, common.Step{
+			Description: "Reading BlobContainer...",
+			Action:      t.DataSources.BlobContainer.Read,
+		})
+	}
+
+	steps = append(steps, []common.Step{{
 		Description: "Creating Credentials...",
 		Action:      t.DataSources.Credentials.Read,
 	}, {
@@ -133,7 +153,7 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Creating VirtualMachineScaleSet...",
 		Action:      t.Resources.VirtualMachineScaleSet.Create,
-	}}
+	}}...)
 	if t.Attributes.Environment.Directory != "" {
 		steps = append(steps, common.Step{
 			Description: "Uploading Directory...",
@@ -161,13 +181,23 @@ func (t *Task) Read(ctx context.Context) error {
 	steps := []common.Step{{
 		Description: "Reading ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Read,
-	}, {
-		Description: "Reading StorageAccount...",
-		Action:      t.Resources.StorageAccount.Read,
-	}, {
-		Description: "Reading BlobContainer...",
-		Action:      t.Resources.BlobContainer.Read,
-	}, {
+	}}
+	if t.Resources.BlobContainer != nil {
+		steps = append(steps, []common.Step{{
+			Description: "Reading StorageAccount...",
+			Action:      t.Resources.StorageAccount.Read,
+		}, {
+			Description: "Reading BlobContainer...",
+			Action:      t.Resources.BlobContainer.Read,
+		}}...)
+	} else {
+		steps = append(steps, common.Step{
+			Description: "Reading BlobContainer...",
+			Action:      t.DataSources.BlobContainer.Read,
+		})
+	}
+
+	steps = append(steps, []common.Step{{
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
 	}, {
@@ -182,7 +212,7 @@ func (t *Task) Read(ctx context.Context) error {
 	}, {
 		Description: "Reading VirtualMachineScaleSet...",
 		Action:      t.Resources.VirtualMachineScaleSet.Read,
-	}}
+	}}...)
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
@@ -208,7 +238,10 @@ func (t *Task) Delete(ctx context.Context) error {
 					}
 					return nil
 				},
-			}, {
+			}}
+		}
+		if t.Resources.BlobContainer != nil {
+			steps = append(steps, common.Step{
 				Description: "Emptying Bucket...",
 				Action: func(ctx context.Context) error {
 					err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
@@ -217,7 +250,7 @@ func (t *Task) Delete(ctx context.Context) error {
 					}
 					return nil
 				},
-			}}
+			})
 		}
 	}
 	steps = append(steps, []common.Step{{
@@ -232,16 +265,21 @@ func (t *Task) Delete(ctx context.Context) error {
 	}, {
 		Description: "Deleting VirtualNetwork...",
 		Action:      t.Resources.VirtualNetwork.Delete,
-	}, {
-		Description: "Deleting BlobContainer...",
-		Action:      t.Resources.BlobContainer.Delete,
-	}, {
-		Description: "Deleting StorageAccount...",
-		Action:      t.Resources.StorageAccount.Delete,
-	}, {
+	}}...)
+
+	if t.Resources.BlobContainer != nil {
+		steps = append(steps, []common.Step{{
+			Description: "Deleting BlobContainer...",
+			Action:      t.Resources.BlobContainer.Delete,
+		}, {
+			Description: "Deleting StorageAccount...",
+			Action:      t.Resources.StorageAccount.Delete,
+		}}...)
+	}
+	steps = append(steps, common.Step{
 		Description: "Deleting ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Delete,
-	}}...)
+	})
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}

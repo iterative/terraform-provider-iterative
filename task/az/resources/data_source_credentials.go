@@ -8,7 +8,7 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, blobContainer *BlobContainer) *Credentials {
+func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, blobContainer common.StorageCredentials) *Credentials {
 	c := new(Credentials)
 	c.Client = client
 	c.Identifier = identifier.Long()
