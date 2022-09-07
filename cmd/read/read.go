@@ -101,7 +101,7 @@ func (o *Options) printStatus(ctx context.Context, tsk task.Task) error {
 			line = fmt.Sprintf("%s %s", event.Time.Format("2006-01-02T15:04:05Z"), line)
 		}
 
-		logrus.Info(line)
+		logrus.Debug(line)
 	}
 
 	status, err := tsk.Status(ctx)
