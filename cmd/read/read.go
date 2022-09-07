@@ -83,11 +83,12 @@ func (o *Options) printLogs(ctx context.Context, tsk task.Task) error {
 	}
 
 	for _, log := range logs {
-		if !o.Timestamps {
-			_, log, _ = strings.Cut(log, " ")
+		for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
+			if !o.Timestamps {
+				_, line, _ = strings.Cut(line, " ")
+			}
+			fmt.Println(line)
 		}
-
-		fmt.Println(log)
 	}
 
 	return nil
