@@ -23,7 +23,7 @@ import (
 type Options struct {
 	Region   string
 	Provider string
-	Log      string
+	Verbose  int
 	common.Cloud
 }
 
@@ -61,15 +61,13 @@ func New() *cobra.Command {
 	cmd.AddCommand(stop.New(&o.Cloud))
 
 	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
-	cmd.PersistentFlags().StringVar(&o.Log, "log", "info", "log level")
+	cmd.PersistentFlags().CountVar(&o.Verbose, "verbose", "verbose output")
 	cmd.PersistentFlags().StringVar(&o.Region, "region", "us-east", "cloud region")
 	cobra.CheckErr(cmd.MarkPersistentFlagRequired("cloud"))
 
 	cobra.OnInitialize(func() {
-		switch o.Log {
-		case "info":
-			logrus.SetLevel(logrus.InfoLevel)
-		case "debug":
+		logrus.SetLevel(logrus.InfoLevel)
+		if o.Verbose > 0 {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 

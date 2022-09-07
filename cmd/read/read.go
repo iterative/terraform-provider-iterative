@@ -35,7 +35,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
 	cmd.Flags().BoolVar(&o.Timestamps, "timestamps", false, "display timestamps")
-	cmd.Flags().BoolVar(&o.Status, "status", false, "read status")
+	cmd.Flags().BoolVar(&o.Status, "status", true, "read status")
 	cmd.Flags().BoolVar(&o.Logs, "logs", false, "read logs")
 	cmd.MarkFlagsMutuallyExclusive("status", "logs")
 
