@@ -102,13 +102,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		cfg.Spot = common.Spot(common.SpotEnabled)
 	}
 
-	id := common.NewRandomIdentifier()
-
-	if o.Name != "" {
-		id = common.NewIdentifier(o.Name)
-		if identifier, err := common.ParseIdentifier(o.Name); err == nil {
-			id = identifier
-		}
+	id := common.NewRandomIdentifier(o.Name)
+	if identifier, err := common.ParseIdentifier(o.Name); err == nil {
+		id = identifier
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Create)
