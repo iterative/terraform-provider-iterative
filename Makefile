@@ -11,8 +11,8 @@ default: build
 build:
 	go build
 
-install:
-	GOBIN=${INSTALL_PATH} go install
+install_tpi:
+	GOBIN=${INSTALL_PATH} go install ./cmd/tpi
 
 test:
 	go test ./... ${TESTARGS} -timeout=30s -parallel=4
