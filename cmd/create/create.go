@@ -120,7 +120,8 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	fmt.Println(id.Long())
+	logrus.Infof("Using identifier %s", id.Long())
+	defer fmt.Println(id.Long())
 
 	if err := tsk.Create(ctx); err != nil {
 		logrus.Errorf("Failed to create a new task: %v", err)
