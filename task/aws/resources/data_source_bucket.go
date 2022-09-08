@@ -14,8 +14,8 @@ import (
 // NewExistingS3Bucket returns a new data source refering to a pre-allocated
 // S3 bucket.
 func NewExistingS3Bucket(client S3Client, credentials aws.Credentials, id string, region string, path string) *ExistingS3Bucket {
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
+	if strings.HasPrefix(path, "/") {
+		path = path[1:]
 	}
 	return &ExistingS3Bucket{
 		client:      client,
