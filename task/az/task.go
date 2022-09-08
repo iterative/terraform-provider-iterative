@@ -42,6 +42,11 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	var bucketCredentials common.StorageCredentials
 	if task.RemoteStorage != nil {
+		// If a subdirectory was not specified, the task id will
+		// be used.
+		if task.RemoteStorage.Path == "" {
+			task.RemoteStorage.Path = string(t.Identifier)
+		}
 		bucket := resources.NewExistingBlobContainer(t.Client, *task.RemoteStorage)
 		t.DataSources.BlobContainer = bucket
 		bucketCredentials = bucket

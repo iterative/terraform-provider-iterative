@@ -219,7 +219,9 @@ func CheckStorage(ctx context.Context, remoteConn RcloneConnection) error {
 type RcloneBackend string
 
 const (
-	RcloneBackendAzureBlob = "azureblob"
+	RcloneBackendAzureBlob          = "azureblob"
+	RcloneBackendS3                 = "s3"
+	RcloneBackendGoogleCloudStorage = "googlecloudstorage"
 )
 
 // RcloneConnection is used to construct an rclone connection string.
