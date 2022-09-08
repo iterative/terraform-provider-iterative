@@ -39,22 +39,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		return nil, err
 	}
 
-	persistentVolumeClaimStorageClass := ""
-	persistentVolumeClaimSize := task.Size.Storage
 	persistentVolumeDirectory := task.Environment.Directory
-
-	match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
-	if match != nil {
-		persistentVolumeClaimStorageClass = match[1]
-		if match[2] != "" {
-			number, err := strconv.Atoi(match[2])
-			if err != nil {
-				return nil, err
-			}
-			persistentVolumeClaimSize = int(number)
-		}
-		persistentVolumeDirectory = match[3]
-	}
 
 	t := new(Task)
 	t.Client = client
@@ -75,17 +60,41 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Identifier,
 		map[string]string{"script": t.Attributes.Task.Environment.Script},
 	)
-	t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
-		t.Client,
-		t.Identifier,
-		persistentVolumeClaimStorageClass,
-		persistentVolumeClaimSize,
-		t.Attributes.Task.Parallelism > 1,
-	)
+	var pvc resources.VolumeInfoProvider
+	if task.RemoteStorage != nil {
+		t.DataSources.ExistingPersistentVolumeClaim = resources.NewExistingPersistentVolumeClaim(
+			t.Client, *task.RemoteStorage)
+		pvc = t.DataSources.ExistingPersistentVolumeClaim
+	} else {
+		persistentVolumeClaimStorageClass := ""
+		persistentVolumeClaimSize := task.Size.Storage
+
+		match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
+		if match != nil {
+			persistentVolumeClaimStorageClass = match[1]
+			if match[2] != "" {
+				number, err := strconv.Atoi(match[2])
+				if err != nil {
+					return nil, err
+				}
+				persistentVolumeClaimSize = int(number)
+			}
+			persistentVolumeDirectory = match[3]
+		}
+
+		t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
+			t.Client,
+			t.Identifier,
+			persistentVolumeClaimStorageClass,
+			persistentVolumeClaimSize,
+			t.Attributes.Task.Parallelism > 1,
+		)
+		pvc = t.Resources.PersistentVolumeClaim
+	}
 	t.Resources.Job = resources.NewJob(
 		t.Client,
 		t.Identifier,
-		t.Resources.PersistentVolumeClaim,
+		pvc,
 		t.Resources.ConfigMap,
 		t.DataSources.PermissionSet,
 		t.Attributes.Task,
@@ -102,12 +111,13 @@ type Task struct {
 		DirectoryOut string
 	}
 	DataSources struct {
-		*resources.PermissionSet
+		PermissionSet                 *resources.PermissionSet
+		ExistingPersistentVolumeClaim *resources.ExistingPersistentVolumeClaim
 	}
 	Resources struct {
-		*resources.ConfigMap
-		*resources.PersistentVolumeClaim
-		*resources.Job
+		ConfigMap             *resources.ConfigMap
+		PersistentVolumeClaim *resources.PersistentVolumeClaim
+		Job                   *resources.Job
 	}
 }
 
@@ -119,10 +129,13 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Creating ConfigMap...",
 		Action:      t.Resources.ConfigMap.Create,
-	}, {
-		Description: "Creating PersistentVolumeClaim...",
-		Action:      t.Resources.PersistentVolumeClaim.Create,
 	}}
+	if t.Resources.PersistentVolumeClaim != nil {
+		steps = append(steps, common.Step{
+			Description: "Creating PersistentVolumeClaim...",
+			Action:      t.Resources.PersistentVolumeClaim.Create,
+		})
+	}
 
 	if t.Attributes.Directory != "" {
 		env := map[string]string{
@@ -166,7 +179,14 @@ func (t *Task) Read(ctx context.Context) error {
 		Action:      t.Resources.ConfigMap.Read,
 	}, {
 		Description: "Reading PersistentVolumeClaim...",
-		Action:      t.Resources.PersistentVolumeClaim.Read,
+		Action: func(ctx context.Context) error {
+			if t.Resources.PersistentVolumeClaim != nil {
+				return t.Resources.PersistentVolumeClaim.Read(ctx)
+			} else if t.DataSources.ExistingPersistentVolumeClaim != nil {
+				return t.DataSources.ExistingPersistentVolumeClaim.Read(ctx)
+			}
+			return fmt.Errorf("misconfigured storage")
+		},
 	}, {
 		Description: "Reading Job...",
 		Action:      t.Resources.Job.Read,
@@ -212,12 +232,16 @@ func (t *Task) Delete(ctx context.Context) error {
 		Description: "Deleting Job...",
 		Action:      t.Resources.Job.Delete,
 	}, {
-		Description: "Deleting PersistentVolumeClaim...",
-		Action:      t.Resources.PersistentVolumeClaim.Delete,
-	}, {
 		Description: "Deleting ConfigMap...",
 		Action:      t.Resources.ConfigMap.Delete,
 	}}...)
+	if t.Resources.PersistentVolumeClaim != nil {
+		steps = append(steps, common.Step{
+			Description: "Deleting PersistentVolumeClaim...",
+			Action:      t.Resources.PersistentVolumeClaim.Delete,
+		})
+	}
+
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
