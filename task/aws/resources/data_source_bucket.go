@@ -13,16 +13,11 @@ import (
 
 // NewExistingS3Bucket returns a new data source refering to a pre-allocated
 // S3 bucket.
-func NewExistingS3Bucket(client S3Client, credentials aws.Credentials, id string, region string, path string) *ExistingS3Bucket {
-	if strings.HasPrefix(path, "/") {
-		path = path[1:]
-	}
+func NewExistingS3Bucket(client S3Client, credentials aws.Credentials, storageParams common.RemoteStorage) *ExistingS3Bucket {
 	return &ExistingS3Bucket{
 		client:      client,
 		credentials: credentials,
-		region:      region,
-		id:          id,
-		path:        path,
+		params:      storageParams,
 	}
 }
 
@@ -31,15 +26,13 @@ type ExistingS3Bucket struct {
 	client      S3Client
 	credentials aws.Credentials
 
-	id     string
-	region string
-	path   string
+	params common.RemoteStorage
 }
 
 // Read verifies the specified S3 bucket is accessible.
 func (b *ExistingS3Bucket) Read(ctx context.Context) error {
 	input := s3.HeadBucketInput{
-		Bucket: aws.String(b.id),
+		Bucket: aws.String(b.params.Container),
 	}
 	if _, err := b.client.HeadBucket(ctx, &input); err != nil {
 		if errorCodeIs(err, errNotFound) {
@@ -53,14 +46,15 @@ func (b *ExistingS3Bucket) Read(ctx context.Context) error {
 // ConnectionString implements common.StorageCredentials.
 // The method returns the rclone connection string for the specific bucket.
 func (b *ExistingS3Bucket) ConnectionString(ctx context.Context) (string, error) {
+	region := b.params.Config["region"]
 	connectionString := fmt.Sprintf(
 		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s/%s",
-		b.region,
+		region,
 		b.credentials.AccessKeyID,
 		b.credentials.SecretAccessKey,
 		b.credentials.SessionToken,
-		b.id,
-		b.path)
+		b.params.Container,
+		strings.TrimPrefix(b.params.Path, "/"))
 	return connectionString, nil
 }
 
