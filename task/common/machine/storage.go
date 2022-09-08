@@ -49,7 +49,7 @@ func Reports(ctx context.Context, remote, prefix string) ([]string, error) {
 		return nil, err
 	}
 
-	entries, err := remoteFileSystem.List(ctx, "/reports")
+	entries, err := remoteFileSystem.List(ctx, "reports")
 	if err != nil {
 		return nil, err
 	}

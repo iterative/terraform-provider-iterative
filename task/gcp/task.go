@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"errors"
 	"net"
 
 	"github.com/sirupsen/logrus"
@@ -36,14 +37,32 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Attributes.PermissionSet,
 	)
-	t.Resources.Bucket = resources.NewBucket(
-		t.Client,
-		t.Identifier,
-	)
+	var bucketCredentials common.StorageCredentials
+	if task.RemoteStorage != nil {
+		containerPath := task.RemoteStorage.Path
+		// If a subdirectory was not specified, the task id will
+		// be used.
+		if containerPath == "" {
+			containerPath = string(t.Identifier)
+		}
+		bucket := resources.NewExistingBucket(
+			t.Client,
+			task.RemoteStorage.Container,
+			containerPath)
+		t.DataSources.Bucket = bucket
+		bucketCredentials = bucket
+	} else {
+		bucket := resources.NewBucket(
+			t.Client,
+			t.Identifier,
+		)
+		t.Resources.Bucket = bucket
+		bucketCredentials = bucket
+	}
 	t.DataSources.Credentials = resources.NewCredentials(
 		t.Client,
 		t.Identifier,
-		t.Resources.Bucket,
+		bucketCredentials,
 	)
 	t.DataSources.DefaultNetwork = resources.NewDefaultNetwork(
 		t.Client,
@@ -137,21 +156,22 @@ type Task struct {
 	Identifier  common.Identifier
 	Attributes  common.Task
 	DataSources struct {
-		*resources.DefaultNetwork
-		*resources.Credentials
-		*resources.Image
-		*resources.PermissionSet
+		DefaultNetwork *resources.DefaultNetwork
+		Credentials    *resources.Credentials
+		Image          *resources.Image
+		PermissionSet  *resources.PermissionSet
+		Bucket         *resources.ExistingBucket
 	}
 	Resources struct {
-		*resources.Bucket
+		Bucket                  *resources.Bucket
 		FirewallInternalIngress *resources.FirewallRule
 		FirewallInternalEgress  *resources.FirewallRule
 		FirewallExternalIngress *resources.FirewallRule
 		FirewallExternalEgress  *resources.FirewallRule
 		FirewallDenyIngress     *resources.FirewallRule
 		FirewallDenyEgress      *resources.FirewallRule
-		*resources.InstanceTemplate
-		*resources.InstanceGroupManager
+		InstanceTemplate        *resources.InstanceTemplate
+		InstanceGroupManager    *resources.InstanceGroupManager
 	}
 }
 
@@ -166,10 +186,19 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Reading Image...",
 		Action:      t.DataSources.Image.Read,
-	}, {
-		Description: "Creating Bucket...",
-		Action:      t.Resources.Bucket.Create,
-	}, {
+	}}
+	if t.Resources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Creating Bucket...",
+			Action:      t.Resources.Bucket.Create,
+		})
+	} else if t.DataSources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Verifying bucket...",
+			Action:      t.DataSources.Bucket.Read,
+		})
+	}
+	steps = append(steps, []common.Step{{
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
 	}, {
@@ -196,7 +225,7 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Creating InstanceGroupManager...",
 		Action:      t.Resources.InstanceGroupManager.Create,
-	}}
+	}}...)
 
 	if t.Attributes.Environment.Directory != "" {
 		steps = append(steps, common.Step{
@@ -229,7 +258,14 @@ func (t *Task) Read(ctx context.Context) error {
 		Action:      t.DataSources.Image.Read,
 	}, {
 		Description: "Reading Bucket...",
-		Action:      t.Resources.Bucket.Read,
+		Action: func(ctx context.Context) error {
+			if t.Resources.Bucket != nil {
+				return t.Resources.Bucket.Read(ctx)
+			} else if t.DataSources.Bucket != nil {
+				return t.DataSources.Bucket.Read(ctx)
+			}
+			return errors.New("storage misconfigured")
+		},
 	}, {
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
@@ -318,10 +354,13 @@ func (t *Task) Delete(ctx context.Context) error {
 	}, {
 		Description: "Deleting FirewallDenyIngress...",
 		Action:      t.Resources.FirewallDenyIngress.Delete,
-	}, {
-		Description: "Deleting Bucket...",
-		Action:      t.Resources.Bucket.Delete,
 	}}...)
+	if t.Resources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Deleting Bucket...",
+			Action:      t.Resources.Bucket.Delete,
+		})
+	}
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}

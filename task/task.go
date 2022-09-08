@@ -49,11 +49,9 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	}
 }
 
+// Task defines the interface implemented by provider-specific task resources.
 type Task interface {
-	Read(ctx context.Context) error
-
-	Create(ctx context.Context) error
-	Delete(ctx context.Context) error
+	common.Resource
 
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error

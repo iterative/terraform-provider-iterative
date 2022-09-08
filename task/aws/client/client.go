@@ -33,13 +33,17 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 	if err != nil {
 		return nil, err
 	}
-
-	c := new(Client)
-	c.Cloud = cloud
-	c.Region = region
-	c.Tags = cloud.Tags
-
-	c.Config = config
+	credentials, err := config.Credentials.Retrieve(ctx)
+	if err != nil {
+		return nil, err
+	}
+	c := &Client{
+		Cloud:       cloud,
+		Region:      region,
+		Tags:        cloud.Tags,
+		Config:      config,
+		credentials: credentials,
+	}
 
 	c.Services.EC2 = ec2.NewFromConfig(config)
 	c.Services.S3 = s3.NewFromConfig(config)
@@ -53,8 +57,9 @@ type Client struct {
 	Region string
 	Tags   map[string]string
 
-	Config   aws.Config
-	Services struct {
+	Config      aws.Config
+	credentials aws.Credentials
+	Services    struct {
 		EC2         *ec2.Client
 		S3          *s3.Client
 		STS         *sts.Client
@@ -93,4 +98,9 @@ func (c *Client) DecodeError(ctx context.Context, encoded error) error {
 	}
 
 	return fmt.Errorf("unable to decode: %s", encoded.Error())
+}
+
+// Credentials returns the AWS credentials the client is currently using.
+func (c *Client) Credentials() aws.Credentials {
+	return c.credentials
 }
