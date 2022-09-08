@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 
 	"github.com/aohorodnyk/uid"
+	"github.com/dustinkirkland/golang-petname"
 )
 
 type Identifier struct {
@@ -49,7 +50,8 @@ func NewDeterministicIdentifier(name string) Identifier {
 func NewRandomIdentifier(name string) Identifier {
 	seed := uid.NewProvider36Size(8).MustGenerate().String()
 	if name == "" {
-		name = seed
+		petname.NonDeterministicMode()
+		name = petname.Generate(3, "-")
 	}
 
 	return Identifier{name: name, salt: hash(seed, shortLength/2)}
