@@ -39,14 +39,11 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		return nil, err
 	}
 
-	persistentVolumeDirectory := task.Environment.Directory
-
 	t := new(Task)
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes.Task = task
-	t.Attributes.Directory = persistentVolumeDirectory
-	t.Attributes.DirectoryOut = persistentVolumeDirectory
+	persistentVolumeDirectory := task.Environment.Directory
 	if task.Environment.DirectoryOut != "" {
 		t.Attributes.DirectoryOut = task.Environment.DirectoryOut
 	}
@@ -91,6 +88,8 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		)
 		pvc = t.Resources.PersistentVolumeClaim
 	}
+	t.Attributes.Directory = persistentVolumeDirectory
+	t.Attributes.DirectoryOut = persistentVolumeDirectory
 	t.Resources.Job = resources.NewJob(
 		t.Client,
 		t.Identifier,
