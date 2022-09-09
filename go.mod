@@ -23,6 +23,7 @@ require (
 	github.com/brianvoe/gofakeit/v6 v6.9.0
 	github.com/cloudflare/gokey v0.1.0
 	github.com/docker/go-units v0.4.0
+	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/go-github/v45 v45.2.0
