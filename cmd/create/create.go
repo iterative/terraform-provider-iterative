@@ -10,11 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
 type Options struct {
+	BaseOptions cmdcommon.BaseOptions
+
 	Environment   map[string]string
 	Image         string
 	Machine       string
@@ -30,17 +33,21 @@ type Options struct {
 	Workdir       string
 }
 
-func New(cloud *common.Cloud) *cobra.Command {
+func New() *cobra.Command {
 	o := Options{}
 
 	cmd := &cobra.Command{
 		Use:   "create [command...]",
 		Short: "Create a task",
 		Long:  ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.Run(cmd, args, cloud)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			o.BaseOptions.ConfigureLogging()
+			return nil
 		},
+		RunE: o.Run,
 	}
+
+	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
 
 	cmd.Flags().StringToStringVar(&o.Environment, "environment", map[string]string{}, "environment variables")
 	cmd.Flags().StringVar(&o.Image, "image", "ubuntu", "machine image")
@@ -59,7 +66,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+func (o *Options) Run(cmd *cobra.Command, args []string) error {
+	cloud := o.BaseOptions.GetCloud()
 	variables := make(map[string]*string)
 	for name, value := range o.Environment {
 		name = strings.ToUpper(name)

@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"terraform-provider-iterative/task/common"
 
 	"terraform-provider-iterative/cmd/create"
 	"terraform-provider-iterative/cmd/destroy"
@@ -19,13 +16,6 @@ import (
 	"terraform-provider-iterative/cmd/status"
 	"terraform-provider-iterative/cmd/stop"
 )
-
-type Options struct {
-	Region   string
-	Provider string
-	Log      string
-	common.Cloud
-}
 
 func Execute() {
 	cmd := New()
@@ -36,17 +26,6 @@ func Execute() {
 }
 
 func New() *cobra.Command {
-	o := Options{
-		Cloud: common.Cloud{
-			Timeouts: common.Timeouts{
-				Create: 15 * time.Minute,
-				Read:   3 * time.Minute,
-				Update: 3 * time.Minute,
-				Delete: 15 * time.Minute,
-			},
-		},
-	}
-
 	cmd := &cobra.Command{
 		Use:   "task",
 		Short: "Run code in the cloud",
@@ -54,28 +33,11 @@ func New() *cobra.Command {
 	data scientists to run code in the cloud.`,
 	}
 
-	cmd.AddCommand(create.New(&o.Cloud))
-	cmd.AddCommand(destroy.New(&o.Cloud))
-	cmd.AddCommand(list.New(&o.Cloud))
-	cmd.AddCommand(status.New(&o.Cloud))
-	cmd.AddCommand(stop.New(&o.Cloud))
-
-	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
-	cmd.PersistentFlags().StringVar(&o.Log, "log", "info", "log level")
-	cmd.PersistentFlags().StringVar(&o.Region, "region", "us-east", "cloud region")
-	cobra.CheckErr(cmd.MarkPersistentFlagRequired("cloud"))
-
-	cobra.OnInitialize(func() {
-		switch o.Log {
-		case "info":
-			logrus.SetLevel(logrus.InfoLevel)
-		case "debug":
-			logrus.SetLevel(logrus.DebugLevel)
-		}
-
-		o.Cloud.Provider = common.Provider(o.Provider)
-		o.Cloud.Region = common.Region(o.Region)
-	})
+	cmd.AddCommand(create.New())
+	cmd.AddCommand(destroy.New())
+	cmd.AddCommand(list.New())
+	cmd.AddCommand(status.New())
+	cmd.AddCommand(stop.New())
 
 	cwd, err := os.Getwd()
 	cobra.CheckErr(err)

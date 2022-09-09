@@ -5,16 +5,18 @@ import (
 
 	"github.com/spf13/cobra"
 
+	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
 type Options struct {
-	Workdir string
-	Output  string
+	BaseOptions cmdcommon.BaseOptions
+	Workdir     string
+	Output      string
 }
 
-func New(cloud *common.Cloud) *cobra.Command {
+func New() *cobra.Command {
 	o := Options{}
 
 	cmd := &cobra.Command{
@@ -22,10 +24,14 @@ func New(cloud *common.Cloud) *cobra.Command {
 		Short: "Destroy a task and all associated resources.",
 		Long:  ``,
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.Run(cmd, args, cloud)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			o.BaseOptions.ConfigureLogging()
+			return nil
 		},
+		RunE: o.Run,
 	}
+
+	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
 
 	cmd.Flags().StringVar(&o.Output, "output", "", "output directory, relative to workdir")
 	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory")
@@ -33,7 +39,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+func (o *Options) Run(cmd *cobra.Command, args []string) error {
+	cloud := o.BaseOptions.GetCloud()
 	cfg := common.Task{
 		Environment: common.Environment{
 			Directory:    o.Workdir,
