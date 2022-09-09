@@ -27,7 +27,7 @@ func newListCmd() *cobra.Command {
 		RunE: o.Run,
 	}
 
-	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
+	o.BaseOptions.SetFlags(cmd.Flags())
 
 	return cmd
 }

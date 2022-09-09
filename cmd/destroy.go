@@ -30,7 +30,7 @@ func newDestroyCmd() *cobra.Command {
 		RunE: o.Run,
 	}
 
-	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
+	o.BaseOptions.SetFlags(cmd.Flags())
 
 	cmd.Flags().StringVar(&o.Output, "output", "", "output directory, relative to workdir")
 	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory")

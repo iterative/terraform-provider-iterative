@@ -46,7 +46,7 @@ func newCreateCmd() *cobra.Command {
 		RunE: o.Run,
 	}
 
-	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
+	o.BaseOptions.SetFlags(cmd.Flags())
 
 	cmd.Flags().StringToStringVar(&o.Environment, "environment", map[string]string{}, "environment variables")
 	cmd.Flags().StringVar(&o.Image, "image", "ubuntu", "machine image")

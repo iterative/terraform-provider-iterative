@@ -29,11 +29,11 @@ var defaultCloud = common.Cloud{
 }
 
 // SetFlags sets base option flags on the provided flagset.
-func (o *BaseOptions) SetFlags(f *pflag.FlagSet, cmd *cobra.Command) {
+func (o *BaseOptions) SetFlags(f *pflag.FlagSet) {
 	f.StringVar(&o.Provider, "cloud", "", "cloud provider")
 	f.StringVar(&o.Log, "log", "info", "log level")
 	f.StringVar(&o.Region, "region", "us-east", "cloud region")
-	cmd.MarkFlagRequired("cloud")
+	cobra.CheckErr(cobra.MarkFlagRequired(f, "cloud"))
 }
 
 // GetCloud parses cloud-specific options and returns a cloud structure.

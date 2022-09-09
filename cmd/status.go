@@ -36,7 +36,7 @@ func newStatusCmd() *cobra.Command {
 		RunE: o.Run,
 	}
 
-	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
+	o.BaseOptions.SetFlags(cmd.Flags())
 
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
 
