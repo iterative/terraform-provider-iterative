@@ -1,4 +1,4 @@
-package read
+package status
 
 import (
 	"context"
@@ -22,8 +22,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 	o := Options{}
 
 	cmd := &cobra.Command{
-		Use:   "read <name>",
-		Short: "Read the status of a task",
+		Use:   "status <name>",
+		Short: "Get the status of a task",
 		Long:  ``,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
