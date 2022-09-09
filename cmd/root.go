@@ -9,12 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"terraform-provider-iterative/cmd/create"
-	"terraform-provider-iterative/cmd/destroy"
-	"terraform-provider-iterative/cmd/list"
-	"terraform-provider-iterative/cmd/status"
-	"terraform-provider-iterative/cmd/stop"
 )
 
 func Execute() {
@@ -33,14 +27,23 @@ func New() *cobra.Command {
 	data scientists to run code in the cloud.`,
 	}
 
-	cmd.AddCommand(create.New())
-	cmd.AddCommand(destroy.New())
-	cmd.AddCommand(list.New())
-	cmd.AddCommand(status.New())
-	cmd.AddCommand(stop.New())
+	cmd.AddCommand(newCreateCmd())
+	cmd.AddCommand(newDestroyCmd())
+	cmd.AddCommand(newListCmd())
+	cmd.AddCommand(newStatusCmd())
+	cmd.AddCommand(newStopCmd())
 
+	cobra.CheckErr(parseConfigFile)
+
+	return cmd
+}
+
+func parseConfigFile(cmd *cobra.Command) error {
 	cwd, err := os.Getwd()
-	cobra.CheckErr(err)
+	if err != nil {
+		return err
+	}
+
 	viper.AddConfigPath(cwd)
 	viper.SetConfigType("hcl")
 	viper.SetConfigName("main.tf")
@@ -105,10 +108,10 @@ func New() *cobra.Command {
 		}
 	}
 
-	for _, cmd := range append(cmd.Commands(), cmd) {
+	for _, subcmd := range append(cmd.Commands(), cmd) {
 		for _, flagSet := range []*pflag.FlagSet{
-			cmd.PersistentFlags(),
-			cmd.Flags(),
+			subcmd.PersistentFlags(),
+			subcmd.Flags(),
 		} {
 			cobra.CheckErr(viper.BindPFlags(flagSet))
 			flagSet.VisitAll(func(f *pflag.Flag) {
@@ -125,6 +128,5 @@ func New() *cobra.Command {
 			})
 		}
 	}
-
-	return cmd
+	return nil
 }
