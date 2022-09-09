@@ -7,18 +7,21 @@ import (
 
 	"github.com/spf13/cobra"
 
+	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
 type Options struct {
+	BaseOptions cmdcommon.BaseOptions
+
 	Parallelism int
 	Status      bool
 	Events      bool
 	Logs        bool
 }
 
-func New(cloud *common.Cloud) *cobra.Command {
+func New() *cobra.Command {
 	o := Options{}
 
 	cmd := &cobra.Command{
@@ -26,10 +29,14 @@ func New(cloud *common.Cloud) *cobra.Command {
 		Short: "Get the status of a task",
 		Long:  ``,
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.Run(cmd, args, cloud)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			o.BaseOptions.ConfigureLogging()
+			return nil
 		},
+		RunE: o.Run,
 	}
+
+	o.BaseOptions.SetFlags(cmd.Flags(), cmd)
 
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
 	cmd.Flags().BoolVar(&o.Status, "status", false, "Read status")
@@ -40,7 +47,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
+func (o *Options) Run(cmd *cobra.Command, args []string) error {
+	cloud := o.BaseOptions.GetCloud()
 	cfg := common.Task{
 		Environment: common.Environment{
 			Image: "ubuntu",

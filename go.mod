@@ -30,6 +30,7 @@ require (
 	github.com/hashicorp/go-getter v1.5.11 // indirect
 	github.com/hashicorp/hcl/v2 v2.8.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/rclone/rclone v1.57.0
 	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/shirou/gopsutil v3.21.11+incompatible
