@@ -40,10 +40,9 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "task",
+		Use:   "leo",
 		Short: "Run code in the cloud",
-		Long: `Task is a command-line tool that allows
-	data scientists to run code in the cloud.`,
+		Long:  `leo is a command-line tool that allows data scientists to run code in the cloud.`,
 	}
 
 	cmd.AddCommand(create.New(&o.Cloud))
