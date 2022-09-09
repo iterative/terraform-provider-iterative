@@ -1,21 +1,20 @@
-package stop
+package cmd
 
 import (
 	"context"
 
 	"github.com/spf13/cobra"
 
-	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
-type Options struct {
-	BaseOptions cmdcommon.BaseOptions
+type stopCmd struct {
+	BaseOptions BaseOptions
 }
 
-func New() *cobra.Command {
-	o := Options{}
+func newStopCmd() *cobra.Command {
+	o := stopCmd{}
 
 	cmd := &cobra.Command{
 		Use:    "stop <name>",
@@ -34,7 +33,7 @@ func New() *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string) error {
+func (o *stopCmd) Run(cmd *cobra.Command, args []string) error {
 	cloud := o.BaseOptions.GetCloud()
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Delete)
 	defer cancel()

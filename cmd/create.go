@@ -1,4 +1,4 @@
-package create
+package cmd
 
 import (
 	"context"
@@ -10,13 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
-type Options struct {
-	BaseOptions cmdcommon.BaseOptions
+type createCmd struct {
+	BaseOptions BaseOptions
 
 	Environment   map[string]string
 	Image         string
@@ -33,8 +32,8 @@ type Options struct {
 	Workdir       string
 }
 
-func New() *cobra.Command {
-	o := Options{}
+func newCreateCmd() *cobra.Command {
+	o := createCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "create [command...]",
@@ -66,7 +65,7 @@ func New() *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string) error {
+func (o *createCmd) Run(cmd *cobra.Command, args []string) error {
 	cloud := o.BaseOptions.GetCloud()
 	variables := make(map[string]*string)
 	for name, value := range o.Environment {

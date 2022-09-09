@@ -1,4 +1,4 @@
-package list
+package cmd
 
 import (
 	"context"
@@ -6,16 +6,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 )
 
-type Options struct {
-	BaseOptions cmdcommon.BaseOptions
+type listCmd struct {
+	BaseOptions BaseOptions
 }
 
-func New() *cobra.Command {
-	o := Options{}
+func newListCmd() *cobra.Command {
+	o := listCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -33,7 +32,7 @@ func New() *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string) error {
+func (o *listCmd) Run(cmd *cobra.Command, args []string) error {
 	cloud := o.BaseOptions.GetCloud()
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Read)
 	defer cancel()

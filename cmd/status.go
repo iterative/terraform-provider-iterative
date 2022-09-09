@@ -1,4 +1,4 @@
-package status
+package cmd
 
 import (
 	"context"
@@ -7,13 +7,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
-type Options struct {
-	BaseOptions cmdcommon.BaseOptions
+type statusCmd struct {
+	BaseOptions BaseOptions
 
 	Parallelism int
 	Status      bool
@@ -21,8 +20,8 @@ type Options struct {
 	Logs        bool
 }
 
-func New() *cobra.Command {
-	o := Options{}
+func newStatusCmd() *cobra.Command {
+	o := statusCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "status <name>",
@@ -47,7 +46,7 @@ func New() *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string) error {
+func (o *statusCmd) Run(cmd *cobra.Command, args []string) error {
 	cloud := o.BaseOptions.GetCloud()
 	cfg := common.Task{
 		Environment: common.Environment{

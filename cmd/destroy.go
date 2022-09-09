@@ -1,23 +1,22 @@
-package destroy
+package cmd
 
 import (
 	"context"
 
 	"github.com/spf13/cobra"
 
-	cmdcommon "terraform-provider-iterative/cmd/common"
 	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
-type Options struct {
-	BaseOptions cmdcommon.BaseOptions
+type destroyCmd struct {
+	BaseOptions BaseOptions
 	Workdir     string
 	Output      string
 }
 
-func New() *cobra.Command {
-	o := Options{}
+func newDestroyCmd() *cobra.Command {
+	o := destroyCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "destroy <name>",
@@ -39,7 +38,7 @@ func New() *cobra.Command {
 	return cmd
 }
 
-func (o *Options) Run(cmd *cobra.Command, args []string) error {
+func (o *destroyCmd) Run(cmd *cobra.Command, args []string) error {
 	cloud := o.BaseOptions.GetCloud()
 	cfg := common.Task{
 		Environment: common.Environment{
