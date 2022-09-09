@@ -1,4 +1,4 @@
-package delete
+package destroy
 
 import (
 	"context"
@@ -18,8 +18,8 @@ func New(cloud *common.Cloud) *cobra.Command {
 	o := Options{}
 
 	cmd := &cobra.Command{
-		Use:   "delete <name>",
-		Short: "Delete a task",
+		Use:   "destroy <name>",
+		Short: "Destroy a task and all associated resources.",
 		Long:  ``,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
