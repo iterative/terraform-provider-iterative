@@ -9,7 +9,7 @@ INSTALL_PATH=~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/
 default: build
 
 build:
-	go build
+	go build ./...
 
 install_tpi:
 	GOBIN=${INSTALL_PATH} go install ./cmd/tpi
