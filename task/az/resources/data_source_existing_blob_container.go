@@ -9,7 +9,6 @@ import (
 )
 
 // NewExistingBlobContainer returns a new data source refering to a pre-allocated storage container.
-// The containerRef parameter is expected to be in the form of "storageAccountName/containerName".
 func NewExistingBlobContainer(client *client.Client, storageParams common.RemoteStorage) *ExistingBlobContainer {
 	return &ExistingBlobContainer{
 		client: client,
