@@ -1,7 +1,7 @@
 builds:
 -
   id: "tpi"
-  main: ./cmd/tpi
+  main: ./main.go
   env:
   - CGO_ENABLED=0
   mod_timestamp: '{{ .CommitTimestamp }}'
