@@ -52,6 +52,7 @@ export AZURE_CLIENT_ID='3 value with "quotes" and spaces'
 export AZURE_CLIENT_SECRET='4 value with "quotes" and spaces'
 export AZURE_SUBSCRIPTION_ID='5 value with "quotes" and spaces'
 export AZURE_TENANT_ID='6 value with "quotes" and spaces'
+export CML_RUNNER_SENSITIVE_ENV=AZURE_CLIENT_ID:AZURE_CLIENT_SECRET:AZURE_SUBSCRIPTION_ID:AZURE_TENANT_ID
 
 while lsof /var/lib/dpkg/lock; do sleep 1; done
 
