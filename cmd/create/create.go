@@ -55,6 +55,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.Tags, "tags", map[string]string{}, "resource tags")
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 24*60*60, "timeout")
 	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
+	cmd.Flags().SetInterspersed(false)
 
 	return cmd
 }
@@ -115,6 +116,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
+	logrus.Infof("Using identifier %s", id.Long())
+	defer fmt.Println(id.Long())
+
 	if err := tsk.Create(ctx); err != nil {
 		logrus.Errorf("Failed to create a new task: %v", err)
 		logrus.Warn("Attempting to delete residual resources...")
@@ -125,6 +129,5 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	fmt.Println(id.Long())
 	return nil
 }
