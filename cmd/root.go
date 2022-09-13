@@ -23,7 +23,7 @@ import (
 type Options struct {
 	Region   string
 	Provider string
-	Verbose  int
+	Verbose  bool
 	common.Cloud
 }
 
@@ -61,13 +61,13 @@ func New() *cobra.Command {
 	cmd.AddCommand(stop.New(&o.Cloud))
 
 	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
-	cmd.PersistentFlags().CountVar(&o.Verbose, "verbose", "verbose output")
+	cmd.PersistentFlags().BoolVar(&o.Verbose, "verbose", "verbose output")
 	cmd.PersistentFlags().StringVar(&o.Region, "region", "us-east", "cloud region")
 	cobra.CheckErr(cmd.MarkPersistentFlagRequired("cloud"))
 
 	cobra.OnInitialize(func() {
 		logrus.SetLevel(logrus.InfoLevel)
-		if o.Verbose > 0 {
+		if o.Verbose {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 
