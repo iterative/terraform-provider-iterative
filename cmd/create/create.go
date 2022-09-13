@@ -70,6 +70,8 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		}
 	}
 
+	cloud.Tags = o.Tags
+
 	script := o.Script
 	if !strings.HasPrefix(script, "#!") {
 		script = "#!/bin/sh\n" + script
