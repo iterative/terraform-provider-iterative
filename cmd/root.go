@@ -61,7 +61,7 @@ func New() *cobra.Command {
 	cmd.AddCommand(stop.New(&o.Cloud))
 
 	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
-	cmd.PersistentFlags().BoolVar(&o.Verbose, "verbose", "verbose output")
+	cmd.PersistentFlags().BoolVar(&o.Verbose, "verbose", false, "verbose output")
 	cmd.PersistentFlags().StringVar(&o.Region, "region", "us-east", "cloud region")
 	cobra.CheckErr(cmd.MarkPersistentFlagRequired("cloud"))
 
