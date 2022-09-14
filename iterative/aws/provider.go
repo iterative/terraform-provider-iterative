@@ -235,8 +235,8 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				return err
 			}
 
-			if len(page.InstanceTypeOfferings) > 0 {
-				availabilityZone = aws.ToString(page.InstanceTypeOfferings[0].Location)
+			if offerings := page.InstanceTypeOfferings; len(offerings) > 0 {
+				availabilityZone = aws.ToString(offerings[0].Location)
 				break
 			}
 		}
