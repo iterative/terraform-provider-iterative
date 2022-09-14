@@ -217,32 +217,31 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		},
 	}
 
-	// Availability zone
-	if availabilityZone == "" {
-		offeringsInput := &ec2.DescribeInstanceTypeOfferingsInput{
-			LocationType: types.LocationTypeAvailabilityZone,
-			Filters: []types.Filter{
-				{
-					Name:   aws.String("instance-type"),
-					Values: []string{instanceType},
-				},
-			},
-		}
-
-		for offeringsPaginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(svc, offeringsInput); offeringsPaginator.HasMorePages(); {
-			page, err := offeringsPaginator.NextPage(ctx)
-			if err != nil {
-				return err
-			}
-
-			if offerings := page.InstanceTypeOfferings; len(offerings) > 0 {
-				availabilityZone = aws.ToString(offerings[0].Location)
-				break
-			}
-		}
-	}
-
 	if subnetId == "" {
+		if availabilityZone == "" {
+			offeringsInput := &ec2.DescribeInstanceTypeOfferingsInput{
+				LocationType: types.LocationTypeAvailabilityZone,
+				Filters: []types.Filter{
+					{
+						Name:   aws.String("instance-type"),
+						Values: []string{instanceType},
+					},
+				},
+			}
+
+			for offeringsPaginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(svc, offeringsInput); offeringsPaginator.HasMorePages(); {
+				page, err := offeringsPaginator.NextPage(ctx)
+				if err != nil {
+					return err
+				}
+
+				if offerings := page.InstanceTypeOfferings; len(offerings) > 0 {
+					availabilityZone = aws.ToString(offerings[0].Location)
+					break
+				}
+			}
+		}
+
 		// use availability zone
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
 			Name:   aws.String("availability-zone"),
