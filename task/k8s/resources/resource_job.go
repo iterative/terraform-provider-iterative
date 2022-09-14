@@ -28,9 +28,10 @@ import (
 )
 
 func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {
-	j := new(Job)
-	j.Client = client
-	j.Identifier = identifier.Long()
+	j := &Job{
+		Client:     client,
+		Identifier: identifier.Long(),
+	}
 	j.Dependencies.PersistentVolumeClaim = persistentVolumeClaim
 	j.Dependencies.ConfigMap = configMap
 	j.Dependencies.PermissionSet = permissionSet
@@ -58,9 +59,9 @@ type Job struct {
 		Events       []common.Event
 	}
 	Dependencies struct {
-		*PersistentVolumeClaim
-		*ConfigMap
-		*PermissionSet
+		PersistentVolumeClaim *PersistentVolumeClaim
+		ConfigMap             *ConfigMap
+		PermissionSet         *PermissionSet
 	}
 	Resource *kubernetes_batch.Job
 }
