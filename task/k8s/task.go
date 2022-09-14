@@ -90,6 +90,12 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.DataSources.PermissionSet,
 		t.Attributes.Task,
 	)
+	t.Resources.TransferPod = resources.NewTransferPod(
+		t.Client,
+		t.Identifier,
+		t.Resources.PersistentVolumeClaim,
+		t.DataSources.PermissionSet,
+		t.Attributes.Task)
 	return t, nil
 }
 
@@ -108,6 +114,7 @@ type Task struct {
 		*resources.ConfigMap
 		*resources.PersistentVolumeClaim
 		*resources.Job
+		*resources.TransferPod
 	}
 }
 
@@ -125,23 +132,17 @@ func (t *Task) Create(ctx context.Context) error {
 	}}
 
 	if t.Attributes.Directory != "" {
-		env := map[string]string{
-			"TPI_TRANSFER_MODE": "true",
-		}
 		steps = append(steps, []common.Step{{
-			Description: "Deleting Job...",
-			Action:      withEnv(env, t.Resources.Job.Delete),
-		}, {
-			Description: "Creating ephemeral Job to upload directory...",
-			Action:      withEnv(env, t.Resources.Job.Create),
+			Description: "Creating temporary deployment to upload directory...",
+			Action:      t.Resources.TransferPod.Create,
 		}, {
 			Description: "Uploading Directory...",
-			Action: withEnv(env, func(ctx context.Context) error {
+			Action: func(ctx context.Context) error {
 				return t.Push(ctx, t.Attributes.Directory)
-			}),
+			},
 		}, {
-			Description: "Deleting ephemeral Job to upload directory...",
-			Action:      withEnv(env, t.Resources.Job.Delete),
+			Description: "Deleting temporary pod to upload directory...",
+			Action:      t.Resources.TransferPod.Delete,
 		}}...)
 	}
 
@@ -183,35 +184,25 @@ func (t *Task) Read(ctx context.Context) error {
 
 func (t *Task) Delete(ctx context.Context) error {
 	logrus.Info("Deleting resources...")
-	steps := []common.Step{}
-	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
-		env := map[string]string{
-			"TPI_TRANSFER_MODE": "true",
-			"TPI_PULL_MODE":     "true",
-		}
-
-		steps = []common.Step{{
-			Description: "Deleting Job...",
-			Action:      withEnv(env, t.Resources.Job.Delete),
-		}, {
-			Description: "Creating ephemeral Job to retrieve directory...",
-			Action:      withEnv(env, t.Resources.Job.Create),
-		}, {
-			Description: "Downloading Directory...",
-			Action: withEnv(env, func(ctx context.Context) error {
-				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
-			}),
-		}, {
-			// WTH?
-			Description: "Deleting ephemeral Job to retrieve directory...",
-			Action:      withEnv(env, t.Resources.Job.Create),
-		}}
-	}
-
-	steps = append(steps, []common.Step{{
+	steps := []common.Step{{
 		Description: "Deleting Job...",
 		Action:      t.Resources.Job.Delete,
-	}, {
+	}}
+	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
+		steps = append(steps, []common.Step{{
+			Description: "Creating temporary deployment to download directory...",
+			Action:      t.Resources.TransferPod.Create,
+		}, {
+			Description: "Downloading Directory...",
+			Action: func(ctx context.Context) error {
+				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
+			},
+		}, {
+			Description: "Deleting temporary pod to download directory...",
+			Action:      t.Resources.TransferPod.Delete,
+		}}...)
+	}
+	steps = append(steps, []common.Step{{
 		Description: "Deleting PersistentVolumeClaim...",
 		Action:      t.Resources.PersistentVolumeClaim.Delete,
 	}, {
@@ -226,7 +217,7 @@ func (t *Task) Delete(ctx context.Context) error {
 }
 
 func (t *Task) Push(ctx context.Context, source string) error {
-	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
+	waitSelector := fmt.Sprintf("app=%s-transfer", t.Identifier.Long())
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Create, t.Client.Namespace, waitSelector)
 	if err != nil {
 		return err
@@ -237,11 +228,11 @@ func (t *Task) Push(ctx context.Context, source string) error {
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
 
-	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
+	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/data/directory")})
 }
 
 func (t *Task) Pull(ctx context.Context, destination, include string) error {
-	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
+	waitSelector := fmt.Sprintf("app=%s-transfer", t.Identifier.Long())
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Delete, t.Client.Namespace, waitSelector)
 	if err != nil {
 		return err
@@ -258,7 +249,7 @@ func (t *Task) Pull(ctx context.Context, destination, include string) error {
 	}
 	defer os.RemoveAll(dir)
 
-	err = copyOptions.Run([]string{fmt.Sprintf("%s/%s:/directory/directory", t.Client.Namespace, pod), dir})
+	err = copyOptions.Run([]string{fmt.Sprintf("%s/%s:/data/directory", t.Client.Namespace, pod), dir})
 	if err != nil {
 		return err
 	}
@@ -298,15 +289,4 @@ func (t *Task) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, er
 
 func (t *Task) GetIdentifier(ctx context.Context) common.Identifier {
 	return t.Identifier
-}
-
-// withEnv runs the specified action with the environment variables set.
-func withEnv(env map[string]string, action func(context.Context) error) func(context.Context) error {
-	return func(ctx context.Context) error {
-		for key, value := range env {
-			os.Setenv(key, value)
-			defer os.Unsetenv(key)
-		}
-		return action(ctx)
-	}
 }

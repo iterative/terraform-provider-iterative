@@ -7,7 +7,6 @@ import (
 	"io"
 	"math"
 	"net"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -58,9 +57,9 @@ type Job struct {
 		Events       []common.Event
 	}
 	Dependencies struct {
-		*PersistentVolumeClaim
-		*ConfigMap
-		*PermissionSet
+		PersistentVolumeClaim *PersistentVolumeClaim
+		ConfigMap             *ConfigMap
+		PermissionSet         *PermissionSet
 	}
 	Resource *kubernetes_batch.Job
 }
@@ -147,14 +146,6 @@ func (j *Job) Create(ctx context.Context) error {
 			Value: value,
 		})
 	}
-	jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
-		Name:  "TPI_TRANSFER_MODE",
-		Value: os.Getenv("TPI_TRANSFER_MODE"),
-	})
-	jobEnvironment = append(jobEnvironment, kubernetes_core.EnvVar{
-		Name:  "TPI_PULL_MODE",
-		Value: os.Getenv("TPI_PULL_MODE"),
-	})
 
 	readExecuteUserGroupOthers := int32(0555)
 
@@ -200,15 +191,8 @@ func (j *Job) Create(ctx context.Context) error {
 	// The second branch will run on apply, waiting for the file copy to complete before starting
 	// the script.
 	script := `
-	if ! test -z "$TPI_TRANSFER_MODE"; then
-	  test -z "$TPI_PULL_MODE" && rm -r /directory/directory
-	  while true; do
-	    sleep 86400
-	  done
-	else
 	  cd /directory/directory
 	  exec /script/script
-	fi
 	`
 
 	job := kubernetes_batch.Job{
