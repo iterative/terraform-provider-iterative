@@ -28,7 +28,7 @@ var (
 	}
 )
 
-//ResourceMachineCreate creates AWS instance
+// ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	userData := d.Get("startup_script").(string)
 	pairName := d.Id()
@@ -61,6 +61,32 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return decodeAWSError(region, err)
 	}
 	svc := ec2.NewFromConfig(config)
+
+	// Availability zone
+	if availabilityZone == "" {
+		offeringsInput := &ec2.DescribeInstanceTypeOfferingsInput{
+			LocationType: types.LocationTypeAvailabilityZone,
+			Filters: []types.Filter{
+				{
+					Name:   aws.String("instance-type"),
+					Values: []string{instanceType},
+				},
+			},
+		}
+
+	loop:
+		for offeringsPaginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(svc, offeringsInput); offeringsPaginator.HasMorePages(); {
+			page, err := offeringsPaginator.NextPage(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, offering := range page.InstanceTypeOfferings {
+				availabilityZone = aws.ToString(offering.Location)
+				break loop
+			}
+		}
+	}
 
 	// Image
 	imagesRes, err := svc.DescribeImages(ctx, &ec2.DescribeImagesInput{
@@ -216,20 +242,21 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	}
-	// use availability zone from user
-	if availabilityZone != "" && subnetId == "" {
+
+	if subnetId == "" {
+		// use availability zone
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
 			Name:   aws.String("availability-zone"),
 			Values: []string{availabilityZone},
 		})
-	}
-	// use exact subnet-id from user
-	if subnetId != "" {
+	} else {
+		// use exact subnet-id from user
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
 			Name:   aws.String("subnet-id"),
 			Values: []string{subnetId},
 		})
 	}
+
 	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
 	if err != nil {
 		return decodeAWSError(region, err)
@@ -385,7 +412,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-//ResourceMachineDelete deletes AWS instance
+// ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	id := aws.String(d.Id())
 	region := GetRegion(d.Get("region").(string))
