@@ -62,32 +62,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	svc := ec2.NewFromConfig(config)
 
-	// Availability zone
-	if availabilityZone == "" {
-		offeringsInput := &ec2.DescribeInstanceTypeOfferingsInput{
-			LocationType: types.LocationTypeAvailabilityZone,
-			Filters: []types.Filter{
-				{
-					Name:   aws.String("instance-type"),
-					Values: []string{instanceType},
-				},
-			},
-		}
-
-	loop:
-		for offeringsPaginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(svc, offeringsInput); offeringsPaginator.HasMorePages(); {
-			page, err := offeringsPaginator.NextPage(ctx)
-			if err != nil {
-				return err
-			}
-
-			for _, offering := range page.InstanceTypeOfferings {
-				availabilityZone = aws.ToString(offering.Location)
-				break loop
-			}
-		}
-	}
-
 	// Image
 	imagesRes, err := svc.DescribeImages(ctx, &ec2.DescribeImagesInput{
 		Filters: []types.Filter{
@@ -241,6 +215,31 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				Values: []string{vpcID},
 			},
 		},
+	}
+
+	// Availability zone
+	if availabilityZone == "" {
+		offeringsInput := &ec2.DescribeInstanceTypeOfferingsInput{
+			LocationType: types.LocationTypeAvailabilityZone,
+			Filters: []types.Filter{
+				{
+					Name:   aws.String("instance-type"),
+					Values: []string{instanceType},
+				},
+			},
+		}
+
+		for offeringsPaginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(svc, offeringsInput); offeringsPaginator.HasMorePages(); {
+			page, err := offeringsPaginator.NextPage(ctx)
+			if err != nil {
+				return err
+			}
+
+			if len(page.InstanceTypeOfferings) > 0 {
+				availabilityZone = aws.ToString(page.InstanceTypeOfferings[0].Location)
+				break
+			}
+		}
 	}
 
 	if subnetId == "" {
