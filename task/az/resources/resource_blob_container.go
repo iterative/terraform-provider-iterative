@@ -5,9 +5,11 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
 	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
+	"terraform-provider-iterative/task/common/machine"
 )
 
 func NewBlobContainer(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount) *BlobContainer {
@@ -23,8 +25,8 @@ type BlobContainer struct {
 	Client       *client.Client
 	Identifier   string
 	Dependencies struct {
-		*ResourceGroup
-		*StorageAccount
+		ResourceGroup  *ResourceGroup
+		StorageAccount *StorageAccount
 	}
 	Resource *storage.BlobContainer
 }
@@ -73,3 +75,19 @@ func (b *BlobContainer) Delete(ctx context.Context) error {
 	b.Resource = nil
 	return nil
 }
+
+// ConnectionString implements BucketCredentials.
+// The method returns the rclone connection string for the specific bucket.
+func (b *BlobContainer) ConnectionString(ctx context.Context) (string, error) {
+	connection := machine.RcloneConnection{
+		Backend:   machine.RcloneBackendAzureBlob,
+		Container: b.Dependencies.StorageAccount.Identifier,
+		Config: map[string]string{
+			"account": b.Dependencies.StorageAccount.Identifier,
+			"key":     to.String(b.Dependencies.StorageAccount.Attributes.Value),
+		},
+	}
+	return connection.String(), nil
+}
+
+var _ common.StorageCredentials = (*BlobContainer)(nil)
