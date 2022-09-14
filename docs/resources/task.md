@@ -297,7 +297,7 @@ A comma-separated list of [user-assigned identity](https://docs.microsoft.com/en
 
 #### Kubernetes
 
-[Not yet implemented](https://github.com/iterative/terraform-provider-iterative/issues/560)
+The name of a service account in the current namespace.
 
 ## Known Issues
 
