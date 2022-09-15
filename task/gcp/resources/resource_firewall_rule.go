@@ -30,9 +30,10 @@ const (
 )
 
 func NewFirewallRule(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, rule common.FirewallRule, direction FirewallRuleDirection, action FirewallRuleAction, priority uint16) *FirewallRule {
-	f := new(FirewallRule)
-	f.Client = client
-	f.Identifier = fmt.Sprintf("%s-%s%d", identifier.Long(), strings.ToLower(string(direction[0:1])), priority)
+	f := &FirewallRule{
+		client:     client,
+		Identifier: fmt.Sprintf("%s-%s%d", identifier.Long(), strings.ToLower(string(direction[0:1])), priority),
+	}
 	f.Attributes.Rule = rule
 	f.Attributes.Direction = direction
 	f.Attributes.Action = action
@@ -42,7 +43,7 @@ func NewFirewallRule(client *client.Client, identifier common.Identifier, defaul
 }
 
 type FirewallRule struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		Rule      common.FirewallRule
@@ -51,7 +52,7 @@ type FirewallRule struct {
 		Priority  uint16
 	}
 	Dependencies struct {
-		*DefaultNetwork
+		DefaultNetwork *DefaultNetwork
 	}
 	Resource *compute.Firewall
 }
@@ -112,7 +113,7 @@ func (f *FirewallRule) Create(ctx context.Context) error {
 		}
 	}
 
-	insertOperation, err := f.Client.Services.Compute.Firewalls.Insert(f.Client.Credentials.ProjectID, &definition).Do()
+	insertOperation, err := f.client.Services.Compute.Firewalls.Insert(f.client.Credentials.ProjectID, &definition).Do()
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "alreadyExists") {
 			return f.Read(ctx)
@@ -120,8 +121,8 @@ func (f *FirewallRule) Create(ctx context.Context) error {
 		return err
 	}
 
-	getOperationCall := f.Client.Services.Compute.GlobalOperations.Get(f.Client.Credentials.ProjectID, insertOperation.Name)
-	_, err = waitForOperation(ctx, f.Client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
+	getOperationCall := f.client.Services.Compute.GlobalOperations.Get(f.client.Credentials.ProjectID, insertOperation.Name)
+	_, err = waitForOperation(ctx, f.client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
 	if err != nil {
 		return err
 	}
@@ -130,7 +131,7 @@ func (f *FirewallRule) Create(ctx context.Context) error {
 }
 
 func (f *FirewallRule) Read(ctx context.Context) error {
-	firewall, err := f.Client.Services.Compute.Firewalls.Get(f.Client.Credentials.ProjectID, f.Identifier).Do()
+	firewall, err := f.client.Services.Compute.Firewalls.Get(f.client.Credentials.ProjectID, f.Identifier).Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
@@ -148,8 +149,8 @@ func (f *FirewallRule) Update(ctx context.Context) error {
 }
 
 func (f *FirewallRule) Delete(ctx context.Context) error {
-	deleteOperationCall := f.Client.Services.Compute.Firewalls.Delete(f.Client.Credentials.ProjectID, f.Identifier)
-	_, err := waitForOperation(ctx, f.Client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
+	deleteOperationCall := f.client.Services.Compute.Firewalls.Delete(f.client.Credentials.ProjectID, f.Identifier)
+	_, err := waitForOperation(ctx, f.client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
 	if err != nil {
 		var e *googleapi.Error
 		if !errors.As(err, &e) || e.Code != 404 {
