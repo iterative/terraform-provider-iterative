@@ -12,20 +12,21 @@ import (
 )
 
 func NewSecurityGroup(client *client.Client, identifier common.Identifier, defaultVPC *DefaultVPC, firewall common.Firewall) *SecurityGroup {
-	s := new(SecurityGroup)
-	s.Client = client
-	s.Identifier = identifier.Long()
-	s.Attributes = firewall
+	s := &SecurityGroup{
+		client:     client,
+		Identifier: identifier.Long(),
+		Attributes: firewall,
+	}
 	s.Dependencies.DefaultVPC = defaultVPC
 	return s
 }
 
 type SecurityGroup struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Attributes   common.Firewall
 	Dependencies struct {
-		*DefaultVPC
+		DefaultVPC *DefaultVPC
 	}
 	Resource *types.SecurityGroup
 }
@@ -42,12 +43,12 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeSecurityGroup,
-				Tags:         makeTagSlice(s.Identifier, s.Client.Tags),
+				Tags:         makeTagSlice(s.Identifier, s.client.Tags),
 			},
 		},
 	}
 
-	group, err := s.Client.Services.EC2.CreateSecurityGroup(ctx, &createInput)
+	group, err := s.client.Services.EC2.CreateSecurityGroup(ctx, &createInput)
 	if err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		GroupIds: []string{aws.ToString(group.GroupId)},
 	}
 
-	if err := ec2.NewSecurityGroupExistsWaiter(s.Client.Services.EC2).Wait(ctx, &describeInput, s.Client.Cloud.Timeouts.Create); err != nil {
+	if err := ec2.NewSecurityGroupExistsWaiter(s.client.Services.EC2).Wait(ctx, &describeInput, s.client.Cloud.Timeouts.Create); err != nil {
 		return err
 	}
 
@@ -70,7 +71,7 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		IpPermissions: s.generatePermissions(common.FirewallRule{}),
 	}
 
-	if _, err := s.Client.Services.EC2.RevokeSecurityGroupEgress(ctx, &revokeEgressInput); err != nil {
+	if _, err := s.client.Services.EC2.RevokeSecurityGroupEgress(ctx, &revokeEgressInput); err != nil {
 		return err
 	}
 
@@ -80,12 +81,12 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeSecurityGroupRule,
-				Tags:         makeTagSlice(s.Identifier, s.Client.Tags),
+				Tags:         makeTagSlice(s.Identifier, s.client.Tags),
 			},
 		},
 	}
 
-	if _, err := s.Client.Services.EC2.AuthorizeSecurityGroupEgress(ctx, &egressInput); err != nil {
+	if _, err := s.client.Services.EC2.AuthorizeSecurityGroupEgress(ctx, &egressInput); err != nil {
 		return err
 	}
 
@@ -95,12 +96,12 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeSecurityGroupRule,
-				Tags:         makeTagSlice(s.Identifier, s.Client.Tags),
+				Tags:         makeTagSlice(s.Identifier, s.client.Tags),
 			},
 		},
 	}
 
-	if _, err := s.Client.Services.EC2.AuthorizeSecurityGroupIngress(ctx, &ingressInput); err != nil {
+	if _, err := s.client.Services.EC2.AuthorizeSecurityGroupIngress(ctx, &ingressInput); err != nil {
 		return err
 	}
 
@@ -117,7 +118,7 @@ func (s *SecurityGroup) Read(ctx context.Context) error {
 		},
 	}
 
-	securityGroups, err := s.Client.Services.EC2.DescribeSecurityGroups(ctx, &input)
+	securityGroups, err := s.client.Services.EC2.DescribeSecurityGroups(ctx, &input)
 	if err != nil {
 		return err
 	}
@@ -146,7 +147,7 @@ func (s *SecurityGroup) Delete(ctx context.Context) error {
 		GroupId: s.Resource.GroupId,
 	}
 
-	if _, err := s.Client.Services.EC2.DeleteSecurityGroup(ctx, &input); err != nil {
+	if _, err := s.client.Services.EC2.DeleteSecurityGroup(ctx, &input); err != nil {
 		return err
 	}
 
