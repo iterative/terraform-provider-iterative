@@ -49,13 +49,14 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		return nil, err
 	}
 
-	c := new(Client)
-	c.Cloud = cloud
-	c.Namespace = namespace
-	c.Tags = tags
-	c.Config = &config
-	c.ClientConfig = clientConfig
-	c.ClientSet = client
+	c := &Client{
+		Cloud:        cloud,
+		Namespace:    namespace,
+		Tags:         tags,
+		Config:       &config,
+		ClientConfig: clientConfig,
+		ClientSet:    client,
+	}
 	c.Services.Batch = client.BatchV1()
 	c.Services.Core = client.CoreV1()
 	return c, nil

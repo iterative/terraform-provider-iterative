@@ -7,14 +7,14 @@ import (
 )
 
 func NewPermissionSet(client *client.Client, identifier string) *PermissionSet {
-	ps := new(PermissionSet)
-	ps.Client = client
-	ps.Identifier = identifier
-	return ps
+	return &PermissionSet{
+		client:     client,
+		Identifier: identifier,
+	}
 }
 
 type PermissionSet struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Resource   struct {
 		ServiceAccountName           string

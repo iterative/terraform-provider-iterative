@@ -29,33 +29,32 @@ func ListConfigMaps(ctx context.Context, client *client.Client) ([]common.Identi
 }
 
 func NewConfigMap(client *client.Client, identifier common.Identifier, data map[string]string) *ConfigMap {
-	c := new(ConfigMap)
-	c.Client = client
-	c.Identifier = identifier.Long()
-	c.Attributes = data
-	return c
+	return &ConfigMap{
+		client:     client,
+		Identifier: identifier.Long(),
+		Attributes: data,
+	}
 }
 
 type ConfigMap struct {
-	Client       *client.Client
-	Identifier   string
-	Attributes   map[string]string
-	Dependencies struct{}
-	Resource     *kubernetes_core.ConfigMap
+	client     *client.Client
+	Identifier string
+	Attributes map[string]string
+	Resource   *kubernetes_core.ConfigMap
 }
 
 func (c *ConfigMap) Create(ctx context.Context) error {
 	configMapInput := kubernetes_core.ConfigMap{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
 			Name:        c.Identifier,
-			Namespace:   c.Client.Namespace,
-			Labels:      c.Client.Tags,
-			Annotations: c.Client.Tags,
+			Namespace:   c.client.Namespace,
+			Labels:      c.client.Tags,
+			Annotations: c.client.Tags,
 		},
 		Data: c.Attributes,
 	}
 
-	_, err := c.Client.Services.Core.ConfigMaps(c.Client.Namespace).Create(ctx, &configMapInput, kubernetes_meta.CreateOptions{})
+	_, err := c.client.Services.Core.ConfigMaps(c.client.Namespace).Create(ctx, &configMapInput, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
 			return nil
@@ -67,7 +66,7 @@ func (c *ConfigMap) Create(ctx context.Context) error {
 }
 
 func (c *ConfigMap) Read(ctx context.Context) error {
-	configMap, err := c.Client.Services.Core.ConfigMaps(c.Client.Namespace).Get(ctx, c.Identifier, kubernetes_meta.GetOptions{})
+	configMap, err := c.client.Services.Core.ConfigMaps(c.client.Namespace).Get(ctx, c.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return common.NotFoundError
@@ -80,7 +79,7 @@ func (c *ConfigMap) Read(ctx context.Context) error {
 }
 
 func (c *ConfigMap) Delete(ctx context.Context) error {
-	err := c.Client.Services.Core.ConfigMaps(c.Client.Namespace).Delete(ctx, c.Identifier, kubernetes_meta.DeleteOptions{})
+	err := c.client.Services.Core.ConfigMaps(c.client.Namespace).Delete(ctx, c.Identifier, kubernetes_meta.DeleteOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return nil
