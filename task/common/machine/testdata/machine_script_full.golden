@@ -61,7 +61,8 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
   WantedBy=default.target
 END
 
-curl --location --remote-name https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64
+curl --location --remote-name https://github.com/iterative/terraform-provider-iterative/releases/latest/download/terraform-provider-iterative_linux_amd64
+# TODO: replace download location with https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64
 sudo mv leo* /usr/bin/leo
 sudo chmod u=rwx,g=rx,o=rx /usr/bin/leo
 sudo chown root:root /usr/bin/leo
