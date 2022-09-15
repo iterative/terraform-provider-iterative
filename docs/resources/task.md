@@ -54,7 +54,7 @@ resource "iterative_task" "example" {
 
 ### Optional
 
-- `region` - (Optional) [Cloud region/zone](#cloud-region) to run the task on.
+- `region` - (Optional) [Cloud region/zone](#cloud-region) to run the task on, or node selector labels for Kubernetes.
 - `machine` - (Optional) See [Machine Types](#machine-type) below.
 - `disk_size` - (Optional) Size of the ephemeral machine storage in GB. `-1`: automatic based on `image`.
 - `spot` - (Optional) Spot instance price. `-1`: disabled, `0`: automatic price, any other positive number: maximum bidding price in USD per hour (above which the instance is terminated until the price drops).
@@ -257,7 +257,25 @@ In addition to generic regions, it's possible to specify any cloud region suppor
 
 ### Kubernetes
 
-The `region` attribute is ignored.
+For Kubernetes, the `region` attribute can be used to set the [`nodeSelector`](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector) field of the job specification. The value of `region` should be a comma-delimited list of `key=value` nodel label pairs.
+
+For example:
+```tf
+resource "iterative_task" "example" {
+  cloud  = "k8s"
+  region = "foo=bar,goo=baz"
+}
+```
+
+This will create a pod with a `nodeSelector` value like the following:
+```yaml
+apiVersion: V1
+kind: Pod
+spec:
+  nodeSelector:
+    foo: bar
+    goo: baz
+```
 
 ## Permission Set
 
@@ -284,10 +302,6 @@ A comma-separated list of [user-assigned identity](https://docs.microsoft.com/en
 ## Known Issues
 
 ### Kubernetes
-
-#### Region attribute
-
-Setting the `region` attribute results in undefined behaviour.
 
 #### Directory storage
 

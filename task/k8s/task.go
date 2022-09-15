@@ -34,7 +34,7 @@ func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) 
 }
 
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
-	client, err := client.New(ctx, cloud, task.Tags)
+	client, err := client.New(ctx, cloud, cloud.Tags)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (t *Task) Delete(ctx context.Context) error {
 }
 
 func (t *Task) Push(ctx context.Context, source string) error {
-	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.GetObjectMeta().GetLabels()["controller-uid"])
+	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Create, t.Client.Namespace, waitSelector)
 	if err != nil {
 		return err
@@ -241,7 +241,7 @@ func (t *Task) Push(ctx context.Context, source string) error {
 }
 
 func (t *Task) Pull(ctx context.Context, destination, include string) error {
-	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.GetObjectMeta().GetLabels()["controller-uid"])
+	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Delete, t.Client.Namespace, waitSelector)
 	if err != nil {
 		return err
