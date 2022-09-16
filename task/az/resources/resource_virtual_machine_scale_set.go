@@ -28,7 +28,6 @@ func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifi
 	v.Attributes.Size = task.Size
 	v.Attributes.Environment = task.Environment
 	v.Attributes.Firewall = task.Firewall
-	v.Attributes.Tags = task.Tags
 	v.Attributes.Parallelism = &task.Parallelism
 	v.Attributes.Spot = float64(task.Spot)
 	v.Dependencies.ResourceGroup = resourceGroup
@@ -46,7 +45,6 @@ type VirtualMachineScaleSet struct {
 		Size        common.Size
 		Environment common.Environment
 		Firewall    common.Firewall
-		Tags        map[string]string
 		Parallelism *uint16
 		Spot        float64
 		Addresses   []net.IP

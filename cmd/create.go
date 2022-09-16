@@ -61,6 +61,7 @@ func newCreateCmd() *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.Tags, "tags", map[string]string{}, "resource tags")
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 24*60*60, "timeout")
 	cmd.Flags().StringVar(&o.Workdir, "workdir", ".", "working directory to upload")
+	cmd.Flags().SetInterspersed(false)
 
 	return cmd
 }
@@ -75,6 +76,8 @@ func (o *createCmd) Run(cmd *cobra.Command, args []string) error {
 			variables[name] = &copy
 		}
 	}
+
+	cloud.Tags = o.Tags
 
 	script := o.Script
 	if !strings.HasPrefix(script, "#!") {
@@ -122,6 +125,9 @@ func (o *createCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	logrus.Infof("Using identifier %s", id.Long())
+	defer fmt.Println(id.Long())
+
 	if err := tsk.Create(ctx); err != nil {
 		logrus.Errorf("Failed to create a new task: %v", err)
 		logrus.Warn("Attempting to delete residual resources...")
@@ -132,6 +138,5 @@ func (o *createCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(id.Long())
 	return nil
 }

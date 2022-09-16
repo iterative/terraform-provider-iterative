@@ -16,8 +16,8 @@ type statusCmd struct {
 	BaseOptions BaseOptions
 
 	Parallelism int
+	Timestamps  bool
 	Status      bool
-	Events      bool
 	Logs        bool
 }
 
@@ -39,6 +39,10 @@ func newStatusCmd() *cobra.Command {
 	o.BaseOptions.SetFlags(cmd.Flags())
 
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
+	cmd.Flags().BoolVar(&o.Timestamps, "timestamps", false, "display timestamps")
+	cmd.Flags().BoolVar(&o.Status, "status", true, "read status")
+	cmd.Flags().BoolVar(&o.Logs, "logs", false, "read logs")
+	cmd.MarkFlagsMutuallyExclusive("status", "logs")
 
 	return cmd
 }
@@ -68,26 +72,42 @@ func (o *statusCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var events []string
-	for _, event := range tsk.Events(ctx) {
-		events = append(events, fmt.Sprintf(
-			"%s: %s\n%s",
-			event.Time.Format("2006-01-02 15:04:05"),
-			event.Code,
-			strings.Join(event.Description, "\n"),
-		))
+	switch {
+	case o.Logs:
+		return o.printLogs(ctx, tsk)
+	case o.Status:
+		return o.printStatus(ctx, tsk)
 	}
-	logrus.Info(events)
 
+	return nil
+}
+
+func (o *statusCmd) printLogs(ctx context.Context, tsk task.Task) error {
 	logs, err := tsk.Logs(ctx)
 	if err != nil {
 		return err
 	}
 
-	for index, log := range logs {
+	for _, log := range logs {
 		for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
-			logrus.Infof("\x1b[%dmLOG %d >> %s", 35, index, line)
+			if !o.Timestamps {
+				_, line, _ = strings.Cut(line, " ")
+			}
+			fmt.Println(line)
 		}
+	}
+
+	return nil
+}
+
+func (o *statusCmd) printStatus(ctx context.Context, tsk task.Task) error {
+	for _, event := range tsk.Events(ctx) {
+		line := fmt.Sprintf("%s: %s", event.Code, strings.Join(event.Description, " "))
+		if o.Timestamps {
+			line = fmt.Sprintf("%s %s", event.Time.Format("2006-01-02T15:04:05Z"), line)
+		}
+
+		logrus.Debug(line)
 	}
 
 	status, err := tsk.Status(ctx)
@@ -95,18 +115,18 @@ func (o *statusCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	message := fmt.Sprintf("\x1b[%dmStatus: queued \x1b[1m•\x1b[0m", 34)
+	message := "queued"
 
 	if status["succeeded"] >= o.Parallelism {
-		message = fmt.Sprintf("\x1b[%dmStatus: completed successfully \x1b[1m•\x1b[0m", 32)
+		message = "succeeded"
 	}
 	if status["failed"] > 0 {
-		message = fmt.Sprintf("\x1b[%dmStatus: completed with errors \x1b[1m•\x1b[0m", 31)
+		message = "failed"
 	}
 	if status["running"] >= o.Parallelism {
-		message = fmt.Sprintf("\x1b[%dmStatus: running \x1b[1m•\x1b[0m", 33)
+		message = "running"
 	}
 
-	logrus.Info(message)
+	fmt.Println(message)
 	return nil
 }

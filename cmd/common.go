@@ -15,7 +15,7 @@ import (
 type BaseOptions struct {
 	Region   string
 	Provider string
-	Log      string
+	Verbose  bool
 }
 
 // defaultCloud specifies default timeouts.
@@ -31,8 +31,8 @@ var defaultCloud = common.Cloud{
 // SetFlags sets base option flags on the provided flagset.
 func (o *BaseOptions) SetFlags(f *pflag.FlagSet) {
 	f.StringVar(&o.Provider, "cloud", "", "cloud provider")
-	f.StringVar(&o.Log, "log", "info", "log level")
 	f.StringVar(&o.Region, "region", "us-east", "cloud region")
+	f.BoolVar(&o.Verbose, "verbose", false, "verbose output")
 	cobra.CheckErr(cobra.MarkFlagRequired(f, "cloud"))
 }
 
@@ -46,10 +46,8 @@ func (o *BaseOptions) GetCloud() *common.Cloud {
 
 // ConfigureLogging configures logging and sets the log level.
 func (o *BaseOptions) ConfigureLogging() {
-	switch o.Log {
-	case "info":
-		logrus.SetLevel(logrus.InfoLevel)
-	case "debug":
+	logrus.SetLevel(logrus.InfoLevel)
+	if o.Verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"terraform-provider-iterative/task"
@@ -43,7 +43,7 @@ func (o *listCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, id := range lst {
-		logrus.Info(id.Long())
+		fmt.Println(id.Long())
 	}
 
 	return nil

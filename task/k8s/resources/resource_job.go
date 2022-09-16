@@ -36,6 +36,13 @@ func NewJob(client *client.Client, identifier common.Identifier, persistentVolum
 	j.Dependencies.PermissionSet = permissionSet
 	j.Attributes.Task = task
 	j.Attributes.Parallelism = task.Parallelism
+	j.Attributes.NodeSelector = map[string]string{}
+	for _, selector := range strings.Split(string(client.Cloud.Region), ",") {
+		key, value, is_found := strings.Cut(selector, "=")
+		if is_found && len(value) > 0 {
+			j.Attributes.NodeSelector[key] = value
+		}
+	}
 	return j
 }
 
@@ -43,11 +50,12 @@ type Job struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Task        common.Task
-		Parallelism uint16
-		Addresses   []net.IP
-		Status      common.Status
-		Events      []common.Event
+		Task         common.Task
+		Parallelism  uint16
+		NodeSelector map[string]string
+		Addresses    []net.IP
+		Status       common.Status
+		Events       []common.Event
 	}
 	Dependencies struct {
 		*PersistentVolumeClaim
@@ -90,8 +98,12 @@ func (j *Job) Create(ctx context.Context) error {
 		return common.NotFoundError
 	}
 
-	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
+	for selector, value := range j.Attributes.NodeSelector {
+		jobNodeSelector[selector] = value
+	}
+
+	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobAccelerator := match[3]
 	jobGPUType := "nvidia.com/gpu"
 	jobGPUCount := match[4]
@@ -108,7 +120,7 @@ func (j *Job) Create(ctx context.Context) error {
 	if jobGPUCount > "0" {
 		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
 		if jobAccelerator != "" {
-			jobNodeSelector = map[string]string{"accelerator": jobAccelerator}
+			jobNodeSelector["accelerator"] = jobAccelerator
 		}
 	}
 
@@ -337,7 +349,7 @@ func (j *Job) Delete(ctx context.Context) error {
 
 func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	pods, err := j.Client.Services.Core.Pods(j.Client.Namespace).List(ctx, kubernetes_meta.ListOptions{
-		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.GetObjectMeta().GetLabels()["controller-uid"]),
+		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.Spec.Selector.MatchLabels["controller-uid"]),
 	})
 	if err != nil {
 		return nil, err
