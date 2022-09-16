@@ -5,7 +5,7 @@ on:
   pull_request_target:
     paths: 'task/**'
   schedule:
-  - cron: '0 1 * * *'
+  - cron: '0 1 * * *' # Everyday @ 0100 UTC
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
