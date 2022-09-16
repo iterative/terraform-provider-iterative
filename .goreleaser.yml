@@ -55,3 +55,10 @@ release:
   # draft: true
 changelog:
   skip: true
+announce:
+  slack:
+    enabled: true
+    message_template: 'Succesfully released <{{ .ProjectName }} {{.Tag}}|{{ .ReleaseURL }>'
+    channel: '#cml'
+    username: Go
+    icon_emoji: gopher
