@@ -43,7 +43,8 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes.Task = task
-	persistentVolumeDirectory := task.Environment.Directory
+	t.Attributes.Directory = task.Environment.Directory
+	t.Attributes.DirectoryOut = task.Environment.Directory
 	if task.Environment.DirectoryOut != "" {
 		t.Attributes.DirectoryOut = task.Environment.DirectoryOut
 	}
@@ -63,7 +64,8 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 			t.Client, *task.RemoteStorage)
 		pvc = t.DataSources.ExistingPersistentVolumeClaim
 	} else {
-		persistentVolumeClaimStorageClass := ""
+		var persistentVolumeDirectory string
+		var persistentVolumeClaimStorageClass string
 		persistentVolumeClaimSize := task.Size.Storage
 
 		match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
@@ -77,6 +79,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 				persistentVolumeClaimSize = int(number)
 			}
 			persistentVolumeDirectory = match[3]
+			task.Attributes.Directory = persistentVolumeDirectory
 		}
 
 		t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
@@ -88,8 +91,6 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		)
 		pvc = t.Resources.PersistentVolumeClaim
 	}
-	t.Attributes.Directory = persistentVolumeDirectory
-	t.Attributes.DirectoryOut = persistentVolumeDirectory
 	t.Resources.Job = resources.NewJob(
 		t.Client,
 		t.Identifier,
