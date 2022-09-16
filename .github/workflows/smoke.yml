@@ -35,12 +35,12 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
       SMOKE_TEST_ENABLE_${{ matrix.provider }}: true
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha || github.ref }}
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v3
       with:
-        go-version: ^1.17
+        go-version: ^1.19
     - if: matrix.provider == 'AWS'
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -48,7 +48,7 @@ jobs:
         role-to-assume: arn:aws:iam::342840881361:role/SandboxUser
     - run: go test ./task -v -timeout=30m -count=1 -tags=smoke
     - if: always()
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: master
     - if: always()
@@ -68,12 +68,12 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha || github.ref }}
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v3
       with:
-        go-version: ^1.17
+        go-version: ^1.19
     - run: |
         az login \
           --service-principal \
