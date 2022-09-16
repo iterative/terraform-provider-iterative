@@ -1,25 +1,28 @@
 name: Release
 on:
   release:
-    types: [published]
+    types: [prereleased]
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
-          go-version: 1.17
+          go-version-file: go.mod
       - run: |
-          gpg --import <<< "$TERRAFORM_REGISTRY_GPG_PRIVATE_KEY"
+          printenv TERRAFORM_REGISTRY_GPG_PRIVATE_KEY | gpg --import
         env:
           TERRAFORM_REGISTRY_GPG_PRIVATE_KEY: ${{ secrets.TERRAFORM_REGISTRY_GPG_PRIVATE_KEY }}
-      - uses: goreleaser/goreleaser-action@v2
+      - uses: goreleaser/goreleaser-action@v3
         with:
-          version: latest
-          args: release --rm-dist
+          args: release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - run: gh release edit --prerelease=false ${{ github.event.release.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
   synchronize:
     # Empyrically equivalent to pressing the "Resync" button in the Settings
     # page of Terraform Registry, but without bothering humans in the process
