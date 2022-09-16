@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: ^1.19
+          go-version-file: go.mod
       - run: |
           gpg --import <<< "$TERRAFORM_REGISTRY_GPG_PRIVATE_KEY"
         env:
