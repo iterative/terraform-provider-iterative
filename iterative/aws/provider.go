@@ -28,7 +28,7 @@ var (
 	}
 )
 
-//ResourceMachineCreate creates AWS instance
+// ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	userData := d.Get("startup_script").(string)
 	pairName := d.Id()
@@ -216,20 +216,45 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	}
-	// use availability zone from user
-	if availabilityZone != "" && subnetId == "" {
+
+	if subnetId == "" {
+		if availabilityZone == "" {
+			offeringsInput := &ec2.DescribeInstanceTypeOfferingsInput{
+				LocationType: types.LocationTypeAvailabilityZone,
+				Filters: []types.Filter{
+					{
+						Name:   aws.String("instance-type"),
+						Values: []string{instanceType},
+					},
+				},
+			}
+
+			for offeringsPaginator := ec2.NewDescribeInstanceTypeOfferingsPaginator(svc, offeringsInput); offeringsPaginator.HasMorePages(); {
+				page, err := offeringsPaginator.NextPage(ctx)
+				if err != nil {
+					return err
+				}
+
+				if offerings := page.InstanceTypeOfferings; len(offerings) > 0 {
+					availabilityZone = aws.ToString(offerings[0].Location)
+					break
+				}
+			}
+		}
+
+		// use availability zone
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
 			Name:   aws.String("availability-zone"),
 			Values: []string{availabilityZone},
 		})
-	}
-	// use exact subnet-id from user
-	if subnetId != "" {
+	} else {
+		// use exact subnet-id from user
 		subnetOptions.Filters = append(subnetOptions.Filters, types.Filter{
 			Name:   aws.String("subnet-id"),
 			Values: []string{subnetId},
 		})
 	}
+
 	subDesc, err := svc.DescribeSubnets(ctx, subnetOptions)
 	if err != nil {
 		return decodeAWSError(region, err)
@@ -385,7 +410,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-//ResourceMachineDelete deletes AWS instance
+// ResourceMachineDelete deletes AWS instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	id := aws.String(d.Id())
 	region := GetRegion(d.Get("region").(string))
