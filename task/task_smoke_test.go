@@ -19,18 +19,61 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+type testTarget struct {
+	machine string
+	image   string
+	script  string
+}
+
+var testTargets = map[string]testTarget{
+	// default test target spins up small instances and runs lightweight scripts on them.
+	"default": testTarget{
+		machine: "m",
+		image:   "ubuntu",
+		script: `
+#!/bin/sh -e
+mkdir --parents cache output
+touch cache/file
+echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+sleep 60
+cat output/file
+`[1:],
+	},
+	"gpu": testTarget{
+		machine: "m+t4",
+		image:   "nvidia",
+		script: `
+#!/bin/sh -e
+nvidia-smi
+mkdir --parents cache output
+touch cache/file
+echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+sleep 60
+cat output/file
+`[1:],
+	},
+}
+
 // TestTaskSmoke runs smoke tests with specified infrastructure providers.
 // Cloud provider access credentials (provided as environment variables) are required.
 func TestTaskSmoke(t *testing.T) {
 	testName := os.Getenv("SMOKE_TEST_IDENTIFIER")
 	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
-
 	enableAWS := os.Getenv("SMOKE_TEST_ENABLE_AWS") != ""
 	enableAZ := os.Getenv("SMOKE_TEST_ENABLE_AZ") != ""
 	enableGCP := os.Getenv("SMOKE_TEST_ENABLE_GCP") != ""
 	enableK8S := os.Getenv("SMOKE_TEST_ENABLE_K8S") != ""
 
 	enableALL := !enableAWS && !enableAZ && !enableGCP && !enableK8S
+
+	testTargetName := os.Getenv("SMOKE_TEST_TARGET")
+	if testTargetName == "" {
+		testTargetName = "default"
+	}
+	target, ok := testTargets[testTargetName]
+	if !ok {
+		t.Fatalf("test target %q undefined", testTargetName)
+	}
 
 	providers := map[common.Provider]bool{
 		common.ProviderAWS: enableAWS || enableALL,
@@ -76,18 +119,11 @@ func TestTaskSmoke(t *testing.T) {
 
 			task := common.Task{
 				Size: common.Size{
-					Machine: "m+t4",
+					Machine: target.machine,
 				},
 				Environment: common.Environment{
-					Image: "nvidia",
-					Script: `#!/bin/sh -e
-						nvidia-smi
-						mkdir --parents cache output
-						touch cache/file
-						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-						sleep 60
-						cat output/file
-					`,
+					Image:  target.image,
+					Script: target.script,
 					Variables: map[string]*string{
 						"ENVIRONMENT_VARIABLE_DATA": &newData,
 					},
