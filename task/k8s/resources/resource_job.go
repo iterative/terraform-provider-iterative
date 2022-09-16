@@ -58,9 +58,9 @@ type Job struct {
 		Events       []common.Event
 	}
 	Dependencies struct {
-		*PersistentVolumeClaim
-		*ConfigMap
-		*PermissionSet
+		PersistentVolumeClaim *PersistentVolumeClaim
+		ConfigMap             *ConfigMap
+		PermissionSet         *PermissionSet
 	}
 	Resource *kubernetes_batch.Job
 }
