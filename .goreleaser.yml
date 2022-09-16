@@ -11,7 +11,6 @@ builds:
     - -X main.commit={{.Commit}}
     - -X main.date={{.Date}}
   goos:
-    # - freebsd
     - windows
     - linux
     - darwin
@@ -43,16 +42,11 @@ checksum:
 signs:
   - artifacts: checksum
     args:
-      # if you are using this is a GitHub action or some other automated pipeline, you 
-      # need to pass the batch flag to indicate its not interactive.
       - "--batch"
       - "--output"
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
-release:
-  # If you want to manually examine the release before its live, uncomment this line:
-  # draft: true
 changelog:
   skip: true
 announce:
