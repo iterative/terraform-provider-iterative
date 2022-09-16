@@ -108,10 +108,10 @@ func parseConfigFile(cmd *cobra.Command) error {
 		}
 	}
 
-	for _, subcmd := range append(cmd.Commands(), cmd) {
+	for _, command := range append(cmd.Commands(), cmd) {
 		for _, flagSet := range []*pflag.FlagSet{
-			subcmd.PersistentFlags(),
-			subcmd.Flags(),
+			command.PersistentFlags(),
+			command.Flags(),
 		} {
 			cobra.CheckErr(viper.BindPFlags(flagSet))
 			flagSet.VisitAll(func(f *pflag.Flag) {
