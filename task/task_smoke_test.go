@@ -22,7 +22,8 @@ import (
 type testTarget struct {
 	machine string
 	image   string
-	script  string
+	env     map[string]string
+	spot    common.Spot
 }
 
 var testTargets = map[string]testTarget{
@@ -30,27 +31,15 @@ var testTargets = map[string]testTarget{
 	"default": testTarget{
 		machine: "m",
 		image:   "ubuntu",
-		script: `
-#!/bin/sh -e
-mkdir --parents cache output
-touch cache/file
-echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-sleep 60
-cat output/file
-`[1:],
+		spot:    common.SpotDisabled,
 	},
 	"gpu": testTarget{
 		machine: "m+t4",
 		image:   "nvidia",
-		script: `
-#!/bin/sh -e
-nvidia-smi
-mkdir --parents cache output
-touch cache/file
-echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-sleep 60
-cat output/file
-`[1:],
+		env: map[string]string{
+			"TEST_GPU": "yes",
+		},
+		spot: common.SpotEnabled,
 	},
 }
 
@@ -66,13 +55,13 @@ func TestTaskSmoke(t *testing.T) {
 
 	enableALL := !enableAWS && !enableAZ && !enableGCP && !enableK8S
 
-	testTargetName := os.Getenv("SMOKE_TEST_TARGET")
-	if testTargetName == "" {
-		testTargetName = "default"
+	targetName := os.Getenv("SMOKE_TEST_TARGET")
+	if targetName == "" {
+		targetName = "default"
 	}
-	target, ok := testTargets[testTargetName]
+	target, ok := testTargets[targetName]
 	if !ok {
-		t.Fatalf("test target %q undefined", testTargetName)
+		t.Fatalf("test target %q undefined", targetName)
 	}
 
 	providers := map[common.Provider]bool{
@@ -85,7 +74,17 @@ func TestTaskSmoke(t *testing.T) {
 	if testName == "" {
 		testName = "smoke test"
 	}
-
+	script := `
+#!/bin/sh -e
+if [ -n "$TEST_GPU" ]; then
+  nvidia-smi
+fi
+mkdir --parents cache output
+touch cache/file
+echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+sleep 60
+cat output/file
+`[1:]
 	for provider, enabled := range providers {
 		if !enabled {
 			continue
@@ -117,16 +116,21 @@ func TestTaskSmoke(t *testing.T) {
 
 			identifier := common.NewDeterministicIdentifier(testName)
 
+			env := map[string]*string{
+				"ENVIRONMENT_VARIABLE_DATA": &newData,
+			}
+			for k := range target.env {
+				val := target.env[k]
+				env[k] = &val
+			}
 			task := common.Task{
 				Size: common.Size{
 					Machine: target.machine,
 				},
 				Environment: common.Environment{
-					Image:  target.image,
-					Script: target.script,
-					Variables: map[string]*string{
-						"ENVIRONMENT_VARIABLE_DATA": &newData,
-					},
+					Image:        target.image,
+					Script:       script,
+					Variables:    env,
 					Directory:    baseDirectory,
 					DirectoryOut: relativeOutputDirectory,
 					Timeout:      10 * time.Minute,
@@ -136,7 +140,7 @@ func TestTaskSmoke(t *testing.T) {
 						Ports: &[]uint16{22},
 					},
 				},
-				Spot:        common.SpotEnabled,
+				Spot:        target.spot,
 				Parallelism: 1,
 			}
 

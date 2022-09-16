@@ -4,6 +4,9 @@ permissions:
 on:
   pull_request_target:
     paths: 'task/**'
+  schedule:
+  - cron: '0 1 * * *'
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
@@ -15,6 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo ✓
+  set_env_pr_test:
+    run: |
+      echo "SMOKE_TEST_TARGET='default'" >> $GITHUB_ENV
+    if: github.event_name == 'pull_request_target'
+  set_env_gpu_test:
+    run: |
+      echo "SMOKE_TEST_TARGET='gpu'" >> $GITHUB_ENV
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
   test:
     needs: authorize
     environment: automatic
