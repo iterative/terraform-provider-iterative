@@ -90,7 +90,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.DataSources.PermissionSet,
 		t.Attributes.Task,
 	)
-	t.Resources.TransferPod = resources.NewTransferPod(
+	t.Resources.TransferDeployment = resources.NewTransferDeployment(
 		t.Client,
 		t.Identifier,
 		t.Resources.PersistentVolumeClaim,
@@ -114,7 +114,7 @@ type Task struct {
 		*resources.ConfigMap
 		*resources.PersistentVolumeClaim
 		*resources.Job
-		*resources.TransferPod
+		*resources.TransferDeployment
 	}
 }
 
@@ -134,7 +134,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if t.Attributes.Directory != "" {
 		steps = append(steps, []common.Step{{
 			Description: "Creating temporary deployment to upload directory...",
-			Action:      t.Resources.TransferPod.Create,
+			Action:      t.Resources.TransferDeployment.Create,
 		}, {
 			Description: "Uploading Directory...",
 			Action: func(ctx context.Context) error {
@@ -142,7 +142,7 @@ func (t *Task) Create(ctx context.Context) error {
 			},
 		}, {
 			Description: "Deleting temporary pod to upload directory...",
-			Action:      t.Resources.TransferPod.Delete,
+			Action:      t.Resources.TransferDeployment.Delete,
 		}}...)
 	}
 
@@ -191,7 +191,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
 		steps = append(steps, []common.Step{{
 			Description: "Creating temporary deployment to download directory...",
-			Action:      t.Resources.TransferPod.Create,
+			Action:      t.Resources.TransferDeployment.Create,
 		}, {
 			Description: "Downloading Directory...",
 			Action: func(ctx context.Context) error {
@@ -199,7 +199,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			},
 		}, {
 			Description: "Deleting temporary pod to download directory...",
-			Action:      t.Resources.TransferPod.Delete,
+			Action:      t.Resources.TransferDeployment.Delete,
 		}}...)
 	}
 	steps = append(steps, []common.Step{{

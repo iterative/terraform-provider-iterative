@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"net"
 
 	k8s_apps "k8s.io/api/apps/v1"
 	k8s_core "k8s.io/api/core/v1"
@@ -15,9 +14,9 @@ import (
 	"terraform-provider-iterative/task/k8s/client"
 )
 
-// NewTransferPod creates a pod used to transfer data between the persistent storage and local.
-func NewTransferPod(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, permissionSet *PermissionSet, task common.Task) *TransferPod {
-	p := &TransferPod{
+// NewTransferDeployment creates a pod used to transfer data between the persistent storage and local.
+func NewTransferDeployment(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, permissionSet *PermissionSet, task common.Task) *TransferDeployment {
+	p := &TransferDeployment{
 		Client:     client,
 		Identifier: identifier.Long(),
 	}
@@ -27,13 +26,12 @@ func NewTransferPod(client *client.Client, identifier common.Identifier, persist
 	return p
 }
 
-// TransferPod is a deployment with a single pod used to transfer data between the persistent volume claim and local.
-type TransferPod struct {
+// TransferDeployment is a deployment with a single pod used to transfer data between the persistent volume claim and local.
+type TransferDeployment struct {
 	Client     *client.Client
 	Identifier string
 	Attributes struct {
-		Task      common.Task
-		Addresses []net.IP
+		Task common.Task
 	}
 	Dependencies struct {
 		PersistentVolumeClaim *PersistentVolumeClaim
@@ -43,17 +41,17 @@ type TransferPod struct {
 }
 
 // Create creates the transfer pod resource.
-func (p *TransferPod) Create(ctx context.Context) error {
+func (p *TransferDeployment) Create(ctx context.Context) error {
 	if p.Attributes.Task.Environment.Directory == "" {
 		return fmt.Errorf("output directory not set")
 	}
 
 	volumeMounts := []k8s_core.VolumeMount{{
-		Name:      p.Identifier + "-pvc",
+		Name:      p.Identifier,
 		MountPath: "/data",
 	}}
 	volumes := []k8s_core.Volume{{
-		Name: p.Identifier + "-pvc",
+		Name: p.Identifier,
 		VolumeSource: k8s_core.VolumeSource{
 			PersistentVolumeClaim: &k8s_core.PersistentVolumeClaimVolumeSource{
 				ClaimName: p.Dependencies.PersistentVolumeClaim.Identifier,
@@ -109,7 +107,7 @@ func (p *TransferPod) Create(ctx context.Context) error {
 }
 
 // Read updates the information of the transfer deployment.
-func (p *TransferPod) Read(ctx context.Context) error {
+func (p *TransferDeployment) Read(ctx context.Context) error {
 	deployment, err := p.Client.Services.Apps.Deployments(p.Client.Namespace).Get(ctx, p.Identifier, k8s_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*k8s_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
@@ -122,7 +120,7 @@ func (p *TransferPod) Read(ctx context.Context) error {
 }
 
 // Delete removes the transfer deployment.
-func (p *TransferPod) Delete(ctx context.Context) error {
+func (p *TransferDeployment) Delete(ctx context.Context) error {
 	_, err := p.Client.Services.Apps.Deployments(p.Client.Namespace).Get(ctx, p.Identifier, k8s_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*k8s_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
