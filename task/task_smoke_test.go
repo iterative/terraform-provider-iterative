@@ -97,7 +97,7 @@ func TestTaskSmoke(t *testing.T) {
                    echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
                    sleep 60
                    cat output/file
-        `[1:]
+        `
 
 	for provider, enabled := range providers {
 		if !enabled {
