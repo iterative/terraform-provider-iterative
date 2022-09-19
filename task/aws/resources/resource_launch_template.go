@@ -19,10 +19,11 @@ import (
 )
 
 func NewLaunchTemplate(client *client.Client, identifier common.Identifier, securityGroup *SecurityGroup, permissionSet *PermissionSet, image *Image, keyPair *KeyPair, credentials *Credentials, task common.Task) *LaunchTemplate {
-	l := new(LaunchTemplate)
-	l.Client = client
-	l.Identifier = identifier.Long()
-	l.Attributes = task
+	l := &LaunchTemplate{
+		client:     client,
+		Identifier: identifier.Long(),
+		Attributes: task,
+	}
 	l.Dependencies.SecurityGroup = securityGroup
 	l.Dependencies.Image = image
 	l.Dependencies.KeyPair = keyPair
@@ -32,15 +33,15 @@ func NewLaunchTemplate(client *client.Client, identifier common.Identifier, secu
 }
 
 type LaunchTemplate struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Attributes   common.Task
 	Dependencies struct {
-		*KeyPair
-		*SecurityGroup
-		*Image
-		*Credentials
-		*PermissionSet
+		KeyPair       *KeyPair
+		SecurityGroup *SecurityGroup
+		Image         *Image
+		Credentials   *Credentials
+		PermissionSet *PermissionSet
 	}
 	Resource *types.LaunchTemplate
 }
@@ -98,18 +99,18 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 			TagSpecifications: []types.LaunchTemplateTagSpecificationRequest{
 				{
 					ResourceType: types.ResourceTypeInstance,
-					Tags:         makeTagSlice(l.Identifier, l.Client.Tags),
+					Tags:         makeTagSlice(l.Identifier, l.client.Tags),
 				},
 				{
 					ResourceType: types.ResourceTypeVolume,
-					Tags:         makeTagSlice(l.Identifier, l.Client.Tags),
+					Tags:         makeTagSlice(l.Identifier, l.client.Tags),
 				},
 			},
 		},
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeLaunchTemplate,
-				Tags:         makeTagSlice(l.Identifier, l.Client.Tags),
+				Tags:         makeTagSlice(l.Identifier, l.client.Tags),
 			},
 		},
 	}
@@ -118,7 +119,7 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 		input.LaunchTemplateData.BlockDeviceMappings[0].Ebs.VolumeSize = aws.Int32(int32(size))
 	}
 
-	if _, err = l.Client.Services.EC2.CreateLaunchTemplate(ctx, &input); err != nil {
+	if _, err = l.client.Services.EC2.CreateLaunchTemplate(ctx, &input); err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "InvalidLaunchTemplateName.AlreadyExistsException" {
 			return l.Read(ctx)
@@ -134,7 +135,7 @@ func (l *LaunchTemplate) Read(ctx context.Context) error {
 		LaunchTemplateNames: []string{l.Identifier},
 	}
 
-	templates, err := l.Client.Services.EC2.DescribeLaunchTemplates(ctx, &input)
+	templates, err := l.client.Services.EC2.DescribeLaunchTemplates(ctx, &input)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func (l *LaunchTemplate) Delete(ctx context.Context) error {
 		LaunchTemplateName: aws.String(l.Identifier),
 	}
 
-	if _, err := l.Client.Services.EC2.DeleteLaunchTemplate(ctx, &input); err != nil {
+	if _, err := l.client.Services.EC2.DeleteLaunchTemplate(ctx, &input); err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "InvalidLaunchTemplateName.NotFoundException" {
 			l.Resource = nil

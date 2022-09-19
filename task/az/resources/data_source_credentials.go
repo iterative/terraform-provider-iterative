@@ -12,9 +12,10 @@ import (
 )
 
 func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount, blobContainer *BlobContainer) *Credentials {
-	c := new(Credentials)
-	c.Client = client
-	c.Identifier = identifier.Long()
+	c := &Credentials{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	c.Dependencies.ResourceGroup = resourceGroup
 	c.Dependencies.StorageAccount = storageAccount
 	c.Dependencies.BlobContainer = blobContainer
@@ -22,12 +23,12 @@ func NewCredentials(client *client.Client, identifier common.Identifier, resourc
 }
 
 type Credentials struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Dependencies struct {
-		*ResourceGroup
-		*StorageAccount
-		*BlobContainer
+		ResourceGroup  *ResourceGroup
+		StorageAccount *StorageAccount
+		BlobContainer  *BlobContainer
 	}
 	Resource map[string]string
 }
@@ -40,7 +41,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 		c.Dependencies.BlobContainer.Identifier,
 	)
 
-	credentials, err := c.Client.Settings.GetClientCredentials()
+	credentials, err := c.client.Settings.GetClientCredentials()
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 		return errors.New("unable to find client secret")
 	}
 
-	subscriptionID := c.Client.Settings.GetSubscriptionID()
+	subscriptionID := c.client.Settings.GetSubscriptionID()
 
 	c.Resource = map[string]string{
 		"AZURE_CLIENT_ID":         credentials.ClientID,
@@ -57,8 +58,8 @@ func (c *Credentials) Read(ctx context.Context) error {
 		"AZURE_SUBSCRIPTION_ID":   subscriptionID,
 		"AZURE_TENANT_ID":         credentials.TenantID,
 		"RCLONE_REMOTE":           connectionString,
-		"TPI_TASK_CLOUD_PROVIDER": string(c.Client.Cloud.Provider),
-		"TPI_TASK_CLOUD_REGION":   c.Client.Region,
+		"TPI_TASK_CLOUD_PROVIDER": string(c.client.Cloud.Provider),
+		"TPI_TASK_CLOUD_REGION":   c.client.Region,
 		"TPI_TASK_IDENTIFIER":     c.Identifier,
 	}
 

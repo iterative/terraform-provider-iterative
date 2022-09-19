@@ -22,9 +22,10 @@ import (
 )
 
 func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnets, launchTemplate *LaunchTemplate, parallelism *uint16, spot common.Spot) *AutoScalingGroup {
-	a := new(AutoScalingGroup)
-	a.Client = client
-	a.Identifier = identifier.Long()
+	a := &AutoScalingGroup{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	a.Attributes.Parallelism = parallelism
 	a.Attributes.Spot = float64(spot)
 	a.Dependencies.DefaultVPCSubnets = subnet
@@ -33,7 +34,7 @@ func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, su
 }
 
 type AutoScalingGroup struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		Parallelism *uint16
@@ -43,8 +44,8 @@ type AutoScalingGroup struct {
 		Events      []common.Event
 	}
 	Dependencies struct {
-		*DefaultVPCSubnets
-		*LaunchTemplate
+		DefaultVPCSubnets *DefaultVPCSubnets
+		LaunchTemplate    *LaunchTemplate
 	}
 	Resource *types.AutoScalingGroup
 }
@@ -87,7 +88,7 @@ func (a *AutoScalingGroup) Create(ctx context.Context) error {
 		VPCZoneIdentifier: aws.String(strings.Join(subnets, ",")),
 	}
 
-	if _, err := a.Client.Services.AutoScaling.CreateAutoScalingGroup(ctx, &input); err != nil {
+	if _, err := a.client.Services.AutoScaling.CreateAutoScalingGroup(ctx, &input); err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "AlreadyExists" {
 			return a.Read(ctx)
@@ -99,7 +100,7 @@ func (a *AutoScalingGroup) Create(ctx context.Context) error {
 		AutoScalingGroupNames: []string{a.Identifier},
 	}
 
-	if err := autoscaling.NewGroupExistsWaiter(a.Client.Services.AutoScaling).Wait(ctx, &waitInput, a.Client.Cloud.Timeouts.Create); err != nil {
+	if err := autoscaling.NewGroupExistsWaiter(a.client.Services.AutoScaling).Wait(ctx, &waitInput, a.client.Cloud.Timeouts.Create); err != nil {
 		return err
 	}
 
@@ -111,7 +112,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 		AutoScalingGroupNames: []string{a.Identifier},
 	}
 
-	groups, err := a.Client.Services.AutoScaling.DescribeAutoScalingGroups(ctx, &groupsInput)
+	groups, err := a.client.Services.AutoScaling.DescribeAutoScalingGroups(ctx, &groupsInput)
 	if err != nil {
 		return err
 	}
@@ -128,7 +129,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 			instancesInput.InstanceIds = append(instancesInput.InstanceIds, aws.ToString(instance.InstanceId))
 		}
 
-		for instancesPaginator := ec2.NewDescribeInstancesPaginator(a.Client.Services.EC2, &instancesInput); instancesPaginator.HasMorePages(); {
+		for instancesPaginator := ec2.NewDescribeInstancesPaginator(a.client.Services.EC2, &instancesInput); instancesPaginator.HasMorePages(); {
 			page, err := instancesPaginator.NextPage(ctx)
 			if err != nil {
 				return err
@@ -157,7 +158,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 	}
 
 	a.Attributes.Events = []common.Event{}
-	for activitiesPaginator := autoscaling.NewDescribeScalingActivitiesPaginator(a.Client.Services.AutoScaling, &activitiesInput); activitiesPaginator.HasMorePages(); {
+	for activitiesPaginator := autoscaling.NewDescribeScalingActivitiesPaginator(a.client.Services.AutoScaling, &activitiesInput); activitiesPaginator.HasMorePages(); {
 		page, err := activitiesPaginator.NextPage(ctx)
 		if err != nil {
 			return err
@@ -192,7 +193,7 @@ func (a *AutoScalingGroup) Update(ctx context.Context) error {
 		DesiredCapacity:      aws.Int32(int32(*a.Attributes.Parallelism)),
 	}
 
-	if _, err := a.Client.Services.AutoScaling.UpdateAutoScalingGroup(ctx, &input); err != nil {
+	if _, err := a.client.Services.AutoScaling.UpdateAutoScalingGroup(ctx, &input); err != nil {
 		return err
 	}
 
@@ -205,7 +206,7 @@ func (a *AutoScalingGroup) Delete(ctx context.Context) error {
 		ForceDelete:          aws.Bool(true),
 	}
 
-	if _, err := a.Client.Services.AutoScaling.DeleteAutoScalingGroup(ctx, &input); err != nil {
+	if _, err := a.client.Services.AutoScaling.DeleteAutoScalingGroup(ctx, &input); err != nil {
 		var e smithy.APIError
 		errors.As(err, &e)
 		if errors.As(err, &e) && e.ErrorCode() == "ValidationError" {
@@ -219,7 +220,7 @@ func (a *AutoScalingGroup) Delete(ctx context.Context) error {
 		AutoScalingGroupNames: []string{a.Identifier},
 	}
 
-	if err := autoscaling.NewGroupNotExistsWaiter(a.Client.Services.AutoScaling).Wait(ctx, &waitInput, a.Client.Cloud.Timeouts.Delete); err != nil {
+	if err := autoscaling.NewGroupNotExistsWaiter(a.client.Services.AutoScaling).Wait(ctx, &waitInput, a.client.Cloud.Timeouts.Delete); err != nil {
 		return err
 	}
 

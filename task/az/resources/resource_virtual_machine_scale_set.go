@@ -22,9 +22,10 @@ import (
 )
 
 func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, permissionSet *PermissionSet, credentials *Credentials, task *common.Task) *VirtualMachineScaleSet {
-	v := new(VirtualMachineScaleSet)
-	v.Client = client
-	v.Identifier = identifier.Long()
+	v := &VirtualMachineScaleSet{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	v.Attributes.Size = task.Size
 	v.Attributes.Environment = task.Environment
 	v.Attributes.Firewall = task.Firewall
@@ -39,7 +40,7 @@ func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifi
 }
 
 type VirtualMachineScaleSet struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		Size        common.Size
@@ -52,17 +53,17 @@ type VirtualMachineScaleSet struct {
 		Events      []common.Event
 	}
 	Dependencies struct {
-		*ResourceGroup
-		*Subnet
-		*SecurityGroup
-		*Credentials
-		*PermissionSet
+		ResourceGroup *ResourceGroup
+		Subnet        *Subnet
+		SecurityGroup *SecurityGroup
+		Credentials   *Credentials
+		PermissionSet *PermissionSet
 	}
 	Resource *compute.VirtualMachineScaleSet
 }
 
 func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
-	keyPair, err := v.Client.GetKeyPair(ctx)
+	keyPair, err := v.client.GetKeyPair(ctx)
 	if err != nil {
 		return err
 	}
@@ -123,8 +124,8 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	}
 
 	settings := compute.VirtualMachineScaleSet{
-		Tags:     v.Client.Tags,
-		Location: to.StringPtr(v.Client.Region),
+		Tags:     v.client.Tags,
+		Location: to.StringPtr(v.client.Region),
 		Sku: &compute.Sku{
 			Name:     to.StringPtr(size),
 			Tier:     to.StringPtr("Standard"),
@@ -216,7 +217,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		}
 	}
 
-	future, err := v.Client.Services.VirtualMachineScaleSets.CreateOrUpdate(
+	future, err := v.client.Services.VirtualMachineScaleSets.CreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
 		v.Identifier,
@@ -226,7 +227,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.Client.Services.VirtualMachineScaleSets.Client); err != nil {
+	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualMachineScaleSets.Client); err != nil {
 		return err
 	}
 
@@ -234,7 +235,7 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 }
 
 func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
-	scaleSet, err := v.Client.Services.VirtualMachineScaleSets.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	scaleSet, err := v.client.Services.VirtualMachineScaleSets.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return common.NotFoundError
@@ -244,7 +245,7 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 
 	v.Attributes.Events = []common.Event{}
 	v.Attributes.Status = common.Status{common.StatusCodeActive: 0}
-	scaleSetView, err := v.Client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	scaleSetView, err := v.client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		return err
 	}
@@ -276,7 +277,7 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 	}
 
 	v.Attributes.Addresses = []net.IP{}
-	machineListPages, err := v.Client.Services.PublicIPAddresses.ListVirtualMachineScaleSetPublicIPAddresses(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	machineListPages, err := v.client.Services.PublicIPAddresses.ListVirtualMachineScaleSetPublicIPAddresses(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		return err
 	}
@@ -302,7 +303,7 @@ func (v *VirtualMachineScaleSet) Update(ctx context.Context) error {
 	}
 
 	v.Resource.Sku.Capacity = to.Int64Ptr(int64(*v.Attributes.Parallelism))
-	future, err := v.Client.Services.VirtualMachineScaleSets.CreateOrUpdate(
+	future, err := v.client.Services.VirtualMachineScaleSets.CreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
 		v.Identifier,
@@ -312,7 +313,7 @@ func (v *VirtualMachineScaleSet) Update(ctx context.Context) error {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.Client.Services.VirtualMachineScaleSets.Client); err != nil {
+	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualMachineScaleSets.Client); err != nil {
 		return err
 	}
 
@@ -320,7 +321,7 @@ func (v *VirtualMachineScaleSet) Update(ctx context.Context) error {
 }
 
 func (v *VirtualMachineScaleSet) Delete(ctx context.Context) error {
-	future, err := v.Client.Services.VirtualMachineScaleSets.Delete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	future, err := v.client.Services.VirtualMachineScaleSets.Delete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return nil
@@ -328,7 +329,7 @@ func (v *VirtualMachineScaleSet) Delete(ctx context.Context) error {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.Client.Services.VirtualMachineScaleSets.Client); err != nil {
+	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualMachineScaleSets.Client); err != nil {
 		return err
 	}
 
