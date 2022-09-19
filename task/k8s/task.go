@@ -79,7 +79,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 				persistentVolumeClaimSize = int(number)
 			}
 			persistentVolumeDirectory = match[3]
-			task.Attributes.Directory = persistentVolumeDirectory
+			t.Attributes.Directory = persistentVolumeDirectory
 		}
 
 		t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
