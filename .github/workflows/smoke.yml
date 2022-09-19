@@ -122,7 +122,7 @@ jobs:
         az aks create \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --node-vm-size=Standard_NC6 \
+          --node-vm-size=Standard_A2_v2 \
           --node-count=1 \
           --generate-ssh-keys
     - run: |
