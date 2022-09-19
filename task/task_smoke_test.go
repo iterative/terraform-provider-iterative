@@ -89,17 +89,19 @@ func TestTaskSmoke(t *testing.T) {
 	}
 
 	if testName == "" {
-		testName = fmt.Sprintf("smoke test: %s", targetName)
+		testName = "smoke test"
 	}
+
 	script := `
           #!/bin/sh -e
-          [ -n "$TEST_GPU" ] && nvidia-smi
+          test -v TEST_GPU && nvidia-smi
           mkdir --parents cache output
           touch cache/file
           echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
           sleep 60
           cat output/file
         `[1:]
+
 	for provider, enabled := range providers {
 		if !enabled {
 			continue
