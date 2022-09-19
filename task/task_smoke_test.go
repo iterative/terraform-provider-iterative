@@ -4,7 +4,6 @@ package task_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
