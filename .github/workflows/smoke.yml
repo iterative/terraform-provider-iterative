@@ -5,10 +5,24 @@ on:
   pull_request_target:
     paths: 'task/**'
   schedule:
-  - cron: '0 9 * * *'
+  - cron: '0 1 * * *' # Everyday @ 0100 UTC
+  workflow_dispatch:
+    inputs:
+      test_target:
+        description: Type of instances to be provisioned during test.
+        required: true
+        default: 'gpu+spot'
+        type: choice
+        options:
+          - quick
+          - quick+spot
+          - gpu
+          - gpu+spot
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
+env:
+ SMOKE_TEST_TARGET: ${{ github.event_name == 'pull_request_target' && 'quick' || inputs.test_target || 'gpu+spot' }}
 jobs:
   authorize:
     environment: ${{ (github.event_name == 'pull_request_target' &&
@@ -35,12 +49,12 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
       SMOKE_TEST_ENABLE_${{ matrix.provider }}: true
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha || github.ref }}
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v3
       with:
-        go-version: ^1.17
+        go-version-file: go.mod
     - if: matrix.provider == 'AWS'
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -48,7 +62,7 @@ jobs:
         role-to-assume: arn:aws:iam::342840881361:role/SandboxUser
     - run: go test ./task -v -timeout=30m -count=1 -tags=smoke
     - if: always()
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: master
     - if: always()
@@ -60,7 +74,7 @@ jobs:
     needs: authorize
     environment: automatic
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     concurrency: ${{ github.workflow }}-K8S
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -68,12 +82,12 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha || github.ref }}
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v3
       with:
-        go-version: ^1.17
+        go-version-file: go.mod
     - run: |
         az login \
           --service-principal \
@@ -82,7 +96,11 @@ jobs:
           --tenant="$AZURE_TENANT_ID"
         az account set \
           --subscription="$AZURE_SUBSCRIPTION_ID"
-    - id: cluster
+        az group create \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --location=eastus
+    - id: cluster_gpu
+      if: ${{ contains(env.SMOKE_TEST_TARGET, 'gpu') }}
       run: |
         az extension add \
           --name=aks-preview
@@ -91,9 +109,6 @@ jobs:
         az feature register \
           --namespace=Microsoft.ContainerService \
           --name=GPUDedicatedVHDPreview
-        az group create \
-          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --location=eastus
         az aks create \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
@@ -101,6 +116,16 @@ jobs:
           --node-count=1 \
           --aks-custom-headers=UseGPUDedicatedVHD=true \
           --generate-ssh-keys
+    - id: cluster
+      if: ${{ !contains(env.SMOKE_TEST_TARGET, 'gpu') }}
+      run: |
+        az aks create \
+          --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --node-vm-size=Standard_A2_v2 \
+          --node-count=1 \
+          --generate-ssh-keys
+    - run: |
         az aks get-credentials \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
@@ -110,7 +135,7 @@ jobs:
           -e 's/\n/%0A/g;' \
           -e 's/\r/%0D/g;' \
           -e 's/(.+)/::add-mask::\1\n::set-output name=kubeconfig::\1\n/g'
-    - run: go test ./task -v -timeout=30m -count=1 -tags=smoke
+    - run: go test ./task -v -timeout=60m -count=1 -tags=smoke
       env:
         KUBECONFIG_DATA: ${{ steps.cluster.outputs.kubeconfig }}
         SMOKE_TEST_ENABLE_K8S: true

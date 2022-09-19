@@ -1,6 +1,6 @@
 //go:build smoke
 
-package task
+package task_test
 
 import (
 	"context"
@@ -16,21 +16,69 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
+
+type testTarget struct {
+	machine string
+	image   string
+	env     map[string]string
+	spot    common.Spot
+}
+
+var testTargets = map[string]testTarget{
+	// default test target spins up small instances and runs lightweight scripts on them.
+	"quick": testTarget{
+		machine: "m",
+		image:   "ubuntu",
+		spot:    common.SpotDisabled,
+	},
+	"quick+spot": testTarget{
+		machine: "m",
+		image:   "ubuntu",
+		spot:    common.SpotEnabled,
+	},
+	"gpu": testTarget{
+		machine: "m+t4",
+		image:   "nvidia",
+		env: map[string]string{
+			"TEST_GPU": "yes",
+		},
+		spot: common.SpotDisabled,
+	},
+	"gpu+spot": testTarget{
+		machine: "m+t4",
+		image:   "nvidia",
+		env: map[string]string{
+			"TEST_GPU": "yes",
+		},
+		spot: common.SpotEnabled,
+	},
+}
+
+const defaultTestTarget = "quick"
 
 // TestTaskSmoke runs smoke tests with specified infrastructure providers.
 // Cloud provider access credentials (provided as environment variables) are required.
 func TestTaskSmoke(t *testing.T) {
 	testName := os.Getenv("SMOKE_TEST_IDENTIFIER")
 	sweepOnly := os.Getenv("SMOKE_TEST_SWEEP") != ""
-
 	enableAWS := os.Getenv("SMOKE_TEST_ENABLE_AWS") != ""
 	enableAZ := os.Getenv("SMOKE_TEST_ENABLE_AZ") != ""
 	enableGCP := os.Getenv("SMOKE_TEST_ENABLE_GCP") != ""
 	enableK8S := os.Getenv("SMOKE_TEST_ENABLE_K8S") != ""
 
 	enableALL := !enableAWS && !enableAZ && !enableGCP && !enableK8S
+
+	targetName := os.Getenv("SMOKE_TEST_TARGET")
+	if targetName == "" {
+		targetName = defaultTestTarget
+	}
+	target, ok := testTargets[targetName]
+	if !ok {
+		t.Fatalf("test target %q undefined", targetName)
+	}
 
 	providers := map[common.Provider]bool{
 		common.ProviderAWS: enableAWS || enableALL,
@@ -42,6 +90,16 @@ func TestTaskSmoke(t *testing.T) {
 	if testName == "" {
 		testName = "smoke test"
 	}
+
+	script := `
+          #!/bin/sh -e
+          test -v TEST_GPU && nvidia-smi
+          mkdir --parents cache output
+          touch cache/file
+          echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+          sleep 60
+          cat output/file
+        `[1:]
 
 	for provider, enabled := range providers {
 		if !enabled {
@@ -74,23 +132,21 @@ func TestTaskSmoke(t *testing.T) {
 
 			identifier := common.NewDeterministicIdentifier(testName)
 
-			task := common.Task{
+			env := map[string]*string{
+				"ENVIRONMENT_VARIABLE_DATA": &newData,
+			}
+			for k := range target.env {
+				val := target.env[k]
+				env[k] = &val
+			}
+			taskParams := common.Task{
 				Size: common.Size{
-					Machine: "m+t4",
+					Machine: target.machine,
 				},
 				Environment: common.Environment{
-					Image: "nvidia",
-					Script: `#!/bin/sh -e
-						nvidia-smi
-						mkdir --parents cache output
-						touch cache/file
-						echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-						sleep 60
-						cat output/file
-					`,
-					Variables: map[string]*string{
-						"ENVIRONMENT_VARIABLE_DATA": &newData,
-					},
+					Image:        target.image,
+					Script:       script,
+					Variables:    env,
 					Directory:    baseDirectory,
 					DirectoryOut: relativeOutputDirectory,
 					Timeout:      10 * time.Minute,
@@ -100,13 +156,13 @@ func TestTaskSmoke(t *testing.T) {
 						Ports: &[]uint16{22},
 					},
 				},
-				Spot:        common.SpotEnabled,
+				Spot:        target.spot,
 				Parallelism: 1,
 			}
 
 			ctx := context.TODO()
 
-			newTask, err := New(ctx, cloud, identifier, task)
+			newTask, err := task.New(ctx, cloud, identifier, taskParams)
 			require.NoError(t, err)
 
 			require.NoError(t, newTask.Delete(ctx))

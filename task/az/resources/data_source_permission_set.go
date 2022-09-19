@@ -23,14 +23,14 @@ func ValidateARMID(id string) error {
 }
 
 func NewPermissionSet(client *client.Client, identifer string) *PermissionSet {
-	ps := new(PermissionSet)
-	ps.Client = client
-	ps.Identifier = identifer
-	return ps
+	return &PermissionSet{
+		client:     client,
+		Identifier: identifer,
+	}
 }
 
 type PermissionSet struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Resource   *compute.VirtualMachineScaleSetIdentity
 }

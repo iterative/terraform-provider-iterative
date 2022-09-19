@@ -28,31 +28,40 @@ import (
 )
 
 func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {
-	j := new(Job)
-	j.Client = client
-	j.Identifier = identifier.Long()
+	j := &Job{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	j.Dependencies.PersistentVolumeClaim = persistentVolumeClaim
 	j.Dependencies.ConfigMap = configMap
 	j.Dependencies.PermissionSet = permissionSet
 	j.Attributes.Task = task
 	j.Attributes.Parallelism = task.Parallelism
+	j.Attributes.NodeSelector = map[string]string{}
+	for _, selector := range strings.Split(string(client.Cloud.Region), ",") {
+		key, value, is_found := strings.Cut(selector, "=")
+		if is_found && len(value) > 0 {
+			j.Attributes.NodeSelector[key] = value
+		}
+	}
 	return j
 }
 
 type Job struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
-		Task        common.Task
-		Parallelism uint16
-		Addresses   []net.IP
-		Status      common.Status
-		Events      []common.Event
+		Task         common.Task
+		Parallelism  uint16
+		NodeSelector map[string]string
+		Addresses    []net.IP
+		Status       common.Status
+		Events       []common.Event
 	}
 	Dependencies struct {
-		*PersistentVolumeClaim
-		*ConfigMap
-		*PermissionSet
+		PersistentVolumeClaim *PersistentVolumeClaim
+		ConfigMap             *ConfigMap
+		PermissionSet         *PermissionSet
 	}
 	Resource *kubernetes_batch.Job
 }
@@ -90,8 +99,12 @@ func (j *Job) Create(ctx context.Context) error {
 		return common.NotFoundError
 	}
 
-	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobNodeSelector := map[string]string{}
+	for selector, value := range j.Attributes.NodeSelector {
+		jobNodeSelector[selector] = value
+	}
+
+	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobAccelerator := match[3]
 	jobGPUType := "nvidia.com/gpu"
 	jobGPUCount := match[4]
@@ -108,7 +121,7 @@ func (j *Job) Create(ctx context.Context) error {
 	if jobGPUCount > "0" {
 		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
 		if jobAccelerator != "" {
-			jobNodeSelector = map[string]string{"accelerator": jobAccelerator}
+			jobNodeSelector["accelerator"] = jobAccelerator
 		}
 	}
 
@@ -202,9 +215,9 @@ func (j *Job) Create(ctx context.Context) error {
 	job := kubernetes_batch.Job{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
 			Name:        j.Identifier,
-			Namespace:   j.Client.Namespace,
-			Labels:      j.Client.Tags,
-			Annotations: j.Client.Tags,
+			Namespace:   j.client.Namespace,
+			Labels:      j.client.Tags,
+			Annotations: j.client.Tags,
 		},
 		Spec: kubernetes_batch.JobSpec{
 			ActiveDeadlineSeconds: &jobActiveDeadlineSeconds,
@@ -251,7 +264,7 @@ func (j *Job) Create(ctx context.Context) error {
 	}
 
 	// Ask Kubernetes to create the job.
-	out, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Create(ctx, &job, kubernetes_meta.CreateOptions{})
+	out, err := j.client.Services.Batch.Jobs(j.client.Namespace).Create(ctx, &job, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
 			return j.Read(ctx)
@@ -264,7 +277,7 @@ func (j *Job) Create(ctx context.Context) error {
 }
 
 func (j *Job) Read(ctx context.Context) error {
-	job, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
+	job, err := j.client.Services.Batch.Jobs(j.client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return common.NotFoundError
@@ -272,7 +285,7 @@ func (j *Job) Read(ctx context.Context) error {
 		return err
 	}
 	eventListOptions := kubernetes_meta.ListOptions{FieldSelector: fields.OneTermEqualSelector("involvedObject.name", job.Name).String()}
-	events, err := j.Client.Services.Core.Events(j.Client.Namespace).List(ctx, eventListOptions)
+	events, err := j.client.Services.Core.Events(j.client.Namespace).List(ctx, eventListOptions)
 	if err != nil {
 		return err
 	}
@@ -296,7 +309,7 @@ func (j *Job) Read(ctx context.Context) error {
 }
 
 func (j *Job) Delete(ctx context.Context) error {
-	_, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
+	_, err := j.client.Services.Batch.Jobs(j.client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return nil
@@ -309,15 +322,15 @@ func (j *Job) Delete(ctx context.Context) error {
 	// ownerReference.blockOwnerDeletion=true.
 	propagationPolicy := kubernetes_meta.DeletePropagationForeground
 
-	err = j.Client.Services.Batch.Jobs(j.Client.Namespace).Delete(ctx, j.Identifier, kubernetes_meta.DeleteOptions{
+	err = j.client.Services.Batch.Jobs(j.client.Namespace).Delete(ctx, j.Identifier, kubernetes_meta.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to delete Job! API error: %s", err)
 	}
 
-	err = terraform_resource.RetryContext(ctx, j.Client.Cloud.Timeouts.Delete, func() *terraform_resource.RetryError {
-		_, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
+	err = terraform_resource.RetryContext(ctx, j.client.Cloud.Timeouts.Delete, func() *terraform_resource.RetryError {
+		_, err := j.client.Services.Batch.Jobs(j.client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 		if err != nil {
 			if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 				return nil
@@ -336,8 +349,8 @@ func (j *Job) Delete(ctx context.Context) error {
 }
 
 func (j *Job) Logs(ctx context.Context) ([]string, error) {
-	pods, err := j.Client.Services.Core.Pods(j.Client.Namespace).List(ctx, kubernetes_meta.ListOptions{
-		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.GetObjectMeta().GetLabels()["controller-uid"]),
+	pods, err := j.client.Services.Core.Pods(j.client.Namespace).List(ctx, kubernetes_meta.ListOptions{
+		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.Spec.Selector.MatchLabels["controller-uid"]),
 	})
 	if err != nil {
 		return nil, err
@@ -346,7 +359,7 @@ func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	var result []string
 
 	for _, pod := range pods.Items {
-		logs, err := j.Client.Services.Core.Pods(j.Client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{
+		logs, err := j.client.Services.Core.Pods(j.client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{
 			Timestamps: true,
 		}).Stream(ctx)
 		if err != nil {
