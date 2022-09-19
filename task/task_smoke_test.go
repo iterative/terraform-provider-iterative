@@ -1,9 +1,10 @@
 //go:build smoke
 
-package task
+package task_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"terraform-provider-iterative/task"
 	"terraform-provider-iterative/task/common"
 )
 
@@ -28,12 +30,25 @@ type testTarget struct {
 
 var testTargets = map[string]testTarget{
 	// default test target spins up small instances and runs lightweight scripts on them.
-	"default": testTarget{
+	"quick": testTarget{
 		machine: "m",
 		image:   "ubuntu",
 		spot:    common.SpotDisabled,
 	},
+	"quick+spot": testTarget{
+		machine: "m",
+		image:   "ubuntu",
+		spot:    common.SpotEnabled,
+	},
 	"gpu": testTarget{
+		machine: "m+t4",
+		image:   "nvidia",
+		env: map[string]string{
+			"TEST_GPU": "yes",
+		},
+		spot: common.SpotDisabled,
+	},
+	"gpu+spot": testTarget{
 		machine: "m+t4",
 		image:   "nvidia",
 		env: map[string]string{
@@ -42,6 +57,8 @@ var testTargets = map[string]testTarget{
 		spot: common.SpotEnabled,
 	},
 }
+
+const defaultTestTarget = "quick"
 
 // TestTaskSmoke runs smoke tests with specified infrastructure providers.
 // Cloud provider access credentials (provided as environment variables) are required.
@@ -57,7 +74,7 @@ func TestTaskSmoke(t *testing.T) {
 
 	targetName := os.Getenv("SMOKE_TEST_TARGET")
 	if targetName == "" {
-		targetName = "default"
+		targetName = defaultTestTarget
 	}
 	target, ok := testTargets[targetName]
 	if !ok {
@@ -72,19 +89,19 @@ func TestTaskSmoke(t *testing.T) {
 	}
 
 	if testName == "" {
-		testName = "smoke test"
+		testName = fmt.Sprintf("smoke test: %s", targetName)
 	}
 	script := `
-#!/bin/sh -e
-if [ -n "$TEST_GPU" ]; then
-  nvidia-smi
-fi
-mkdir --parents cache output
-touch cache/file
-echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-sleep 60
-cat output/file
-`[1:]
+          #!/bin/sh -e
+          if [ -n "$TEST_GPU" ]; then
+            nvidia-smi
+          fi
+          mkdir --parents cache output
+          touch cache/file
+          echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+          sleep 60
+          cat output/file
+        `[1:]
 	for provider, enabled := range providers {
 		if !enabled {
 			continue
@@ -123,7 +140,7 @@ cat output/file
 				val := target.env[k]
 				env[k] = &val
 			}
-			task := common.Task{
+			taskParams := common.Task{
 				Size: common.Size{
 					Machine: target.machine,
 				},
@@ -146,7 +163,7 @@ cat output/file
 
 			ctx := context.TODO()
 
-			newTask, err := New(ctx, cloud, identifier, task)
+			newTask, err := task.New(ctx, cloud, identifier, taskParams)
 			require.NoError(t, err)
 
 			require.NoError(t, newTask.Delete(ctx))
