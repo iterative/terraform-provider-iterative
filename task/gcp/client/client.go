@@ -51,11 +51,11 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		region = val
 	}
 
-	c := new(Client)
-	c.Cloud = cloud
-	c.Region = region
-
-	c.Credentials = credentials
+	c := &Client{
+		Cloud:       cloud,
+		Region:      region,
+		Credentials: credentials,
+	}
 
 	computeService, err := compute.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {

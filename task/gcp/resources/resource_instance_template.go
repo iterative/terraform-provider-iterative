@@ -18,10 +18,11 @@ import (
 )
 
 func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, permissionSet *PermissionSet, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {
-	i := new(InstanceTemplate)
-	i.Client = client
-	i.Identifier = identifier.Long()
-	i.Attributes = task
+	i := &InstanceTemplate{
+		client:     client,
+		Identifier: identifier.Long(),
+		Attributes: task,
+	}
 	i.Dependencies.PermissionSet = permissionSet
 	i.Dependencies.Credentials = credentials
 	i.Dependencies.DefaultNetwork = defaultNetwork
@@ -31,21 +32,21 @@ func NewInstanceTemplate(client *client.Client, identifier common.Identifier, de
 }
 
 type InstanceTemplate struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Attributes   common.Task
 	Dependencies struct {
-		*DefaultNetwork
-		FirewallRules []*FirewallRule
-		*Image
-		*Credentials
-		*PermissionSet
+		DefaultNetwork *DefaultNetwork
+		FirewallRules  []*FirewallRule
+		Image          *Image
+		Credentials    *Credentials
+		PermissionSet  *PermissionSet
 	}
 	Resource *compute.InstanceTemplate
 }
 
 func (i *InstanceTemplate) Create(ctx context.Context) error {
-	keyPair, err := i.Client.GetKeyPair(ctx)
+	keyPair, err := i.client.GetKeyPair(ctx)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 				OnHostMaintenance: hostMaintenanceBehavior,
 				Preemptible:       isPreemptible,
 			},
-			Labels: i.Client.Tags,
+			Labels: i.client.Tags,
 			Metadata: &compute.Metadata{
 				Items: []*compute.MetadataItems{
 					{
@@ -177,7 +178,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 		definition.Properties.Disks[0].InitializeParams.DiskSizeGb = int64(size)
 	}
 
-	insertOperation, err := i.Client.Services.Compute.InstanceTemplates.Insert(i.Client.Credentials.ProjectID, definition).Do()
+	insertOperation, err := i.client.Services.Compute.InstanceTemplates.Insert(i.client.Credentials.ProjectID, definition).Do()
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "alreadyExists") {
 			return i.Read(ctx)
@@ -185,8 +186,8 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 		return err
 	}
 
-	getOperationCall := i.Client.Services.Compute.GlobalOperations.Get(i.Client.Credentials.ProjectID, insertOperation.Name)
-	_, err = waitForOperation(ctx, i.Client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
+	getOperationCall := i.client.Services.Compute.GlobalOperations.Get(i.client.Credentials.ProjectID, insertOperation.Name)
+	_, err = waitForOperation(ctx, i.client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
 	if err != nil {
 		return err
 	}
@@ -195,7 +196,7 @@ func (i *InstanceTemplate) Create(ctx context.Context) error {
 }
 
 func (i *InstanceTemplate) Read(ctx context.Context) error {
-	template, err := i.Client.Services.Compute.InstanceTemplates.Get(i.Client.Credentials.ProjectID, i.Identifier).Do()
+	template, err := i.client.Services.Compute.InstanceTemplates.Get(i.client.Credentials.ProjectID, i.Identifier).Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
@@ -213,8 +214,8 @@ func (i *InstanceTemplate) Update(ctx context.Context) error {
 }
 
 func (i *InstanceTemplate) Delete(ctx context.Context) error {
-	deleteOperationCall := i.Client.Services.Compute.InstanceTemplates.Delete(i.Client.Credentials.ProjectID, i.Identifier)
-	_, err := waitForOperation(ctx, i.Client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
+	deleteOperationCall := i.client.Services.Compute.InstanceTemplates.Delete(i.client.Credentials.ProjectID, i.Identifier)
+	_, err := waitForOperation(ctx, i.client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
 	if err != nil {
 		var e *googleapi.Error
 		if !errors.As(err, &e) || e.Code != 404 {

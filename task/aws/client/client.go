@@ -34,13 +34,12 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		return nil, err
 	}
 
-	c := new(Client)
-	c.Cloud = cloud
-	c.Region = region
-	c.Tags = cloud.Tags
-
-	c.Config = config
-
+	c := &Client{
+		Cloud:  cloud,
+		Region: region,
+		Tags:   cloud.Tags,
+		Config: config,
+	}
 	c.Services.EC2 = ec2.NewFromConfig(config)
 	c.Services.S3 = s3.NewFromConfig(config)
 	c.Services.STS = sts.NewFromConfig(config)

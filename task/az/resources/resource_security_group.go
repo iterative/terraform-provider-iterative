@@ -14,20 +14,21 @@ import (
 )
 
 func NewSecurityGroup(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, firewall common.Firewall) *SecurityGroup {
-	s := new(SecurityGroup)
-	s.Client = client
-	s.Identifier = identifier.Long()
-	s.Attributes = firewall
+	s := &SecurityGroup{
+		client:                 client,
+		Identifier: identifier.Long(),
+		Attributes: firewall,
+	}
 	s.Dependencies.ResourceGroup = resourceGroup
 	return s
 }
 
 type SecurityGroup struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Attributes   common.Firewall
 	Dependencies struct {
-		*ResourceGroup
+		ResourceGroup *ResourceGroup
 	}
 	Resource *network.SecurityGroup
 }
@@ -77,9 +78,9 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		}
 	}
 
-	securityGroupCreateFuture, err := s.Client.Services.SecurityGroups.CreateOrUpdate(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, network.SecurityGroup{
-		Tags:     s.Client.Tags,
-		Location: to.StringPtr(s.Client.Region),
+	securityGroupCreateFuture, err := s.client.Services.SecurityGroups.CreateOrUpdate(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, network.SecurityGroup{
+		Tags:     s.client.Tags,
+		Location: to.StringPtr(s.client.Region),
 		SecurityGroupPropertiesFormat: &network.SecurityGroupPropertiesFormat{
 			SecurityRules: &rules,
 		},
@@ -89,7 +90,7 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 		return err
 	}
 
-	if err := securityGroupCreateFuture.WaitForCompletionRef(ctx, s.Client.Services.SecurityGroups.Client); err != nil {
+	if err := securityGroupCreateFuture.WaitForCompletionRef(ctx, s.client.Services.SecurityGroups.Client); err != nil {
 		return err
 	}
 
@@ -97,7 +98,7 @@ func (s *SecurityGroup) Create(ctx context.Context) error {
 }
 
 func (s *SecurityGroup) Read(ctx context.Context) error {
-	securityGroup, err := s.Client.Services.SecurityGroups.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
+	securityGroup, err := s.client.Services.SecurityGroups.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return common.NotFoundError
@@ -114,7 +115,7 @@ func (s *SecurityGroup) Update(ctx context.Context) error {
 }
 
 func (s *SecurityGroup) Delete(ctx context.Context) error {
-	groupDeleteFuture, err := s.Client.Services.SecurityGroups.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier)
+	groupDeleteFuture, err := s.client.Services.SecurityGroups.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return nil
@@ -122,7 +123,7 @@ func (s *SecurityGroup) Delete(ctx context.Context) error {
 		return err
 	}
 
-	err = groupDeleteFuture.WaitForCompletionRef(ctx, s.Client.Services.Groups.Client)
+	err = groupDeleteFuture.WaitForCompletionRef(ctx, s.client.Services.Groups.Client)
 	s.Resource = nil
 	return err
 }

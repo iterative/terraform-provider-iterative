@@ -18,16 +18,17 @@ import (
 )
 
 func NewInstanceGroupManager(client *client.Client, identifier common.Identifier, instanceTemplate *InstanceTemplate, parallelism *uint16) *InstanceGroupManager {
-	i := new(InstanceGroupManager)
-	i.Client = client
-	i.Identifier = identifier.Long()
+	i := &InstanceGroupManager{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	i.Attributes.Parallelism = parallelism
 	i.Dependencies.InstanceTemplate = instanceTemplate
 	return i
 }
 
 type InstanceGroupManager struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		Parallelism *uint16
@@ -36,13 +37,13 @@ type InstanceGroupManager struct {
 		Events      []common.Event
 	}
 	Dependencies struct {
-		*InstanceTemplate
+		InstanceTemplate *InstanceTemplate
 	}
 	Resource *compute.InstanceGroupManager
 }
 
 func (i *InstanceGroupManager) Read(ctx context.Context) error {
-	manager, err := i.Client.Services.Compute.InstanceGroupManagers.Get(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier).Do()
+	manager, err := i.client.Services.Compute.InstanceGroupManagers.Get(i.client.Credentials.ProjectID, i.client.Region, i.Identifier).Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
@@ -52,7 +53,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	}
 
 	i.Attributes.Events = []common.Event{}
-	errors, err := i.Client.Services.Compute.InstanceGroupManagers.ListErrors(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier).Do()
+	errors, err := i.client.Services.Compute.InstanceGroupManagers.ListErrors(i.client.Credentials.ProjectID, i.client.Region, i.Identifier).Do()
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 		})
 	}
 
-	groupInstances, err := i.Client.Services.Compute.InstanceGroups.ListInstances(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier, &compute.InstanceGroupsListInstancesRequest{}).Do()
+	groupInstances, err := i.client.Services.Compute.InstanceGroups.ListInstances(i.client.Credentials.ProjectID, i.client.Region, i.Identifier, &compute.InstanceGroupsListInstancesRequest{}).Do()
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	for _, groupInstance := range groupInstances.Items {
 		logrus.Debug("Instance Group Manager Status:", groupInstance.Status)
 		if groupInstance.Status == "RUNNING" {
-			instance, err := i.Client.Services.Compute.Instances.Get(i.Client.Credentials.ProjectID, i.Client.Region, filepath.Base(groupInstance.Instance)).Do()
+			instance, err := i.client.Services.Compute.Instances.Get(i.client.Credentials.ProjectID, i.client.Region, filepath.Base(groupInstance.Instance)).Do()
 			if err != nil {
 				return err
 			}
@@ -113,7 +114,7 @@ func (i *InstanceGroupManager) Create(ctx context.Context) error {
 		ForceSendFields: []string{"TargetSize"},
 	}
 
-	insertOperation, err := i.Client.Services.Compute.InstanceGroupManagers.Insert(i.Client.Credentials.ProjectID, i.Client.Region, definition).Do()
+	insertOperation, err := i.client.Services.Compute.InstanceGroupManagers.Insert(i.client.Credentials.ProjectID, i.client.Region, definition).Do()
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "alreadyExists") {
 			return i.Read(ctx)
@@ -121,8 +122,8 @@ func (i *InstanceGroupManager) Create(ctx context.Context) error {
 		return err
 	}
 
-	getOperationCall := i.Client.Services.Compute.ZoneOperations.Get(i.Client.Credentials.ProjectID, i.Client.Region, insertOperation.Name)
-	_, err = waitForOperation(ctx, i.Client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
+	getOperationCall := i.client.Services.Compute.ZoneOperations.Get(i.client.Credentials.ProjectID, i.client.Region, insertOperation.Name)
+	_, err = waitForOperation(ctx, i.client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
 	if err != nil {
 		return err
 	}
@@ -131,13 +132,13 @@ func (i *InstanceGroupManager) Create(ctx context.Context) error {
 }
 
 func (i *InstanceGroupManager) Update(ctx context.Context) error {
-	insertOperation, err := i.Client.Services.Compute.InstanceGroupManagers.Resize(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier, int64(*i.Attributes.Parallelism)).Do()
+	insertOperation, err := i.client.Services.Compute.InstanceGroupManagers.Resize(i.client.Credentials.ProjectID, i.client.Region, i.Identifier, int64(*i.Attributes.Parallelism)).Do()
 	if err != nil {
 		return err
 	}
 
-	getOperationCall := i.Client.Services.Compute.ZoneOperations.Get(i.Client.Credentials.ProjectID, i.Client.Region, insertOperation.Name)
-	_, err = waitForOperation(ctx, i.Client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
+	getOperationCall := i.client.Services.Compute.ZoneOperations.Get(i.client.Credentials.ProjectID, i.client.Region, insertOperation.Name)
+	_, err = waitForOperation(ctx, i.client.Cloud.Timeouts.Create, 2*time.Second, 32*time.Second, getOperationCall.Do)
 	if err != nil {
 		return err
 	}
@@ -146,8 +147,8 @@ func (i *InstanceGroupManager) Update(ctx context.Context) error {
 }
 
 func (i *InstanceGroupManager) Delete(ctx context.Context) error {
-	deleteOperationCall := i.Client.Services.Compute.InstanceGroupManagers.Delete(i.Client.Credentials.ProjectID, i.Client.Region, i.Identifier)
-	_, err := waitForOperation(ctx, i.Client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
+	deleteOperationCall := i.client.Services.Compute.InstanceGroupManagers.Delete(i.client.Credentials.ProjectID, i.client.Region, i.Identifier)
+	_, err := waitForOperation(ctx, i.client.Cloud.Timeouts.Delete, 2*time.Second, 32*time.Second, deleteOperationCall.Do)
 	if err != nil {
 		var e *googleapi.Error
 		if !errors.As(err, &e) || e.Code != 404 {
