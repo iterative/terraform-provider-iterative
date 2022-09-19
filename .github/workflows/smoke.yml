@@ -22,7 +22,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 env:
- SMOKE_TEST_TARGET: ${{ github.event_name == 'pull_request_target' && 'quick' || inputs.test_target }}
+ SMOKE_TEST_TARGET: ${{ github.event_name == 'pull_request_target' && 'quick' || inputs.test_target || 'gpu+spot' }}
 jobs:
   authorize:
     environment: ${{ (github.event_name == 'pull_request_target' &&
