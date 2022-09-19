@@ -13,14 +13,14 @@ import (
 )
 
 func NewImage(client *client.Client, identifier string) *Image {
-	i := new(Image)
-	i.Client = client
-	i.Identifier = identifier
-	return i
+	return &Image{
+		client:     client,
+		Identifier: identifier,
+	}
 }
 
 type Image struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		SSHUser string
@@ -47,11 +47,11 @@ func (i *Image) Read(ctx context.Context) error {
 	project := match[2]
 	imageOrFamily := match[3]
 
-	resource, err := i.Client.Services.Compute.Images.Get(project, imageOrFamily).Do()
+	resource, err := i.client.Services.Compute.Images.Get(project, imageOrFamily).Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
-			resource, err := i.Client.Services.Compute.Images.GetFromFamily(project, imageOrFamily).Do()
+			resource, err := i.client.Services.Compute.Images.GetFromFamily(project, imageOrFamily).Do()
 			if err != nil {
 				var e *googleapi.Error
 				if errors.As(err, &e) && e.Code == 404 {

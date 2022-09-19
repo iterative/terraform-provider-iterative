@@ -6,10 +6,10 @@ import (
 )
 
 type Cloud struct {
-	Timeouts
-	Provider
-	Region
-	Tags map[string]string
+	Timeouts Timeouts
+	Provider Provider
+	Region   Region
+	Tags     map[string]string
 }
 
 type Timeouts struct {

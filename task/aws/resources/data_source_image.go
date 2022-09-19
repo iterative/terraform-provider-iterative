@@ -15,14 +15,14 @@ import (
 )
 
 func NewImage(client *client.Client, identifier string) *Image {
-	i := new(Image)
-	i.Client = client
-	i.Identifier = identifier
-	return i
+	return &Image{
+		client:     client,
+		Identifier: identifier,
+	}
 }
 
 type Image struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		SSHUser string
@@ -73,7 +73,7 @@ func (i *Image) Read(ctx context.Context) error {
 		Filters: filters,
 	}
 
-	result, err := i.Client.Services.EC2.DescribeImages(ctx, &input)
+	result, err := i.client.Services.EC2.DescribeImages(ctx, &input)
 	if err != nil {
 		return err
 	}

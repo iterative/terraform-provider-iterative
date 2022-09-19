@@ -28,9 +28,10 @@ import (
 )
 
 func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {
-	j := new(Job)
-	j.Client = client
-	j.Identifier = identifier.Long()
+	j := &Job{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	j.Dependencies.PersistentVolumeClaim = persistentVolumeClaim
 	j.Dependencies.ConfigMap = configMap
 	j.Dependencies.PermissionSet = permissionSet
@@ -47,7 +48,7 @@ func NewJob(client *client.Client, identifier common.Identifier, persistentVolum
 }
 
 type Job struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		Task         common.Task
@@ -214,9 +215,9 @@ func (j *Job) Create(ctx context.Context) error {
 	job := kubernetes_batch.Job{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
 			Name:        j.Identifier,
-			Namespace:   j.Client.Namespace,
-			Labels:      j.Client.Tags,
-			Annotations: j.Client.Tags,
+			Namespace:   j.client.Namespace,
+			Labels:      j.client.Tags,
+			Annotations: j.client.Tags,
 		},
 		Spec: kubernetes_batch.JobSpec{
 			ActiveDeadlineSeconds: &jobActiveDeadlineSeconds,
@@ -263,7 +264,7 @@ func (j *Job) Create(ctx context.Context) error {
 	}
 
 	// Ask Kubernetes to create the job.
-	out, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Create(ctx, &job, kubernetes_meta.CreateOptions{})
+	out, err := j.client.Services.Batch.Jobs(j.client.Namespace).Create(ctx, &job, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
 			return j.Read(ctx)
@@ -276,7 +277,7 @@ func (j *Job) Create(ctx context.Context) error {
 }
 
 func (j *Job) Read(ctx context.Context) error {
-	job, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
+	job, err := j.client.Services.Batch.Jobs(j.client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return common.NotFoundError
@@ -284,7 +285,7 @@ func (j *Job) Read(ctx context.Context) error {
 		return err
 	}
 	eventListOptions := kubernetes_meta.ListOptions{FieldSelector: fields.OneTermEqualSelector("involvedObject.name", job.Name).String()}
-	events, err := j.Client.Services.Core.Events(j.Client.Namespace).List(ctx, eventListOptions)
+	events, err := j.client.Services.Core.Events(j.client.Namespace).List(ctx, eventListOptions)
 	if err != nil {
 		return err
 	}
@@ -308,7 +309,7 @@ func (j *Job) Read(ctx context.Context) error {
 }
 
 func (j *Job) Delete(ctx context.Context) error {
-	_, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
+	_, err := j.client.Services.Batch.Jobs(j.client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return nil
@@ -321,15 +322,15 @@ func (j *Job) Delete(ctx context.Context) error {
 	// ownerReference.blockOwnerDeletion=true.
 	propagationPolicy := kubernetes_meta.DeletePropagationForeground
 
-	err = j.Client.Services.Batch.Jobs(j.Client.Namespace).Delete(ctx, j.Identifier, kubernetes_meta.DeleteOptions{
+	err = j.client.Services.Batch.Jobs(j.client.Namespace).Delete(ctx, j.Identifier, kubernetes_meta.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to delete Job! API error: %s", err)
 	}
 
-	err = terraform_resource.RetryContext(ctx, j.Client.Cloud.Timeouts.Delete, func() *terraform_resource.RetryError {
-		_, err := j.Client.Services.Batch.Jobs(j.Client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
+	err = terraform_resource.RetryContext(ctx, j.client.Cloud.Timeouts.Delete, func() *terraform_resource.RetryError {
+		_, err := j.client.Services.Batch.Jobs(j.client.Namespace).Get(ctx, j.Identifier, kubernetes_meta.GetOptions{})
 		if err != nil {
 			if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 				return nil
@@ -348,7 +349,7 @@ func (j *Job) Delete(ctx context.Context) error {
 }
 
 func (j *Job) Logs(ctx context.Context) ([]string, error) {
-	pods, err := j.Client.Services.Core.Pods(j.Client.Namespace).List(ctx, kubernetes_meta.ListOptions{
+	pods, err := j.client.Services.Core.Pods(j.client.Namespace).List(ctx, kubernetes_meta.ListOptions{
 		LabelSelector: fmt.Sprintf("controller-uid=%s", j.Resource.Spec.Selector.MatchLabels["controller-uid"]),
 	})
 	if err != nil {
@@ -358,7 +359,7 @@ func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	var result []string
 
 	for _, pod := range pods.Items {
-		logs, err := j.Client.Services.Core.Pods(j.Client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{
+		logs, err := j.client.Services.Core.Pods(j.client.Namespace).GetLogs(pod.Name, &kubernetes_core.PodLogOptions{
 			Timestamps: true,
 		}).Stream(ctx)
 		if err != nil {
