@@ -14,25 +14,26 @@ import (
 )
 
 func NewStorageAccount(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup) *StorageAccount {
-	s := new(StorageAccount)
-	s.Client = client
-	s.Identifier = identifier.Short()
+	s := &StorageAccount{
+		client:     client,
+		Identifier: identifier.Short(),
+	}
 	s.Dependencies.ResourceGroup = resourceGroup
 	return s
 }
 
 type StorageAccount struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Attributes   *storage.AccountKey
 	Dependencies struct {
-		*ResourceGroup
+		ResourceGroup *ResourceGroup
 	}
 	Resource *storage.Account
 }
 
 func (s *StorageAccount) Create(ctx context.Context) error {
-	future, err := s.Client.Services.StorageAccounts.Create(
+	future, err := s.client.Services.StorageAccounts.Create(
 		ctx,
 		s.Dependencies.ResourceGroup.Identifier,
 		s.Identifier,
@@ -42,8 +43,8 @@ func (s *StorageAccount) Create(ctx context.Context) error {
 				Tier: storage.SkuTierStandard,
 			},
 			Kind:     storage.KindBlobStorage,
-			Location: to.StringPtr(s.Client.Region),
-			Tags:     s.Client.Tags,
+			Location: to.StringPtr(s.client.Region),
+			Tags:     s.client.Tags,
 			AccountPropertiesCreateParameters: &storage.AccountPropertiesCreateParameters{
 				AccessTier: storage.AccessTierHot,
 			},
@@ -52,14 +53,14 @@ func (s *StorageAccount) Create(ctx context.Context) error {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, s.Client.Services.StorageAccounts.Client); err != nil {
+	if err := future.WaitForCompletionRef(ctx, s.client.Services.StorageAccounts.Client); err != nil {
 		return err
 	}
 	return s.Read(ctx)
 }
 
 func (s *StorageAccount) Read(ctx context.Context) error {
-	account, err := s.Client.Services.StorageAccounts.GetProperties(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
+	account, err := s.client.Services.StorageAccounts.GetProperties(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return common.NotFoundError
@@ -67,7 +68,7 @@ func (s *StorageAccount) Read(ctx context.Context) error {
 		return err
 	}
 
-	keys, err := s.Client.Services.StorageAccounts.ListKeys(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
+	keys, err := s.client.Services.StorageAccounts.ListKeys(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
 	if err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func (s *StorageAccount) Update(ctx context.Context) error {
 }
 
 func (s *StorageAccount) Delete(ctx context.Context) error {
-	_, err := s.Client.Services.StorageAccounts.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier)
+	_, err := s.client.Services.StorageAccounts.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return nil
