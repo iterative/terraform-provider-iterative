@@ -91,13 +91,13 @@ func TestTaskSmoke(t *testing.T) {
 	}
 
 	script := `#!/bin/sh -e
-                   test -v TEST_GPU && nvidia-smi
-                   mkdir --parents cache output
-                   touch cache/file
-                   echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-                   sleep 60
-                   cat output/file
-        `
+		test -v TEST_GPU && nvidia-smi
+		mkdir --parents cache output
+		touch cache/file
+		echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+		sleep 60
+		cat output/file
+	`
 
 	for provider, enabled := range providers {
 		if !enabled {
