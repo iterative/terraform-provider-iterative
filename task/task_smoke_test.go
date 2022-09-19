@@ -93,9 +93,7 @@ func TestTaskSmoke(t *testing.T) {
 	}
 	script := `
           #!/bin/sh -e
-          if [ -n "$TEST_GPU" ]; then
-            nvidia-smi
-          fi
+          [ -n "$TEST_GPU" ] && nvidia-smi
           mkdir --parents cache output
           touch cache/file
           echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
