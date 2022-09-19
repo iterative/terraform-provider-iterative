@@ -39,16 +39,19 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	var bucketCredentials common.StorageCredentials
 	if task.RemoteStorage != nil {
-		containerPath := task.RemoteStorage.Path
+		if len(t.Client.Credentials.JSON) == 0 {
+			return nil, errors.New("unable to find credentials JSON string")
+		}
+		credentials := string(t.Client.Credentials.JSON)
 		// If a subdirectory was not specified, the task id will
 		// be used.
-		if containerPath == "" {
-			containerPath = string(t.Identifier)
+		if task.RemoteStorage.Path == "" {
+			task.RemoteStorage.Path = string(t.Identifier)
 		}
+
 		bucket := resources.NewExistingBucket(
-			t.Client,
-			task.RemoteStorage.Container,
-			containerPath)
+			credentials,
+			*task.RemoteStorage)
 		t.DataSources.Bucket = bucket
 		bucketCredentials = bucket
 	} else {

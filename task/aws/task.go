@@ -14,7 +14,7 @@ import (
 	"terraform-provider-iterative/task/common/ssh"
 )
 
-const s3_region = "s3_region"
+const s3_region = "region"
 
 func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {
 	client, err := client.New(ctx, cloud, nil)
@@ -52,23 +52,18 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	)
 	var bucketCredentials common.StorageCredentials
 	if task.RemoteStorage != nil {
-		containerPath := task.RemoteStorage.Path
 		// If a subdirectory was not specified, the task id will
 		// be used.
-		if containerPath == "" {
-			containerPath = string(t.Identifier)
+		if task.RemoteStorage.Path == "" {
+			task.RemoteStorage.Path = string(t.Identifier)
 		}
 		// Container config may override the s3 region.
-		region, ok := task.RemoteStorage.Config[s3_region]
-		if !ok {
-			region = t.Client.Region
+		if region, ok := task.RemoteStorage.Config[s3_region]; !ok || region == "" {
+			task.RemoteStorage.Config[s3_region] = t.Client.Region
 		}
 		bucket := resources.NewExistingS3Bucket(
-			t.Client.Services.S3,
 			t.Client.Credentials(),
-			task.RemoteStorage.Container,
-			region,
-			containerPath)
+			*task.RemoteStorage)
 		t.DataSources.Bucket = bucket
 		bucketCredentials = bucket
 	} else {

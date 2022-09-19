@@ -65,6 +65,7 @@ resource "iterative_task" "example" {
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `storage.container` - (Optional) Pre-allocated container to use for storage of task data, results and status.
 - `storage.container_path` - (Optional) Subdirectory in pre-allocated container to use for storage. If omitted, the task's identifier will be used.
+- `storage.container_opts` - (Optional) Block of cloud-specific container settings.
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
 - `tags` - (Optional) Map of tags for the created cloud resources.
@@ -278,6 +279,23 @@ A service account email and a [list of scopes](https://cloud.google.com/sdk/gclo
 #### Microsoft Azure
 A comma-separated list of [user-assigned identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) ARM resource ids, e.g.:
 `permission_set = "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}"`
+
+##### Pre-allocated blob container
+To use a pre-allocated azure blob container, the storage account name and access key need to be specified in
+the `storage` section:
+
+```
+resource "iterative_task" "example" {
+    (...)
+    container = "container-name"
+    container_path = "subdirectory"
+    container_opts = {
+      account = "storage-account-name"
+      key = "storage-account-key"
+    }
+    (...)
+}
+```
 
 #### Kubernetes
 
