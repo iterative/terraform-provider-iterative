@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
 	"io/ioutil"
 	"path/filepath"
 
@@ -91,14 +90,13 @@ func TestTaskSmoke(t *testing.T) {
 		testName = "smoke test"
 	}
 
-	script := `
-          #!/bin/sh -e
-          test -v TEST_GPU && nvidia-smi
-          mkdir --parents cache output
-          touch cache/file
-          echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
-          sleep 60
-          cat output/file
+	script := `#!/bin/sh -e
+                   test -v TEST_GPU && nvidia-smi
+                   mkdir --parents cache output
+                   touch cache/file
+                   echo "$ENVIRONMENT_VARIABLE_DATA" | tee --append output/file
+                   sleep 60
+                   cat output/file
         `[1:]
 
 	for provider, enabled := range providers {
