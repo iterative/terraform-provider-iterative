@@ -12,18 +12,19 @@ import (
 )
 
 func NewVirtualNetwork(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup) *VirtualNetwork {
-	v := new(VirtualNetwork)
-	v.Client = client
-	v.Identifier = identifier.Long()
+	v := &VirtualNetwork{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	v.Dependencies.ResourceGroup = resourceGroup
 	return v
 }
 
 type VirtualNetwork struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Dependencies struct {
-		*ResourceGroup
+		ResourceGroup *ResourceGroup
 	}
 	Resource *network.VirtualNetwork
 }
@@ -34,13 +35,13 @@ func (v *VirtualNetwork) Create(ctx context.Context) error {
 		return nil
 	}
 
-	virtualNetworkCreateFuture, err := v.Client.Services.VirtualNetworks.CreateOrUpdate(
+	virtualNetworkCreateFuture, err := v.client.Services.VirtualNetworks.CreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
 		v.Identifier,
 		network.VirtualNetwork{
-			Tags:     v.Client.Tags,
-			Location: to.StringPtr(v.Client.Region),
+			Tags:     v.client.Tags,
+			Location: to.StringPtr(v.client.Region),
 			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
 				AddressSpace: &network.AddressSpace{
 					AddressPrefixes: &[]string{"10.0.0.0/8"},
@@ -50,7 +51,7 @@ func (v *VirtualNetwork) Create(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = virtualNetworkCreateFuture.WaitForCompletionRef(ctx, v.Client.Services.VirtualNetworks.Client)
+	err = virtualNetworkCreateFuture.WaitForCompletionRef(ctx, v.client.Services.VirtualNetworks.Client)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func (v *VirtualNetwork) Create(ctx context.Context) error {
 }
 
 func (v *VirtualNetwork) Read(ctx context.Context) error {
-	virtualNetwork, err := v.Client.Services.VirtualNetworks.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, "")
+	virtualNetwork, err := v.client.Services.VirtualNetworks.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return common.NotFoundError
@@ -75,7 +76,7 @@ func (v *VirtualNetwork) Update(ctx context.Context) error {
 }
 
 func (v *VirtualNetwork) Delete(ctx context.Context) error {
-	future, err := v.Client.Services.VirtualNetworks.Delete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	future, err := v.client.Services.VirtualNetworks.Delete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return nil
@@ -83,7 +84,7 @@ func (v *VirtualNetwork) Delete(ctx context.Context) error {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.Client.Services.VirtualNetworks.Client); err != nil {
+	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualNetworks.Client); err != nil {
 		return err
 	}
 

@@ -12,9 +12,10 @@ import (
 )
 
 func NewSubnet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, virtualNetwork *VirtualNetwork, securityGroup *SecurityGroup) *Subnet {
-	s := new(Subnet)
-	s.Client = client
-	s.Identifier = identifier.Long()
+	s := &Subnet{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	s.Dependencies.ResourceGroup = resourceGroup
 	s.Dependencies.VirtualNetwork = virtualNetwork
 	s.Dependencies.SecurityGroup = securityGroup
@@ -22,18 +23,18 @@ func NewSubnet(client *client.Client, identifier common.Identifier, resourceGrou
 }
 
 type Subnet struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Dependencies struct {
-		*ResourceGroup
-		*VirtualNetwork
-		*SecurityGroup
+		ResourceGroup  *ResourceGroup
+		VirtualNetwork *VirtualNetwork
+		SecurityGroup  *SecurityGroup
 	}
 	Resource *network.Subnet
 }
 
 func (s *Subnet) Create(ctx context.Context) error {
-	subnetCreateFuture, err := s.Client.Services.Subnets.CreateOrUpdate(
+	subnetCreateFuture, err := s.client.Services.Subnets.CreateOrUpdate(
 		ctx,
 		s.Dependencies.ResourceGroup.Identifier,
 		s.Dependencies.VirtualNetwork.Identifier,
@@ -48,7 +49,7 @@ func (s *Subnet) Create(ctx context.Context) error {
 		return err
 	}
 
-	if err := subnetCreateFuture.WaitForCompletionRef(ctx, s.Client.Services.Subnets.Client); err != nil {
+	if err := subnetCreateFuture.WaitForCompletionRef(ctx, s.client.Services.Subnets.Client); err != nil {
 		return err
 	}
 
@@ -56,7 +57,7 @@ func (s *Subnet) Create(ctx context.Context) error {
 }
 
 func (s *Subnet) Read(ctx context.Context) error {
-	subnet, err := s.Client.Services.Subnets.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier, "")
+	subnet, err := s.client.Services.Subnets.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier, "")
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return common.NotFoundError
@@ -73,7 +74,7 @@ func (s *Subnet) Update(ctx context.Context) error {
 }
 
 func (s *Subnet) Delete(ctx context.Context) error {
-	subnetDeleteFuture, err := s.Client.Services.Subnets.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier)
+	subnetDeleteFuture, err := s.client.Services.Subnets.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return nil
@@ -81,7 +82,7 @@ func (s *Subnet) Delete(ctx context.Context) error {
 		return err
 	}
 
-	err = subnetDeleteFuture.WaitForCompletionRef(ctx, s.Client.Services.Subnets.Client)
+	err = subnetDeleteFuture.WaitForCompletionRef(ctx, s.client.Services.Subnets.Client)
 	s.Resource = nil
 	return err
 }

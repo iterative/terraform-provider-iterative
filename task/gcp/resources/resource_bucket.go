@@ -31,23 +31,23 @@ func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifie
 }
 
 func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
-	b := new(Bucket)
-	b.Client = client
-	b.Identifier = identifier.Long()
-	return b
+	return &Bucket{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 }
 
 type Bucket struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Resource   *storage.Bucket
 }
 
 func (b *Bucket) Create(ctx context.Context) error {
-	bucket, err := b.Client.Services.Storage.Buckets.Insert(b.Client.Credentials.ProjectID, &storage.Bucket{
+	bucket, err := b.client.Services.Storage.Buckets.Insert(b.client.Credentials.ProjectID, &storage.Bucket{
 		Name:     b.Identifier,
-		Location: b.Client.Region[:len(b.Client.Region)-2], // remove zone suffix (e.g. `{region}-a` -> `{region}`)
-		Labels:   b.Client.Tags,
+		Location: b.client.Region[:len(b.client.Region)-2], // remove zone suffix (e.g. `{region}-a` -> `{region}`)
+		Labels:   b.client.Tags,
 	}).Do()
 	if err != nil {
 		var e *googleapi.Error
@@ -62,7 +62,7 @@ func (b *Bucket) Create(ctx context.Context) error {
 }
 
 func (b *Bucket) Read(ctx context.Context) error {
-	bucket, err := b.Client.Services.Storage.Buckets.Get(b.Identifier).Do()
+	bucket, err := b.client.Services.Storage.Buckets.Get(b.Identifier).Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {
@@ -86,18 +86,18 @@ func (b *Bucket) Delete(ctx context.Context) error {
 
 	deletePage := func(objects *storage.Objects) error {
 		for _, object := range objects.Items {
-			if err := b.Client.Services.Storage.Objects.Delete(b.Identifier, object.Name).Do(); err != nil {
+			if err := b.client.Services.Storage.Objects.Delete(b.Identifier, object.Name).Do(); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 
-	if err := b.Client.Services.Storage.Objects.List(b.Identifier).Pages(ctx, deletePage); err != nil {
+	if err := b.client.Services.Storage.Objects.List(b.Identifier).Pages(ctx, deletePage); err != nil {
 		return err
 	}
 
-	if err := b.Client.Services.Storage.Buckets.Delete(b.Identifier).Do(); err != nil {
+	if err := b.client.Services.Storage.Buckets.Delete(b.Identifier).Do(); err != nil {
 		return err
 	}
 

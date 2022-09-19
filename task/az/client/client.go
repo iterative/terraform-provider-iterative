@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
@@ -32,9 +33,10 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 
 	agent := "tpi"
 
-	c := new(Client)
-	c.Cloud = cloud
-	c.Settings = settings
+	c := &Client{
+		Cloud:    cloud,
+		Settings: settings,
+	}
 
 	for key, value := range tags {
 		c.Tags[key] = &value
