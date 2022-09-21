@@ -103,7 +103,7 @@ jobs:
     - run: |
         az group create \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --location=eastus
+          --location=westus2
         az aks create \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
