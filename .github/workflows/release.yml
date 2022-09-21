@@ -1,7 +1,13 @@
 name: Release
 on:
-  release:
-    types: [prereleased]
+  workflow_dispatch:
+    inputs:
+      bump:
+        type: choice
+        required: true
+        description: Bump version number
+        options: [major, minor, patch]
+        default: patch
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -14,15 +20,21 @@ jobs:
           printenv TERRAFORM_REGISTRY_GPG_PRIVATE_KEY | gpg --import
         env:
           TERRAFORM_REGISTRY_GPG_PRIVATE_KEY: ${{ secrets.TERRAFORM_REGISTRY_GPG_PRIVATE_KEY }}
+      - run: |
+          go install github.com/FalcoSuessgott/tago@v1.4.0
+          tago --${{ github.event.inputs.bump }}
       - uses: goreleaser/goreleaser-action@v3
         with:
           args: release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      - run: gh release edit --prerelease=false ${{ github.event.release.tag_name }}
+      - if: failure()
+        run: >
+          curl "$SLACK_WEBHOOK"
+          --header 'Content-type: application/json'
+          --data '{"text": "Release of <https://github.com/iterative/terraform-provider-iterative|terraform-provider-iterative> failed!"}'
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   synchronize:
     # Empyrically equivalent to pressing the "Resync" button in the Settings
     # page of Terraform Registry, but without bothering humans in the process
