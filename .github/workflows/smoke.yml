@@ -14,15 +14,16 @@ on:
         default: 'gpu+spot'
         type: choice
         options:
-          - quick
-          - quick+spot
-          - gpu
-          - gpu+spot
+        - quick
+        - quick+spot
+        - gpu
+        - gpu+spot
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 env:
  SMOKE_TEST_TARGET: ${{ github.event_name == 'pull_request_target' && 'quick' || inputs.test_target || 'gpu+spot' }}
+ SMOKE_TEST_IDENTIFIER: smoke-test-${{ github.run_id }}
 jobs:
   authorize:
     environment: ${{ (github.event_name == 'pull_request_target' &&
@@ -30,7 +31,7 @@ jobs:
       'manual' || 'automatic' }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo ✓
+    - run: echo ✓
   test:
     needs: authorize
     environment: automatic
@@ -42,10 +43,6 @@ jobs:
         provider: [AWS, AZ, GCP]
     concurrency: ${{ github.workflow }}-${{ matrix.provider }}
     env:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       GOOGLE_APPLICATION_CREDENTIALS_DATA: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_DATA }}
       SMOKE_TEST_ENABLE_${{ matrix.provider }}: true
     steps:
@@ -60,6 +57,12 @@ jobs:
       with:
         aws-region: us-west-1
         role-to-assume: arn:aws:iam::342840881361:role/SandboxUser
+    - if: matrix.provider == 'AZ'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     - run: go test ./task -v -timeout=30m -count=1 -tags=smoke
     - if: always()
       uses: actions/checkout@v3
@@ -76,11 +79,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     concurrency: ${{ github.workflow }}-K8S
-    env:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -88,19 +86,12 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
-    - run: |
-        az login \
-          --service-principal \
-          --user="$AZURE_CLIENT_ID" \
-          --password="$AZURE_CLIENT_SECRET" \
-          --tenant="$AZURE_TENANT_ID"
-        az account set \
-          --subscription="$AZURE_SUBSCRIPTION_ID"
-        az group create \
-          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --location=eastus
-    - id: cluster_gpu
-      if: ${{ contains(env.SMOKE_TEST_TARGET, 'gpu') }}
+    - uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - if: contains(env.SMOKE_TEST_TARGET, 'gpu')
       run: |
         az extension add \
           --name=aks-preview
@@ -109,23 +100,19 @@ jobs:
         az feature register \
           --namespace=Microsoft.ContainerService \
           --name=GPUDedicatedVHDPreview
-        az aks create \
-          --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --node-vm-size=Standard_NC4as_T4_v3 \
-          --node-count=1 \
-          --aks-custom-headers=UseGPUDedicatedVHD=true \
-          --generate-ssh-keys
-    - id: cluster
-      if: ${{ !contains(env.SMOKE_TEST_TARGET, 'gpu') }}
-      run: |
-        az aks create \
-          --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --node-vm-size=Standard_A2_v2 \
-          --node-count=1 \
-          --generate-ssh-keys
     - run: |
+        az group create \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --location=westus2
+        az aks create \
+          --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
+          --node-vm-size=${{ contains(env.SMOKE_TEST_TARGET, 'gpu') && 'Standard_NC6' || 'Standard_A2_v2' }} \
+          --node-count=1 \
+          --aks-custom-headers=${{ contains(env.SMOKE_TEST_TARGET, 'gpu') && 'UseGPUDedicatedVHD=true' || '' }} \
+          --generate-ssh-keys
+    - id: credentials
+      run: |
         az aks get-credentials \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
@@ -137,12 +124,10 @@ jobs:
           -e 's/(.+)/::add-mask::\1\n::set-output name=kubeconfig::\1\n/g'
     - run: go test ./task -v -timeout=60m -count=1 -tags=smoke
       env:
-        KUBECONFIG_DATA: ${{ steps.cluster.outputs.kubeconfig }}
+        KUBECONFIG_DATA: ${{ steps.credentials.outputs.kubeconfig }}
         SMOKE_TEST_ENABLE_K8S: true
     - if: always()
       run: |
         az group delete \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --yes
-env:
-  SMOKE_TEST_IDENTIFIER: smoke test ${{ github.run_id }}
