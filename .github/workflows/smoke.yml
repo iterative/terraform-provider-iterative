@@ -91,12 +91,19 @@ jobs:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - if: contains(env.SMOKE_TEST_TARGET, 'gpu')
+      run: |
+        az extension add \
+          --name=aks-preview
+        az provider register \
+          --namespace=Microsoft.ContainerService
+        az feature register \
+          --namespace=Microsoft.ContainerService \
+          --name=GPUDedicatedVHDPreview
     - run: |
         az group create \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --location=eastus
-    - id: cluster
-      run: |
         az aks create \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
@@ -104,7 +111,8 @@ jobs:
           --node-count=1 \
           --aks-custom-headers=${{ contains(env.SMOKE_TEST_TARGET, 'gpu') && 'UseGPUDedicatedVHD=true' || '' }} \
           --generate-ssh-keys
-    - run: |
+    - id: credentials
+      run: |
         az aks get-credentials \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
@@ -116,7 +124,7 @@ jobs:
           -e 's/(.+)/::add-mask::\1\n::set-output name=kubeconfig::\1\n/g'
     - run: go test ./task -v -timeout=60m -count=1 -tags=smoke
       env:
-        KUBECONFIG_DATA: ${{ steps.cluster.outputs.kubeconfig }}
+        KUBECONFIG_DATA: ${{ steps.credentials.outputs.kubeconfig }}
         SMOKE_TEST_ENABLE_K8S: true
     - if: always()
       run: |
