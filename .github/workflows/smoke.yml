@@ -107,7 +107,7 @@ jobs:
         az aks create \
           --resource-group="tpiSmokeTestCluster$GITHUB_RUN_ID" \
           --name="tpiSmokeTestCluster$GITHUB_RUN_ID" \
-          --node-vm-size=${{ contains(env.SMOKE_TEST_TARGET, 'gpu') && 'Standard_NC6' || 'Standard_A2_v2' }} \
+          --node-vm-size=${{ contains(env.SMOKE_TEST_TARGET, 'gpu') && 'Standard_NC4as_T4_v3' || 'Standard_A2_v2' }} \
           --node-count=1 \
           --aks-custom-headers=${{ contains(env.SMOKE_TEST_TARGET, 'gpu') && 'UseGPUDedicatedVHD=true' || '' }} \
           --generate-ssh-keys
