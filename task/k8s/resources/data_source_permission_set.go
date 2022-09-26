@@ -41,8 +41,7 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 			return fmt.Errorf("service account %q does not exist in namespace %q: %w",
 				ps.Identifier, ps.client.Namespace, common.NotFoundError)
 		}
-		return fmt.Errorf("failed to lookup service account %q in namespace %q: %w",
-			ps.Identifier, ps.client.Namespace, common.NotFoundError)
+		return fmt.Errorf("failed to lookup service account %q in namespace %q: %w", ps.Identifier, ps.client.Namespace, err)
 
 	}
 	ps.Resource.ServiceAccountName = ps.Identifier
