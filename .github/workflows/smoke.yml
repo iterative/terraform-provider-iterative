@@ -64,6 +64,8 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     - run: go test ./task -v -timeout=30m -count=1 -tags=smoke
+      env:
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     - if: always()
       uses: actions/checkout@v3
       with:
@@ -71,6 +73,7 @@ jobs:
     - if: always()
       run: go test ./task -v -timeout=30m -count=1 -tags=smoke
       env:
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         SMOKE_TEST_SWEEP: true
   test-k8s:
     name: test (K8S)
