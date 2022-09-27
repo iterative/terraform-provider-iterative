@@ -33,25 +33,20 @@ type StorageAccount struct {
 }
 
 func (s *StorageAccount) Create(ctx context.Context) error {
-	skuNameStandardLRS := armstorage.SKUNameStandardLRS
-	skuTierStandard := armstorage.SKUTierStandard
-	kindBlobStorage := armstorage.KindBlobStorage
-	accessTierHot := armstorage.AccessTierHot
-
 	poller, err := s.client.Services.StorageAccounts.BeginCreate(
 		ctx,
 		s.Dependencies.ResourceGroup.Identifier,
 		s.Identifier,
 		armstorage.AccountCreateParameters{
 			SKU: &armstorage.SKU{
-				Name: &skuNameStandardLRS,
-				Tier: &skuTierStandard,
+				Name: to.Ptr(armstorage.SKUNameStandardLRS),
+				Tier: to.Ptr(armstorage.SKUTierStandard),
 			},
-			Kind:     &kindBlobStorage,
+			Kind:     to.Ptr(armstorage.KindBlobStorage),
 			Location: to.Ptr(s.client.Region),
 			Tags:     s.client.Tags,
 			Properties: &armstorage.AccountPropertiesCreateParameters{
-				AccessTier: &accessTierHot,
+				AccessTier: to.Ptr(armstorage.AccessTierHot),
 			},
 		},
 		nil,

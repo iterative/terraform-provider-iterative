@@ -132,17 +132,15 @@ func (s *SecurityGroup) Delete(ctx context.Context) error {
 }
 
 func generateSecurityRule(net, port string, priority uint16, direction armnetwork.SecurityRuleDirection) *armnetwork.SecurityRule {
-	securityRuleProtocolAsterisk := armnetwork.SecurityRuleProtocolAsterisk
-	securityRuleAccessAllow := armnetwork.SecurityRuleAccessAllow
 	return &armnetwork.SecurityRule{
 		Name: to.Ptr(fmt.Sprintf("%s-%d", direction, priority)),
 		Properties: &armnetwork.SecurityRulePropertiesFormat{
-			Protocol:                 &securityRuleProtocolAsterisk,
+			Protocol:                 to.Ptr(armnetwork.SecurityRuleProtocolAsterisk),
 			SourceAddressPrefix:      to.Ptr("*"),
 			SourcePortRange:          to.Ptr("*"),
 			DestinationAddressPrefix: to.Ptr(net),
 			DestinationPortRange:     to.Ptr(port),
-			Access:                   &securityRuleAccessAllow,
+			Access:                   to.Ptr(armnetwork.SecurityRuleAccessAllow),
 			Priority:                 to.Ptr(int32(100 + priority)),
 			Direction:                &direction,
 		},
