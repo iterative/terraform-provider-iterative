@@ -27,7 +27,7 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		return nil, errors.New("subscription environment variable not found")
 	}
 
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -55,67 +55,67 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 
 	c.Region = region
 
-	c.Services.ResourceGroups, err = armresources.NewResourceGroupsClient(subscription, cred, nil)
+	c.Services.ResourceGroups, err = armresources.NewResourceGroupsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.SecurityGroups, err = armnetwork.NewSecurityGroupsClient(subscription, cred, nil)
+	c.Services.SecurityGroups, err = armnetwork.NewSecurityGroupsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.PublicIPPrefixes, err = armnetwork.NewPublicIPPrefixesClient(subscription, cred, nil)
+	c.Services.PublicIPPrefixes, err = armnetwork.NewPublicIPPrefixesClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.PublicIPAddresses, err = armnetwork.NewPublicIPAddressesClient(subscription, cred, nil)
+	c.Services.PublicIPAddresses, err = armnetwork.NewPublicIPAddressesClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualNetworks, err = armnetwork.NewVirtualNetworksClient(subscription, cred, nil)
+	c.Services.VirtualNetworks, err = armnetwork.NewVirtualNetworksClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.Subnets, err = armnetwork.NewSubnetsClient(subscription, cred, nil)
+	c.Services.Subnets, err = armnetwork.NewSubnetsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.Interfaces, err = armnetwork.NewInterfacesClient(subscription, cred, nil)
+	c.Services.Interfaces, err = armnetwork.NewInterfacesClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachines, err = armcompute.NewVirtualMachinesClient(subscription, cred, nil)
+	c.Services.VirtualMachines, err = armcompute.NewVirtualMachinesClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSets, err = armcompute.NewVirtualMachineScaleSetsClient(subscription, cred, nil)
+	c.Services.VirtualMachineScaleSets, err = armcompute.NewVirtualMachineScaleSetsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSetVMs, err = armcompute.NewVirtualMachineScaleSetVMsClient(subscription, cred, nil)
+	c.Services.VirtualMachineScaleSetVMs, err = armcompute.NewVirtualMachineScaleSetVMsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSets, err = armcompute.NewVirtualMachineScaleSetsClient(subscription, cred, nil)
+	c.Services.VirtualMachineScaleSets, err = armcompute.NewVirtualMachineScaleSetsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.StorageAccounts, err = armstorage.NewAccountsClient(subscription, cred, nil)
+	c.Services.StorageAccounts, err = armstorage.NewAccountsClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Services.BlobContainers, err = armstorage.NewBlobContainersClient(subscription, cred, nil)
+	c.Services.BlobContainers, err = armstorage.NewBlobContainersClient(subscription, credential, nil)
 	if err != nil {
 		return nil, err
 	}
