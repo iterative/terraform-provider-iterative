@@ -2,10 +2,11 @@ package resources
 
 import (
 	"context"
+	"errors"
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
@@ -30,26 +31,28 @@ type Subnet struct {
 		VirtualNetwork *VirtualNetwork
 		SecurityGroup  *SecurityGroup
 	}
-	Resource *network.Subnet
+	Resource *armnetwork.Subnet
 }
 
 func (s *Subnet) Create(ctx context.Context) error {
-	subnetCreateFuture, err := s.client.Services.Subnets.CreateOrUpdate(
+	poller, err := s.client.Services.Subnets.BeginCreateOrUpdate(
 		ctx,
 		s.Dependencies.ResourceGroup.Identifier,
 		s.Dependencies.VirtualNetwork.Identifier,
 		s.Identifier,
-		network.Subnet{
-			SubnetPropertiesFormat: &network.SubnetPropertiesFormat{
-				AddressPrefix:        to.StringPtr("10.0.0.0/16"),
+		armnetwork.Subnet{
+			Properties: &armnetwork.SubnetPropertiesFormat{
+				AddressPrefix:        to.Ptr("10.0.0.0/16"),
 				NetworkSecurityGroup: s.Dependencies.SecurityGroup.Resource,
 			},
-		})
+		},
+		nil,
+	)
 	if err != nil {
 		return err
 	}
 
-	if err := subnetCreateFuture.WaitForCompletionRef(ctx, s.client.Services.Subnets.Client); err != nil {
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
 		return err
 	}
 
@@ -57,15 +60,16 @@ func (s *Subnet) Create(ctx context.Context) error {
 }
 
 func (s *Subnet) Read(ctx context.Context) error {
-	subnet, err := s.client.Services.Subnets.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier, "")
+	response, err := s.client.Services.Subnets.Get(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return common.NotFoundError
 		}
 		return err
 	}
 
-	s.Resource = &subnet
+	s.Resource = &response.Subnet
 	return nil
 }
 
@@ -74,15 +78,16 @@ func (s *Subnet) Update(ctx context.Context) error {
 }
 
 func (s *Subnet) Delete(ctx context.Context) error {
-	subnetDeleteFuture, err := s.client.Services.Subnets.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier)
+	poller, err := s.client.Services.Subnets.BeginDelete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Dependencies.VirtualNetwork.Identifier, s.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return nil
 		}
 		return err
 	}
 
-	err = subnetDeleteFuture.WaitForCompletionRef(ctx, s.client.Services.Subnets.Client)
+	_, err = poller.PollUntilDone(ctx, nil)
 	s.Resource = nil
 	return err
 }

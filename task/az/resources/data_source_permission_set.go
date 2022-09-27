@@ -6,7 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
 
 	"terraform-provider-iterative/task/az/client"
 )
@@ -32,12 +33,12 @@ func NewPermissionSet(client *client.Client, identifer string) *PermissionSet {
 type PermissionSet struct {
 	client     *client.Client
 	Identifier string
-	Resource   *compute.VirtualMachineScaleSetIdentity
+	Resource   *armcompute.VirtualMachineScaleSetIdentity
 }
 
 func (ps *PermissionSet) Read(ctx context.Context) error {
 	identities := strings.Split(ps.Identifier, ",")
-	identityMap := map[string]*compute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{}
+	identityMap := map[string]*armcompute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{}
 	for _, identity := range identities {
 		identity = strings.TrimSpace(identity)
 		if identity == "" {
@@ -47,15 +48,15 @@ func (ps *PermissionSet) Read(ctx context.Context) error {
 			return err
 		}
 
-		identityMap[identity] = &compute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{}
+		identityMap[identity] = &armcompute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{}
 	}
 	if len(identityMap) == 0 {
 		ps.Resource = nil
 		return nil
 	}
-	ps.Resource = &compute.VirtualMachineScaleSetIdentity{
+	ps.Resource = &armcompute.VirtualMachineScaleSetIdentity{
 		UserAssignedIdentities: identityMap,
-		Type:                   compute.ResourceIdentityTypeSystemAssignedUserAssigned,
+		Type:                   to.Ptr(armcompute.ResourceIdentityTypeSystemAssignedUserAssigned),
 	}
 	return nil
 }

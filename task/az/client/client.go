@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
-	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"terraform-provider-iterative/task/common"
@@ -26,12 +27,10 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		return nil, errors.New("subscription environment variable not found")
 	}
 
-	authorizer, err := settings.GetAuthorizer()
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, err
 	}
-
-	agent := "tpi"
 
 	c := &Client{
 		Cloud:    cloud,
@@ -56,75 +55,68 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 
 	c.Region = region
 
-	c.Services.Groups = resources.NewGroupsClient(subscription)
-	c.Services.Groups.Authorizer = authorizer
-	if err := c.Services.Groups.AddToUserAgent(agent); err != nil {
+	c.Services.ResourceGroups, err = armresources.NewResourceGroupsClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.SecurityGroups = network.NewSecurityGroupsClient(subscription)
-	c.Services.SecurityGroups.Authorizer = authorizer
-	if err := c.Services.SecurityGroups.AddToUserAgent(agent); err != nil {
+	c.Services.SecurityGroups, err = armnetwork.NewSecurityGroupsClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.PublicIPPrefixes = network.NewPublicIPPrefixesClient(subscription)
-	c.Services.PublicIPPrefixes.Authorizer = authorizer
-	if err := c.Services.PublicIPPrefixes.AddToUserAgent(agent); err != nil {
+	c.Services.PublicIPPrefixes, err = armnetwork.NewPublicIPPrefixesClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.PublicIPAddresses = network.NewPublicIPAddressesClient(subscription)
-	c.Services.PublicIPAddresses.Authorizer = authorizer
-	if err := c.Services.PublicIPAddresses.AddToUserAgent(agent); err != nil {
+	c.Services.PublicIPAddresses, err = armnetwork.NewPublicIPAddressesClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualNetworks = network.NewVirtualNetworksClient(subscription)
-	c.Services.VirtualNetworks.Authorizer = authorizer
-	if err := c.Services.VirtualNetworks.AddToUserAgent(agent); err != nil {
+	c.Services.VirtualNetworks, err = armnetwork.NewVirtualNetworksClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.Subnets = network.NewSubnetsClient(subscription)
-	c.Services.Subnets.Authorizer = authorizer
-	if err := c.Services.Subnets.AddToUserAgent(agent); err != nil {
+	c.Services.Subnets, err = armnetwork.NewSubnetsClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.Interfaces = network.NewInterfacesClient(subscription)
-	c.Services.Interfaces.Authorizer = authorizer
-	if err := c.Services.Interfaces.AddToUserAgent(agent); err != nil {
+	c.Services.Interfaces, err = armnetwork.NewInterfacesClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachines = compute.NewVirtualMachinesClient(subscription)
-	c.Services.VirtualMachines.Authorizer = authorizer
-	if err := c.Services.VirtualMachines.AddToUserAgent(agent); err != nil {
+	c.Services.VirtualMachines, err = armcompute.NewVirtualMachinesClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSets = compute.NewVirtualMachineScaleSetsClient(subscription)
-	c.Services.VirtualMachineScaleSets.Authorizer = authorizer
-	if err := c.Services.VirtualMachineScaleSets.AddToUserAgent(agent); err != nil {
+	c.Services.VirtualMachineScaleSets, err = armcompute.NewVirtualMachineScaleSetsClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSetVMs = compute.NewVirtualMachineScaleSetVMsClient(subscription)
-	c.Services.VirtualMachineScaleSetVMs.Authorizer = authorizer
-	if err := c.Services.VirtualMachineScaleSetVMs.AddToUserAgent(agent); err != nil {
+	c.Services.VirtualMachineScaleSetVMs, err = armcompute.NewVirtualMachineScaleSetVMsClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.StorageAccounts = storage.NewAccountsClient(subscription)
-	c.Services.StorageAccounts.Authorizer = authorizer
-	if err := c.Services.StorageAccounts.AddToUserAgent(agent); err != nil {
+	c.Services.VirtualMachineScaleSets, err = armcompute.NewVirtualMachineScaleSetsClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Services.BlobContainers = storage.NewBlobContainersClient(subscription)
-	c.Services.BlobContainers.Authorizer = authorizer
-	if err := c.Services.BlobContainers.AddToUserAgent(agent); err != nil {
+	c.Services.StorageAccounts, err = armstorage.NewAccountsClient(subscription, cred, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Services.BlobContainers, err = armstorage.NewBlobContainersClient(subscription, cred, nil)
+	if err != nil {
 		return nil, err
 	}
 
@@ -137,21 +129,22 @@ type Client struct {
 	Tags     map[string]*string
 	Settings auth.EnvironmentSettings
 	Services struct {
-		Groups                    resources.GroupsClient
-		SecurityGroups            network.SecurityGroupsClient
-		PublicIPPrefixes          network.PublicIPPrefixesClient
-		PublicIPAddresses         network.PublicIPAddressesClient
-		VirtualNetworks           network.VirtualNetworksClient
-		Subnets                   network.SubnetsClient
-		Interfaces                network.InterfacesClient
-		VirtualMachines           compute.VirtualMachinesClient
-		VirtualMachineScaleSets   compute.VirtualMachineScaleSetsClient
-		VirtualMachineScaleSetVMs compute.VirtualMachineScaleSetVMsClient
-		StorageAccounts           storage.AccountsClient
-		BlobContainers            storage.BlobContainersClient
+		ResourceGroups            *armresources.ResourceGroupsClient
+		SecurityGroups            *armnetwork.SecurityGroupsClient
+		PublicIPPrefixes          *armnetwork.PublicIPPrefixesClient
+		PublicIPAddresses         *armnetwork.PublicIPAddressesClient
+		VirtualNetworks           *armnetwork.VirtualNetworksClient
+		Subnets                   *armnetwork.SubnetsClient
+		Interfaces                *armnetwork.InterfacesClient
+		VirtualMachines           *armcompute.VirtualMachinesClient
+		VirtualMachineScaleSets   *armcompute.VirtualMachineScaleSetsClient
+		VirtualMachineScaleSetVMs *armcompute.VirtualMachineScaleSetVMsClient
+		StorageAccounts           *armstorage.AccountsClient
+		BlobContainers            *armstorage.BlobContainersClient
 	}
 }
 
+// FIXME: this function is broken with the new credential source
 func (c *Client) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {
 	credentials, err := c.Settings.GetClientCredentials()
 	if err != nil {

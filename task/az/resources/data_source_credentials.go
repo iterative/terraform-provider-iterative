@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Azure/go-autorest/autorest/to"
-
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
 )
@@ -37,7 +35,7 @@ func (c *Credentials) Read(ctx context.Context) error {
 	connectionString := fmt.Sprintf(
 		":azureblob,account='%s',key='%s':%s",
 		c.Dependencies.StorageAccount.Identifier,
-		to.String(c.Dependencies.StorageAccount.Attributes.Value),
+		*c.Dependencies.StorageAccount.Attributes.Value,
 		c.Dependencies.BlobContainer.Identifier,
 	)
 

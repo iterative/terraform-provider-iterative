@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
@@ -25,50 +25,58 @@ func NewStorageAccount(client *client.Client, identifier common.Identifier, reso
 type StorageAccount struct {
 	client       *client.Client
 	Identifier   string
-	Attributes   *storage.AccountKey
+	Attributes   *armstorage.AccountKey
 	Dependencies struct {
 		ResourceGroup *ResourceGroup
 	}
-	Resource *storage.Account
+	Resource *armstorage.Account
 }
 
 func (s *StorageAccount) Create(ctx context.Context) error {
-	future, err := s.client.Services.StorageAccounts.Create(
+	skuNameStandardLRS := armstorage.SKUNameStandardLRS
+	skuTierStandard := armstorage.SKUTierStandard
+	kindBlobStorage := armstorage.KindBlobStorage
+	accessTierHot := armstorage.AccessTierHot
+
+	poller, err := s.client.Services.StorageAccounts.BeginCreate(
 		ctx,
 		s.Dependencies.ResourceGroup.Identifier,
 		s.Identifier,
-		storage.AccountCreateParameters{
-			Sku: &storage.Sku{
-				Name: storage.SkuNameStandardLRS,
-				Tier: storage.SkuTierStandard,
+		armstorage.AccountCreateParameters{
+			SKU: &armstorage.SKU{
+				Name: &skuNameStandardLRS,
+				Tier: &skuTierStandard,
 			},
-			Kind:     storage.KindBlobStorage,
-			Location: to.StringPtr(s.client.Region),
+			Kind:     &kindBlobStorage,
+			Location: to.Ptr(s.client.Region),
 			Tags:     s.client.Tags,
-			AccountPropertiesCreateParameters: &storage.AccountPropertiesCreateParameters{
-				AccessTier: storage.AccessTierHot,
+			Properties: &armstorage.AccountPropertiesCreateParameters{
+				AccessTier: &accessTierHot,
 			},
-		})
+		},
+		nil,
+	)
 	if err != nil {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, s.client.Services.StorageAccounts.Client); err != nil {
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
 		return err
 	}
 	return s.Read(ctx)
 }
 
 func (s *StorageAccount) Read(ctx context.Context) error {
-	account, err := s.client.Services.StorageAccounts.GetProperties(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
+	response, err := s.client.Services.StorageAccounts.GetProperties(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return common.NotFoundError
 		}
 		return err
 	}
 
-	keys, err := s.client.Services.StorageAccounts.ListKeys(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, "")
+	keys, err := s.client.Services.StorageAccounts.ListKeys(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, nil)
 	if err != nil {
 		return err
 	}
@@ -77,11 +85,11 @@ func (s *StorageAccount) Read(ctx context.Context) error {
 		return errors.New("storage account keys not found")
 	}
 
-	for _, key := range *keys.Keys {
-		actual := strings.ToUpper(string(key.Permissions))
-		expected := strings.ToUpper(string(storage.KeyPermissionFull))
+	for _, key := range keys.Keys {
+		actual := strings.ToUpper(string(*key.Permissions))
+		expected := strings.ToUpper(string(armstorage.KeyPermissionFull))
 		if actual == expected {
-			s.Attributes = &key
+			s.Attributes = key
 		}
 	}
 
@@ -89,7 +97,7 @@ func (s *StorageAccount) Read(ctx context.Context) error {
 		return errors.New("storage account read+write key not found")
 	}
 
-	s.Resource = &account
+	s.Resource = &response.Account
 	return nil
 }
 
@@ -98,9 +106,10 @@ func (s *StorageAccount) Update(ctx context.Context) error {
 }
 
 func (s *StorageAccount) Delete(ctx context.Context) error {
-	_, err := s.client.Services.StorageAccounts.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier)
+	_, err := s.client.Services.StorageAccounts.Delete(ctx, s.Dependencies.ResourceGroup.Identifier, s.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return nil
 		}
 		return err

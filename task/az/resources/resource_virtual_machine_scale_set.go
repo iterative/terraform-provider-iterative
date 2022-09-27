@@ -9,10 +9,10 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
 
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 
 	"github.com/sirupsen/logrus"
 
@@ -59,7 +59,7 @@ type VirtualMachineScaleSet struct {
 		Credentials   *Credentials
 		PermissionSet *PermissionSet
 	}
-	Resource *compute.VirtualMachineScaleSet
+	Resource *armcompute.VirtualMachineScaleSet
 }
 
 func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
@@ -123,64 +123,64 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		size = val
 	}
 
-	settings := compute.VirtualMachineScaleSet{
+	settings := armcompute.VirtualMachineScaleSet{
 		Tags:     v.client.Tags,
-		Location: to.StringPtr(v.client.Region),
-		Sku: &compute.Sku{
-			Name:     to.StringPtr(size),
-			Tier:     to.StringPtr("Standard"),
-			Capacity: to.Int64Ptr(0),
+		Location: to.Ptr(v.client.Region),
+		SKU: &armcompute.SKU{
+			Name:     to.Ptr(size),
+			Tier:     to.Ptr("Standard"),
+			Capacity: to.Ptr(int64(0)),
 		},
 		Identity: v.Dependencies.PermissionSet.Resource,
-		VirtualMachineScaleSetProperties: &compute.VirtualMachineScaleSetProperties{
-			UpgradePolicy: &compute.UpgradePolicy{
-				Mode: compute.UpgradeModeManual,
+		Properties: &armcompute.VirtualMachineScaleSetProperties{
+			UpgradePolicy: &armcompute.UpgradePolicy{
+				Mode: to.Ptr(armcompute.UpgradeModeManual),
 			},
-			VirtualMachineProfile: &compute.VirtualMachineScaleSetVMProfile{
-				StorageProfile: &compute.VirtualMachineScaleSetStorageProfile{
-					ImageReference: &compute.ImageReference{
-						Publisher: to.StringPtr(publisher),
-						Offer:     to.StringPtr(offer),
-						Sku:       to.StringPtr(sku),
-						Version:   to.StringPtr(version),
+			VirtualMachineProfile: &armcompute.VirtualMachineScaleSetVMProfile{
+				StorageProfile: &armcompute.VirtualMachineScaleSetStorageProfile{
+					ImageReference: &armcompute.ImageReference{
+						Publisher: to.Ptr(publisher),
+						Offer:     to.Ptr(offer),
+						SKU:       to.Ptr(sku),
+						Version:   to.Ptr(version),
 					},
-					OsDisk: &compute.VirtualMachineScaleSetOSDisk{
-						Caching:      compute.CachingTypesReadWrite,
-						CreateOption: compute.DiskCreateOptionTypesFromImage,
-						ManagedDisk: &compute.VirtualMachineScaleSetManagedDiskParameters{
-							StorageAccountType: compute.StorageAccountTypesStandardLRS,
+					OSDisk: &armcompute.VirtualMachineScaleSetOSDisk{
+						Caching:      to.Ptr(armcompute.CachingTypesReadWrite),
+						CreateOption: to.Ptr(armcompute.DiskCreateOptionTypesFromImage),
+						ManagedDisk: &armcompute.VirtualMachineScaleSetManagedDiskParameters{
+							StorageAccountType: to.Ptr(armcompute.StorageAccountTypesStandardLRS),
 						},
 					},
 				},
-				OsProfile: &compute.VirtualMachineScaleSetOSProfile{
-					ComputerNamePrefix: to.StringPtr("tpi"),
-					CustomData:         to.StringPtr(base64.StdEncoding.EncodeToString([]byte(script))),
-					AdminUsername:      to.StringPtr(sshUser),
-					LinuxConfiguration: &compute.LinuxConfiguration{
-						SSH: &compute.SSHConfiguration{
-							PublicKeys: &[]compute.SSHPublicKey{
+				OSProfile: &armcompute.VirtualMachineScaleSetOSProfile{
+					ComputerNamePrefix: to.Ptr("tpi"),
+					CustomData:         to.Ptr(base64.StdEncoding.EncodeToString([]byte(script))),
+					AdminUsername:      to.Ptr(sshUser),
+					LinuxConfiguration: &armcompute.LinuxConfiguration{
+						SSH: &armcompute.SSHConfiguration{
+							PublicKeys: []*armcompute.SSHPublicKey{
 								{
-									Path:    to.StringPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", sshUser)),
-									KeyData: to.StringPtr(publicKey),
+									Path:    to.Ptr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", sshUser)),
+									KeyData: to.Ptr(publicKey),
 								},
 							},
 						},
 					},
 				},
-				NetworkProfile: &compute.VirtualMachineScaleSetNetworkProfile{
-					NetworkInterfaceConfigurations: &[]compute.VirtualMachineScaleSetNetworkConfiguration{
+				NetworkProfile: &armcompute.VirtualMachineScaleSetNetworkProfile{
+					NetworkInterfaceConfigurations: []*armcompute.VirtualMachineScaleSetNetworkConfiguration{
 						{
-							Name: to.StringPtr(v.Identifier),
-							VirtualMachineScaleSetNetworkConfigurationProperties: &compute.VirtualMachineScaleSetNetworkConfigurationProperties{
-								Primary:              to.BoolPtr(true),
-								NetworkSecurityGroup: &compute.SubResource{ID: v.Dependencies.SecurityGroup.Resource.ID},
-								IPConfigurations: &[]compute.VirtualMachineScaleSetIPConfiguration{
+							Name: to.Ptr(v.Identifier),
+							Properties: &armcompute.VirtualMachineScaleSetNetworkConfigurationProperties{
+								Primary:              to.Ptr(true),
+								NetworkSecurityGroup: &armcompute.SubResource{ID: v.Dependencies.SecurityGroup.Resource.ID},
+								IPConfigurations: []*armcompute.VirtualMachineScaleSetIPConfiguration{
 									{
-										Name: to.StringPtr(v.Identifier),
-										VirtualMachineScaleSetIPConfigurationProperties: &compute.VirtualMachineScaleSetIPConfigurationProperties{
-											Subnet: &compute.APIEntityReference{ID: v.Dependencies.Subnet.Resource.ID},
-											PublicIPAddressConfiguration: &compute.VirtualMachineScaleSetPublicIPAddressConfiguration{
-												Name: to.StringPtr(v.Identifier),
+										Name: to.Ptr(v.Identifier),
+										Properties: &armcompute.VirtualMachineScaleSetIPConfigurationProperties{
+											Subnet: &armcompute.APIEntityReference{ID: v.Dependencies.Subnet.Resource.ID},
+											PublicIPAddressConfiguration: &armcompute.VirtualMachineScaleSetPublicIPAddressConfiguration{
+												Name: to.Ptr(v.Identifier),
 											},
 										},
 									},
@@ -194,14 +194,14 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 	}
 
 	if size := v.Attributes.Size.Storage; size > 0 {
-		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.StorageProfile.OsDisk.DiskSizeGB = to.Int32Ptr(int32(size))
+		settings.Properties.VirtualMachineProfile.StorageProfile.OSDisk.DiskSizeGB = to.Ptr(int32(size))
 	}
 
 	if plan == "#plan" {
-		settings.Plan = &compute.Plan{
-			Publisher: to.StringPtr(publisher),
-			Product:   to.StringPtr(offer),
-			Name:      to.StringPtr(sku),
+		settings.Plan = &armcompute.Plan{
+			Publisher: to.Ptr(publisher),
+			Product:   to.Ptr(offer),
+			Name:      to.Ptr(sku),
 		}
 	}
 
@@ -210,24 +210,25 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 		if spot == 0 {
 			spot = -1
 		}
-		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.EvictionPolicy = compute.Delete
-		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.Priority = compute.Spot
-		settings.VirtualMachineScaleSetProperties.VirtualMachineProfile.BillingProfile = &compute.BillingProfile{
-			MaxPrice: to.Float64Ptr(float64(spot)),
+		*settings.Properties.VirtualMachineProfile.EvictionPolicy = armcompute.VirtualMachineEvictionPolicyTypesDelete
+		*settings.Properties.VirtualMachineProfile.Priority = armcompute.VirtualMachinePriorityTypesSpot
+		settings.Properties.VirtualMachineProfile.BillingProfile = &armcompute.BillingProfile{
+			MaxPrice: to.Ptr(float64(spot)),
 		}
 	}
 
-	future, err := v.client.Services.VirtualMachineScaleSets.CreateOrUpdate(
+	poller, err := v.client.Services.VirtualMachineScaleSets.BeginCreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
 		v.Identifier,
 		settings,
+		nil,
 	)
 	if err != nil {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualMachineScaleSets.Client); err != nil {
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
 		return err
 	}
 
@@ -235,9 +236,10 @@ func (v *VirtualMachineScaleSet) Create(ctx context.Context) error {
 }
 
 func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
-	scaleSet, err := v.client.Services.VirtualMachineScaleSets.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	response, err := v.client.Services.VirtualMachineScaleSets.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return common.NotFoundError
 		}
 		return err
@@ -245,55 +247,53 @@ func (v *VirtualMachineScaleSet) Read(ctx context.Context) error {
 
 	v.Attributes.Events = []common.Event{}
 	v.Attributes.Status = common.Status{common.StatusCodeActive: 0}
-	scaleSetView, err := v.client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	scaleSetView, err := v.client.Services.VirtualMachineScaleSets.GetInstanceView(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, nil)
 	if err != nil {
 		return err
 	}
 	if scaleSetView.VirtualMachine.StatusesSummary != nil {
-		for _, status := range *scaleSetView.VirtualMachine.StatusesSummary {
-			code := to.String(status.Code)
-			logrus.Debug("ScaleSet Status Summary:", code, int(to.Int32(status.Count)))
+		for _, status := range scaleSetView.VirtualMachine.StatusesSummary {
+			code := *status.Code
+			logrus.Debug("ScaleSet Status Summary:", code, int(*status.Count))
 			if code == "ProvisioningState/succeeded" {
-				v.Attributes.Status[common.StatusCodeActive] = int(to.Int32(status.Count))
+				v.Attributes.Status[common.StatusCodeActive] = int(*status.Count)
 			}
 		}
 	}
 	if scaleSetView.Statuses != nil {
-		for _, status := range *scaleSetView.Statuses {
+		for _, status := range scaleSetView.Statuses {
 			statusTime := time.Unix(0, 0)
 			if status.Time != nil {
-				statusTime = status.Time.Time
+				statusTime = *status.Time
 			}
 			v.Attributes.Events = append(v.Attributes.Events, common.Event{
 				Time: statusTime,
-				Code: to.String(status.Code),
+				Code: *status.Code,
 				Description: []string{
-					string(status.Level),
-					to.String(status.DisplayStatus),
-					to.String(status.Message),
+					string(*status.Level),
+					*status.DisplayStatus,
+					*status.Message,
 				},
 			})
 		}
 	}
 
 	v.Attributes.Addresses = []net.IP{}
-	machineListPages, err := v.client.Services.PublicIPAddresses.ListVirtualMachineScaleSetPublicIPAddresses(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
-	if err != nil {
-		return err
-	}
 
-	for machineListPages.NotDone() {
-		for _, machine := range machineListPages.Values() {
-			if address := net.ParseIP(to.String(machine.PublicIPAddressPropertiesFormat.IPAddress)); address != nil {
+	for pager := v.client.Services.PublicIPAddresses.NewListPager(v.Dependencies.ResourceGroup.Identifier, nil); pager.More(); {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, machine := range page.PublicIPAddressListResult.Value {
+			if address := net.ParseIP(*machine.Properties.IPAddress); address != nil {
 				v.Attributes.Addresses = append(v.Attributes.Addresses, address)
 			}
 		}
-		if err := machineListPages.NextWithContext(ctx); err != nil {
-			return err
-		}
 	}
 
-	v.Resource = &scaleSet
+	v.Resource = &response.VirtualMachineScaleSet
 	return nil
 }
 
@@ -302,18 +302,19 @@ func (v *VirtualMachineScaleSet) Update(ctx context.Context) error {
 		return err
 	}
 
-	v.Resource.Sku.Capacity = to.Int64Ptr(int64(*v.Attributes.Parallelism))
-	future, err := v.client.Services.VirtualMachineScaleSets.CreateOrUpdate(
+	v.Resource.SKU.Capacity = to.Ptr(int64(*v.Attributes.Parallelism))
+	poller, err := v.client.Services.VirtualMachineScaleSets.BeginCreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
 		v.Identifier,
 		*v.Resource,
+		nil,
 	)
 	if err != nil {
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualMachineScaleSets.Client); err != nil {
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
 		return err
 	}
 
@@ -321,15 +322,16 @@ func (v *VirtualMachineScaleSet) Update(ctx context.Context) error {
 }
 
 func (v *VirtualMachineScaleSet) Delete(ctx context.Context) error {
-	future, err := v.client.Services.VirtualMachineScaleSets.Delete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	poller, err := v.client.Services.VirtualMachineScaleSets.BeginDelete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return nil
 		}
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualMachineScaleSets.Client); err != nil {
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
 		return err
 	}
 

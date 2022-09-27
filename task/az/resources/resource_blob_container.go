@@ -2,9 +2,10 @@ package resources
 
 import (
 	"context"
+	"errors"
 
-	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
-	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
@@ -28,34 +29,37 @@ type BlobContainer struct {
 		ResourceGroup  *ResourceGroup
 		StorageAccount *StorageAccount
 	}
-	Resource *storage.BlobContainer
+	Resource *armstorage.BlobContainer
 }
 
 func (b *BlobContainer) Create(ctx context.Context) error {
-	container, err := b.client.Services.BlobContainers.Create(
+	response, err := b.client.Services.BlobContainers.Create(
 		ctx,
 		b.Dependencies.ResourceGroup.Identifier,
 		b.Dependencies.StorageAccount.Identifier,
 		b.Identifier,
-		storage.BlobContainer{})
+		armstorage.BlobContainer{},
+		nil,
+	)
 	if err != nil {
 		return err
 	}
 
-	b.Resource = &container
+	b.Resource = &response.BlobContainer
 	return nil
 }
 
 func (b *BlobContainer) Read(ctx context.Context) error {
-	container, err := b.client.Services.BlobContainers.Get(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
+	response, err := b.client.Services.BlobContainers.Get(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return common.NotFoundError
 		}
 		return err
 	}
 
-	b.Resource = &container
+	b.Resource = &response.BlobContainer
 	return nil
 }
 
@@ -64,9 +68,10 @@ func (b *BlobContainer) Update(ctx context.Context) error {
 }
 
 func (b *BlobContainer) Delete(ctx context.Context) error {
-	_, err := b.client.Services.BlobContainers.Delete(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
+	_, err := b.client.Services.BlobContainers.Delete(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return nil
 		}
 		return err

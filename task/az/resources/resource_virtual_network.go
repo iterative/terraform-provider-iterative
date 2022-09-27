@@ -2,10 +2,11 @@ package resources
 
 import (
 	"context"
+	"errors"
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-11-01/network"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
@@ -26,7 +27,7 @@ type VirtualNetwork struct {
 	Dependencies struct {
 		ResourceGroup *ResourceGroup
 	}
-	Resource *network.VirtualNetwork
+	Resource *armnetwork.VirtualNetwork
 }
 
 func (v *VirtualNetwork) Create(ctx context.Context) error {
@@ -35,23 +36,25 @@ func (v *VirtualNetwork) Create(ctx context.Context) error {
 		return nil
 	}
 
-	virtualNetworkCreateFuture, err := v.client.Services.VirtualNetworks.CreateOrUpdate(
+	poller, err := v.client.Services.VirtualNetworks.BeginCreateOrUpdate(
 		ctx,
 		v.Dependencies.ResourceGroup.Identifier,
 		v.Identifier,
-		network.VirtualNetwork{
+		armnetwork.VirtualNetwork{
 			Tags:     v.client.Tags,
-			Location: to.StringPtr(v.client.Region),
-			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
-				AddressSpace: &network.AddressSpace{
-					AddressPrefixes: &[]string{"10.0.0.0/8"},
+			Location: to.Ptr(v.client.Region),
+			Properties: &armnetwork.VirtualNetworkPropertiesFormat{
+				AddressSpace: &armnetwork.AddressSpace{
+					AddressPrefixes: []*string{to.Ptr("10.0.0.0/8")},
 				},
 			},
-		})
+		},
+		nil,
+	)
 	if err != nil {
 		return err
 	}
-	err = virtualNetworkCreateFuture.WaitForCompletionRef(ctx, v.client.Services.VirtualNetworks.Client)
+	_, err = poller.PollUntilDone(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -59,15 +62,16 @@ func (v *VirtualNetwork) Create(ctx context.Context) error {
 }
 
 func (v *VirtualNetwork) Read(ctx context.Context) error {
-	virtualNetwork, err := v.client.Services.VirtualNetworks.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, "")
+	response, err := v.client.Services.VirtualNetworks.Get(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return common.NotFoundError
 		}
 		return err
 	}
 
-	v.Resource = &virtualNetwork
+	v.Resource = &response.VirtualNetwork
 	return nil
 }
 
@@ -76,15 +80,16 @@ func (v *VirtualNetwork) Update(ctx context.Context) error {
 }
 
 func (v *VirtualNetwork) Delete(ctx context.Context) error {
-	future, err := v.client.Services.VirtualNetworks.Delete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier)
+	poller, err := v.client.Services.VirtualNetworks.BeginDelete(ctx, v.Dependencies.ResourceGroup.Identifier, v.Identifier, nil)
 	if err != nil {
-		if err.(autorest.DetailedError).StatusCode == 404 {
+		var e *azcore.ResponseError
+		if errors.As(err, &e) && e.RawResponse.StatusCode == 404 {
 			return nil
 		}
 		return err
 	}
 
-	if err := future.WaitForCompletionRef(ctx, v.client.Services.VirtualNetworks.Client); err != nil {
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
 		return err
 	}
 
