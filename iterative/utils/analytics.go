@@ -380,7 +380,6 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		return
 	}
 
-
 	payload, err := JitsuEventPayload(action, e, extra)
 	if err != nil {
 		logrus.Debugf("analytics: Failure generating Jitsu Event Payload; doing nothing")
