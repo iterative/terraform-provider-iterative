@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -362,6 +363,26 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 			return
 		}
 	}
+
+			os.Getenv(GITHUB_REPOSITORY)
+	
+	
+	// Exclude continuous integration tests and internal projects from analytics
+	for variable, exceptions := range map[string][]string {
+		os.Getenv("GITHUB_REPOSITORY_OWNER"): []string{"iterative", "iterative-test"},
+		os.Getenv("CI_PROJECT_ROOT_NAMESPACE"): []string{"iterative.ai", "iterative-test"},
+		os.Getenv("BITBUCKET_WORKSPACE"): []string{"iterative-ai", "iterative-test"},
+	} {
+		for _, exception := range exceptions {
+			if variable == exception {
+				return
+			}
+		}
+	}
+	if strings.HasPrefix(os.Getenv("GITHUB_REPOSITORY"), "iterative/") {
+		return
+	}
+
 
 	payload, err := JitsuEventPayload(action, e, extra)
 	if err != nil {
