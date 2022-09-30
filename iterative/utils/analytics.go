@@ -364,9 +364,6 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		}
 	}
 
-			os.Getenv(GITHUB_REPOSITORY)
-	
-	
 	// Exclude continuous integration tests and internal projects from analytics
 	for variable, exceptions := range map[string][]string {
 		os.Getenv("GITHUB_REPOSITORY_OWNER"): []string{"iterative", "iterative-test"},
