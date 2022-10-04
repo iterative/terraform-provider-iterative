@@ -78,7 +78,5 @@ signs:
       - "${artifact}"
 changelog:
   skip: true
-announce:
-  slack:
-    enabled: true
-    message_template: Succesfully released {{ .ProjectName }} {{.Tag}}
+release:
+  draft: true

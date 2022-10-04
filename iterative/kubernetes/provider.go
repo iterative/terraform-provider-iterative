@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -83,6 +84,12 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 		}
 	}
 
+	// Lookup service account if set.
+	svcAccount, svcTokenAutomount, err := getServiceAccount(ctx, conn, namespace, d.Get("instance_permission_set").(string))
+	if err != nil {
+		return err
+	}
+
 	// Leave the job running for 30 seconds after the termination signal, but remove it immediately after terminating.
 	jobTTLSecondsAfterFinished := int32(0)
 	jobTerminationGracePeriod := int64(30)
@@ -126,6 +133,8 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 							},
 						},
 					},
+					ServiceAccountName:           svcAccount,
+					AutomountServiceAccountToken: svcTokenAutomount,
 				},
 			},
 		},
@@ -433,4 +442,18 @@ func ResourceMachineLogs(ctx context.Context, d *terraform_schema.ResourceData, 
 	}
 
 	return buf.String(), nil
+}
+
+func getServiceAccount(ctx context.Context, client kubernetes.Interface, namespace string, accountName string) (account string, automountToken *bool, err error) {
+	if accountName == "" {
+		return "", nil, nil
+	}
+	acct, err := client.CoreV1().ServiceAccounts(namespace).Get(ctx, accountName, kubernetes_meta.GetOptions{})
+	if err != nil {
+		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == http.StatusNotFound {
+			return "", nil, fmt.Errorf("service account %q does not exist in namespace %q", accountName, namespace)
+		}
+		return "", nil, fmt.Errorf("failed to lookup service account %q in namespace %q: %w", accountName, namespace, err)
+	}
+	return accountName, acct.AutomountServiceAccountToken, nil
 }
