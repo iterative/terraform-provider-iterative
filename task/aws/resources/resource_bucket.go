@@ -37,14 +37,14 @@ func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifie
 }
 
 func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
-	b := new(Bucket)
-	b.Client = client
-	b.Identifier = identifier.Long()
-	return b
+	return &Bucket{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 }
 
 type Bucket struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Resource   *types.Bucket
 }
@@ -54,13 +54,13 @@ func (b *Bucket) Create(ctx context.Context) error {
 		Bucket: aws.String(b.Identifier),
 	}
 
-	if b.Client.Region != "us-east-1" {
+	if b.client.Region != "us-east-1" {
 		createInput.CreateBucketConfiguration = &types.CreateBucketConfiguration{
-			LocationConstraint: types.BucketLocationConstraint(b.Client.Region),
+			LocationConstraint: types.BucketLocationConstraint(b.client.Region),
 		}
 	}
 
-	if _, err := b.Client.Services.S3.CreateBucket(ctx, &createInput); err != nil {
+	if _, err := b.client.Services.S3.CreateBucket(ctx, &createInput); err != nil {
 		if errorCodeIs(err, errBucketAlreadyOwnedByYou) {
 			return b.Read(ctx)
 		}
@@ -71,7 +71,7 @@ func (b *Bucket) Create(ctx context.Context) error {
 		Bucket: aws.String(b.Identifier),
 	}
 
-	if err := s3.NewBucketExistsWaiter(b.Client.Services.S3).Wait(ctx, &waitInput, b.Client.Cloud.Timeouts.Create); err != nil {
+	if err := s3.NewBucketExistsWaiter(b.client.Services.S3).Wait(ctx, &waitInput, b.client.Cloud.Timeouts.Create); err != nil {
 		return err
 	}
 
@@ -83,7 +83,7 @@ func (b *Bucket) Read(ctx context.Context) error {
 		Bucket: aws.String(b.Identifier),
 	}
 
-	if _, err := b.Client.Services.S3.HeadBucket(ctx, &input); err != nil {
+	if _, err := b.client.Services.S3.HeadBucket(ctx, &input); err != nil {
 		if errorCodeIs(err, errNotFound) {
 			return common.NotFoundError
 		}
@@ -103,7 +103,7 @@ func (b *Bucket) Delete(ctx context.Context) error {
 		Bucket: aws.String(b.Identifier),
 	}
 
-	for paginator := s3.NewListObjectsV2Paginator(b.Client.Services.S3, &listInput); paginator.HasMorePages(); {
+	for paginator := s3.NewListObjectsV2Paginator(b.client.Services.S3, &listInput); paginator.HasMorePages(); {
 		page, err := paginator.NextPage(ctx)
 		if errorCodeIs(err, errNoSuchBucket) {
 			b.Resource = nil
@@ -131,7 +131,7 @@ func (b *Bucket) Delete(ctx context.Context) error {
 			},
 		}
 
-		if _, err = b.Client.Services.S3.DeleteObjects(ctx, &input); err != nil {
+		if _, err = b.client.Services.S3.DeleteObjects(ctx, &input); err != nil {
 			return err
 		}
 	}
@@ -140,7 +140,7 @@ func (b *Bucket) Delete(ctx context.Context) error {
 		Bucket: aws.String(b.Identifier),
 	}
 
-	_, err := b.Client.Services.S3.DeleteBucket(ctx, &deleteInput)
+	_, err := b.client.Services.S3.DeleteBucket(ctx, &deleteInput)
 	if errorCodeIs(err, errNoSuchBucket) {
 		b.Resource = nil
 		return nil

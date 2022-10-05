@@ -15,9 +15,10 @@ import (
 )
 
 func NewPersistentVolumeClaim(client *client.Client, identifier common.Identifier, storageClass string, size int, many bool) *PersistentVolumeClaim {
-	p := new(PersistentVolumeClaim)
-	p.Client = client
-	p.Identifier = identifier.Long()
+	p := &PersistentVolumeClaim{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 	p.Attributes.StorageClass = storageClass
 	p.Attributes.Size = size
 	p.Attributes.Many = many
@@ -25,7 +26,7 @@ func NewPersistentVolumeClaim(client *client.Client, identifier common.Identifie
 }
 
 type PersistentVolumeClaim struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes struct {
 		StorageClass string
@@ -50,9 +51,9 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 	persistentVolumeClaimInput := kubernetes_core.PersistentVolumeClaim{
 		ObjectMeta: kubernetes_meta.ObjectMeta{
 			Name:        p.Identifier,
-			Namespace:   p.Client.Namespace,
-			Labels:      p.Client.Tags,
-			Annotations: p.Client.Tags,
+			Namespace:   p.client.Namespace,
+			Labels:      p.client.Tags,
+			Annotations: p.client.Tags,
 		},
 		Spec: kubernetes_core.PersistentVolumeClaimSpec{
 			AccessModes: []kubernetes_core.PersistentVolumeAccessMode{accessMode},
@@ -68,7 +69,7 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 		persistentVolumeClaimInput.Spec.StorageClassName = &p.Attributes.StorageClass
 	}
 
-	_, err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Create(ctx, &persistentVolumeClaimInput, kubernetes_meta.CreateOptions{})
+	_, err := p.client.Services.Core.PersistentVolumeClaims(p.client.Namespace).Create(ctx, &persistentVolumeClaimInput, kubernetes_meta.CreateOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 409 {
 			return nil
@@ -80,7 +81,7 @@ func (p *PersistentVolumeClaim) Create(ctx context.Context) error {
 }
 
 func (p *PersistentVolumeClaim) Read(ctx context.Context) error {
-	persistentVolumeClaim, err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Get(ctx, p.Identifier, kubernetes_meta.GetOptions{})
+	persistentVolumeClaim, err := p.client.Services.Core.PersistentVolumeClaims(p.client.Namespace).Get(ctx, p.Identifier, kubernetes_meta.GetOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return common.NotFoundError
@@ -93,7 +94,7 @@ func (p *PersistentVolumeClaim) Read(ctx context.Context) error {
 }
 
 func (p *PersistentVolumeClaim) Delete(ctx context.Context) error {
-	err := p.Client.Services.Core.PersistentVolumeClaims(p.Client.Namespace).Delete(ctx, p.Identifier, kubernetes_meta.DeleteOptions{})
+	err := p.client.Services.Core.PersistentVolumeClaims(p.client.Namespace).Delete(ctx, p.Identifier, kubernetes_meta.DeleteOptions{})
 	if err != nil {
 		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == 404 {
 			return nil

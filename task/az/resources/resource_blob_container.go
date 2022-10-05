@@ -13,16 +13,18 @@ import (
 )
 
 func NewBlobContainer(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount) *BlobContainer {
-	b := new(BlobContainer)
-	b.Client = client
-	b.Identifier = identifier.Short()
+	b := &BlobContainer{
+		client:     client,
+		Identifier: identifier.Short(),
+	}
+
 	b.Dependencies.ResourceGroup = resourceGroup
 	b.Dependencies.StorageAccount = storageAccount
 	return b
 }
 
 type BlobContainer struct {
-	Client       *client.Client
+	client       *client.Client
 	Identifier   string
 	Dependencies struct {
 		ResourceGroup  *ResourceGroup
@@ -32,7 +34,7 @@ type BlobContainer struct {
 }
 
 func (b *BlobContainer) Create(ctx context.Context) error {
-	container, err := b.Client.Services.BlobContainers.Create(
+	container, err := b.client.Services.BlobContainers.Create(
 		ctx,
 		b.Dependencies.ResourceGroup.Identifier,
 		b.Dependencies.StorageAccount.Identifier,
@@ -47,7 +49,7 @@ func (b *BlobContainer) Create(ctx context.Context) error {
 }
 
 func (b *BlobContainer) Read(ctx context.Context) error {
-	container, err := b.Client.Services.BlobContainers.Get(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
+	container, err := b.client.Services.BlobContainers.Get(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return common.NotFoundError
@@ -64,7 +66,7 @@ func (b *BlobContainer) Update(ctx context.Context) error {
 }
 
 func (b *BlobContainer) Delete(ctx context.Context) error {
-	_, err := b.Client.Services.BlobContainers.Delete(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
+	_, err := b.client.Services.BlobContainers.Delete(ctx, b.Dependencies.ResourceGroup.Identifier, b.Dependencies.StorageAccount.Identifier, b.Identifier)
 	if err != nil {
 		if err.(autorest.DetailedError).StatusCode == 404 {
 			return nil

@@ -16,21 +16,21 @@ import (
 )
 
 func NewKeyPair(client *client.Client, identifier common.Identifier) *KeyPair {
-	k := new(KeyPair)
-	k.Client = client
-	k.Identifier = identifier.Long()
-	return k
+	return &KeyPair{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 }
 
 type KeyPair struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Attributes ssh.DeterministicSSHKeyPair
 	Resource   *types.KeyPairInfo
 }
 
 func (k *KeyPair) Create(ctx context.Context) error {
-	keyPair, err := k.Client.GetKeyPair(ctx)
+	keyPair, err := k.client.GetKeyPair(ctx)
 	if err != nil {
 		return err
 	}
@@ -47,12 +47,12 @@ func (k *KeyPair) Create(ctx context.Context) error {
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeKeyPair,
-				Tags:         makeTagSlice(k.Identifier, k.Client.Tags),
+				Tags:         makeTagSlice(k.Identifier, k.client.Tags),
 			},
 		},
 	}
 
-	pair, err := k.Client.Services.EC2.ImportKeyPair(ctx, &input)
+	pair, err := k.client.Services.EC2.ImportKeyPair(ctx, &input)
 	if err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "InvalidKeyPair.Duplicate" {
@@ -65,7 +65,7 @@ func (k *KeyPair) Create(ctx context.Context) error {
 		KeyPairIds: []string{aws.ToString(pair.KeyPairId)},
 	}
 
-	if err := ec2.NewKeyPairExistsWaiter(k.Client.Services.EC2).Wait(ctx, &waitInput, k.Client.Cloud.Timeouts.Create); err != nil {
+	if err := ec2.NewKeyPairExistsWaiter(k.client.Services.EC2).Wait(ctx, &waitInput, k.client.Cloud.Timeouts.Create); err != nil {
 		return err
 	}
 
@@ -73,7 +73,7 @@ func (k *KeyPair) Create(ctx context.Context) error {
 }
 
 func (k *KeyPair) Read(ctx context.Context) error {
-	pair, err := k.Client.GetKeyPair(ctx)
+	pair, err := k.client.GetKeyPair(ctx)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (k *KeyPair) Read(ctx context.Context) error {
 		KeyNames: []string{k.Identifier},
 	}
 
-	pairs, err := k.Client.Services.EC2.DescribeKeyPairs(ctx, &input)
+	pairs, err := k.client.Services.EC2.DescribeKeyPairs(ctx, &input)
 	if err != nil {
 		var e smithy.APIError
 		if errors.As(err, &e) && e.ErrorCode() == "InvalidKeyPair.NotFound" {
@@ -104,7 +104,7 @@ func (k *KeyPair) Delete(ctx context.Context) error {
 		KeyName: aws.String(k.Identifier),
 	}
 
-	if _, err := k.Client.Services.EC2.DeleteKeyPair(ctx, &input); err != nil {
+	if _, err := k.client.Services.EC2.DeleteKeyPair(ctx, &input); err != nil {
 		return err
 	}
 

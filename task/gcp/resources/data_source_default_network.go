@@ -12,18 +12,18 @@ import (
 )
 
 func NewDefaultNetwork(client *client.Client) *DefaultNetwork {
-	d := new(DefaultNetwork)
-	d.Client = client
-	return d
+	return &DefaultNetwork{
+		client: client,
+	}
 }
 
 type DefaultNetwork struct {
-	Client   *client.Client
+	client   *client.Client
 	Resource *compute.Network
 }
 
 func (d *DefaultNetwork) Read(ctx context.Context) error {
-	network, err := d.Client.Services.Compute.Networks.Get(d.Client.Credentials.ProjectID, "default").Do()
+	network, err := d.client.Services.Compute.Networks.Get(d.client.Credentials.ProjectID, "default").Do()
 	if err != nil {
 		var e *googleapi.Error
 		if errors.As(err, &e) && e.Code == 404 {

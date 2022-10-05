@@ -12,13 +12,11 @@ import (
 )
 
 func NewDefaultVPC(client *client.Client) *DefaultVPC {
-	d := new(DefaultVPC)
-	d.Client = client
-	return d
+	return &DefaultVPC{client: client}
 }
 
 type DefaultVPC struct {
-	Client   *client.Client
+	client   *client.Client
 	Resource *types.Vpc
 }
 
@@ -32,7 +30,7 @@ func (d *DefaultVPC) Read(ctx context.Context) error {
 		},
 	}
 
-	vpcs, err := d.Client.Services.EC2.DescribeVpcs(ctx, &input)
+	vpcs, err := d.client.Services.EC2.DescribeVpcs(ctx, &input)
 	if err != nil {
 		return err
 	}

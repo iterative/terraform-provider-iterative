@@ -3,32 +3,48 @@ package resources
 import (
 	"context"
 	"fmt"
+	"net/http"
+
+	kubernetes_errors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/k8s/client"
 )
 
+// NewPermissionSet creates a new permission set.
 func NewPermissionSet(client *client.Client, identifier string) *PermissionSet {
-	ps := new(PermissionSet)
-	ps.Client = client
-	ps.Identifier = identifier
-	return ps
+	return &PermissionSet{
+		client:     client,
+		Identifier: identifier,
+	}
 }
 
+// PermissionSet matches the provided service account name to an existing service account.
 type PermissionSet struct {
-	Client     *client.Client
+	client     *client.Client
 	Identifier string
 	Resource   struct {
 		ServiceAccountName           string
 		AutomountServiceAccountToken *bool
-		flag                         bool
 	}
 }
 
+// Read verifies the service account.
 func (ps *PermissionSet) Read(ctx context.Context) error {
-	ps.Resource.flag = true
 	if ps.Identifier == "" {
-		ps.Resource.ServiceAccountName = ""
-		ps.Resource.AutomountServiceAccountToken = nil
 		return nil
 	}
-	return fmt.Errorf("not yet implemented")
+	account, err := ps.client.Services.Core.ServiceAccounts(ps.client.Namespace).Get(ctx, ps.Identifier, metav1.GetOptions{})
+	if err != nil {
+		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == http.StatusNotFound {
+			return fmt.Errorf("service account %q does not exist in namespace %q: %w",
+				ps.Identifier, ps.client.Namespace, common.NotFoundError)
+		}
+		return fmt.Errorf("failed to lookup service account %q in namespace %q: %w", ps.Identifier, ps.client.Namespace, err)
+
+	}
+	ps.Resource.ServiceAccountName = ps.Identifier
+	ps.Resource.AutomountServiceAccountToken = account.AutomountServiceAccountToken
+	return nil
 }

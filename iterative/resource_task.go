@@ -418,16 +418,16 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			if newId, err := common.ParseIdentifier(name); err == nil {
 				id = newId
 			} else {
-				id = common.NewIdentifier(name)
+				id = common.NewDeterministicIdentifier(name)
 			}
 		} else if name := os.Getenv("GITHUB_RUN_ID"); name != "" {
-			id = common.NewIdentifier(name)
+			id = common.NewDeterministicIdentifier(name)
 		} else if name := os.Getenv("CI_PIPELINE_ID"); name != "" {
-			id = common.NewIdentifier(name)
+			id = common.NewDeterministicIdentifier(name)
 		} else if name := os.Getenv("BITBUCKET_STEP_TRIGGERER_UUID"); name != "" {
-			id = common.NewIdentifier(name)
+			id = common.NewDeterministicIdentifier(name)
 		} else {
-			id = common.NewRandomIdentifier()
+			id = common.NewRandomIdentifier("")
 		}
 	}
 

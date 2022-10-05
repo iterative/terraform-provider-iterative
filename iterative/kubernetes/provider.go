@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -83,6 +84,12 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 		}
 	}
 
+	// Lookup service account if set.
+	svcAccount, svcTokenAutomount, err := getServiceAccount(ctx, conn, namespace, d.Get("instance_permission_set").(string))
+	if err != nil {
+		return err
+	}
+
 	// Leave the job running for 30 seconds after the termination signal, but remove it immediately after terminating.
 	jobTTLSecondsAfterFinished := int32(0)
 	jobTerminationGracePeriod := int64(30)
@@ -126,6 +133,8 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 							},
 						},
 					},
+					ServiceAccountName:           svcAccount,
+					AutomountServiceAccountToken: svcTokenAutomount,
 				},
 			},
 		},
@@ -140,7 +149,7 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	log.Printf("[INFO] Submitted new job: %#v", out)
 
 	// Get the controller unique identifier for the job, so we can easily find the pods it creates.
-	waitSelector := fmt.Sprintf("controller-uid=%s", out.GetObjectMeta().GetLabels()["controller-uid"])
+	waitSelector := fmt.Sprintf("controller-uid=%s", out.Spec.Selector.MatchLabels["controller-uid"])
 
 	// Wait for the job to satisfy the readiness condition specified through kubernetes_readiness_command.
 	return terraform_resource.Retry(d.Timeout(terraform_schema.TimeoutCreate), func() *terraform_resource.RetryError {
@@ -414,7 +423,7 @@ func ResourceMachineLogs(ctx context.Context, d *terraform_schema.ResourceData, 
 	}
 
 	pods, err := conn.CoreV1().Pods(namespace).List(ctx, kubernetes_meta.ListOptions{
-		LabelSelector: fmt.Sprintf("controller-uid=%s", job.GetObjectMeta().GetLabels()["controller-uid"]),
+		LabelSelector: fmt.Sprintf("controller-uid=%s", job.Spec.Selector.MatchLabels["controller-uid"]),
 	})
 	if err != nil {
 		return "", err
@@ -433,4 +442,18 @@ func ResourceMachineLogs(ctx context.Context, d *terraform_schema.ResourceData, 
 	}
 
 	return buf.String(), nil
+}
+
+func getServiceAccount(ctx context.Context, client kubernetes.Interface, namespace string, accountName string) (account string, automountToken *bool, err error) {
+	if accountName == "" {
+		return "", nil, nil
+	}
+	acct, err := client.CoreV1().ServiceAccounts(namespace).Get(ctx, accountName, kubernetes_meta.GetOptions{})
+	if err != nil {
+		if statusErr, ok := err.(*kubernetes_errors.StatusError); ok && statusErr.ErrStatus.Code == http.StatusNotFound {
+			return "", nil, fmt.Errorf("service account %q does not exist in namespace %q", accountName, namespace)
+		}
+		return "", nil, fmt.Errorf("failed to lookup service account %q in namespace %q: %w", accountName, namespace, err)
+	}
+	return accountName, acct.AutomountServiceAccountToken, nil
 }

@@ -2,7 +2,6 @@ package task
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 
@@ -31,10 +30,6 @@ func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) 
 }
 
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (Task, error) {
-	if identifier == "" {
-		return nil, errors.New("identifier must not be empty")
-	}
-
 	switch cloud.Provider {
 	case common.ProviderAWS:
 		return aws.New(ctx, cloud, identifier, task)

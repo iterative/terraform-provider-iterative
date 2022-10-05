@@ -12,17 +12,18 @@ import (
 )
 
 func NewDefaultVPCSubnets(client *client.Client, defaultVpc *DefaultVPC) *DefaultVPCSubnets {
-	d := new(DefaultVPCSubnets)
-	d.Client = client
+	d := &DefaultVPCSubnets{
+		client: client,
+	}
 	d.Dependencies.DefaultVPC = defaultVpc
 	return d
 }
 
 type DefaultVPCSubnets struct {
-	Client       *client.Client
+	client       *client.Client
 	Resource     []*types.Subnet
 	Dependencies struct {
-		*DefaultVPC
+		DefaultVPC *DefaultVPC
 	}
 }
 
@@ -40,7 +41,7 @@ func (d *DefaultVPCSubnets) Read(ctx context.Context) error {
 		},
 	}
 
-	subnets, err := d.Client.Services.EC2.DescribeSubnets(ctx, &input)
+	subnets, err := d.client.Services.EC2.DescribeSubnets(ctx, &input)
 	if err != nil {
 		return err
 	}

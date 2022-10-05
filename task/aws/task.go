@@ -26,7 +26,7 @@ func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) 
 }
 
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
-	client, err := client.New(ctx, cloud, task.Tags)
+	client, err := client.New(ctx, cloud, cloud.Tags)
 	if err != nil {
 		return nil, err
 	}

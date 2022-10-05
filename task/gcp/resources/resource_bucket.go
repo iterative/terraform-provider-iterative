@@ -32,10 +32,10 @@ func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifie
 }
 
 func NewBucket(client *client.Client, identifier common.Identifier) *Bucket {
-	b := new(Bucket)
-	b.client = client
-	b.Identifier = identifier.Long()
-	return b
+	return &Bucket{
+		client:     client,
+		Identifier: identifier.Long(),
+	}
 }
 
 // Bucket is a resource refering to an allocated gcp storage bucket.
