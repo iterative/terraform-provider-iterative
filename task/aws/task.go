@@ -55,7 +55,7 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		// If a subdirectory was not specified, the task id will
 		// be used.
 		if task.RemoteStorage.Path == "" {
-			task.RemoteStorage.Path = string(t.Identifier)
+			task.RemoteStorage.Path = t.Identifier.Short()
 		}
 		// Container config may override the s3 region.
 		if region, ok := task.RemoteStorage.Config[s3_region]; !ok || region == "" {

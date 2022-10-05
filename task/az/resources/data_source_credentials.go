@@ -30,7 +30,7 @@ type Credentials struct {
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
-	credentials, err := c.Client.Settings.GetClientCredentials()
+	credentials, err := c.client.Settings.GetClientCredentials()
 	if err != nil {
 		return err
 	}

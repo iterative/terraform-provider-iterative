@@ -156,14 +156,14 @@ func (b *Bucket) Delete(ctx context.Context) error {
 // ConnectionString implements BucketCredentials.
 // The method returns the rclone connection string for the specific bucket.
 func (b *Bucket) ConnectionString(ctx context.Context) (string, error) {
-	credentials, err := b.Client.Config.Credentials.Retrieve(ctx)
+	credentials, err := b.client.Config.Credentials.Retrieve(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	connectionString := fmt.Sprintf(
 		":s3,provider=AWS,region=%s,access_key_id=%s,secret_access_key=%s,session_token=%s:%s",
-		b.Client.Region,
+		b.client.Region,
 		credentials.AccessKeyID,
 		credentials.SecretAccessKey,
 		credentials.SessionToken,
