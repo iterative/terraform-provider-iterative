@@ -14,7 +14,7 @@ source /opt/task/credentials
 if ! test -z "$CI"; then
   cml rerun-workflow
 fi
-(systemctl is-system-running | grep stopping) || tpi stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
+(systemctl is-system-running | grep stopping) || leo stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
 END
 
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
@@ -62,9 +62,10 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 END
 
 curl --location --remote-name https://github.com/iterative/terraform-provider-iterative/releases/latest/download/terraform-provider-iterative_linux_amd64
-sudo mv terraform-provider-iterative* /usr/bin/tpi
-sudo chmod u=rwx,g=rx,o=rx /usr/bin/tpi
-sudo chown root:root /usr/bin/tpi
+# TODO: replace download location with https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64
+sudo mv terraform-provider-iterative* /usr/bin/leo
+sudo chmod u=rwx,g=rx,o=rx /usr/bin/leo
+sudo chown root:root /usr/bin/leo
 
 curl --location --remote-name https://github.com/iterative/cml/releases/latest/download/cml-linux
 chmod u=rwx,g=rx,o=rx cml-linux

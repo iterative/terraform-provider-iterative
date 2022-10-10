@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -148,7 +149,8 @@ func GroupId() (string, error) {
 			os.Getenv("CI_SERVER_URL"),
 			os.Getenv("CI_PROJECT_ROOT_NAMESPACE"))
 	} else if ci == "bitbucket" {
-		rawId = os.Getenv("BITBUCKET_WORKSPACE")
+		rawId = fmt.Sprintf("https://bitbucket.com/%s",
+			os.Getenv("BITBUCKET_WORKSPACE"))
 	}
 
 	id, err := deterministic(rawId)
@@ -363,10 +365,29 @@ func SendJitsuEvent(action string, e error, extra map[string]interface{}) {
 		}
 	}
 
+	// Exclude runs from GitHub Codespaces at Iterative
+	if strings.HasPrefix(os.Getenv("GITHUB_REPOSITORY"), "iterative/") {
+		return
+	}
+
 	payload, err := JitsuEventPayload(action, e, extra)
 	if err != nil {
 		logrus.Debugf("analytics: Failure generating Jitsu Event Payload; doing nothing")
 		return
+	}
+
+	// Exclude continuous integration tests and internal projects from analytics
+	for _, group := range []string{
+		"dc16cd76-71b7-5afa-bf11-e85e02ee1554", // deterministic("https://github.com/iterative")
+		"b0e229bf-2598-54b7-a3e0-81869cdad579", // deterministic("https://github.com/iterative-test")
+		"d5aaeca4-fe6a-5c72-8aa7-6dcd65974973", // deterministic("https://gitlab.com/iterative.ai")
+		"b6df227b-5b3d-5190-a8fa-d272b617ee6c", // deterministic("https://gitlab.com/iterative-test")
+		"2c6415f0-cb5a-5e52-8c81-c5af4f11715d", // deterministic("https://bitbucket.com/iterative-ai")
+		"c0b86b90-d63c-5fb0-b84d-718d8e15f8d6", // deterministic("https://bitbucket.com/iterative-test")
+	} {
+		if payload["group_id"].(string) == group {
+			return
+		}
 	}
 
 	if payload["user_id"] == "do-not-track" {

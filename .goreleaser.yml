@@ -1,5 +1,8 @@
 builds:
-- env:
+-
+  id: "tpi"
+  main: ./main.go
+  env:
   - CGO_ENABLED=0
   mod_timestamp: '{{ .CommitTimestamp }}'
   flags:
@@ -7,9 +10,6 @@ builds:
   ldflags:
     - -s -w
     - -X terraform-provider-iterative/iterative/utils.Version={{.Version}}
-    - -X main.version={{.Version}}
-    - -X main.commit={{.Commit}}
-    - -X main.date={{.Date}}
   goos:
     - windows
     - linux
@@ -26,14 +26,43 @@ builds:
       goarch: arm64
     - goos: windows
       goarch: arm
-  binary: '{{ .ProjectName }}_v{{ .Version }}'
+  binary: 'terraform-provider-iterative'
+-
+  id: "leo"
+  main: ./cmd/leo
+  env:
+  - CGO_ENABLED=0
+  mod_timestamp: '{{ .CommitTimestamp }}'
+  flags:
+    - -trimpath
+  ldflags:
+    - -s -w
+    - -X terraform-provider-iterative/iterative/utils.Version={{.Version}}
+  goos:
+    # - freebsd
+    - windows
+    - linux
+    - darwin
+  goarch:
+    - amd64
+    - '386'
+    - arm
+    - arm64
+  ignore:
+    - goos: darwin
+      goarch: '386'
+    - goos: windows
+      goarch: arm64
+    - goos: windows
+      goarch: arm
+  binary: 'leo'
 archives:
 - id: default
   format: zip
-  name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 - id: agent
   format: binary
-  name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+  name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256

@@ -83,7 +83,7 @@ resource "azurerm_role_definition" "task" {
   }
 }
 resource "azurerm_role_assignment" "task" {
-  name               = azurerm_role_definition.task.name
+  name               = azurerm_role_definition.task.role_definition_id
   principal_id       = azuread_service_principal.task.object_id
   role_definition_id = azurerm_role_definition.task.role_definition_resource_id
   scope              = data.azurerm_subscription.current.id
