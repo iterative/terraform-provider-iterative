@@ -51,7 +51,7 @@ sudo tee /usr/bin/cml.sh << 'EOF'
 export AWS_SECRET_ACCESS_KEY='0 value with "quotes" and spaces'
 export AWS_ACCESS_KEY_ID='1 value with "quotes" and spaces'
 export AWS_SESSION_TOKEN='2 value with "quotes" and spaces'
-export CML_RUNNER_SENSITIVE_ENV=AWS_SECRET_ACCESS_KEY:AWS_ACCESS_KEY_ID:AWS_SESSION_TOKEN
+export _CML_RUNNER_SENSITIVE_ENV=AWS_SECRET_ACCESS_KEY:AWS_ACCESS_KEY_ID:AWS_SESSION_TOKEN
 
 while lsof /var/lib/dpkg/lock; do sleep 1; done
 

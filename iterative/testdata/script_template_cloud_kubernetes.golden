@@ -1,7 +1,7 @@
 #!/bin/sh
 sudo systemctl is-enabled cml.service && return 0
 export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
-export CML_RUNNER_SENSITIVE_ENV=KUBERNETES_CONFIGURATION
+export _CML_RUNNER_SENSITIVE_ENV=KUBERNETES_CONFIGURATION
 
 while lsof /var/lib/dpkg/lock; do sleep 1; done
 
