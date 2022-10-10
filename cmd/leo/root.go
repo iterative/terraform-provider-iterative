@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -11,13 +11,12 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"terraform-provider-iterative/cmd/leo/create"
+	"terraform-provider-iterative/cmd/leo/delete"
+	"terraform-provider-iterative/cmd/leo/list"
+	"terraform-provider-iterative/cmd/leo/read"
+	"terraform-provider-iterative/cmd/leo/stop"
 	"terraform-provider-iterative/task/common"
-
-	"terraform-provider-iterative/cmd/create"
-	"terraform-provider-iterative/cmd/delete"
-	"terraform-provider-iterative/cmd/list"
-	"terraform-provider-iterative/cmd/read"
-	"terraform-provider-iterative/cmd/stop"
 )
 
 type Options struct {
@@ -27,15 +26,8 @@ type Options struct {
 	common.Cloud
 }
 
-func Execute() {
-	cmd := New()
-	err := cmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func New() *cobra.Command {
+// NewCmd initializes the subcommand structure.
+func NewCmd() *cobra.Command {
 	o := Options{
 		Cloud: common.Cloud{
 			Timeouts: common.Timeouts{
@@ -48,10 +40,9 @@ func New() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "task",
+		Use:   "leo",
 		Short: "Run code in the cloud",
-		Long: `Task is a command-line tool that allows
-	data scientists to run code in the cloud.`,
+		Long:  `leo is a command-line tool that allows data scientists to run code in the cloud.`,
 	}
 
 	cmd.AddCommand(create.New(&o.Cloud))

@@ -9,10 +9,10 @@ INSTALL_PATH=~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/
 default: build
 
 build:
-	go build
+	go build ./...
 
-install:
-	GOBIN=${INSTALL_PATH} go install
+install_tpi:
+	GOBIN=${INSTALL_PATH} go install ./...
 
 test:
 	go test ./... ${TESTARGS} -timeout=30s -parallel=4
