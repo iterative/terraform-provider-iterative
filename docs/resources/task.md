@@ -64,7 +64,6 @@ resource "iterative_task" "example" {
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
 - `storage.container` - (Optional) Pre-allocated container to use for storage of task data, results and status.
-- `storage.container_path` - (Optional) Subdirectory in pre-allocated container to use for storage. If omitted, the task's identifier will be used.
 - `storage.container_opts` - (Optional) Block of cloud-specific container settings.
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
@@ -282,42 +281,86 @@ spec:
 
 ## Permission Set
 
+### Generic
+
 A set of "permissions" assigned to the `task` instance, format depends on the cloud provider
 
-#### Amazon Web Services
+### Cloud-specific
+
+#### Kubernetes
+
+The name of a service account in the current namespace.
+
+### Amazon Web Services
 
 An [instance profile `arn`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), e.g.:
 `permission_set = "arn:aws:iam:1234567890:instance-profile/rolename"`
 
-#### Google Cloud Platform
+### Google Cloud Platform
 
 A service account email and a [list of scopes](https://cloud.google.com/sdk/gcloud/reference/alpha/compute/instances/set-scopes#--scopes), e.g.:
 `permission_set = "sa-name@project_id.iam.gserviceaccount.com,scopes=storage-rw"`
 
-#### Microsoft Azure
+### Microsoft Azure
 A comma-separated list of [user-assigned identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview) ARM resource ids, e.g.:
 `permission_set = "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}"`
 
-##### Pre-allocated blob container
+## Pre-allocated blob container
+
+### Generic
+
+To use a pre-allocated container for storing task data, specify the `container` key in the `storage` section
+of the config:
+
+```hcl
+resource "iterative_task" "example" {
+  (...)
+  storage {
+    container = "container-name/path/path"
+  }
+  (...)
+}
+```
+
+The container name may include a path component, in this case the specified subdirectory will be used
+to store task execution results. Otherwise, a subdirectory will be created with a name matchin the
+task's randomly generated id.
+
+If the container name is suffixed with a forward slash, (`container-name/`), the root of the container
+will be used for storage.
+
+### Cloud-specific
+
+#### Amazon Web Services
+
+The container name is the name of the S3 container. It should be in the same region as the task deployment.
+
+#### Google Cloud Platform
+
+The container name is the name of the google cloud storage container.
+
+#### Kubernetes
+
+The container name is the name of a predefined persistent volume claim.
+
+#### Microsoft Azure
+
 To use a pre-allocated azure blob container, the storage account name and access key need to be specified in
 the `storage` section:
 
 ```
 resource "iterative_task" "example" {
     (...)
-    container = "container-name"
-    container_path = "subdirectory"
-    container_opts = {
-      account = "storage-account-name"
-      key = "storage-account-key"
+    storage {
+      container = "container-name"
+      container_opts = {
+        account = "storage-account-name"
+        key = "storage-account-key"
+      }
     }
     (...)
 }
 ```
-
-#### Kubernetes
-
-The name of a service account in the current namespace.
 
 ## Known Issues
 
