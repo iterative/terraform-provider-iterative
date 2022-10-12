@@ -144,12 +144,6 @@ func resourceTask() *schema.Resource {
 							Optional: true,
 							Default:  "",
 						},
-						"container_path": {
-							Type:     schema.TypeString,
-							ForceNew: true,
-							Optional: true,
-							Default:  "",
-						},
 						"container_opts": {
 							Type:     schema.TypeMap,
 							ForceNew: true,
@@ -366,21 +360,21 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		directory_out = storage["output"].(string)
 
 		// Propagate configuration for pre-allocated storage container.
-		container := storage["container"].(string)
-		containerPath := storage["container_path"].(string)
-		if container != "" {
+		containerRaw := storage["container"].(string)
+		if containerRaw != "" {
+			container, containerPath := parseContainerPath(containerRaw)
 			remoteStorage = &common.RemoteStorage{
 				Container: container,
 				Path:      containerPath,
 				Config:    map[string]string{},
 			}
-		}
-		if storage["container_opts"] != nil {
-			remoteConfig := storage["container_opts"].(map[string]interface{})
-			var ok bool
-			for key, value := range remoteConfig {
-				if remoteStorage.Config[key], ok = value.(string); !ok {
-					return nil, fmt.Errorf("invalid value for remote config key %q: %v", key, value)
+			if storage["container_opts"] != nil {
+				remoteConfig := storage["container_opts"].(map[string]interface{})
+				var ok bool
+				for key, value := range remoteConfig {
+					if remoteStorage.Config[key], ok = value.(string); !ok {
+						return nil, fmt.Errorf("invalid value for remote config key %q: %v", key, value)
+					}
 				}
 			}
 		}
@@ -439,4 +433,18 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
+}
+
+// parseContainerPath will attempt to separate the container name from the optional subdirectory
+// in the container.
+func parseContainerPath(raw string) (string /* container name */, string /* subdirectory */) {
+	parts := strings.SplitN(raw, "/", 2)
+	if len(parts) == 0 {
+		return "", ""
+	}
+	if len(parts) == 1 {
+		// No subdirectory specified.
+		return parts[0], ""
+	}
+	return parts[0], "/" + parts[1]
 }
