@@ -1,5 +1,8 @@
 #!/bin/sh
 sudo systemctl is-enabled cml.service && return 0
+
+sudo curl --location https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64 --output /usr/bin/leo
+sudo chmod a+x /usr/bin/leo
 PS4='tpi:setup.sh: '
 set -x
 
