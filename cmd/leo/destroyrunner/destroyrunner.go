@@ -1,7 +1,6 @@
 package destroyrunner
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -54,13 +53,13 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 
 	switch cloud.Provider {
 	case common.ProviderAWS:
-		return aws.ResourceMachineDelete(context.TODO(), d, nil)
+		return aws.ResourceMachineDelete(cmd.Context(), d, nil)
 	case common.ProviderGCP:
-		return gcp.ResourceMachineDelete(context.TODO(), d, nil)
+		return gcp.ResourceMachineDelete(cmd.Context(), d, nil)
 	case common.ProviderAZ:
-		return azure.ResourceMachineDelete(context.TODO(), d, nil)
+		return azure.ResourceMachineDelete(cmd.Context(), d, nil)
 	case common.ProviderK8S:
-		return kubernetes.ResourceMachineDelete(context.TODO(), d, nil)
+		return kubernetes.ResourceMachineDelete(cmd.Context(), d, nil)
 	}
 
 	return fmt.Errorf("unknown provider: %#v", cloud.Provider)
