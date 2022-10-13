@@ -312,8 +312,8 @@ func renderScript(data map[string]interface{}) (string, error) {
 		`#!/bin/sh
 sudo systemctl is-enabled cml.service && return 0
 
-curl --location https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64 --output /usr/bin/leo
-chmod a+x /usr/bin/leo
+sudo curl --location https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64 --output /usr/bin/leo
+sudo chmod a+x /usr/bin/leo
 
 {{- if not .container}}
 {{- if .setup}}{{.setup}}{{- end}}
