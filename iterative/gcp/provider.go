@@ -31,7 +31,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	networkName := "iterative"
-	instanceName := d.Get("name").(string)
+	instanceName := d.Id()
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
@@ -281,7 +281,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceZone := getRegion(d.Get("region").(string))
-	instanceName := d.Get("name").(string)
+	instanceName := d.Id()
 
 	service.Instances.Delete(project, instanceZone, instanceName).Do()
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
