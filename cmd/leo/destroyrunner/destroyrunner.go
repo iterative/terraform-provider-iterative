@@ -16,7 +16,6 @@ import (
 )
 
 type Options struct {
-	Name string
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -33,21 +32,12 @@ func New(cloud *common.Cloud) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Name, "name", "", "needed for Google Cloud runners") // FIXME: it shouldn't
-
 	return cmd
 }
 
 func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) error {
-	r := map[string]interface{}{
-		"region": string(cloud.Region),
-		"name":   o.Name,
-	}
-	s := map[string]*schema.Schema{
-		"region": {Type: schema.TypeString},
-		"name":   {Type: schema.TypeString},
-	}
-
+	r := map[string]interface{}{"region": string(cloud.Region)}
+	s := map[string]*schema.Schema{"region": {Type: schema.TypeString}}
 	d := schema.TestResourceDataRaw(&testing.RuntimeT{}, s, r)
 	d.SetId(args[0])
 
