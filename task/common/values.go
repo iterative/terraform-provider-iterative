@@ -41,6 +41,9 @@ type Event struct {
 	Code        string
 	Description []string
 }
+
+// RemoteStorage contains the configuration for the cloud storage container
+// used by the task.
 type RemoteStorage struct {
 	// Container stores the id of the container to be used.
 	Container string

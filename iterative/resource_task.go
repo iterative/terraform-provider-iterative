@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/rclone/rclone/lib/bucket"
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/iterative/utils"
 	"terraform-provider-iterative/task"
@@ -362,7 +362,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		// Propagate configuration for pre-allocated storage container.
 		containerRaw := storage["container"].(string)
 		if containerRaw != "" {
-			container, containerPath := parseContainerPath(containerRaw)
+			container, containerPath := bucket.Split(containerRaw)
 			remoteStorage = &common.RemoteStorage{
 				Container: container,
 				Path:      containerPath,
@@ -433,18 +433,4 @@ func diagnostic(diags diag.Diagnostics, err error, severity diag.Severity) diag.
 		Severity: severity,
 		Summary:  err.Error(),
 	})
-}
-
-// parseContainerPath will attempt to separate the container name from the optional subdirectory
-// in the container.
-func parseContainerPath(raw string) (string /* container name */, string /* subdirectory */) {
-	parts := strings.SplitN(raw, "/", 2)
-	if len(parts) == 0 {
-		return "", ""
-	}
-	if len(parts) == 1 {
-		// No subdirectory specified.
-		return parts[0], ""
-	}
-	return parts[0], "/" + parts[1]
 }
