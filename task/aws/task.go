@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"net"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 
@@ -263,14 +262,12 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 
 // Pull downloads the output directory from remote storage.
 func (t *Task) Pull(ctx context.Context) error {
-	src := t.DataSources.Credentials.Resource["RCLONE_REMOTE"] +
-		filepath.Join("/data", t.Attributes.Environment.DirectoryOut)
-	dst := filepath.Join(t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
-
 	return machine.Transfer(ctx,
-		src, dst,
-		t.Attributes.Environment.ExcludeList,
-	)
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
 // Push uploads the work directory to remote storage.

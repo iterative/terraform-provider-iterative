@@ -111,9 +111,10 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 func Transfer(ctx context.Context, source, destination string, exclude []string) error {
 	ctx, fi := filter.AddConfig(ctx)
 	for _, excludePattern := range exclude {
-		// TODO: remove
-		logrus.Warn(excludePattern)
-		if err := fi.AddRule("- " + excludePattern); err != nil {
+		if !isRcloneFilter(excludePattern) {
+			excludePattern = "- " + excludePattern
+		}
+		if err := fi.AddRule(excludePattern); err != nil {
 			return err
 		}
 	}
@@ -189,4 +190,25 @@ func progress(interval time.Duration) func() {
 	return func() {
 		done <- true
 	}
+}
+
+// LimitTransfer updates the list of exclusion rules so that only a single subdirectory
+// is transfered.
+func LimitTransfer(subdir string, rules []string) []string {
+	dir := filepath.Clean(subdir)
+	if dir == "." || dir == "" {
+		// No changes needed.
+		return rules
+	}
+
+	newRules := append(rules, []string{
+		"+ " + filepath.Join("/", dir),
+		"+ " + filepath.Join("/", dir, "/**"),
+		"- /**",
+	}...)
+	return newRules
+}
+
+func isRcloneFilter(rule string) bool {
+	return strings.HasPrefix(rule, "+ ") || strings.HasPrefix(rule, "- ")
 }

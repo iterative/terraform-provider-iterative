@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -269,9 +268,11 @@ func (t *Task) Pull(ctx context.Context) error {
 	}
 
 	return machine.Transfer(ctx,
-		filepath.Join(dir, t.Attributes.DirectoryOut),
-		filepath.Join(t.Attributes.Directory, t.Attributes.DirectoryOut),
-		t.Attributes.Environment.ExcludeList)
+		dir,
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {
