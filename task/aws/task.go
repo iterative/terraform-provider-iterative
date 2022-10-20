@@ -272,10 +272,6 @@ func (t *Task) Pull(ctx context.Context) error {
 
 // Push uploads the work directory to remote storage.
 func (t *Task) Push(ctx context.Context) error {
-	// TODO remove
-	for _, p := range t.Attributes.Environment.ExcludeList {
-		logrus.Warnf("exclude pattern: %q", p)
-	}
 	return machine.Transfer(ctx,
 		t.Attributes.Environment.Directory,
 		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
