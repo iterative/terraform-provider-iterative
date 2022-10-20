@@ -53,8 +53,10 @@ type Task interface {
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 
-	Push(ctx context.Context, source string) error
-	Pull(ctx context.Context, destination, include string) error
+	// Push uploads the task's workspace to the remote storage.
+	Push(ctx context.Context) error
+	// Pull downloads the output directory from remote storage.
+	Pull(ctx context.Context) error
 
 	Status(ctx context.Context) (common.Status, error)
 	Events(ctx context.Context) []common.Event

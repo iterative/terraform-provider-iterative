@@ -77,6 +77,7 @@ type Environment struct {
 	Timeout      time.Duration
 	Directory    string
 	DirectoryOut string
+	ExcludeList  []string
 }
 
 type Variables map[string]*string

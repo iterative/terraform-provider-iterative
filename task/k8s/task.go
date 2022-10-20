@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -34,6 +35,11 @@ func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) 
 }
 
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
+	// This is a temporary measure, until we reimplement file syncing on k8s.
+	if len(task.Environment.ExcludeList) != 0 {
+		logrus.Warn("File excludes are not supported on k8s.")
+	}
+
 	client, err := client.New(ctx, cloud, cloud.Tags)
 	if err != nil {
 		return nil, err
@@ -136,9 +142,7 @@ func (t *Task) Create(ctx context.Context) error {
 			Action:      withEnv(env, t.Resources.Job.Create),
 		}, {
 			Description: "Uploading Directory...",
-			Action: withEnv(env, func(ctx context.Context) error {
-				return t.Push(ctx, t.Attributes.Directory)
-			}),
+			Action:      withEnv(env, t.Push),
 		}, {
 			Description: "Deleting ephemeral Job to upload directory...",
 			Action:      withEnv(env, t.Resources.Job.Delete),
@@ -198,9 +202,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			Action:      withEnv(env, t.Resources.Job.Create),
 		}, {
 			Description: "Downloading Directory...",
-			Action: withEnv(env, func(ctx context.Context) error {
-				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
-			}),
+			Action:      withEnv(env, t.Pull),
 		}, {
 			// WTH?
 			Description: "Deleting ephemeral Job to retrieve directory...",
@@ -225,7 +227,8 @@ func (t *Task) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (t *Task) Push(ctx context.Context, source string) error {
+// Push uploads the work directory to the persistent volume claim.
+func (t *Task) Push(ctx context.Context) error {
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Create, t.Client.Namespace, waitSelector)
 	if err != nil {
@@ -237,10 +240,12 @@ func (t *Task) Push(ctx context.Context, source string) error {
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
 
-	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
+	return copyOptions.Run([]string{t.Attributes.Directory,
+		fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
 }
 
-func (t *Task) Pull(ctx context.Context, destination, include string) error {
+// Pull downloads the output directory from the persistent volume claim.
+func (t *Task) Pull(ctx context.Context) error {
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Delete, t.Client.Namespace, waitSelector)
 	if err != nil {
@@ -263,7 +268,10 @@ func (t *Task) Pull(ctx context.Context, destination, include string) error {
 		return err
 	}
 
-	return machine.Transfer(ctx, dir, destination, include)
+	return machine.Transfer(ctx,
+		filepath.Join(dir, t.Attributes.DirectoryOut),
+		filepath.Join(t.Attributes.Directory, t.Attributes.DirectoryOut),
+		t.Attributes.Environment.ExcludeList)
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {

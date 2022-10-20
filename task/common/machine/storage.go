@@ -108,20 +108,12 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 	return initialStatus, nil
 }
 
-func Transfer(ctx context.Context, source, destination string, include string) error {
-	if include = filepath.Clean(include); filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
-		return errors.New("storage.output must be inside storage.workdir")
-	}
-
-	rules := []string{
-		"+ " + filepath.Clean("/"+include),
-		"+ " + filepath.Clean("/"+include+"/**"),
-		"- **",
-	}
-
+func Transfer(ctx context.Context, source, destination string, exclude []string) error {
 	ctx, fi := filter.AddConfig(ctx)
-	for _, rule := range rules {
-		if err := fi.AddRule(rule); err != nil {
+	for _, excludePattern := range exclude {
+		// TODO: remove
+		logrus.Warn(excludePattern)
+		if err := fi.AddRule("- " + excludePattern); err != nil {
 			return err
 		}
 	}
