@@ -93,6 +93,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		switch o.Follow {
 		case true:
 			logrus.SetLevel(logrus.WarnLevel)
+			ctx = context.Background()
 		case false:
 			return nil
 		}
