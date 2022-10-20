@@ -3,7 +3,9 @@ package read
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -12,12 +14,19 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+type status string
+
+const (
+	statusQueued    status = "queued"
+	statusSucceeded status = "succeeded"
+	statusFailed    status = "failed"
+	statusRunning   status = "running"
+)
+
 type Options struct {
 	Parallelism int
 	Timestamps  bool
-	Status      bool
-	Events      bool
-	Logs        bool
+	Follow      bool
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -35,9 +44,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
 	cmd.Flags().BoolVar(&o.Timestamps, "timestamps", false, "display timestamps")
-	cmd.Flags().BoolVar(&o.Status, "status", true, "read status")
-	cmd.Flags().BoolVar(&o.Logs, "logs", false, "read logs")
-	cmd.MarkFlagsMutuallyExclusive("status", "logs")
+	cmd.Flags().BoolVar(&o.Follow, "follow", false, "follow logs")
 
 	return cmd
 }
@@ -62,39 +69,70 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	if err := tsk.Read(ctx); err != nil {
-		return err
-	}
+	for last := 0; ; {
+		if err := tsk.Read(ctx); err != nil {
+			return err
+		}
 
-	switch {
-	case o.Logs:
-		return o.printLogs(ctx, tsk)
-	case o.Status:
-		return o.printStatus(ctx, tsk)
-	}
+		logs, err := o.getLogs(ctx, tsk)
+		if err != nil {
+			return err
+		}
+		status, err := o.getStatus(ctx, tsk)
+		if err != nil {
+			return err
+		}
 
-	return nil
-}
+		delta := strings.Join(logs[last:], "\n")
+		last = len(logs)
 
-func (o *Options) printLogs(ctx context.Context, tsk task.Task) error {
-	logs, err := tsk.Logs(ctx)
-	if err != nil {
-		return err
-	}
+		if delta != "" {
+			fmt.Println(delta)
+		}
 
-	for _, log := range logs {
-		for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
-			if !o.Timestamps {
-				_, line, _ = strings.Cut(line, " ")
-			}
-			fmt.Println(line)
+		switch o.Follow {
+		case true:
+			logrus.SetLevel(logrus.WarnLevel)
+		case false:
+			return nil
+		}
+
+		switch status {
+		case statusSucceeded:
+			fmt.Print("\n")
+			os.Exit(0)
+		case statusFailed:
+			fmt.Print("\n")
+			os.Exit(1)
+		default:
+			time.Sleep(3 * time.Second)
 		}
 	}
 
 	return nil
 }
 
-func (o *Options) printStatus(ctx context.Context, tsk task.Task) error {
+func (o *Options) getLogs(ctx context.Context, tsk task.Task) ([]string, error) {
+	logs, err := tsk.Logs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []string
+
+	for _, log := range logs {
+		for _, line := range strings.Split(strings.Trim(log, "\n"), "\n") {
+			if !o.Timestamps {
+				_, line, _ = strings.Cut(line, " ")
+			}
+			result = append(result, line)
+		}
+	}
+
+	return result, nil
+}
+
+func (o *Options) getStatus(ctx context.Context, tsk task.Task) (status, error) {
 	for _, event := range tsk.Events(ctx) {
 		line := fmt.Sprintf("%s: %s", event.Code, strings.Join(event.Description, " "))
 		if o.Timestamps {
@@ -106,21 +144,21 @@ func (o *Options) printStatus(ctx context.Context, tsk task.Task) error {
 
 	status, err := tsk.Status(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	message := "queued"
+	result := statusQueued
 
 	if status["succeeded"] >= o.Parallelism {
-		message = "succeeded"
+		result = statusSucceeded
 	}
 	if status["failed"] > 0 {
-		message = "failed"
+		result = statusFailed
 	}
 	if status["running"] >= o.Parallelism {
-		message = "running"
+		result = statusRunning
 	}
 
-	fmt.Println(message)
-	return nil
+	logrus.Debug(result)
+	return result, nil
 }
