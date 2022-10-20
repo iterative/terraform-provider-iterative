@@ -28,6 +28,14 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+// defaultTransferExcludes lists files that TPI will not transfer
+// to remote storage.
+var defaultTransferExcludes = []string{
+	"- /main.tf",
+	"- /terraform.tfstate*",
+	"- /.terraform**",
+}
+
 type StatusReport struct {
 	Result string
 	Status string
@@ -110,11 +118,16 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 
 func Transfer(ctx context.Context, source, destination string, exclude []string) error {
 	ctx, fi := filter.AddConfig(ctx)
-	for _, excludePattern := range exclude {
-		if !isRcloneFilter(excludePattern) {
-			excludePattern = "- " + excludePattern
+
+	rules := append([]string{}, defaultTransferExcludes...)
+	if len(exclude) > 0 {
+		rules = append(rules, exclude...)
+	}
+	for _, filterRule := range rules {
+		if !isRcloneFilter(filterRule) {
+			filterRule = "- " + filterRule
 		}
-		if err := fi.AddRule(excludePattern); err != nil {
+		if err := fi.AddRule(filterRule); err != nil {
 			return err
 		}
 	}
