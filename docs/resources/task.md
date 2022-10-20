@@ -24,7 +24,7 @@ resource "iterative_task" "example" {
   storage {
     workdir = "."         # default blank (don't upload)
     output  = "results"   # default blank (don't download). Relative to workdir
-    exclude = ["/.dvc/cache", "/results/tempfile", "*.pyc"]
+    exclude = [".dvc/cache", "results/tempfile", "*.pyc"]
   }
   script = <<-END
     #!/bin/bash

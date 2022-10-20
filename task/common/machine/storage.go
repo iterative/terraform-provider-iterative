@@ -125,6 +125,7 @@ func Transfer(ctx context.Context, source, destination string, exclude []string)
 	}
 	for _, filterRule := range rules {
 		if !isRcloneFilter(filterRule) {
+			filterRule = filepath.Join("/", filterRule)
 			filterRule = "- " + filterRule
 		}
 		if err := fi.AddRule(filterRule); err != nil {

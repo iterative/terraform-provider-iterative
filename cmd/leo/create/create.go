@@ -48,7 +48,7 @@ func New(cloud *common.Cloud) *cobra.Command {
 	cmd.Flags().StringVar(&o.Machine, "machine", "m", "machine type")
 	cmd.Flags().StringVar(&o.Name, "name", "", "deterministic name")
 	cmd.Flags().StringVar(&o.Output, "output", "", "output directory to download")
-	cmd.Flags().StringSliceVar(&o.Exclude, "exclude", nil, "comma-separated list of patterns to exclude from uploading and downloading")
+	cmd.Flags().StringSliceVar(&o.Exclude, "exclude", nil, "comma-separated list of paths to exclude from uploading and downloading")
 	cmd.Flags().IntVar(&o.Parallelism, "parallelism", 1, "parallelism")
 	cmd.Flags().StringVar(&o.PermissionSet, "permission-set", "", "permission set")
 	cmd.Flags().StringVar(&o.Script, "script", "", "script to run")

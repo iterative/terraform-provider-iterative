@@ -27,16 +27,24 @@ func TestTransferExcludes(t *testing.T) {
 		},
 	}, {
 		description: "Test excluding using glob patterns.",
-		exclude:     []string{"*.txt"},
+		exclude:     []string{"**.txt"},
 		expect: []string{
 			"/temp", // directory still gets transfered.
 		},
 	}, {
-		description: "Test rooted excludes.",
-		exclude:     []string{"/temp/a.txt"},
+		description: "Test explicitly anchored excludes.",
+		exclude:     []string{"/a.txt"},
 		expect: []string{
-			"/a.txt",
 			"/temp",
+			"/temp/a.txt",
+			"/temp/b.txt",
+		},
+	}, {
+		description: "Test implicitly anchored excludes.",
+		exclude:     []string{"a.txt"},
+		expect: []string{
+			"/temp",
+			"/temp/a.txt",
 			"/temp/b.txt",
 		},
 	}}
