@@ -130,6 +130,9 @@ func NewCmd() *cobra.Command {
 									if value, ok := nestedBlock["workdir"]; ok {
 										viper.Set("workdir", value)
 									}
+									if value, ok := nestedBlock["exclude"]; ok {
+										viper.Set("exclude", value)
+									}
 								}
 							}
 						}
