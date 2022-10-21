@@ -233,9 +233,8 @@ func (t *Task) Create(ctx context.Context) error {
 	if t.Attributes.Environment.Directory != "" {
 		steps = append(steps, common.Step{
 			Description: "Uploading Directory...",
-			Action: func(ctx context.Context) error {
-				return t.Push(ctx, t.Attributes.Environment.Directory)
-			}})
+			Action:      t.Push,
+		})
 	}
 	steps = append(steps, common.Step{
 		Description: "Starting task...",
@@ -315,7 +314,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			steps = []common.Step{{
 				Description: "Downloading Directory...",
 				Action: func(ctx context.Context) error {
-					err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
+					err := t.Pull(ctx)
 					if err != nil && err != common.NotFoundError {
 						return err
 					}
@@ -379,20 +378,23 @@ func (t *Task) Logs(ctx context.Context) ([]string, error) {
 	return machine.Logs(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
 }
 
-func (t *Task) Pull(ctx context.Context, destination, include string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", destination, include)
+// Pull downloads the output directory from remote storage.
+func (t *Task) Pull(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
-func (t *Task) Push(ctx context.Context, source string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, source, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", "**")
+// Push uploads the work directory to remote storage.
+func (t *Task) Push(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.Attributes.Environment.Directory,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.ExcludeList,
+	)
 }
 
 func (t *Task) Start(ctx context.Context) error {
