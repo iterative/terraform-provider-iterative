@@ -68,7 +68,8 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	for last := 0; ; {
+        var last int
+	for {
 		if err := tsk.Read(ctx); err != nil {
 			return err
 		}
