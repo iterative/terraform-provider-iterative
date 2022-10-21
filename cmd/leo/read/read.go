@@ -69,7 +69,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	for last := 0; ; {
+	for last := 0;; {
 		if err := tsk.Read(ctx); err != nil {
 			return err
 		}
@@ -78,16 +78,15 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		if err != nil {
 			return err
 		}
+
 		status, err := o.getStatus(ctx, tsk)
 		if err != nil {
 			return err
 		}
 
-		delta := strings.Join(logs[last:], "\n")
-		last = len(logs)
-
-		if delta != "" {
+		if delta := strings.Join(logs[last:], "\n"); delta != "" {
 			fmt.Println(delta)
+			last = len(logs)
 		}
 
 		switch o.Follow {
@@ -100,17 +99,13 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 
 		switch status {
 		case statusSucceeded:
-			fmt.Print("\n")
 			os.Exit(0)
 		case statusFailed:
-			fmt.Print("\n")
 			os.Exit(1)
 		default:
 			time.Sleep(3 * time.Second)
 		}
 	}
-
-	return nil
 }
 
 func (o *Options) getLogs(ctx context.Context, tsk task.Task) ([]string, error) {
