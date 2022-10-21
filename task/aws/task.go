@@ -299,10 +299,6 @@ func (t *Task) Delete(ctx context.Context) error {
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Logs(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
 }
 
@@ -346,10 +342,6 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Status(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"], t.Attributes.Status)
 }
 
