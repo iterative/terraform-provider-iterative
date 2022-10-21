@@ -57,7 +57,6 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cloud.Timeouts.Read)
-	defer cancel()
 
 	id, err := common.ParseIdentifier(args[0])
 	if err != nil {
@@ -69,7 +68,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-	for last := 0;; {
+	for last := 0; ; {
 		if err := tsk.Read(ctx); err != nil {
 			return err
 		}
@@ -91,8 +90,11 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 
 		switch o.Follow {
 		case true:
+			// disable debug logs for subsequent iterations
 			logrus.SetLevel(logrus.WarnLevel)
-			ctx = context.Background()
+			// create a new context to reset timeout on every iteration
+			ctx, cancel = context.WithTimeout(context.Background(), cloud.Timeouts.Read)
+			defer cancel()
 		case false:
 			return nil
 		}
@@ -145,13 +147,13 @@ func (o *Options) getStatus(ctx context.Context, tsk task.Task) (status, error) 
 
 	result := statusQueued
 
-	if status["succeeded"] >= o.Parallelism {
+	if status[common.StatusCodeSucceeded] >= o.Parallelism {
 		result = statusSucceeded
 	}
-	if status["failed"] > 0 {
+	if status[common.StatusCodeFailed] > 0 {
 		result = statusFailed
 	}
-	if status["running"] >= o.Parallelism {
+	if status[common.StatusCodeActive] >= o.Parallelism {
 		result = statusRunning
 	}
 
