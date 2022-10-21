@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -137,6 +138,15 @@ func resourceTask() *schema.Resource {
 							ForceNew: false,
 							Optional: true,
 							Default:  "",
+						},
+						"exclude": {
+							Type:     schema.TypeList,
+							ForceNew: false,
+							Optional: true,
+							Default:  nil,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -336,12 +346,22 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		Tags: tags,
 	}
 
-	directory := ""
-	directory_out := ""
+	var directory string
+	var directoryOut string
+	var excludeList []string
 	if d.Get("storage").(*schema.Set).Len() > 0 {
 		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
 		directory = storage["workdir"].(string)
-		directory_out = storage["output"].(string)
+		directoryOut = storage["output"].(string)
+		directoryOut = filepath.Clean(directoryOut)
+		if filepath.IsAbs(directoryOut) || strings.HasPrefix(directoryOut, "../") {
+			return nil, errors.New("storage.output must be inside storage.workdir")
+		}
+
+		excludes := storage["exclude"].([]interface{})
+		for _, exclude := range excludes {
+			excludeList = append(excludeList, exclude.(string))
+		}
 	}
 
 	t := common.Task{
@@ -354,7 +374,8 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			Script:       d.Get("script").(string),
 			Variables:    v,
 			Directory:    directory,
-			DirectoryOut: directory_out,
+			DirectoryOut: directoryOut,
+			ExcludeList:  excludeList,
 			Timeout:      time.Duration(d.Get("timeout").(int)) * time.Second,
 		},
 		Firewall: common.Firewall{

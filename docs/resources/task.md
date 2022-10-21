@@ -24,6 +24,7 @@ resource "iterative_task" "example" {
   storage {
     workdir = "."         # default blank (don't upload)
     output  = "results"   # default blank (don't download). Relative to workdir
+    exclude = [".dvc/cache", "results/tempfile", "*.pyc"]
   }
   script = <<-END
     #!/bin/bash
@@ -63,6 +64,7 @@ resource "iterative_task" "example" {
 - `parallelism` - (Optional) Number of machines to be launched in parallel.
 - `storage.workdir` - (Optional) Local working directory to upload and use as the `script` working directory.
 - `storage.output` - (Optional) Results directory (**relative to `workdir`**) to download (default: no download).
+- `storage.exclude` - (Optional) List of files and globs to exclude from transfering. Excluded files are neither uploaded to cloud storage nor downloaded from it. Exclusions are defined relative to `storage.workdir`.
 - `environment` - (Optional) Map of environment variable names and values for the task script. Empty string values are replaced with local environment values. Empty values may also be combined with a [glob](<https://en.wikipedia.org/wiki/Glob_(programming)>) name to import all matching variables.
 - `timeout` - (Optional) Maximum number of seconds to run before instances are force-terminated. The countdown is reset each time TPI auto-respawns a spot instance.
 - `tags` - (Optional) Map of tags for the created cloud resources.

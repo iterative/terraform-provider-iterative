@@ -28,6 +28,14 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
+// defaultTransferExcludes lists files that TPI will not transfer
+// to remote storage.
+var defaultTransferExcludes = []string{
+	"- /main.tf",
+	"- /terraform.tfstate*",
+	"- /.terraform**",
+}
+
 type StatusReport struct {
 	Result string
 	Status string
@@ -108,20 +116,19 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 	return initialStatus, nil
 }
 
-func Transfer(ctx context.Context, source, destination string, include string) error {
-	if include = filepath.Clean(include); filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
-		return errors.New("storage.output must be inside storage.workdir")
-	}
-
-	rules := []string{
-		"+ " + filepath.Clean("/"+include),
-		"+ " + filepath.Clean("/"+include+"/**"),
-		"- **",
-	}
-
+func Transfer(ctx context.Context, source, destination string, exclude []string) error {
 	ctx, fi := filter.AddConfig(ctx)
-	for _, rule := range rules {
-		if err := fi.AddRule(rule); err != nil {
+
+	rules := append([]string{}, defaultTransferExcludes...)
+	if len(exclude) > 0 {
+		rules = append(rules, exclude...)
+	}
+	for _, filterRule := range rules {
+		if !isRcloneFilter(filterRule) {
+			filterRule = filepath.Join("/", filterRule)
+			filterRule = "- " + filterRule
+		}
+		if err := fi.AddRule(filterRule); err != nil {
 			return err
 		}
 	}
@@ -197,4 +204,25 @@ func progress(interval time.Duration) func() {
 	return func() {
 		done <- true
 	}
+}
+
+// LimitTransfer updates the list of exclusion rules so that only a single subdirectory
+// is transfered.
+func LimitTransfer(subdir string, rules []string) []string {
+	dir := filepath.Clean(subdir)
+	if dir == "." || dir == "" {
+		// No changes needed.
+		return rules
+	}
+
+	newRules := append(rules, []string{
+		"+ " + filepath.Join("/", dir),
+		"+ " + filepath.Join("/", dir, "/**"),
+		"- /**",
+	}...)
+	return newRules
+}
+
+func isRcloneFilter(rule string) bool {
+	return strings.HasPrefix(rule, "+ ") || strings.HasPrefix(rule, "- ")
 }
