@@ -5,11 +5,10 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/aws/smithy-go"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/smithy-go"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
