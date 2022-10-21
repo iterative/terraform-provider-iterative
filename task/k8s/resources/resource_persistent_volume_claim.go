@@ -103,3 +103,13 @@ func (p *PersistentVolumeClaim) Delete(ctx context.Context) error {
 	}
 	return nil
 }
+
+// VolumeInfo returns information for attaching the persistent volume claim to the job.
+func (p *PersistentVolumeClaim) VolumeInfo(ctx context.Context) (string /*subpath*/, *kubernetes_core.PersistentVolumeClaimVolumeSource) {
+	pvc := &kubernetes_core.PersistentVolumeClaimVolumeSource{
+		ClaimName: p.Identifier,
+	}
+	// PersistentVolumeClaims are mounted at root.
+	return "", pvc
+
+}

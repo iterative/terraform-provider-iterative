@@ -23,6 +23,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/gobwas/glob v0.2.3
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/google/uuid v1.3.0
