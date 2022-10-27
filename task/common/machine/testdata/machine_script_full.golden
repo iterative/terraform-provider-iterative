@@ -11,9 +11,6 @@ sudo tee /usr/bin/tpi-task-shutdown << 'END'
 #!/bin/bash
 sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 source /opt/task/credentials
-if ! test -z "$CI"; then
-  cml rerun-workflow
-fi
 (systemctl is-system-running | grep stopping) || leo stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
 END
 
