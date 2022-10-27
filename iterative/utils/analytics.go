@@ -316,11 +316,6 @@ func ResourceData(d *schema.ResourceData) map[string]interface{} {
 func JitsuEventPayload(action string, e error, extra map[string]interface{}) (map[string]interface{}, error) {
 	systemInfo := SystemInfo()
 
-	err := ""
-	if e != nil {
-		err = reflect.TypeOf(e).String()
-	}
-
 	userId, uErr := UserId()
 	if uErr != nil {
 		return nil, uErr
@@ -350,8 +345,12 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) (ma
 		"os_name":      systemInfo["os_name"],
 		"os_version":   systemInfo["platform_version"],
 		"backend":      extra["cloud"],
-		"error":        err,
 		"extra":        extra,
+	}
+
+	if e != nil { 
+		// Get the type of the error as a string, but not the error message itself, because it can be sensitive.
+		payload["error"] = reflect.TypeOf(e).String()
 	}
 
 	return payload, nil
