@@ -40,7 +40,7 @@ vendor
 
 # ignore binaries in the root dir
 terraform-provider-iterative
-leo-*
+leo
 
 # JetBrains IDEs
 .idea/*
