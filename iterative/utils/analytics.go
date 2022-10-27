@@ -349,6 +349,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) (ma
 	}
 
 	if e != nil { 
+		// Get the type of the error as a string, but not the error message itself, because it can be sensitive.
 		payload["error"] = reflect.TypeOf(e).String()
 	}
 
