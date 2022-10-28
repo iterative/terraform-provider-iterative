@@ -14,6 +14,9 @@ default: build
 .PHONY: build
 build: tpi leo
 
+.PHONY: install
+install: install-tpi
+
 .PHONY: tpi
 tpi:
 	CGO_ENABLED=0 \
@@ -28,8 +31,8 @@ leo:
     	-o $(shell pwd)/leo \
     	$(LEO_PATH)
 
-.PHONY: install_tpi
-install_tpi:
+.PHONY: install-tpi
+install-tpi:
 	GOBIN=${TF_PLUGIN_INSTALL_PATH} go install -ldflags="$(GO_LINK_FLAGS)" $(TPI_PATH)
 
 .PHONY: test
