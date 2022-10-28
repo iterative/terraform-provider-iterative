@@ -349,7 +349,7 @@ func JitsuEventPayload(action string, e error, extra map[string]interface{}) (ma
 	}
 
 	if e != nil { 
-		// Only use error type (not message) to avoid potentially sensitive information.
+		// Only use error type (not message) to avoid potentially sensitive information
 		payload["error"] = reflect.TypeOf(e).String()
 	}
 
