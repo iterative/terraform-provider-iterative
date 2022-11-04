@@ -58,7 +58,7 @@ type storeCredentialsResponse struct {
 // Credentials is used to unmarshal the json request payload.
 type Credentials struct {
 	Type           string          // aws, gcp or az
-	AWSCredentials *AWSCredentials `json:"aws",omitempty`
+	AWSCredentials *AWSCredentials `json:"aws,omitempty"`
 }
 
 // AWSCredentials stores credentials for provisioning AWS resources.
