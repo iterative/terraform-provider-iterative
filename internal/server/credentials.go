@@ -14,9 +14,7 @@ const (
 	CredentialsHeader = "credentials"
 )
 
-// RequestWithCloudCredentials wraps the provided handler function
-// and extracts credentials from the http request's header. The credentials are passed on to
-// further handlers via the context.
+// CloudCredentialsFromRequest extracts credentials from the http request's header.
 func CloudCredentialsFromRequest(req *http.Request) (*common.Credentials, error) {
 	credentialsRaw := req.Header.Get(CredentialsHeader)
 	if len(credentialsRaw) == 0 {
