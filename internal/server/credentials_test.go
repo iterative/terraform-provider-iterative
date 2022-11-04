@@ -45,6 +45,7 @@ func TestCredentialMiddleware(t *testing.T) {
 	buff := &bytes.Buffer{}
 	err := json.NewEncoder(buff).Encode(creds)
 	assert.NoError(t, err)
+
 	encodedCredentials := base64.StdEncoding.EncodeToString(buff.Bytes())
 
 	req, err := http.NewRequest("GET", httpsrv.URL+"/", nil)
