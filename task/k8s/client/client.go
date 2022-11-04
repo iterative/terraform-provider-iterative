@@ -22,6 +22,10 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		kubeconfig = os.Getenv("KUBECONFIG_DATA")
 	}
 
+	if k8sCredentials := cloud.Credentials.K8SCredentials; k8sCredentials != nil {
+		kubeconfig = k8sCredentials.Config
+	}
+
 	config, err := clientcmd.NewClientConfigFromBytes([]byte(kubeconfig))
 	if err != nil || kubeconfig == "" {
 		config = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(

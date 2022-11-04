@@ -23,6 +23,10 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 
 	credentialsData := []byte(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_DATA"))
 
+	if gcpCredentials := cloud.Credentials.GCPCredentials; gcpCredentials != nil {
+		credentialsData = []byte(gcpCredentials.ApplicationCredentials)
+	}
+
 	var err error
 	var credentials *google.Credentials
 	if len(credentialsData) > 0 {
