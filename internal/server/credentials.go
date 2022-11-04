@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,6 +10,11 @@ import (
 
 const (
 	CredentialsTypeAWS = "aws"
+)
+
+const (
+	// CredentialsKeyHeader is the name of the header containing the credentials lookup key.
+	CredentialsKeyHeader = "key"
 )
 
 // storeCredentials stores the supplied credentials and returns
@@ -66,4 +72,40 @@ type AWSCredentials struct {
 	AccessKeyId     string `json:"aws_access_key_id"`
 	SecretAccessKey string `json:"aws_secret_access_key"`
 	SessionToken    string `json:"aws_session_token"`
+}
+
+// credentialsLookup wraps the provided handler function and first performs a lookup
+// of stored credentials based on the request's header.
+// The credentials are then stored in the context and the wrapped handler is called.
+func (s *server) credentialsLookup(h func(w http.ResponseWriter, req *http.Request)) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		key := req.Header.Get(CredentialsKeyHeader)
+
+		creds, err := s.LookupCredentials(key)
+		if err == ErrNotFound {
+			log.Printf("credentials with key %q not found", key)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if err != nil {
+			log.Printf("failed to lookup credentials: %s", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		ctx := contextWithCredentials(req.Context(), *creds)
+		h(w, req.WithContext(ctx))
+	}
+}
+
+type contextCredentialsKey struct{}
+
+// contextWithCredentials stores the supplied credentials in the context.
+func contextWithCredentials(ctx context.Context, creds Credentials) context.Context {
+	return context.WithValue(ctx, contextCredentialsKey{}, creds)
+}
+
+// credentialsFromContext retrieves credentials from the context.
+func credentialsFromContext(ctx context.Context) (Credentials, bool) {
+	creds, ok := ctx.Value(contextCredentialsKey{}).(Credentials)
+	return creds, ok
 }
