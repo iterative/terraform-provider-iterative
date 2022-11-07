@@ -30,10 +30,7 @@ type Credentials struct {
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
-	credentials, err := c.client.Settings.GetClientCredentials()
-	if err != nil {
-		return err
-	}
+	credentials := c.client.Cloud.Credentials.AZCredentials
 
 	if len(credentials.ClientSecret) == 0 {
 		return errors.New("unable to find client secret")
@@ -44,12 +41,10 @@ func (c *Credentials) Read(ctx context.Context) error {
 		return err
 	}
 
-	subscriptionID := c.client.Settings.GetSubscriptionID()
-
 	c.Resource = map[string]string{
 		"AZURE_CLIENT_ID":         credentials.ClientID,
 		"AZURE_CLIENT_SECRET":     credentials.ClientSecret,
-		"AZURE_SUBSCRIPTION_ID":   subscriptionID,
+		"AZURE_SUBSCRIPTION_ID":   credentials.SubscriptionID,
 		"AZURE_TENANT_ID":         credentials.TenantID,
 		"RCLONE_REMOTE":           connectionString,
 		"TPI_TASK_CLOUD_PROVIDER": string(c.client.Cloud.Provider),

@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -29,7 +30,22 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		region = val
 	}
 
-	config, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	options := []func(*config.LoadOptions) error{
+		config.WithRegion(region),
+	}
+
+	if awsCredentials := cloud.Credentials.AWSCredentials; awsCredentials != nil {
+		options = append(options, config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+			Value: aws.Credentials{
+				AccessKeyID:     awsCredentials.AccessKeyID,
+				SecretAccessKey: awsCredentials.SecretAccessKey,
+				SessionToken:    awsCredentials.SessionToken,
+				Source:          "user-specified credentials",
+			},
+		}))
+	}
+
+	config, err := config.LoadDefaultConfig(ctx, options...)
 	if err != nil {
 		return nil, err
 	}
