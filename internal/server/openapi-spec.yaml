@@ -1,0 +1,197 @@
+openapi: 3.0.3
+info:
+  title: LEO server API specification
+  description: LEO server handles requests to manage execution of tasks in public cloud infrastructure.
+  version: 0.0.1-alpha
+components:
+  schemas:
+    Credentials:
+      description: This defines the schema of the base64-encoded json in the 'credentials' header.
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+            - aws
+            # other providers will be added later
+        aws:
+          type: object
+          properties:
+            AccessKeyID:
+              type: string
+            SecretAccessKey:
+              type: string
+            SessionTOken:
+              type: string
+    Task:
+      description: Task definition for allocating cloud resources.
+      type: object
+      properties:
+        env:
+          description: Environment variable mappings.
+          type: object
+          additionalProperties:
+            type: string
+        tags:
+          description: Resource tags.
+          type: object
+          additionalProperties:
+            type: string
+        image:
+          description: Machine image.
+          type: string
+        machine:
+          description: Machine type.
+          type: string
+        script:
+          type: string
+          format: byte
+        spot:
+          type: boolean
+        storage:
+          description: Disk size (GB).
+          type: integer
+        timeout:
+          description: Task execution timeout (seconds).
+          type: integer
+    TaskList:
+      description: List of allocated tasks.
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            type: string # task id
+    TaskStatus:
+      description: Status of an allocated task.
+      type: object
+      properties:
+        # TODO: define in more detail.
+        status:
+          type: string
+    Job:
+      description: |
+        Job identifier returned when triggering allocation or
+        deallocation of resources.
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - executing
+            - done
+            - error
+        error:
+          type: string
+      required:
+        - id
+
+paths:
+  '/task/':
+    post:
+      operationId: createTask
+      summary: Start executing a task.
+      parameters:
+        - name: credentials
+          in: header
+          schema:
+            type: string
+            format: byte # byte64 encoded
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+      responses:
+        '200':
+          description: Allocation started succesfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+    get:
+      operationId: listTasks
+      summary: List allocated tasks.
+      parameters:
+        - name: credentials
+          in: header
+          schema:
+            type: string
+            format: byte # byte64 encoded
+          required: true
+      responses:
+        '200':
+          description: Allocation started succesfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+  '/task/{id}':
+    get:
+      operationId: getTaskStatus
+      summary: Get task status.
+      parameters:
+        - name: credentials
+          in: header
+          schema:
+            type: string
+            format: byte # byte64 encoded
+          required: true
+        - name: id
+          description: id of the task.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Allocation started succesfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatus'
+    delete:
+      operationId: destroyTask
+      summary: Deallocate task resources.
+      parameters:
+        - name: credentials
+          in: header
+          schema:
+            type: string
+            format: byte # byte64 encoded
+          required: true
+        - name: id
+          description: id of the task.
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Deallocation started succesfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+  '/job/{id}':
+    get:
+      operationId: getJobStatus
+      summary: Get status of a job.
+      parameters:
+        - name: id
+          description: id of the job.
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Allocation started succesfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatus'
