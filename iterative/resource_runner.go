@@ -416,6 +416,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 				Attributes: AttributesType{
 					ID:                 d.Id(),
 					Cloud:              d.Get("cloud").(string),
+					Spot:               d.Get("spot").(bool),
 					Region:             d.Get("region").(string),
 					Name:               d.Get("name").(string),
 					Labels:             "",
@@ -500,6 +501,7 @@ type AttributesType struct {
 	Token              string      `json:"token"`
 	Driver             string      `json:"driver"`
 	Cloud              string      `json:"cloud"`
+	Spot               bool        `json:"spot"`
 	CustomData         string      `json:"custom_data"`
 	ID                 string      `json:"id"`
 	Image              interface{} `json:"image"`
