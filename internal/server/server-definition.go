@@ -28,7 +28,7 @@ type Credentials struct {
 	Aws *struct {
 		AccessKeyID     *string `json:"AccessKeyID,omitempty"`
 		SecretAccessKey *string `json:"SecretAccessKey,omitempty"`
-		SessionTOken    *string `json:"SessionTOken,omitempty"`
+		SessionToken    *string `json:"SessionToken,omitempty"`
 	} `json:"aws,omitempty"`
 	Provider *CredentialsProvider `json:"provider,omitempty"`
 }
