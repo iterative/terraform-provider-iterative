@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-)
 
-const (
-	CredentialsTypeAWS = "aws"
+	"terraform-provider-iterative/task/common"
 )
 
 const (
@@ -32,7 +30,7 @@ func (s *server) storeCredentials(w http.ResponseWriter, req *http.Request) (*st
 	// TODO: more validation
 	var key string
 	switch creds.Type {
-	case CredentialsTypeAWS:
+	case common.ProviderAWS:
 		key = creds.AWSCredentials.AccessKeyId
 	default:
 		log.Printf("credentials type %q is not supported", creds.Type)
@@ -63,7 +61,7 @@ type storeCredentialsResponse struct {
 
 // Credentials is used to unmarshal the json request payload.
 type Credentials struct {
-	Type           string          // aws, gcp or az
+	Type           common.Provider // aws, gcp or az
 	AWSCredentials *AWSCredentials `json:"aws,omitempty"`
 }
 
