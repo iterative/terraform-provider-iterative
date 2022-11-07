@@ -31,10 +31,10 @@ const (
 )
 
 type Credentials struct {
-	*AWSCredentials
-	*GCPCredentials
-	*AZCredentials
-	*K8SCredentials
+	AWSCredentials *AWSCredentials
+	GCPCredentials *GCPCredentials
+	AZCredentials  *AZCredentials
+	K8SCredentials *K8SCredentials
 }
 
 type AWSCredentials struct {
