@@ -62,13 +62,15 @@ func (c Credentials) Validate() error {
 	default:
 		return fmt.Errorf("unsupported cloud provider: %q", c.Provider)
 	}
-
 	fields := []bool{c.AWSCredentials != nil, c.GCPCredentials != nil, c.AZCredentials != nil, c.K8SCredentials != nil}
 	var count int
 	for _, fieldNotNil := range fields {
 		if fieldNotNil {
 			count++
 		}
+	}
+	if count == 0 {
+		return errors.New("empty credentials")
 	}
 	if count > 1 {
 		return errors.New("conflicting credentials")

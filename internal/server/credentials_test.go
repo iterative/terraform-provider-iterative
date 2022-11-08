@@ -16,7 +16,7 @@ import (
 
 func TestCredentialMiddleware(t *testing.T) {
 	echoHandler := func(w http.ResponseWriter, req *http.Request) {
-		creds, err := server.CloudCredentialsFromRequest(req)
+		creds, err := server.CredentialsFromRequest(req)
 		if err != nil {
 			server.RespondError(req.Context(), w, err)
 			return
@@ -45,7 +45,6 @@ func TestCredentialMiddleware(t *testing.T) {
 	buff := &bytes.Buffer{}
 	err := json.NewEncoder(buff).Encode(creds)
 	assert.NoError(t, err)
-
 	encodedCredentials := base64.StdEncoding.EncodeToString(buff.Bytes())
 
 	req, err := http.NewRequest("GET", httpsrv.URL+"/", nil)
