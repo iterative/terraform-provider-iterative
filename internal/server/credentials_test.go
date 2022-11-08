@@ -16,19 +16,18 @@ import (
 
 func TestCredentialMiddleware(t *testing.T) {
 	echoHandler := func(w http.ResponseWriter, req *http.Request) {
-		creds, ok := server.CredentialsFromContext(req.Context())
-		if !ok {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		creds, err := server.CloudCredentialsFromRequest(req)
+		if err != nil {
+			panic(err)
 		}
-		err := json.NewEncoder(w).Encode(creds)
+		err = json.NewEncoder(w).Encode(*creds)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", server.RequestWithCloudCredentials(echoHandler))
+	mux.HandleFunc("/", echoHandler)
 
 	httpsrv := httptest.NewServer(mux)
 	defer httpsrv.Close()
