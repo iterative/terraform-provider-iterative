@@ -45,7 +45,6 @@ components:
           type: string
         script:
           type: string
-          format: byte
         spot:
           type: boolean
         storage:
@@ -54,6 +53,12 @@ components:
         timeout:
           description: Task execution timeout (seconds).
           type: integer
+      required:
+        - image
+        - machine
+        - script
+        - storage
+        - timeout
     TaskList:
       description: List of allocated tasks.
       type: object
@@ -93,19 +98,19 @@ paths:
     post:
       operationId: createTask
       summary: Start executing a task.
-      parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # byte64 encoded
-          required: true
+#      parameters:
+#        - name: credentials
+#          in: header
+#          schema:
+#            type: string
+#            format: byte # byte64 encoded
+#          required: true
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Credentials'
+              $ref: '#/components/schemas/Task'
       responses:
         '200':
           description: Allocation started succesfully.

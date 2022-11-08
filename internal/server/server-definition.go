@@ -11,30 +11,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Defines values for CredentialsProvider.
-const (
-	Aws CredentialsProvider = "aws"
-)
-
 // Defines values for JobStatus.
 const (
 	Done      JobStatus = "done"
 	Error     JobStatus = "error"
 	Executing JobStatus = "executing"
 )
-
-// Credentials This defines the schema of the base64-encoded json in the 'credentials' header.
-type Credentials struct {
-	Aws *struct {
-		AccessKeyID     *string `json:"AccessKeyID,omitempty"`
-		SecretAccessKey *string `json:"SecretAccessKey,omitempty"`
-		SessionToken    *string `json:"SessionToken,omitempty"`
-	} `json:"aws,omitempty"`
-	Provider *CredentialsProvider `json:"provider,omitempty"`
-}
-
-// CredentialsProvider defines model for Credentials.Provider.
-type CredentialsProvider string
 
 // Job Job identifier returned when triggering allocation or
 // deallocation of resources.
@@ -46,6 +28,29 @@ type Job struct {
 
 // JobStatus defines model for Job.Status.
 type JobStatus string
+
+// Task Task definition for allocating cloud resources.
+type Task struct {
+	// Env Environment variable mappings.
+	Env *map[string]string `json:"env,omitempty"`
+
+	// Image Machine image.
+	Image string `json:"image"`
+
+	// Machine Machine type.
+	Machine string `json:"machine"`
+	Script  string `json:"script"`
+	Spot    *bool  `json:"spot,omitempty"`
+
+	// Storage Disk size (GB).
+	Storage int `json:"storage"`
+
+	// Tags Resource tags.
+	Tags *map[string]string `json:"tags,omitempty"`
+
+	// Timeout Task execution timeout (seconds).
+	Timeout int `json:"timeout"`
+}
 
 // TaskList List of allocated tasks.
 type TaskList struct {
@@ -62,11 +67,6 @@ type ListTasksParams struct {
 	Credentials []byte `json:"credentials"`
 }
 
-// CreateTaskParams defines parameters for CreateTask.
-type CreateTaskParams struct {
-	Credentials []byte `json:"credentials"`
-}
-
 // DestroyTaskParams defines parameters for DestroyTask.
 type DestroyTaskParams struct {
 	Credentials []byte `json:"credentials"`
@@ -78,7 +78,7 @@ type GetTaskStatusParams struct {
 }
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
-type CreateTaskJSONRequestBody = Credentials
+type CreateTaskJSONRequestBody = Task
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -90,7 +90,7 @@ type ServerInterface interface {
 	ListTasks(w http.ResponseWriter, r *http.Request, params ListTasksParams)
 	// Start executing a task.
 	// (POST /task/)
-	CreateTask(w http.ResponseWriter, r *http.Request, params CreateTaskParams)
+	CreateTask(w http.ResponseWriter, r *http.Request)
 	// Deallocate task resources.
 	// (DELETE /task/{id})
 	DestroyTask(w http.ResponseWriter, r *http.Request, id string, params DestroyTaskParams)
@@ -183,38 +183,8 @@ func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Requ
 func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params CreateTaskParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
-
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateTask(w, r, params)
+		siw.Handler.CreateTask(w, r)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {

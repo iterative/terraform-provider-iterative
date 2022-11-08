@@ -20,9 +20,9 @@ func init() {
 type JobState string
 
 const (
-	JobRunning  JobState = "running"
-	JobFinished          = "finished"
-	JobFailed            = "failed"
+	JobRunning  JobState = "executing"
+	JobFinished          = "done"
+	JobFailed            = "error"
 )
 
 // Job defines the interface for background jobs run by the job manager.
