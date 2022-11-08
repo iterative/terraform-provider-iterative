@@ -17,6 +17,10 @@ build: tpi leo
 .PHONY: install
 install: install-tpi
 
+.PHONY: deps
+deps: # Install development dependencies
+	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.2
+
 .PHONY: tpi
 tpi:
 	CGO_ENABLED=0 \
@@ -48,4 +52,5 @@ sweep:
 	SMOKE_TEST_SWEEP=true go test ./task -v ${TESTARGS} -timeout=30m -count=1
 
 .PHONY: generate
+generate:
 	go generate ./...

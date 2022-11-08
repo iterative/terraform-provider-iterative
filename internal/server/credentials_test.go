@@ -2,42 +2,58 @@ package server_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"terraform-provider-iterative/internal/server"
+	"terraform-provider-iterative/task/common"
 )
 
-func TestCredentialStorage(t *testing.T) {
-	srv := server.NewServer()
+func TestCredentialMiddleware(t *testing.T) {
+	echoHandler := func(w http.ResponseWriter, req *http.Request) {
+		creds, ok := server.CredentialsFromContext(req.Context())
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		err := json.NewEncoder(w).Encode(creds)
+		if err != nil {
+			panic(err)
+		}
+	}
 
-	httpsrv := httptest.NewServer(srv.Router())
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", server.RequestWithCloudCredentials(echoHandler))
+
+	httpsrv := httptest.NewServer(mux)
 	defer httpsrv.Close()
 	client := httpsrv.Client()
 
-	creds := server.Credentials{
-		Type: server.CredentialsTypeAWS,
-		AWSCredentials: &server.AWSCredentials{
-			AccessKeyId:     "aws-access-key",
+	creds := common.Credentials{
+		AWSCredentials: &common.AWSCredentials{
+			AccessKeyID:     "aws-access-key",
 			SecretAccessKey: "secret",
 		},
 	}
 	buff := &bytes.Buffer{}
 	err := json.NewEncoder(buff).Encode(creds)
 	assert.NoError(t, err)
+	encodedCredentials := base64.StdEncoding.EncodeToString(buff.Bytes())
 
-	resp, err := client.Post(httpsrv.URL+"/credentials", "application/json", buff)
+	req, err := http.NewRequest("GET", httpsrv.URL+"/", nil)
+	assert.NoError(t, err)
+	req.Header.Set(server.CredentialsHeader, encodedCredentials)
+
+	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	defer resp.Body.Close()
-	var response struct{ Key string }
+	var response common.Credentials
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	assert.NoError(t, err)
-	assert.Equal(t, response.Key, creds.AWSCredentials.AccessKeyId)
-
-	storedCreds, err := srv.LookupCredentials(response.Key)
-	assert.NoError(t, err)
-	assert.EqualValues(t, creds, *storedCreds)
+	assert.EqualValues(t, response, creds)
 }

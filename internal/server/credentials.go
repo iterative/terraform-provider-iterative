@@ -2,95 +2,49 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"log"
+	"errors"
 	"net/http"
 
 	"terraform-provider-iterative/task/common"
 )
 
 const (
-	// CredentialsKeyHeader is the name of the header containing the credentials lookup key.
-	CredentialsKeyHeader = "key"
+	// CredentialsHeader is the name of the header containing the credentials lookup key.
+	CredentialsHeader = "credentials"
 )
 
-// storeCredentials stores the supplied credentials and returns
-// a response indicating a key to reference those credentials in subsequent requests.
-func (s *server) storeCredentials(w http.ResponseWriter, req *http.Request) (*storeCredentialsResponse, error) {
-	dec := json.NewDecoder(req.Body)
-	defer req.Body.Close()
-
-	var creds Credentials
-	err := dec.Decode(&creds)
-	if err != nil {
-		log.Printf("failed to unmarshal request: %s", err.Error())
-		return nil, err
-	}
-	// TODO: more validation
-	var key string
-	switch creds.Type {
-	case common.ProviderAWS:
-		key = creds.AWSCredentials.AccessKeyId
-	default:
-		log.Printf("credentials type %q is not supported", creds.Type)
-		return nil, fmt.Errorf("unsupported credential type %q", creds.Type)
-	}
-	s.m.Lock()
-	defer s.m.Unlock()
-	s.credentials[key] = creds
-	return &storeCredentialsResponse{Key: key}, nil
-}
-
-// LookupCredentials searches the in-memory store for credentials associated with the
-// specified key.
-func (s *server) LookupCredentials(key string) (*Credentials, error) {
-	s.m.Lock()
-	defer s.m.Unlock()
-	creds, ok := s.credentials[key]
-	if !ok {
-		return nil, ErrNotFound
-	}
-	return &creds, nil
-}
-
-// storeCredentialsResponse is returned on succesful requests to store credentials.
-type storeCredentialsResponse struct {
-	Key string `json:"key"`
-}
-
-// Credentials is used to unmarshal the json request payload.
-type Credentials struct {
-	Type           common.Provider // aws, gcp or az
-	AWSCredentials *AWSCredentials `json:"aws,omitempty"`
-}
-
-// AWSCredentials stores credentials for provisioning AWS resources.
-type AWSCredentials struct {
-	AccessKeyId     string `json:"aws_access_key_id"`
-	SecretAccessKey string `json:"aws_secret_access_key"`
-	SessionToken    string `json:"aws_session_token"`
-}
-
-// credentialsLookup wraps the provided handler function and first performs a lookup
-// of stored credentials based on the request's header.
-// The credentials are then stored in the context and the wrapped handler is called.
-func (s *server) credentialsLookup(h func(w http.ResponseWriter, req *http.Request)) func(w http.ResponseWriter, req *http.Request) {
+// RequestWithCloudCredentials wraps the provided handler function
+// and extracts credentials from the http request's header. The credentials are passed on to
+// further handlers via the context.
+func RequestWithCloudCredentials(h func(w http.ResponseWriter, req *http.Request)) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		key := req.Header.Get(CredentialsKeyHeader)
-
-		creds, err := s.LookupCredentials(key)
-		if err == ErrNotFound {
-			log.Printf("credentials with key %q not found", key)
-			w.WriteHeader(http.StatusUnauthorized)
+		credentialsRaw := req.Header.Get(CredentialsHeader)
+		if len(credentialsRaw) == 0 {
+			respondError(req.Context(), w, errors.New("empty credentials header"))
 			return
 		}
+		credentialsJson := make([]byte, base64.StdEncoding.DecodedLen(len(credentialsRaw)))
+		n, err := base64.StdEncoding.Decode(credentialsJson, []byte(credentialsRaw))
 		if err != nil {
-			log.Printf("failed to lookup credentials: %s", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			respondError(req.Context(), w, err)
 			return
 		}
-		ctx := contextWithCredentials(req.Context(), *creds)
+		credentialsJson = credentialsJson[:n]
+		var credentials common.Credentials
+		err = json.Unmarshal([]byte(credentialsJson), &credentials)
+		if err != nil {
+			respondError(req.Context(), w, err)
+			return
+		}
+
+		err = credentials.Validate()
+		if err != nil {
+			respondError(req.Context(), w, err)
+			return
+		}
+		ctx := contextWithCredentials(req.Context(), credentials)
 		h(w, req.WithContext(ctx))
 	}
 }
@@ -98,12 +52,12 @@ func (s *server) credentialsLookup(h func(w http.ResponseWriter, req *http.Reque
 type contextCredentialsKey struct{}
 
 // contextWithCredentials stores the supplied credentials in the context.
-func contextWithCredentials(ctx context.Context, creds Credentials) context.Context {
+func contextWithCredentials(ctx context.Context, creds common.Credentials) context.Context {
 	return context.WithValue(ctx, contextCredentialsKey{}, creds)
 }
 
-// credentialsFromContext retrieves credentials from the context.
-func credentialsFromContext(ctx context.Context) (Credentials, bool) {
-	creds, ok := ctx.Value(contextCredentialsKey{}).(Credentials)
+// CredentialsFromContext retrieves credentials from the context.
+func CredentialsFromContext(ctx context.Context) (common.Credentials, bool) {
+	creds, ok := ctx.Value(contextCredentialsKey{}).(common.Credentials)
 	return creds, ok
 }

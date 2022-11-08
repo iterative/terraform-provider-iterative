@@ -8,8 +8,77 @@ import (
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
+
+// Defines values for CredentialsProvider.
+const (
+	Aws CredentialsProvider = "aws"
+)
+
+// Defines values for JobStatus.
+const (
+	Done      JobStatus = "done"
+	Error     JobStatus = "error"
+	Executing JobStatus = "executing"
+)
+
+// Credentials This defines the schema of the base64-encoded json in the 'credentials' header.
+type Credentials struct {
+	Aws *struct {
+		AccessKeyID     *string `json:"AccessKeyID,omitempty"`
+		SecretAccessKey *string `json:"SecretAccessKey,omitempty"`
+		SessionTOken    *string `json:"SessionTOken,omitempty"`
+	} `json:"aws,omitempty"`
+	Provider *CredentialsProvider `json:"provider,omitempty"`
+}
+
+// CredentialsProvider defines model for Credentials.Provider.
+type CredentialsProvider string
+
+// Job Job identifier returned when triggering allocation or
+// deallocation of resources.
+type Job struct {
+	Error  *string    `json:"error,omitempty"`
+	Id     string     `json:"id"`
+	Status *JobStatus `json:"status,omitempty"`
+}
+
+// JobStatus defines model for Job.Status.
+type JobStatus string
+
+// TaskList List of allocated tasks.
+type TaskList struct {
+	Tasks *[]string `json:"tasks,omitempty"`
+}
+
+// TaskStatus Status of an allocated task.
+type TaskStatus struct {
+	Status *string `json:"status,omitempty"`
+}
+
+// ListTasksParams defines parameters for ListTasks.
+type ListTasksParams struct {
+	Credentials []byte `json:"credentials"`
+}
+
+// CreateTaskParams defines parameters for CreateTask.
+type CreateTaskParams struct {
+	Credentials []byte `json:"credentials"`
+}
+
+// DestroyTaskParams defines parameters for DestroyTask.
+type DestroyTaskParams struct {
+	Credentials []byte `json:"credentials"`
+}
+
+// GetTaskStatusParams defines parameters for GetTaskStatus.
+type GetTaskStatusParams struct {
+	Credentials []byte `json:"credentials"`
+}
+
+// CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
+type CreateTaskJSONRequestBody = Credentials
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -37,7 +106,7 @@ type ServerInterfaceWrapper struct {
 	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(http.Handler) http.Handler
 
 // GetJobStatus operation middleware
 func (siw *ServerInterfaceWrapper) GetJobStatus(w http.ResponseWriter, r *http.Request) {
@@ -48,21 +117,21 @@ func (siw *ServerInterfaceWrapper) GetJobStatus(w http.ResponseWriter, r *http.R
 	// ------------- Path parameter "id" -------------
 	var id string
 
-	err = runtime.BindStyledParameter("simple", false, "id", mux.Vars(r)["id"], &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetJobStatus(w, r, id)
-	}
+	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
 
-	handler(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
 // ListTasks operation middleware
@@ -94,20 +163,20 @@ func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Requ
 		params.Credentials = Credentials
 
 	} else {
-		err = fmt.Errorf("Header parameter credentials is required, but not found")
+		err := fmt.Errorf("Header parameter credentials is required, but not found")
 		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListTasks(w, r, params)
-	}
+	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
 
-	handler(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
 // CreateTask operation middleware
@@ -139,20 +208,20 @@ func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Req
 		params.Credentials = Credentials
 
 	} else {
-		err = fmt.Errorf("Header parameter credentials is required, but not found")
+		err := fmt.Errorf("Header parameter credentials is required, but not found")
 		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateTask(w, r, params)
-	}
+	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
 
-	handler(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
 // DestroyTask operation middleware
@@ -164,7 +233,7 @@ func (siw *ServerInterfaceWrapper) DestroyTask(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "id" -------------
 	var id string
 
-	err = runtime.BindStyledParameter("simple", false, "id", mux.Vars(r)["id"], &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -193,20 +262,20 @@ func (siw *ServerInterfaceWrapper) DestroyTask(w http.ResponseWriter, r *http.Re
 		params.Credentials = Credentials
 
 	} else {
-		err = fmt.Errorf("Header parameter credentials is required, but not found")
+		err := fmt.Errorf("Header parameter credentials is required, but not found")
 		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DestroyTask(w, r, id, params)
-	}
+	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
 
-	handler(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
 // GetTaskStatus operation middleware
@@ -218,7 +287,7 @@ func (siw *ServerInterfaceWrapper) GetTaskStatus(w http.ResponseWriter, r *http.
 	// ------------- Path parameter "id" -------------
 	var id string
 
-	err = runtime.BindStyledParameter("simple", false, "id", mux.Vars(r)["id"], &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -247,20 +316,20 @@ func (siw *ServerInterfaceWrapper) GetTaskStatus(w http.ResponseWriter, r *http.
 		params.Credentials = Credentials
 
 	} else {
-		err = fmt.Errorf("Header parameter credentials is required, but not found")
+		err := fmt.Errorf("Header parameter credentials is required, but not found")
 		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetTaskStatus(w, r, id, params)
-	}
+	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
 
-	handler(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
 type UnescapedCookieParamError struct {
@@ -334,36 +403,36 @@ func (e *TooManyValuesForParamError) Error() string {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-type GorillaServerOptions struct {
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       *mux.Router
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = mux.NewRouter()
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -376,15 +445,21 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/job/{id}", wrapper.GetJobStatus).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/task/", wrapper.ListTasks).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/task/", wrapper.CreateTask).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/task/{id}", wrapper.DestroyTask).Methods("DELETE")
-
-	r.HandleFunc(options.BaseURL+"/task/{id}", wrapper.GetTaskStatus).Methods("GET")
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/job/{id}", wrapper.GetJobStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/task/", wrapper.ListTasks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/task/", wrapper.CreateTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/task/{id}", wrapper.DestroyTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/task/{id}", wrapper.GetTaskStatus)
+	})
 
 	return r
 }
