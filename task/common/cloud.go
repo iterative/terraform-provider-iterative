@@ -33,8 +33,8 @@ const (
 type Credentials struct {
 	AWSCredentials *AWSCredentials `json:"aws,omitempty"`
 	GCPCredentials *GCPCredentials `json:"gcp,omitempty"`
-	AZCredentials  *AZCredentials  `json:az,omitempty"`
-	K8SCredentials *K8SCredentials `json:k8s,omitempty"`
+	AZCredentials  *AZCredentials  `json:"az,omitempty"`
+	K8SCredentials *K8SCredentials `json:"k8s,omitempty"`
 }
 
 // Validate checks that the credentials are valid.
@@ -56,7 +56,7 @@ func (c Credentials) Validate() error {
 }
 
 type AWSCredentials struct {
-	AccessKeyID     string `json:"access-key-id,omitempty`      // AWS_ACCESS_KEY_ID
+	AccessKeyID     string `json:"access-key-id,omitempty"`     // AWS_ACCESS_KEY_ID
 	SecretAccessKey string `json:"secret-access-key,omitempty"` // AWS_SECRET_ACCESS_KEY
 	SessionToken    string `json:"session-token,omitempty"`     // AWS_SESSION_TOKEN
 }

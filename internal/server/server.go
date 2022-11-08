@@ -31,8 +31,8 @@ type server struct {
 	router *chi.Mux
 }
 
-// respondError writes the following error to the response writer.
-func respondError(ctx context.Context, w http.ResponseWriter, err error) {
+// RespondError writes the following error to the response writer.
+func RespondError(ctx context.Context, w http.ResponseWriter, err error) {
 	log.Printf("responding with error: %s", err.Error())
 	// TODO: implement error to status code mapping.
 	w.WriteHeader(http.StatusInternalServerError)

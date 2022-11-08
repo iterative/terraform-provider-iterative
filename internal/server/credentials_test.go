@@ -18,11 +18,13 @@ func TestCredentialMiddleware(t *testing.T) {
 	echoHandler := func(w http.ResponseWriter, req *http.Request) {
 		creds, err := server.CloudCredentialsFromRequest(req)
 		if err != nil {
-			panic(err)
+			server.RespondError(req.Context(), w, err)
+			return
 		}
 		err = json.NewEncoder(w).Encode(*creds)
 		if err != nil {
-			panic(err)
+			server.RespondError(req.Context(), w, err)
+			return
 		}
 	}
 
