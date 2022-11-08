@@ -68,7 +68,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return err
 	}
 
-        var last int
+	var last int
+	firstRun := true
+	waiting := false
 	for {
 		if err := tsk.Read(ctx); err != nil {
 			return err
@@ -79,12 +81,25 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 			return err
 		}
 
+		if firstRun && len(logs) == 0 {
+			fmt.Fprint(os.Stderr, "Waiting for instance")
+			waiting = true
+		}
+		firstRun = false
+		if waiting {
+			fmt.Fprint(os.Stderr, ".")
+		}
+
 		status, err := o.getStatus(ctx, tsk)
 		if err != nil {
 			return err
 		}
 
 		if delta := strings.Join(logs[last:], "\n"); delta != "" {
+			if waiting {
+				fmt.Fprint(os.Stderr, "\n")
+				waiting = false
+			}
 			fmt.Println(delta)
 			last = len(logs)
 		}
