@@ -82,12 +82,12 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		}
 
 		if firstRun && len(logs) == 0 {
-			fmt.Print("Waiting for instance")
+			fmt.Fprint(os.Stderr, "Waiting for instance")
 			waiting = true
 		}
 		firstRun = false
 		if waiting {
-			fmt.Print(".")
+			fmt.Fprint(os.Stderr, ".")
 		}
 
 		status, err := o.getStatus(ctx, tsk)
@@ -97,7 +97,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 
 		if delta := strings.Join(logs[last:], "\n"); delta != "" {
 			if waiting {
-				fmt.Print("\n")
+				fmt.Fprint(os.Stderr, "\n")
 				waiting = false
 			}
 			fmt.Println(delta)
