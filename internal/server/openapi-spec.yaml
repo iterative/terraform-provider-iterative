@@ -21,7 +21,7 @@ components:
               type: string
             SecretAccessKey:
               type: string
-            SessionTOken:
+            SessionToken:
               type: string
     Task:
       description: Task definition for allocating cloud resources.
@@ -139,7 +139,7 @@ paths:
           in: header
           schema:
             type: string
-            format: byte # byte64 encoded
+            format: byte # Base64 encoded
           required: true
         - name: id
           description: id of the task.
@@ -162,7 +162,7 @@ paths:
           in: header
           schema:
             type: string
-            format: byte # byte64 encoded
+            format: byte # Base64 encoded
           required: true
         - name: id
           description: id of the task.
