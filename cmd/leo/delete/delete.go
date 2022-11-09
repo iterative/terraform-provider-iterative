@@ -2,6 +2,7 @@ package delete
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -53,6 +54,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 	if err != nil {
 		return err
 	}
-
+	tsk.Read(ctx)
+	fmt.Println("output dir: ", o.Output)
 	return tsk.Delete(ctx)
 }
