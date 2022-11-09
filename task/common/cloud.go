@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -30,7 +31,9 @@ const (
 	ProviderK8S Provider = "k8s"
 )
 
+// Credentials define the cloud provider credentials.
 type Credentials struct {
+	Provider       Provider        `json:"provider"`
 	AWSCredentials *AWSCredentials `json:"aws,omitempty"`
 	GCPCredentials *GCPCredentials `json:"gcp,omitempty"`
 	AZCredentials  *AZCredentials  `json:"az,omitempty"`
@@ -39,15 +42,33 @@ type Credentials struct {
 
 // Validate checks that the credentials are valid.
 func (c Credentials) Validate() error {
+	switch c.Provider {
+	case ProviderAWS:
+		if c.AWSCredentials == nil {
+			return errors.New("empty credentials")
+		}
+	case ProviderAZ:
+		if c.AZCredentials == nil {
+			return errors.New("empty credentials")
+		}
+	case ProviderGCP:
+		if c.GCPCredentials == nil {
+			return errors.New("empty credentials")
+		}
+	case ProviderK8S:
+		if c.K8SCredentials == nil {
+			return errors.New("empty credentials")
+		}
+	default:
+		return fmt.Errorf("unsupported cloud provider: %q", c.Provider)
+	}
+
 	fields := []bool{c.AWSCredentials != nil, c.GCPCredentials != nil, c.AZCredentials != nil, c.K8SCredentials != nil}
 	var count int
 	for _, fieldNotNil := range fields {
 		if fieldNotNil {
 			count++
 		}
-	}
-	if count == 0 {
-		return errors.New("empty credentials")
 	}
 	if count > 1 {
 		return errors.New("conflicting credentials")

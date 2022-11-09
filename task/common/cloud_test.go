@@ -16,7 +16,27 @@ func TestCredentialValidation(t *testing.T) {
 	}{{
 		description: "empty credentials",
 		credentials: common.Credentials{},
+		expectError: `unsupported cloud provider: ""`,
+	}, {
+		description: "valid AWS credentials",
+		credentials: common.Credentials{
+			Provider:       common.ProviderAWS,
+			AWSCredentials: &common.AWSCredentials{},
+		},
+	}, {
+		description: "empty AWS credentials",
+		credentials: common.Credentials{
+			Provider: common.ProviderAWS,
+		},
 		expectError: "empty credentials",
+	}, {
+		description: "conflicting credentials",
+		credentials: common.Credentials{
+			Provider:       common.ProviderAWS,
+			AWSCredentials: &common.AWSCredentials{},
+			AZCredentials:  &common.AZCredentials{},
+		},
+		expectError: "conflicting credentials",
 	}}
 
 	for _, test := range tests {

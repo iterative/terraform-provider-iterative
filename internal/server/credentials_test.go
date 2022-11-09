@@ -36,6 +36,7 @@ func TestCredentialMiddleware(t *testing.T) {
 	client := httpsrv.Client()
 
 	creds := common.Credentials{
+		Provider: common.ProviderAWS,
 		AWSCredentials: &common.AWSCredentials{
 			AccessKeyID:     "aws-access-key",
 			SecretAccessKey: "secret",
