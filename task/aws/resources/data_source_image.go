@@ -31,6 +31,10 @@ type Image struct {
 }
 
 func (i *Image) Read(ctx context.Context) error {
+	// default image to ubuntu in not present
+	if i.Identifier == "" {
+		i.Identifier = "ubuntu"
+	}
 	image := i.Identifier
 	images := map[string]string{
 		"ubuntu": "ubuntu@099720109477:x86_64:*ubuntu/images/hvm-ssd/ubuntu-focal-20.04*",

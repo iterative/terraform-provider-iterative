@@ -133,6 +133,5 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		}
 		return err
 	}
-
 	return nil
 }

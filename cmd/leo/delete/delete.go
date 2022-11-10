@@ -2,7 +2,6 @@ package delete
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -11,8 +10,9 @@ import (
 )
 
 type Options struct {
-	Workdir string
-	Output  string
+	Workdir     string
+	Output      string
+	ExcludeList []string
 }
 
 func New(cloud *common.Cloud) *cobra.Command {
@@ -39,6 +39,7 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		Environment: common.Environment{
 			Directory:    o.Workdir,
 			DirectoryOut: o.Output,
+			ExcludeList:  o.ExcludeList,
 		},
 	}
 
@@ -54,7 +55,5 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 	if err != nil {
 		return err
 	}
-	tsk.Read(ctx)
-	fmt.Println("output dir: ", o.Output)
 	return tsk.Delete(ctx)
 }
