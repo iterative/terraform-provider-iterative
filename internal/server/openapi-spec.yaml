@@ -121,13 +121,13 @@ paths:
     get:
       operationId: listTasks
       summary: List allocated tasks.
-      parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # byte64 encoded
-          required: true
+#      parameters:
+#        - name: credentials
+#          in: header
+#          schema:
+#            type: string
+#            format: byte # byte64 encoded
+#          required: true
       responses:
         '200':
           description: Allocation started succesfully.

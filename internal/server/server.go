@@ -9,8 +9,11 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"terraform-provider-iterative/internal/jobmanager"
+	"terraform-provider-iterative/task"
+	"terraform-provider-iterative/task/common"
 )
 
 type server struct {
@@ -48,6 +51,40 @@ func (s *server) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	response := Job{
 		Id: jobId,
+	}
+	RespondValue(r.Context(), w, response)
+}
+
+func (s *server) ListTasks(w http.ResponseWriter, r *http.Request) {
+	// Read credentials.
+	creds, err := CredentialsFromRequest(r)
+	if err != nil {
+		RespondError(r.Context(), w, err)
+		return
+	}
+	cloud := common.Cloud{
+		Provider:    creds.Provider,
+		Region:      "us-east",
+		Credentials: *creds,
+		Timeouts: common.Timeouts{
+			Create: 15 * time.Minute,
+			Read:   3 * time.Minute,
+			Update: 3 * time.Minute,
+			Delete: 15 * time.Minute,
+		},
+	}
+	lst, err := task.List(r.Context(), cloud)
+	if err != nil {
+		log.Printf("failed to list tasks: %v", err)
+		RespondError(r.Context(), w, err)
+		return
+	}
+	result := make([]string, len(lst))
+	for i, id := range lst {
+		result[i] = id.Long()
+	}
+	response := TaskList{
+		Tasks: &result,
 	}
 	RespondValue(r.Context(), w, response)
 }

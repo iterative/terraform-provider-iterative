@@ -62,11 +62,6 @@ type TaskStatus struct {
 	Status *string `json:"status,omitempty"`
 }
 
-// ListTasksParams defines parameters for ListTasks.
-type ListTasksParams struct {
-	Credentials []byte `json:"credentials"`
-}
-
 // DestroyTaskParams defines parameters for DestroyTask.
 type DestroyTaskParams struct {
 	Credentials []byte `json:"credentials"`
@@ -87,7 +82,7 @@ type ServerInterface interface {
 	GetJobStatus(w http.ResponseWriter, r *http.Request, id string)
 	// List allocated tasks.
 	// (GET /task/)
-	ListTasks(w http.ResponseWriter, r *http.Request, params ListTasksParams)
+	ListTasks(w http.ResponseWriter, r *http.Request)
 	// Start executing a task.
 	// (POST /task/)
 	CreateTask(w http.ResponseWriter, r *http.Request)
@@ -138,38 +133,8 @@ func (siw *ServerInterfaceWrapper) GetJobStatus(w http.ResponseWriter, r *http.R
 func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTasksParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
-
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListTasks(w, r, params)
+		siw.Handler.ListTasks(w, r)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
