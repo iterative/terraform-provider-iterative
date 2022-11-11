@@ -77,7 +77,7 @@ func newCreateTaskJob(taskParams Task, credentials *common.Credentials) *createT
 
 // Run implements the jobmanager.Job interface.
 func (j *createTaskJob) Run(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), j.cloud.Timeouts.Create)
+	ctx, cancel := context.WithTimeout(ctx, j.cloud.Timeouts.Create)
 	defer cancel()
 
 	tsk, err := task.New(ctx, j.cloud, j.id, j.task)

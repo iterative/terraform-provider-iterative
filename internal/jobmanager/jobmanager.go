@@ -21,8 +21,8 @@ type JobState string
 
 const (
 	JobRunning  JobState = "executing"
-	JobFinished          = "done"
-	JobFailed            = "error"
+	JobFinished JobState = "done"
+	JobFailed   JobState = "error"
 )
 
 // Job defines the interface for background jobs run by the job manager.
