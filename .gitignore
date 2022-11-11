@@ -44,3 +44,7 @@ leo
 
 # JetBrains IDEs
 .idea/*
+
+# AWS SAM
+.aws-sam
+packaged.yml

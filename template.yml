@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: LEO as a Service
+
+Transform: "AWS::Serverless-2016-10-31"
+
+Parameters:
+  ApplicationName:
+    Type: String
+    Default: LEO as a Service
+    Description: Application name used when tagging resources
+
+Resources:
+  ApiGatewayLoggingRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+      Path: /
+
+  MainFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      CodeUri: internal/lambda
+      Handler: main
+      MemorySize: 512
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "execute-api:ManageConnections"
+              Resource:
+                - "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocket}/*"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "lambda:InvokeFunction"
+              Resource:
+                - "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+      Runtime: go1.x
+      Timeout: 900 # 15 minutes, in seconds
+      Tracing: Active
+
+  WebSocket:
+    Type: "AWS::ApiGatewayV2::Api"
+    Properties:
+      Name: !Ref ApplicationName
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.message
+
+  ApiGwAccountConfig:
+    Type: "AWS::ApiGateway::Account"
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayLoggingRole.Arn
+
+  Deployment:
+    Type: "AWS::ApiGatewayV2::Deployment"
+    DependsOn:
+      - MainRoute
+    Properties:
+      ApiId: !Ref WebSocket
+
+  MainFunctionLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn:
+      - MainFunction
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${MainFunction}
+      RetentionInDays: 30
+
+  MainFunctionPermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+      - WebSocket
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref MainFunction
+      Principal: apigateway.amazonaws.com
+
+  MainIntegration:
+    Type: "AWS::ApiGatewayV2::Integration"
+    Properties:
+      ApiId: !Ref WebSocket
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MainFunction.Arn}/invocations"
+
+  Stage:
+    Type: "AWS::ApiGatewayV2::Stage"
+    Properties:
+      ApiId: !Ref WebSocket
+      DefaultRouteSettings:
+        DataTraceEnabled: true
+        DetailedMetricsEnabled: true
+        LoggingLevel: INFO
+      DeploymentId: !Ref Deployment
+      StageName: v1
+
+  MainRoute:
+    Type: "AWS::ApiGatewayV2::Route"
+    Properties:
+      ApiId: !Ref WebSocket
+      AuthorizationType: NONE
+      OperationName: MainRoute
+      RouteKey: $default
+      Target: !Join
+        - /
+        - - integrations
+          - Ref: MainIntegration
+
+Outputs:
+  WebSocketEndpoint:
+    Description: "URL for making WebSocket connections to the application's API"
+    Value: !Sub "wss://${WebSocket}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"

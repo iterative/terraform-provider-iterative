@@ -9,6 +9,10 @@ TPI_PATH ?= $(shell pwd)
 LEO_PATH ?= $(shell pwd)/cmd/leo
 GO_LINK_FLAGS ?= -s -w -X terraform-provider-iterative/iterative/utils.Version=${VERSION}
 
+SAM_TEMPLATE := packaged.yml
+SAM_STACK := leo-deployment
+SAM_REGION := us-east-1
+
 default: build
 
 .PHONY: build
@@ -54,3 +58,31 @@ sweep:
 .PHONY: generate
 generate:
 	go generate ./...
+
+.PHONY: sam-build
+sam-build:
+	sam build
+
+.PHONY: sam-package
+sam-package: sam-build
+	sam package\
+		--resolve-s3\
+		--output-template-file ${SAM_TEMPLATE}\
+		--region ${SAM_REGION}
+
+.PHONY: sam-deploy
+sam-deploy: sam-package
+	sam deploy\
+		--resolve-s3\
+		--region ${SAM_REGION}\
+		--template-file ${SAM_TEMPLATE}\
+		--stack-name ${SAM_STACK}\
+		--capabilities CAPABILITY_IAM
+
+.PHONY: sam-get-endpoint
+sam-get-endpoint:
+	aws cloudformation describe-stacks\
+		--stack-name ${SAM_STACK}\
+		--region ${SAM_REGION}\
+		--query "Stacks[0].Outputs[?OutputKey=='WebSocketEndpoint'].OutputValue"\
+		--output text
