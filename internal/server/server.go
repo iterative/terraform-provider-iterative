@@ -5,24 +5,35 @@ package server
 // TODO: logging
 
 import (
-	"github.com/gorilla/mux"
+	"context"
+	"log"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // NewServer creates a new server handling leo-like operations for multiple
 // users.
 func NewServer() *server {
-	r := mux.NewRouter()
+	r := chi.NewRouter()
 	srv := &server{
 		router: r,
 	}
 	return srv
 }
 
-// Router returns the gorilla mux router associated with the server.
-func (s *server) Router() *mux.Router {
+// Router returns the chi mux associated with the server.
+func (s *server) Router() *chi.Mux {
 	return s.router
 }
 
 type server struct {
-	router *mux.Router
+	router *chi.Mux
+}
+
+// RespondError writes the following error to the response writer.
+func RespondError(ctx context.Context, w http.ResponseWriter, err error) {
+	log.Printf("responding with error: %s", err.Error())
+	// TODO: implement error to status code mapping.
+	w.WriteHeader(http.StatusInternalServerError)
 }

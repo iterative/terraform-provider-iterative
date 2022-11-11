@@ -51,7 +51,7 @@ func TestIdentifier(t *testing.T) {
 
 	t.Run("randomness", func(t *testing.T) {
 		name := "test"
-		
+
 		first := NewRandomIdentifier(name)
 		second := NewRandomIdentifier(name)
 
