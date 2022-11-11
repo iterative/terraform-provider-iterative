@@ -163,12 +163,12 @@ paths:
       operationId: destroyTask
       summary: Deallocate task resources.
       parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # Base64 encoded
-          required: true
+#        - name: credentials
+#          in: header
+#          schema:
+#            type: string
+#            format: byte # Base64 encoded
+#          required: true
         - name: id
           description: id of the task.
           in: path

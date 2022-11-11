@@ -17,7 +17,6 @@ type createTaskJob struct {
 }
 
 func newCreateTaskJob(taskParams Task, credentials *common.Credentials) *createTaskJob {
-
 	var envVars = common.Variables{}
 	if taskParams.Env != nil {
 		for key, value := range *taskParams.Env {
@@ -95,4 +94,53 @@ func (j *createTaskJob) Run(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+// destroyTaskJob deallocates cloud resources associated with a task.
+type destroyTaskJob struct {
+	task  common.Task
+	cloud common.Cloud
+	id    common.Identifier
+}
+
+func newDestroyTaskJob(taskId string, credentials *common.Credentials) (*destroyTaskJob, error) {
+
+	id, err := common.ParseIdentifier(taskId)
+	if err != nil {
+		return nil, err
+	}
+	cloud := common.Cloud{
+		Provider:    credentials.Provider,
+		Region:      "us-east",
+		Credentials: *credentials,
+		Timeouts: common.Timeouts{
+			Create: 15 * time.Minute,
+			Read:   3 * time.Minute,
+			Update: 3 * time.Minute,
+			Delete: 15 * time.Minute,
+		},
+	}
+	task := common.Task{
+		Environment: common.Environment{
+			Image: "ubuntu",
+		},
+	}
+
+	return &destroyTaskJob{
+		id:    id,
+		cloud: cloud,
+		task:  task,
+	}, nil
+}
+
+// Run implements the jobmanager.Job interface.
+func (j *destroyTaskJob) Run(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, j.cloud.Timeouts.Read)
+	defer cancel()
+
+	tsk, err := task.New(ctx, j.cloud, j.id, j.task)
+	if err != nil {
+		return err
+	}
+	return tsk.Delete(ctx)
 }

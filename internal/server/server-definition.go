@@ -62,11 +62,6 @@ type TaskStatus struct {
 	Status *string `json:"status,omitempty"`
 }
 
-// DestroyTaskParams defines parameters for DestroyTask.
-type DestroyTaskParams struct {
-	Credentials []byte `json:"credentials"`
-}
-
 // GetTaskStatusParams defines parameters for GetTaskStatus.
 type GetTaskStatusParams struct {
 	Credentials []byte `json:"credentials"`
@@ -88,7 +83,7 @@ type ServerInterface interface {
 	CreateTask(w http.ResponseWriter, r *http.Request)
 	// Deallocate task resources.
 	// (DELETE /task/{id})
-	DestroyTask(w http.ResponseWriter, r *http.Request, id string, params DestroyTaskParams)
+	DestroyTask(w http.ResponseWriter, r *http.Request, id string)
 	// Get task status.
 	// (GET /task/{id})
 	GetTaskStatus(w http.ResponseWriter, r *http.Request, id string, params GetTaskStatusParams)
@@ -174,36 +169,8 @@ func (siw *ServerInterfaceWrapper) DestroyTask(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params DestroyTaskParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
-
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DestroyTask(w, r, id, params)
+		siw.Handler.DestroyTask(w, r, id)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {

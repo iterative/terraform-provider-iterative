@@ -55,6 +55,26 @@ func (s *server) CreateTask(w http.ResponseWriter, r *http.Request) {
 	RespondValue(r.Context(), w, response)
 }
 
+// DestroyTask deallocates cloud resources associated with a task.
+func (s *server) DestroyTask(w http.ResponseWriter, r *http.Request, id string) {
+	creds, err := CredentialsFromRequest(r)
+	if err != nil {
+		RespondError(r.Context(), w, err)
+		return
+	}
+	job, err := newDestroyTaskJob(id, creds)
+	if err != nil {
+		RespondError(r.Context(), w, err)
+		return
+	}
+	jobId := s.jobManager.Run(context.Background(), job)
+
+	response := Job{
+		Id: jobId,
+	}
+	RespondValue(r.Context(), w, response)
+}
+
 func (s *server) ListTasks(w http.ResponseWriter, r *http.Request) {
 	// Read credentials.
 	creds, err := CredentialsFromRequest(r)
