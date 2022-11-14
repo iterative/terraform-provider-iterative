@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/az/resources"
@@ -123,7 +123,7 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Creating ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Create,
@@ -172,7 +172,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -180,7 +180,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Read,
@@ -219,7 +219,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -227,7 +227,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 
 	if t.Read(ctx) == nil {
@@ -286,7 +286,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 

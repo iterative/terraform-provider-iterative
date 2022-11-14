@@ -31,7 +31,7 @@ require (
 	github.com/rclone/rclone v1.57.0
 	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.11.0
@@ -49,6 +49,7 @@ require (
 )
 
 require (
+	github.com/0x2b3bfa0/logrusctx v0.1.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.4.3
 	github.com/deepmap/oapi-codegen v1.12.2
 	github.com/go-chi/chi/v5 v5.0.7

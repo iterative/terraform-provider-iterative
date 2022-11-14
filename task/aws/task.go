@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/aws/resources"
@@ -133,7 +133,7 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Parsing PermissionSet...",
 		Action:      t.DataSources.PermissionSet.Read,
@@ -188,7 +188,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -196,7 +196,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading DefaultVPC...",
 		Action:      t.DataSources.DefaultVPC.Read,
@@ -235,7 +235,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -243,7 +243,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
@@ -294,7 +294,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 
