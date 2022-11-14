@@ -15,7 +15,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/machine"
@@ -36,7 +36,7 @@ func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) 
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
 	// This is a temporary measure, until we reimplement file syncing on k8s.
 	if len(task.Environment.ExcludeList) != 0 {
-		logrus.Warn("File excludes are not supported on k8s.")
+		logrusctx.Warn(ctx, "File excludes are not supported on k8s.")
 	}
 
 	client, err := client.New(ctx, cloud, cloud.Tags)
@@ -127,7 +127,7 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Parsing PermissionSet...",
 		Action:      t.DataSources.PermissionSet.Read,
@@ -168,7 +168,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -176,7 +176,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading ConfigMap...",
 		Action:      t.Resources.ConfigMap.Read,
@@ -197,7 +197,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -205,7 +205,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
 		env := map[string]string{
@@ -246,7 +246,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 
