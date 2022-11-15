@@ -25,6 +25,27 @@ components:
               type: string
             SessionToken:
               type: string
+        az:
+          type: object
+          properties:
+            ClientID:
+              type: string
+            ClientSecret:
+              type: string
+            SubscriptionID:
+              type: string
+            TenantID:
+              type: string
+        gcp:
+          type: object
+          properties:
+            ApplicationCredentials:
+              type: string
+        k8s:
+          type: object
+          properties:
+            Config:
+              type: string
     Task:
       description: Task definition for allocating cloud resources.
       type: object

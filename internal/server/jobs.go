@@ -16,7 +16,7 @@ type createTaskJob struct {
 	id    common.Identifier
 }
 
-func newCreateTaskJob(taskParams Task, credentials *common.Credentials) *createTaskJob {
+func newCreateTaskJob(taskParams Task, credentials *CloudCredentials) *createTaskJob {
 
 	var envVars = common.Variables{}
 	if taskParams.Env != nil {
@@ -57,8 +57,8 @@ func newCreateTaskJob(taskParams Task, credentials *common.Credentials) *createT
 
 	cloud := common.Cloud{
 		Provider:    credentials.Provider,
-		Region:      "us-east",
-		Credentials: *credentials,
+		Region:      credentials.Region,
+		Credentials: credentials.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,
 			Read:   3 * time.Minute,
