@@ -85,7 +85,7 @@ func (s *server) ListTasks(w http.ResponseWriter, r *http.Request) {
 	cloud := common.Cloud{
 		Provider:    creds.Provider,
 		Region:      "us-east",
-		Credentials: *creds,
+		Credentials: creds.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,
 			Read:   3 * time.Minute,

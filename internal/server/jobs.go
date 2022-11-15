@@ -103,7 +103,7 @@ type destroyTaskJob struct {
 	id    common.Identifier
 }
 
-func newDestroyTaskJob(taskId string, credentials *common.Credentials) (*destroyTaskJob, error) {
+func newDestroyTaskJob(taskId string, credentials *CloudCredentials) (*destroyTaskJob, error) {
 
 	id, err := common.ParseIdentifier(taskId)
 	if err != nil {
@@ -111,8 +111,8 @@ func newDestroyTaskJob(taskId string, credentials *common.Credentials) (*destroy
 	}
 	cloud := common.Cloud{
 		Provider:    credentials.Provider,
-		Region:      "us-east",
-		Credentials: *credentials,
+		Region:      credentials.Region,
+		Credentials: credentials.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,
 			Read:   3 * time.Minute,
