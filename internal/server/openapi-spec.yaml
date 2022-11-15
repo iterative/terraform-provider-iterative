@@ -9,6 +9,8 @@ components:
       description: This defines the schema of the base64-encoded json in the 'credentials' header.
       type: object
       properties:
+        region:
+          type: string
         provider:
           type: string
           enum:
@@ -22,6 +24,27 @@ components:
             SecretAccessKey:
               type: string
             SessionToken:
+              type: string
+        az:
+          type: object
+          properties:
+            ClientID:
+              type: string
+            ClientSecret:
+              type: string
+            SubscriptionID:
+              type: string
+            TenantID:
+              type: string
+        gcp:
+          type: object
+          properties:
+            ApplicationCredentials:
+              type: string
+        k8s:
+          type: object
+          properties:
+            Config:
               type: string
     Task:
       description: Task definition for allocating cloud resources.
@@ -94,7 +117,7 @@ components:
         - id
 
 paths:
-  '/task/':
+  '/task':
     post:
       operationId: createTask
       summary: Start executing a task.
