@@ -9,6 +9,8 @@ components:
       description: This defines the schema of the base64-encoded json in the 'credentials' header.
       type: object
       properties:
+        region:
+          type: string
         provider:
           type: string
           enum:
@@ -94,7 +96,7 @@ components:
         - id
 
 paths:
-  '/task/':
+  '/task':
     post:
       operationId: createTask
       summary: Start executing a task.

@@ -86,10 +86,10 @@ type ServerInterface interface {
 	// (GET /job/{id})
 	GetJobStatus(w http.ResponseWriter, r *http.Request, id string)
 	// List allocated tasks.
-	// (GET /task/)
+	// (GET /task)
 	ListTasks(w http.ResponseWriter, r *http.Request, params ListTasksParams)
 	// Start executing a task.
-	// (POST /task/)
+	// (POST /task)
 	CreateTask(w http.ResponseWriter, r *http.Request)
 	// Deallocate task resources.
 	// (DELETE /task/{id})
@@ -419,10 +419,10 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/job/{id}", wrapper.GetJobStatus)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/task/", wrapper.ListTasks)
+		r.Get(options.BaseURL+"/task", wrapper.ListTasks)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/task/", wrapper.CreateTask)
+		r.Post(options.BaseURL+"/task", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/task/{id}", wrapper.DestroyTask)
