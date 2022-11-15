@@ -59,12 +59,9 @@ type TaskList struct {
 
 // TaskStatus Status of an allocated task.
 type TaskStatus struct {
-	Status *string `json:"status,omitempty"`
-}
-
-// GetTaskStatusParams defines parameters for GetTaskStatus.
-type GetTaskStatusParams struct {
-	Credentials []byte `json:"credentials"`
+	Active    int `json:"active"`
+	Failed    int `json:"failed"`
+	Succeeded int `json:"succeeded"`
 }
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
@@ -86,7 +83,7 @@ type ServerInterface interface {
 	DestroyTask(w http.ResponseWriter, r *http.Request, id string)
 	// Get task status.
 	// (GET /task/{id})
-	GetTaskStatus(w http.ResponseWriter, r *http.Request, id string, params GetTaskStatusParams)
+	GetTaskStatus(w http.ResponseWriter, r *http.Request, id string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -195,36 +192,8 @@ func (siw *ServerInterfaceWrapper) GetTaskStatus(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetTaskStatusParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
-
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetTaskStatus(w, r, id, params)
+		siw.Handler.GetTaskStatus(w, r, id)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {

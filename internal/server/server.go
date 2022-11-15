@@ -109,6 +109,59 @@ func (s *server) ListTasks(w http.ResponseWriter, r *http.Request) {
 	RespondValue(r.Context(), w, response)
 }
 
+func (s *server) GetTaskStatus(w http.ResponseWriter, r *http.Request, id string) {
+	ctx := r.Context()
+	creds, err := CredentialsFromRequest(r)
+	if err != nil {
+		RespondError(ctx, w, err)
+		return
+	}
+	cloud := common.Cloud{
+		Provider:    creds.Provider,
+		Region:      "us-east",
+		Credentials: creds.GetCredentials(),
+		Timeouts: common.Timeouts{
+			Create: 15 * time.Minute,
+			Read:   3 * time.Minute,
+			Update: 3 * time.Minute,
+			Delete: 15 * time.Minute,
+		},
+	}
+	taskParams := common.Task{
+		Environment: common.Environment{
+			Image: "ubuntu",
+		},
+	}
+	taskId, err := common.ParseIdentifier(id)
+	if err != nil {
+		RespondError(ctx, w, err)
+		return
+	}
+
+	tsk, err := task.New(ctx, cloud, taskId, taskParams)
+	if err != nil {
+		RespondError(ctx, w, err)
+		return
+	}
+	status, err := tsk.Status(ctx)
+	if err != nil {
+		RespondError(r.Context(), w, err)
+		return
+	}
+	var response TaskStatus
+	for code, count := range status {
+		switch code {
+		case common.StatusCodeActive:
+			response.Active = count
+		case common.StatusCodeSucceeded:
+			response.Succeeded = count
+		case common.StatusCodeFailed:
+			response.Failed = count
+		}
+	}
+	RespondValue(ctx, w, response)
+}
+
 // GetJobStatus implements ServerInterface.GetJobStatus.
 func (s *server) GetJobStatus(w http.ResponseWriter, r *http.Request, id string) {
 	state, err := s.jobManager.GetStatus(id)

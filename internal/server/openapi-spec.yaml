@@ -94,9 +94,16 @@ components:
       description: Status of an allocated task.
       type: object
       properties:
-        # TODO: define in more detail.
-        status:
-          type: string
+        succeeded:
+          type: integer
+        active:
+          type: integer
+        failed:
+          type: integer
+      required:
+        - succeeded
+        - active
+        - failed
     Job:
       description: |
         Job identifier returned when triggering allocation or
@@ -163,12 +170,12 @@ paths:
       operationId: getTaskStatus
       summary: Get task status.
       parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # Base64 encoded
-          required: true
+#        - name: credentials
+#          in: header
+#          schema:
+#            type: string
+#            format: byte # Base64 encoded
+#          required: true
         - name: id
           description: id of the task.
           in: path
