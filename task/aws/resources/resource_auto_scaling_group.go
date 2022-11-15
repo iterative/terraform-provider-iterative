@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/smithy-go"
-	"github.com/0x2b3bfa0/logrusctx"
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/common"
@@ -139,7 +139,7 @@ func (a *AutoScalingGroup) Read(ctx context.Context) error {
 					if instance.StateReason != nil {
 						status += " " + aws.ToString(instance.StateReason.Message)
 					}
-					logrusctx.Debug(ctx, "AutoScaling Group State:", status)
+					logrus.Debug("AutoScaling Group State:", status)
 					if status == "running" {
 						a.Attributes.Status[common.StatusCodeActive]++
 					}

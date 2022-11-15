@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/0x2b3bfa0/logrusctx"
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/machine"
@@ -179,7 +179,7 @@ type Task struct {
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrusctx.Info(ctx, "Creating resources...")
+	logrus.Info("Creating resources...")
 	steps := []common.Step{{
 		Description: "Parsing PermissionSet...",
 		Action:      t.DataSources.PermissionSet.Read,
@@ -243,7 +243,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrusctx.Info(ctx, "Creation completed")
+	logrus.Info("Creation completed")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -251,7 +251,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
+	logrus.Info("Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading DefaultNetwork...",
 		Action:      t.DataSources.DefaultNetwork.Read,
@@ -299,7 +299,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrusctx.Info(ctx, "Read completed")
+	logrus.Info("Read completed")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -307,7 +307,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrusctx.Info(ctx, "Deleting resources...")
+	logrus.Info("Deleting resources...")
 	steps := []common.Step{}
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
@@ -366,7 +366,7 @@ func (t *Task) Delete(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrusctx.Info(ctx, "Deletion completed")
+	logrus.Info("Deletion completed")
 	return nil
 }
 

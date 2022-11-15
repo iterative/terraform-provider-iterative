@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0x2b3bfa0/logrusctx"
+	"github.com/sirupsen/logrus"
 
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -80,7 +80,7 @@ func (i *InstanceGroupManager) Read(ctx context.Context) error {
 	i.Attributes.Addresses = []net.IP{}
 	i.Attributes.Status = common.Status{common.StatusCodeActive: 0}
 	for _, groupInstance := range groupInstances.Items {
-		logrusctx.Debug(ctx, "Instance Group Manager Status:", groupInstance.Status)
+		logrus.Debug("Instance Group Manager Status:", groupInstance.Status)
 		if groupInstance.Status == "RUNNING" {
 			instance, err := i.client.Services.Compute.Instances.Get(i.client.Credentials.ProjectID, i.client.Region, filepath.Base(groupInstance.Instance)).Do()
 			if err != nil {

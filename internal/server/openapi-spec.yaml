@@ -4,16 +4,25 @@ info:
   description: LEO server handles requests to manage execution of tasks in public cloud infrastructure.
   version: 0.0.1-alpha
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: json+base64
   schemas:
     Credentials:
       description: This defines the schema of the base64-encoded json in the 'credentials' header.
       type: object
       properties:
+        region:
+          type: string
         provider:
           type: string
           enum:
             - aws
-            # other providers will be added later
+            - az
+            - gcp
+            - k8s
         aws:
           type: object
           properties:
@@ -22,6 +31,27 @@ components:
             SecretAccessKey:
               type: string
             SessionToken:
+              type: string
+        az:
+          type: object
+          properties:
+            ClientID:
+              type: string
+            ClientSecret:
+              type: string
+            SubscriptionID:
+              type: string
+            TenantID:
+              type: string
+        gcp:
+          type: object
+          properties:
+            ApplicationCredentials:
+              type: string
+        k8s:
+          type: object
+          properties:
+            Config:
               type: string
     Task:
       description: Task definition for allocating cloud resources.
@@ -43,9 +73,11 @@ components:
         machine:
           description: Machine type.
           type: string
+        region:
+          description: Cloud region to deploy the resources in.
+          type: string
         script:
           type: string
-          format: byte
         spot:
           type: boolean
         storage:
@@ -54,6 +86,12 @@ components:
         timeout:
           description: Task execution timeout (seconds).
           type: integer
+      required:
+        - image
+        - machine
+        - script
+        - storage
+        - timeout
     TaskList:
       description: List of allocated tasks.
       type: object
@@ -62,13 +100,27 @@ components:
           type: array
           items:
             type: string # task id
+    EncryptionKey:
+      description: Credential encryption public key.
+      type: object
+      properties:
+        key:
+          type: string
+          format: byte
     TaskStatus:
       description: Status of an allocated task.
       type: object
       properties:
-        # TODO: define in more detail.
-        status:
-          type: string
+        succeeded:
+          type: integer
+        active:
+          type: integer
+        failed:
+          type: integer
+      required:
+        - succeeded
+        - active
+        - failed
     Job:
       description: |
         Job identifier returned when triggering allocation or
@@ -89,23 +141,29 @@ components:
         - id
 
 paths:
-  '/task/':
+  '/key':
+    get:
+      operationId: getKey
+      summary: Get credential encryption public key.
+      responses:
+        '200':
+          description: Key retrieved succesfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncryptionKey'
+  '/tasks':
     post:
       operationId: createTask
       summary: Start executing a task.
-      parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # byte64 encoded
-          required: true
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Credentials'
+              $ref: '#/components/schemas/Task'
       responses:
         '200':
           description: Allocation started succesfully.
@@ -116,13 +174,8 @@ paths:
     get:
       operationId: listTasks
       summary: List allocated tasks.
-      parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # byte64 encoded
-          required: true
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Allocation started succesfully.
@@ -130,17 +183,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskList'
-  '/task/{id}':
+  '/tasks/{id}':
     get:
       operationId: getTaskStatus
       summary: Get task status.
+      security:
+        - bearerAuth: []
       parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # Base64 encoded
-          required: true
         - name: id
           description: id of the task.
           in: path
@@ -157,13 +206,9 @@ paths:
     delete:
       operationId: destroyTask
       summary: Deallocate task resources.
+      security:
+        - bearerAuth: []
       parameters:
-        - name: credentials
-          in: header
-          schema:
-            type: string
-            format: byte # Base64 encoded
-          required: true
         - name: id
           description: id of the task.
           in: path
@@ -177,7 +222,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Job'
-  '/job/{id}':
+  '/jobs/{id}':
     get:
       operationId: getJobStatus
       summary: Get status of a job.
@@ -194,4 +239,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskStatus'
+                $ref: '#/components/schemas/Job'

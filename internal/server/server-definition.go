@@ -4,6 +4,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -11,9 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Defines values for CredentialsProvider.
 const (
-	Aws CredentialsProvider = "aws"
+	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
 // Defines values for JobStatus.
@@ -23,18 +23,10 @@ const (
 	Executing JobStatus = "executing"
 )
 
-// Credentials This defines the schema of the base64-encoded json in the 'credentials' header.
-type Credentials struct {
-	Aws *struct {
-		AccessKeyID     *string `json:"AccessKeyID,omitempty"`
-		SecretAccessKey *string `json:"SecretAccessKey,omitempty"`
-		SessionTOken    *string `json:"SessionTOken,omitempty"`
-	} `json:"aws,omitempty"`
-	Provider *CredentialsProvider `json:"provider,omitempty"`
+// EncryptionKey Credential encryption public key.
+type EncryptionKey struct {
+	Key *[]byte `json:"key,omitempty"`
 }
-
-// CredentialsProvider defines model for Credentials.Provider.
-type CredentialsProvider string
 
 // Job Job identifier returned when triggering allocation or
 // deallocation of resources.
@@ -47,6 +39,32 @@ type Job struct {
 // JobStatus defines model for Job.Status.
 type JobStatus string
 
+// Task Task definition for allocating cloud resources.
+type Task struct {
+	// Env Environment variable mappings.
+	Env *map[string]string `json:"env,omitempty"`
+
+	// Image Machine image.
+	Image string `json:"image"`
+
+	// Machine Machine type.
+	Machine string `json:"machine"`
+
+	// Region Cloud region to deploy the resources in.
+	Region *string `json:"region,omitempty"`
+	Script string  `json:"script"`
+	Spot   *bool   `json:"spot,omitempty"`
+
+	// Storage Disk size (GB).
+	Storage int `json:"storage"`
+
+	// Tags Resource tags.
+	Tags *map[string]string `json:"tags,omitempty"`
+
+	// Timeout Task execution timeout (seconds).
+	Timeout int `json:"timeout"`
+}
+
 // TaskList List of allocated tasks.
 type TaskList struct {
 	Tasks *[]string `json:"tasks,omitempty"`
@@ -54,49 +72,34 @@ type TaskList struct {
 
 // TaskStatus Status of an allocated task.
 type TaskStatus struct {
-	Status *string `json:"status,omitempty"`
-}
-
-// ListTasksParams defines parameters for ListTasks.
-type ListTasksParams struct {
-	Credentials []byte `json:"credentials"`
-}
-
-// CreateTaskParams defines parameters for CreateTask.
-type CreateTaskParams struct {
-	Credentials []byte `json:"credentials"`
-}
-
-// DestroyTaskParams defines parameters for DestroyTask.
-type DestroyTaskParams struct {
-	Credentials []byte `json:"credentials"`
-}
-
-// GetTaskStatusParams defines parameters for GetTaskStatus.
-type GetTaskStatusParams struct {
-	Credentials []byte `json:"credentials"`
+	Active    int `json:"active"`
+	Failed    int `json:"failed"`
+	Succeeded int `json:"succeeded"`
 }
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
-type CreateTaskJSONRequestBody = Credentials
+type CreateTaskJSONRequestBody = Task
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get status of a job.
-	// (GET /job/{id})
+	// (GET /jobs/{id})
 	GetJobStatus(w http.ResponseWriter, r *http.Request, id string)
+	// Get credential encryption public key.
+	// (GET /key)
+	GetKey(w http.ResponseWriter, r *http.Request)
 	// List allocated tasks.
-	// (GET /task/)
-	ListTasks(w http.ResponseWriter, r *http.Request, params ListTasksParams)
+	// (GET /tasks)
+	ListTasks(w http.ResponseWriter, r *http.Request)
 	// Start executing a task.
-	// (POST /task/)
-	CreateTask(w http.ResponseWriter, r *http.Request, params CreateTaskParams)
+	// (POST /tasks)
+	CreateTask(w http.ResponseWriter, r *http.Request)
 	// Deallocate task resources.
-	// (DELETE /task/{id})
-	DestroyTask(w http.ResponseWriter, r *http.Request, id string, params DestroyTaskParams)
+	// (DELETE /tasks/{id})
+	DestroyTask(w http.ResponseWriter, r *http.Request, id string)
 	// Get task status.
-	// (GET /task/{id})
-	GetTaskStatus(w http.ResponseWriter, r *http.Request, id string, params GetTaskStatusParams)
+	// (GET /tasks/{id})
+	GetTaskStatus(w http.ResponseWriter, r *http.Request, id string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -134,42 +137,29 @@ func (siw *ServerInterfaceWrapper) GetJobStatus(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// GetKey operation middleware
+func (siw *ServerInterfaceWrapper) GetKey(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetKey(w, r)
+	})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // ListTasks operation middleware
 func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTasksParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListTasks(w, r, params)
+		siw.Handler.ListTasks(w, r)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -183,38 +173,10 @@ func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Requ
 func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params CreateTaskParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateTask(w, r, params)
+		siw.Handler.CreateTask(w, r)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -239,36 +201,10 @@ func (siw *ServerInterfaceWrapper) DestroyTask(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params DestroyTaskParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DestroyTask(w, r, id, params)
+		siw.Handler.DestroyTask(w, r, id)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -293,36 +229,10 @@ func (siw *ServerInterfaceWrapper) GetTaskStatus(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetTaskStatusParams
-
-	headers := r.Header
-
-	// ------------- Required header parameter "credentials" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("credentials")]; found {
-		var Credentials []byte
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "credentials", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithLocation("simple", false, "credentials", runtime.ParamLocationHeader, valueList[0], &Credentials)
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credentials", Err: err})
-			return
-		}
-
-		params.Credentials = Credentials
-
-	} else {
-		err := fmt.Errorf("Header parameter credentials is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "credentials", Err: err})
-		return
-	}
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetTaskStatus(w, r, id, params)
+		siw.Handler.GetTaskStatus(w, r, id)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -446,19 +356,22 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/job/{id}", wrapper.GetJobStatus)
+		r.Get(options.BaseURL+"/jobs/{id}", wrapper.GetJobStatus)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/task/", wrapper.ListTasks)
+		r.Get(options.BaseURL+"/key", wrapper.GetKey)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/task/", wrapper.CreateTask)
+		r.Get(options.BaseURL+"/tasks", wrapper.ListTasks)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/task/{id}", wrapper.DestroyTask)
+		r.Post(options.BaseURL+"/tasks", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/task/{id}", wrapper.GetTaskStatus)
+		r.Delete(options.BaseURL+"/tasks/{id}", wrapper.DestroyTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/tasks/{id}", wrapper.GetTaskStatus)
 	})
 
 	return r
