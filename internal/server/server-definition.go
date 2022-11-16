@@ -78,19 +78,19 @@ type CreateTaskJSONRequestBody = Task
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get status of a job.
-	// (GET /job/{id})
+	// (GET /jobs/{id})
 	GetJobStatus(w http.ResponseWriter, r *http.Request, id string)
 	// List allocated tasks.
-	// (GET /task)
+	// (GET /tasks)
 	ListTasks(w http.ResponseWriter, r *http.Request)
 	// Start executing a task.
-	// (POST /task)
+	// (POST /tasks)
 	CreateTask(w http.ResponseWriter, r *http.Request)
 	// Deallocate task resources.
-	// (DELETE /task/{id})
+	// (DELETE /tasks/{id})
 	DestroyTask(w http.ResponseWriter, r *http.Request, id string)
 	// Get task status.
-	// (GET /task/{id})
+	// (GET /tasks/{id})
 	GetTaskStatus(w http.ResponseWriter, r *http.Request, id string)
 }
 
@@ -333,19 +333,19 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/job/{id}", wrapper.GetJobStatus)
+		r.Get(options.BaseURL+"/jobs/{id}", wrapper.GetJobStatus)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/task", wrapper.ListTasks)
+		r.Get(options.BaseURL+"/tasks", wrapper.ListTasks)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/task", wrapper.CreateTask)
+		r.Post(options.BaseURL+"/tasks", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/task/{id}", wrapper.DestroyTask)
+		r.Delete(options.BaseURL+"/tasks/{id}", wrapper.DestroyTask)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/task/{id}", wrapper.GetTaskStatus)
+		r.Get(options.BaseURL+"/tasks/{id}", wrapper.GetTaskStatus)
 	})
 
 	return r

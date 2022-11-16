@@ -134,7 +134,7 @@ components:
         - id
 
 paths:
-  '/task':
+  '/tasks':
     post:
       operationId: createTask
       summary: Start executing a task.
@@ -165,7 +165,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskList'
-  '/task/{id}':
+  '/tasks/{id}':
     get:
       operationId: getTaskStatus
       summary: Get task status.
@@ -204,7 +204,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Job'
-  '/job/{id}':
+  '/jobs/{id}':
     get:
       operationId: getJobStatus
       summary: Get status of a job.
