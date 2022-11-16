@@ -21,6 +21,9 @@ type Timeouts struct {
 }
 
 type Region string
+
+const DefaultRegion Region = "us-east"
+
 type Provider string
 
 const (

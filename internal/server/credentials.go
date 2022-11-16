@@ -6,19 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"terraform-provider-iterative/task/common"
 )
 
 const (
 	// CredentialsHeader is the name of the header containing the credentials lookup key.
-	CredentialsHeader = "credentials"
+	CredentialsHeader = "Authorization"
 )
 
 // CloudCredentials define the cloud provider credentials and region.
 type CloudCredentials struct {
 	common.Credentials
-	Region   common.Region   `json:"region"`
 	Provider common.Provider `json:"provider"`
 }
 
@@ -65,12 +65,17 @@ func (c CloudCredentials) Validate() error {
 
 // CredentialsFromRequest extracts credentials from the http request's header.
 func CredentialsFromRequest(req *http.Request) (*CloudCredentials, error) {
-	credentialsRaw := req.Header.Get(CredentialsHeader)
-	if len(credentialsRaw) == 0 {
+	headerRaw := req.Header.Get(CredentialsHeader)
+	if len(headerRaw) == 0 {
 		return nil, errors.New("empty credentials header")
 	}
-	credentialsJson := make([]byte, base64.StdEncoding.DecodedLen(len(credentialsRaw)))
-	n, err := base64.StdEncoding.Decode(credentialsJson, []byte(credentialsRaw))
+	prefix := "Bearer "
+	if len(headerRaw) < len(prefix) || !(strings.ToLower(headerRaw[:len(prefix)]) == strings.ToLower(prefix)) {
+		return nil, errors.New("invalid bearer token")
+	}
+	headerRaw = headerRaw[len(prefix):]
+	credentialsJson := make([]byte, base64.StdEncoding.DecodedLen(len(headerRaw)))
+	n, err := base64.StdEncoding.Decode(credentialsJson, []byte(headerRaw))
 	if err != nil {
 		return nil, err
 	}

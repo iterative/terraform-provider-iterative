@@ -4,6 +4,11 @@ info:
   description: LEO server handles requests to manage execution of tasks in public cloud infrastructure.
   version: 0.0.1-alpha
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: json+base64
   schemas:
     Credentials:
       description: This defines the schema of the base64-encoded json in the 'credentials' header.
@@ -15,7 +20,9 @@ components:
           type: string
           enum:
             - aws
-            # other providers will be added later
+            - az
+            - gcp
+            - k8s
         aws:
           type: object
           properties:
@@ -65,6 +72,9 @@ components:
           type: string
         machine:
           description: Machine type.
+          type: string
+        region:
+          description: Cloud region to deploy the resources in.
           type: string
         script:
           type: string
@@ -128,13 +138,8 @@ paths:
     post:
       operationId: createTask
       summary: Start executing a task.
-#      parameters:
-#        - name: credentials
-#          in: header
-#          schema:
-#            type: string
-#            format: byte # byte64 encoded
-#          required: true
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -151,13 +156,8 @@ paths:
     get:
       operationId: listTasks
       summary: List allocated tasks.
-#      parameters:
-#        - name: credentials
-#          in: header
-#          schema:
-#            type: string
-#            format: byte # byte64 encoded
-#          required: true
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Allocation started succesfully.
@@ -169,13 +169,9 @@ paths:
     get:
       operationId: getTaskStatus
       summary: Get task status.
+      security:
+        - bearerAuth: []
       parameters:
-#        - name: credentials
-#          in: header
-#          schema:
-#            type: string
-#            format: byte # Base64 encoded
-#          required: true
         - name: id
           description: id of the task.
           in: path
@@ -192,13 +188,9 @@ paths:
     delete:
       operationId: destroyTask
       summary: Deallocate task resources.
+      security:
+        - bearerAuth: []
       parameters:
-#        - name: credentials
-#          in: header
-#          schema:
-#            type: string
-#            format: byte # Base64 encoded
-#          required: true
         - name: id
           description: id of the task.
           in: path
@@ -229,4 +221,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskStatus'
+                $ref: '#/components/schemas/Job'

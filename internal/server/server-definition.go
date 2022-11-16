@@ -4,11 +4,16 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/go-chi/chi/v5"
+)
+
+const (
+	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
 // Defines values for JobStatus.
@@ -39,8 +44,11 @@ type Task struct {
 
 	// Machine Machine type.
 	Machine string `json:"machine"`
-	Script  string `json:"script"`
-	Spot    *bool  `json:"spot,omitempty"`
+
+	// Region Cloud region to deploy the resources in.
+	Region *string `json:"region,omitempty"`
+	Script string  `json:"script"`
+	Spot   *bool   `json:"spot,omitempty"`
 
 	// Storage Disk size (GB).
 	Storage int `json:"storage"`
@@ -125,6 +133,8 @@ func (siw *ServerInterfaceWrapper) GetJobStatus(w http.ResponseWriter, r *http.R
 func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
+
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListTasks(w, r)
 	})
@@ -139,6 +149,8 @@ func (siw *ServerInterfaceWrapper) ListTasks(w http.ResponseWriter, r *http.Requ
 // CreateTask operation middleware
 func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateTask(w, r)
@@ -166,6 +178,8 @@ func (siw *ServerInterfaceWrapper) DestroyTask(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
+
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DestroyTask(w, r, id)
 	})
@@ -191,6 +205,8 @@ func (siw *ServerInterfaceWrapper) GetTaskStatus(w http.ResponseWriter, r *http.
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
 	}
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetTaskStatus(w, r, id)

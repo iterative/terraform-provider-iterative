@@ -84,7 +84,7 @@ func (s *server) ListTasks(w http.ResponseWriter, r *http.Request) {
 	}
 	cloud := common.Cloud{
 		Provider:    creds.Provider,
-		Region:      "us-east",
+		Region:      common.DefaultRegion,
 		Credentials: creds.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,
@@ -118,7 +118,7 @@ func (s *server) GetTaskStatus(w http.ResponseWriter, r *http.Request, id string
 	}
 	cloud := common.Cloud{
 		Provider:    creds.Provider,
-		Region:      "us-east",
+		Region:      common.DefaultRegion,
 		Credentials: creds.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,

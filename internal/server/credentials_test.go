@@ -14,7 +14,7 @@ import (
 	"terraform-provider-iterative/task/common"
 )
 
-func TestCredentialMiddleware(t *testing.T) {
+func TestCredentialRetrieval(t *testing.T) {
 	echoHandler := func(w http.ResponseWriter, req *http.Request) {
 		creds, err := server.CredentialsFromRequest(req)
 		if err != nil {
@@ -51,7 +51,7 @@ func TestCredentialMiddleware(t *testing.T) {
 
 	req, err := http.NewRequest("GET", httpsrv.URL+"/", nil)
 	assert.NoError(t, err)
-	req.Header.Set(server.CredentialsHeader, encodedCredentials)
+	req.Header.Set(server.CredentialsHeader, "Bearer "+encodedCredentials)
 
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
@@ -74,7 +74,6 @@ func TestCredentialValidation(t *testing.T) {
 	}, {
 		description: "valid AWS credentials",
 		credentials: server.CloudCredentials{
-			Region:   common.Region("us-east"),
 			Provider: common.ProviderAWS,
 			Credentials: common.Credentials{
 				AWSCredentials: &common.AWSCredentials{},

@@ -53,10 +53,13 @@ func newCreateTaskJob(taskParams Task, credentials *CloudCredentials) *createTas
 		Parallelism: uint16(1),
 		Spot:        spot,
 	}
-
+	var region = common.DefaultRegion
+	if taskParams.Region != nil {
+		region = common.Region(*taskParams.Region)
+	}
 	cloud := common.Cloud{
 		Provider:    credentials.Provider,
-		Region:      credentials.Region,
+		Region:      region,
 		Credentials: credentials.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,
@@ -111,7 +114,7 @@ func newDestroyTaskJob(taskId string, credentials *CloudCredentials) (*destroyTa
 	}
 	cloud := common.Cloud{
 		Provider:    credentials.Provider,
-		Region:      credentials.Region,
+		Region:      common.DefaultRegion,
 		Credentials: credentials.GetCredentials(),
 		Timeouts: common.Timeouts{
 			Create: 15 * time.Minute,
