@@ -104,16 +104,25 @@ components:
       description: Status of an allocated task.
       type: object
       properties:
-        succeeded:
-          type: integer
-        active:
-          type: integer
-        failed:
-          type: integer
+        Status:
+          type: string
+          enum:
+            - allocating
+            - active
+            - failed
+            - succeeded
+        Events:
+          type: array
+          items:
+            type: string
+        Logs:
+          type: array
+          items:
+            type: string
       required:
-        - succeeded
-        - active
-        - failed
+        - Status
+        - Events
+        - Logs
     Job:
       description: |
         Job identifier returned when triggering allocation or

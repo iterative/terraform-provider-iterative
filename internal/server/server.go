@@ -7,6 +7,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -145,18 +146,39 @@ func (s *server) GetTaskStatus(w http.ResponseWriter, r *http.Request, id string
 	}
 	status, err := tsk.Status(ctx)
 	if err != nil {
-		RespondError(r.Context(), w, err)
+		RespondError(ctx, w, err)
 		return
 	}
 	var response TaskStatus
 	for code, count := range status {
+		if count == 0 {
+			// We're only expecting 1 non-zero status here.
+			continue
+		}
 		switch code {
 		case common.StatusCodeActive:
-			response.Active = count
+			response.Status = Active
 		case common.StatusCodeSucceeded:
-			response.Succeeded = count
+			response.Status = Succeeded
 		case common.StatusCodeFailed:
-			response.Failed = count
+			response.Status = Failed
+		}
+	}
+	// Add log output.
+	logs, err := tsk.Logs(ctx)
+	if err != nil {
+		RespondError(ctx, w, err)
+		return
+	}
+	response.Logs = logs
+
+	// Add event data.
+	events := tsk.Events(ctx)
+	if len(events) > 0 {
+		response.Events = make([]string, len(events))
+		for i, event := range tsk.Events(ctx) {
+			evtLine := fmt.Sprintf("%s (%s) %s", event.Time.Format(time.RFC3339), event.Code, event.Description)
+			response.Events[i] = evtLine
 		}
 	}
 	RespondValue(ctx, w, response)
