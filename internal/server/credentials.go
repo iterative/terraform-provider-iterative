@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -43,12 +42,10 @@ const (
 var PublicKey, PrivateKey *[32]byte
 
 func init() {
-	publicKey, privateKey, err := box.GenerateKey(rand.Reader)
-	if err != nil {
+	var err error
+	if PublicKey, PrivateKey, err = box.GenerateKey(rand.Reader); err != nil {
 		panic(err)
 	}
-
-	PublicKey, PrivateKey = publicKey, privateKey
 }
 
 // CloudCredentials define the cloud provider credentials and region.
@@ -118,7 +115,7 @@ func CredentialsFromRequest(req *http.Request) (*CloudCredentials, error) {
 
 	credentialsJson, ok := box.OpenAnonymous(nil, credentialsBox[:n], PublicKey, PrivateKey)
 	if !ok {
-		return nil, errors.New("failed to decrypt credentials")
+		return nil, AuthorizationError("failed to decrypt credentials")
 	}
 
 	var credentials CloudCredentials
