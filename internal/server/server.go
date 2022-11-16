@@ -6,7 +6,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -187,7 +186,7 @@ func (s *server) GetJobStatus(w http.ResponseWriter, r *http.Request, id string)
 
 // GetKey implements ServerInterface.GetKey.
 func (s *server) GetKey(w http.ResponseWriter, r *http.Request) {
-	key := []byte(base64.StdEncoding.EncodeToString(PublicKey[:]))
+	key := PublicKey[:]
 	RespondValue(r.Context(), w, EncryptionKey{
 		Key: &key,
 	})
