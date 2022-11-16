@@ -184,13 +184,6 @@ func (s *server) GetJobStatus(w http.ResponseWriter, r *http.Request, id string)
 	RespondValue(r.Context(), w, response)
 }
 
-// RespondError writes the following error to the response writer.
-func RespondError(ctx context.Context, w http.ResponseWriter, err error) {
-	log.Printf("responding with error: %s", err.Error())
-	// TODO: implement error to status code mapping.
-	w.WriteHeader(http.StatusInternalServerError)
-}
-
 // RespondValue writes the provided object (marshalled to json) to the response.
 func RespondValue(ctx context.Context, w http.ResponseWriter, value interface{}) {
 	w.Header().Set("Content-Type", "application/json")
