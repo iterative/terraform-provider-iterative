@@ -31,6 +31,10 @@ func newCreateTaskJob(taskParams Task, credentials *CloudCredentials) *createTas
 	if taskParams.Storage == 0 {
 		taskParams.Storage = -1
 	}
+	timeout := 24 * time.Hour
+	if taskParams.Timeout > 0 {
+		timeout = time.Duration(taskParams.Timeout) * time.Second
+	}
 	taskConfig := common.Task{
 		Size: common.Size{
 			Machine: taskParams.Machine,
@@ -43,7 +47,7 @@ func newCreateTaskJob(taskParams Task, credentials *CloudCredentials) *createTas
 			Directory:    "",
 			DirectoryOut: "",
 			ExcludeList:  nil,
-			Timeout:      time.Duration(taskParams.Timeout) * time.Second,
+			Timeout:      timeout,
 		},
 		Firewall: common.Firewall{
 			Ingress: common.FirewallRule{
