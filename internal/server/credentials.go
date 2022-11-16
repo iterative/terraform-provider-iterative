@@ -88,7 +88,7 @@ func CredentialsFromRequest(req *http.Request) (*CloudCredentials, error) {
 		return nil, AuthorizationError("empty credentials header")
 	}
 	prefix := "Bearer "
-	if len(headerRaw) < len(prefix) || !(strings.ToLower(headerRaw[:len(prefix)]) == strings.ToLower(prefix)) {
+	if len(headerRaw) < len(prefix) || !strings.EqualFold(headerRaw[:len(prefix)], prefix) {
 		return nil, AuthorizationError("invalid bearer token")
 	}
 	headerRaw = headerRaw[len(prefix):]
