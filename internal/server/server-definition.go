@@ -23,6 +23,14 @@ const (
 	Executing JobStatus = "executing"
 )
 
+// Defines values for TaskStatusStatus.
+const (
+	Active     TaskStatusStatus = "active"
+	Allocating TaskStatusStatus = "allocating"
+	Failed     TaskStatusStatus = "failed"
+	Succeeded  TaskStatusStatus = "succeeded"
+)
+
 // EncryptionKey Credential encryption public key.
 type EncryptionKey struct {
 	Key *[]byte `json:"key,omitempty"`
@@ -72,10 +80,13 @@ type TaskList struct {
 
 // TaskStatus Status of an allocated task.
 type TaskStatus struct {
-	Active    int `json:"active"`
-	Failed    int `json:"failed"`
-	Succeeded int `json:"succeeded"`
+	Events []string         `json:"Events"`
+	Logs   []string         `json:"Logs"`
+	Status TaskStatusStatus `json:"Status"`
 }
+
+// TaskStatusStatus defines model for TaskStatus.Status.
+type TaskStatusStatus string
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = Task
