@@ -18,6 +18,7 @@ func RunSteps(ctx context.Context, steps []Step) error {
 	for i, step := range steps {
 		logrus.Infof("[%d/%d] %s", i+1, total, step.Description)
 		if err := step.Action(ctx); err != nil {
+			logrus.Debug("step: ", step.Description, " error: ", err)
 			return err
 		}
 	}

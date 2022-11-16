@@ -206,7 +206,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	vmClient, _ := getVMClient(subscriptionID)
 	vmSettings := compute.VirtualMachine{
-		Tags: metadata,
+		Tags:     metadata,
 		Location: to.StringPtr(region),
 		VirtualMachineProperties: &compute.VirtualMachineProperties{
 			HardwareProfile: &compute.HardwareProfile{
@@ -256,7 +256,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 	}
-	
+
 	if userAssignedIdentities != nil {
 		vmSettings.Identity = &compute.VirtualMachineIdentity{
 			UserAssignedIdentities: userAssignedIdentities,
@@ -414,16 +414,19 @@ func GetRegion(region string) string {
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
-	instanceTypes := make(map[string]string)
-	instanceTypes["m"] = "Standard_F8s_v2"
-	instanceTypes["l"] = "Standard_F32s_v2"
-	instanceTypes["xl"] = "Standard_F64s_v2"
-	instanceTypes["m+k80"] = "Standard_NC6"
-	instanceTypes["l+k80"] = "Standard_NC12"
-	instanceTypes["xl+k80"] = "Standard_NC24"
-	instanceTypes["m+v100"] = "Standard_NC6s_v3"
-	instanceTypes["l+v100"] = "Standard_NC12s_v3"
-	instanceTypes["xl+v100"] = "Standard_NC24s_v3"
+	instanceTypes := map[string]string{
+		"s":       "Standard_B1s",
+		"m":       "Standard_F8s_v2",
+		"l":       "Standard_F32s_v2",
+		"xl":      "Standard_F64s_v2",
+		"m+t4":    "Standard_NC4as_T4_v3",
+		"m+k80":   "Standard_NC6",
+		"l+k80":   "Standard_NC12",
+		"xl+k80":  "Standard_NC24",
+		"m+v100":  "Standard_NC6s_v3",
+		"l+v100":  "Standard_NC12s_v3",
+		"xl+v100": "Standard_NC24s_v3",
+	}
 
 	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val
