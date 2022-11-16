@@ -49,7 +49,6 @@ require (
 )
 
 require (
-	github.com/0x2b3bfa0/logrusctx v0.1.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.4.3
 	github.com/deepmap/oapi-codegen v1.12.2
 	github.com/go-chi/chi/v5 v5.0.7
