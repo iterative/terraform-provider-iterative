@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/sync"
 
 	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/common"
 )
@@ -147,7 +148,7 @@ func Transfer(ctx context.Context, source, destination string, exclude []string)
 	}
 
 	if count, size, err := operations.Count(ctx, sourceFileSystem); err == nil {
-		logrus.Infof("Transferring %s (%d files)...", units.HumanSize(float64(size)), count)
+		logrusctx.Infof(ctx, "Transferring %s (%d files)...", units.HumanSize(float64(size)), count)
 	} else {
 		return err
 	}
