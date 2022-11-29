@@ -235,7 +235,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 			},
 		},
 		Tags: &gcp_compute.Tags{
-			Items: []string{instanceName},
+			Items: []string{instanceId},
 		},
 		Scheduling: &gcp_compute.Scheduling{
 			OnHostMaintenance: instanceHostMaintenanceBehavior,
