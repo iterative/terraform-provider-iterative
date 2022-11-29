@@ -31,12 +31,17 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	networkName := "iterative"
-	instanceName := d.Id()
+	instanceId := d.Id()
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
 
 	serviceAccountEmail, serviceAccountScopes := getServiceAccountData(d.Get("instance_permission_set").(string))
+
+	instanceName := d.Get("name").(string)
+	if instanceName == "" {
+		instanceName = instanceId
+	}
 
 	instanceMetadata := map[string]string{}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
@@ -140,11 +145,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	firewallEgressDefinition := &gcp_compute.Firewall{
-		Name:       instanceName + "-egress",
+		Name:       instanceId + "-egress",
 		Network:    network.SelfLink,
 		Direction:  "EGRESS",
 		Priority:   1,
-		TargetTags: []string{instanceName},
+		TargetTags: []string{instanceId},
 		Allowed: []*gcp_compute.FirewallAllowed{
 			{
 				IPProtocol: "all",
@@ -167,11 +172,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	firewallIngressDefinition := &gcp_compute.Firewall{
-		Name:       instanceName + "-ingress",
+		Name:       instanceId + "-ingress",
 		Network:    network.SelfLink,
 		Direction:  "INGRESS",
 		Priority:   1,
-		TargetTags: []string{instanceName},
+		TargetTags: []string{instanceId},
 		Allowed: []*gcp_compute.FirewallAllowed{
 			{
 				IPProtocol: "tcp",
@@ -281,11 +286,15 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceZone := getRegion(d.Get("region").(string))
-	instanceName := d.Id()
+	instanceId := d.Id()
+	instanceName := d.Get("name").(string)
+	if instanceName == "" {
+		instanceName = instanceId
+	}
 
 	service.Instances.Delete(project, instanceZone, instanceName).Do()
-	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
-	service.Firewalls.Delete(project, instanceName+"-egress").Do()
+	service.Firewalls.Delete(project, instanceId+"-ingress").Do()
+	service.Firewalls.Delete(project, instanceId+"-egress").Do()
 
 	return nil
 }
