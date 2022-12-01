@@ -418,7 +418,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 					Cloud:              d.Get("cloud").(string),
 					Spot:               d.Get("spot").(bool),
 					Region:             d.Get("region").(string),
-					Name:               d.Get("name").(string),
+					Name:               d.Id(),
 					Labels:             "",
 					IdleTimeout:        d.Get("idle_timeout").(int),
 					Repo:               "",
@@ -460,7 +460,7 @@ func provisionerCode(d *schema.ResourceData) (string, error) {
 	data["driver"] = d.Get("driver").(string)
 	data["labels"] = d.Get("labels").(string)
 	data["idle_timeout"] = strconv.Itoa(d.Get("idle_timeout").(int))
-	data["name"] = d.Get("name").(string)
+	data["name"] = d.Id()
 	data["cloud"] = d.Get("cloud").(string)
 	data["startup_script"] = d.Get("startup_script").(string)
 	data["tf_resource"] = base64.StdEncoding.EncodeToString(jsonResource)
