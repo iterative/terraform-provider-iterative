@@ -20,7 +20,7 @@ import (
 	azresources "terraform-provider-iterative/task/az/resources"
 )
 
-//ResourceMachineCreate creates AWS instance
+// ResourceMachineCreate creates AWS instance
 func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	subscriptionID, err := subscriptionID()
 	if err != nil {
@@ -59,7 +59,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	sku := imageParts[2]
 	version := imageParts[3]
 
-	vmName := d.Get("name").(string)
+	vmName := d.Id()
 	gpName := d.Id()
 	nsgName := gpName + "-nsg"
 	vnetName := gpName + "-vnet"
@@ -296,7 +296,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-//ResourceMachineDelete deletes Azure instance
+// ResourceMachineDelete deletes Azure instance
 func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	subscriptionID, err := subscriptionID()
 	if err != nil {
@@ -398,7 +398,7 @@ func getUserAssignedIdentityMap(identitiesRaw string) (map[string]*compute.Virtu
 	return identityMap, nil
 }
 
-//GetRegion maps region to real cloud regions
+// GetRegion maps region to real cloud regions
 func GetRegion(region string) string {
 	instanceRegions := make(map[string]string)
 	instanceRegions["us-east"] = "eastus"
