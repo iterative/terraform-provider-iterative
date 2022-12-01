@@ -46,7 +46,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
-		"Name": d.Get("name").(string),
+		"Name": d.Id(),
 		"Id":   d.Id(),
 	}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {

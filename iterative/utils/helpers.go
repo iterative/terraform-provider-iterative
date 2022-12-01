@@ -6,10 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aohorodnyk/uid"
 	"github.com/blang/semver/v4"
 	"github.com/google/go-github/v42/github"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"terraform-provider-iterative/task/common"
 )
 
 func GetCML(version string) string {
@@ -81,11 +82,8 @@ func MachinePrefix(d *schema.ResourceData) string {
 
 func SetId(d *schema.ResourceData) {
 	if len(d.Id()) == 0 {
-		d.SetId("iterative-" + uid.NewProvider36Size(8).MustGenerate().String())
-
-		if len(d.Get("name").(string)) == 0 {
-			d.Set("name", d.Id())
-		}
+		id := common.NewRandomIdentifier(d.Get("name").(string))
+		d.SetId(strings.Replace(id.Long(), "tpi-", "cml-", 1))
 	}
 }
 
