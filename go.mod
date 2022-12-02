@@ -1,4 +1,4 @@
-module terraform-provider-iterative
+module github.com/iterative/terraform-provider-iterative
 
 go 1.19
 

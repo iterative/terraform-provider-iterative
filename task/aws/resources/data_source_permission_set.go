@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
-	"terraform-provider-iterative/task/aws/client"
+	"github.com/iterative/terraform-provider-iterative/task/aws/client"
 )
 
 var validateARN = regexp.MustCompile(`arn:aws:iam::[\d]*:instance-profile/[\S]*`)

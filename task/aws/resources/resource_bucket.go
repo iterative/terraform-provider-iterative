@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 
-	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/aws/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 const (

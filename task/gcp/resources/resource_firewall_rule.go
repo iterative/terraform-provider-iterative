@@ -11,8 +11,8 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
 )
 
 type FirewallRuleDirection string

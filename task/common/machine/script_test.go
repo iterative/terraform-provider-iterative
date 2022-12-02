@@ -7,8 +7,8 @@ import (
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/require"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
 )
 
 func TestScript(t *testing.T) {

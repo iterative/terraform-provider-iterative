@@ -12,8 +12,8 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
 )
 
 func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {

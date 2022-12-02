@@ -11,13 +11,13 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"terraform-provider-iterative/cmd/leo/create"
-	"terraform-provider-iterative/cmd/leo/delete"
-	"terraform-provider-iterative/cmd/leo/destroyrunner"
-	"terraform-provider-iterative/cmd/leo/list"
-	"terraform-provider-iterative/cmd/leo/read"
-	"terraform-provider-iterative/cmd/leo/stop"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/cmd/leo/create"
+	"github.com/iterative/terraform-provider-iterative/cmd/leo/delete"
+	"github.com/iterative/terraform-provider-iterative/cmd/leo/destroyrunner"
+	"github.com/iterative/terraform-provider-iterative/cmd/leo/list"
+	"github.com/iterative/terraform-provider-iterative/cmd/leo/read"
+	"github.com/iterative/terraform-provider-iterative/cmd/leo/stop"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 type Options struct {

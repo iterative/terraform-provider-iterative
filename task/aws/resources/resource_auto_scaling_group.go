@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0x2b3bfa0/logrusctx"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/smithy-go"
-	"github.com/0x2b3bfa0/logrusctx"
 
-	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/aws/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 func NewAutoScalingGroup(client *client.Client, identifier common.Identifier, subnet *DefaultVPCSubnets, launchTemplate *LaunchTemplate, parallelism *uint16, spot common.Spot) *AutoScalingGroup {

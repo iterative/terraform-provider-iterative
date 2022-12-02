@@ -16,9 +16,9 @@ import (
 
 	"gopkg.in/alessio/shellescape.v1"
 
-	"terraform-provider-iterative/environment"
-	"terraform-provider-iterative/iterative/gcp"
-	"terraform-provider-iterative/iterative/utils"
+	"github.com/iterative/terraform-provider-iterative/environment"
+	"github.com/iterative/terraform-provider-iterative/iterative/gcp"
+	"github.com/iterative/terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"

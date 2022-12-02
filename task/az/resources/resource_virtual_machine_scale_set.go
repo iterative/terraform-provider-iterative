@@ -16,9 +16,9 @@ import (
 
 	"github.com/0x2b3bfa0/logrusctx"
 
-	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/az/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
 )
 
 func NewVirtualMachineScaleSet(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, subnet *Subnet, securityGroup *SecurityGroup, permissionSet *PermissionSet, credentials *Credentials, task *common.Task) *VirtualMachineScaleSet {

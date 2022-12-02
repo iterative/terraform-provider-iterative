@@ -4,19 +4,19 @@ package task_test
 
 import (
 	"context"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
-	"io/ioutil"
-	"path/filepath"
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"terraform-provider-iterative/task"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 type testTarget struct {

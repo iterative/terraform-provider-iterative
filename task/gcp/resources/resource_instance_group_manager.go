@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
 )
 
 func NewInstanceGroupManager(client *client.Client, identifier common.Identifier, instanceTemplate *InstanceTemplate, parallelism *uint16) *InstanceGroupManager {

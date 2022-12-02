@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/gcp/resources"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/resources"
 )
 
 func TestExistingBucketConnectionString(t *testing.T) {

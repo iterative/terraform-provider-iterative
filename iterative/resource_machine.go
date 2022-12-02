@@ -7,11 +7,11 @@ import (
 	"net"
 	"time"
 
-	"terraform-provider-iterative/iterative/aws"
-	"terraform-provider-iterative/iterative/azure"
-	"terraform-provider-iterative/iterative/gcp"
-	"terraform-provider-iterative/iterative/kubernetes"
-	"terraform-provider-iterative/iterative/utils"
+	"github.com/iterative/terraform-provider-iterative/iterative/aws"
+	"github.com/iterative/terraform-provider-iterative/iterative/azure"
+	"github.com/iterative/terraform-provider-iterative/iterative/gcp"
+	"github.com/iterative/terraform-provider-iterative/iterative/kubernetes"
+	"github.com/iterative/terraform-provider-iterative/iterative/utils"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

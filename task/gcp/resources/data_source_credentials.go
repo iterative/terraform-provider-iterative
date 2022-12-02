@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
 )
 
 func NewCredentials(client *client.Client, identifier common.Identifier, bucket common.StorageCredentials) *Credentials {

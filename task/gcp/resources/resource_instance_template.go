@@ -12,9 +12,9 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
-	"terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
 )
 
 func NewInstanceTemplate(client *client.Client, identifier common.Identifier, defaultNetwork *DefaultNetwork, firewallRules []*FirewallRule, permissionSet *PermissionSet, image *Image, credentials *Credentials, task common.Task) *InstanceTemplate {

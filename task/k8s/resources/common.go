@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"terraform-provider-iterative/task/k8s/client"
+	"github.com/iterative/terraform-provider-iterative/task/k8s/client"
 )
 
 // Wait for the pods matching the specified selector to pass their respective readiness probes.

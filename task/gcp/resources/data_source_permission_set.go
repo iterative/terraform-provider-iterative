@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
 
 	"google.golang.org/api/compute/v1"
 )

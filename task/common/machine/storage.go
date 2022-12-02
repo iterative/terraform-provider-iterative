@@ -26,10 +26,10 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/0x2b3bfa0/logrusctx"
+	"github.com/sirupsen/logrus"
 
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 // defaultTransferExcludes lists files that TPI will not transfer

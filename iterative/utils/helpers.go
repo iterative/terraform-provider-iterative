@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-github/v42/github"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 func GetCML(version string) string {

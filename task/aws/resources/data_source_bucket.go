@@ -6,8 +6,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
 )
 
 // NewExistingS3Bucket returns a new data source refering to a pre-allocated

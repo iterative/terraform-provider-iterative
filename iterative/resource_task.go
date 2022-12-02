@@ -14,9 +14,9 @@ import (
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/sirupsen/logrus"
 
-	"terraform-provider-iterative/iterative/utils"
-	"terraform-provider-iterative/task"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/iterative/utils"
+	"github.com/iterative/terraform-provider-iterative/task"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 var (

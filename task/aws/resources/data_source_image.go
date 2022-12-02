@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
-	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/aws/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 func NewImage(client *client.Client, identifier string) *Image {

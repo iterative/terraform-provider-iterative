@@ -8,8 +8,8 @@ import (
 	kubernetes_meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/k8s/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/k8s/client"
 )
 
 // NewExistingPersistentVolumeClaim creates a new ExistingPersistentVolumeClaim object.

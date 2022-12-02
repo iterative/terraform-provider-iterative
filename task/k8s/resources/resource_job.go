@@ -23,8 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/k8s/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/k8s/client"
 )
 
 func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim VolumeInfoProvider, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {

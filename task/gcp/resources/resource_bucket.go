@@ -8,8 +8,8 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
 )
 
 func ListBuckets(ctx context.Context, client *client.Client) ([]common.Identifier, error) {

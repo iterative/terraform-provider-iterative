@@ -3,9 +3,9 @@ package resources
 import (
 	"context"
 
-	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/az/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
 )
 
 // NewExistingBlobContainer returns a new data source refering to a pre-allocated storage container.

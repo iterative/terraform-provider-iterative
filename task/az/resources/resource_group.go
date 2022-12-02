@@ -7,8 +7,8 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 
-	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/az/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 func ListResourceGroups(ctx context.Context, client *client.Client) ([]common.Identifier, error) {

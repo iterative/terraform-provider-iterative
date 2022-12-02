@@ -11,8 +11,8 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/storage/v1"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
 )
 
 func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {

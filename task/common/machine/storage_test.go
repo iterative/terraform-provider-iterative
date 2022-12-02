@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
 )
 
 func TestRcloneConnectionString(t *testing.T) {

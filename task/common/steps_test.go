@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 
 	"github.com/stretchr/testify/require"
 )

@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
 )
 
 func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {

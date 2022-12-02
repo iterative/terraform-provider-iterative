@@ -10,8 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"terraform-provider-iterative/task"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 type Options struct {

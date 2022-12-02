@@ -9,13 +9,13 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 
-	"terraform-provider-iterative/task/az/client"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/az/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 func NewSecurityGroup(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, firewall common.Firewall) *SecurityGroup {
 	s := &SecurityGroup{
-		client:                 client,
+		client:     client,
 		Identifier: identifier.Long(),
 		Attributes: firewall,
 	}

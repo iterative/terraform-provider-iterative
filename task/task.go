@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net"
 
-	"terraform-provider-iterative/task/aws"
-	"terraform-provider-iterative/task/az"
-	"terraform-provider-iterative/task/gcp"
-	"terraform-provider-iterative/task/k8s"
+	"github.com/iterative/terraform-provider-iterative/task/aws"
+	"github.com/iterative/terraform-provider-iterative/task/az"
+	"github.com/iterative/terraform-provider-iterative/task/gcp"
+	"github.com/iterative/terraform-provider-iterative/task/k8s"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
 )
 
 func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {

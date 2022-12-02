@@ -11,7 +11,7 @@ import (
 
 	"github.com/alessio/shellescape"
 
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 //go:embed machine-script.sh.tpl

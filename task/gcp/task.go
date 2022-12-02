@@ -7,11 +7,11 @@ import (
 
 	"github.com/0x2b3bfa0/logrusctx"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
-	"terraform-provider-iterative/task/common/ssh"
-	"terraform-provider-iterative/task/gcp/client"
-	"terraform-provider-iterative/task/gcp/resources"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/client"
+	"github.com/iterative/terraform-provider-iterative/task/gcp/resources"
 )
 
 func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {

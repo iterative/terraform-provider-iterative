@@ -8,7 +8,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 
-	"terraform-provider-iterative/task/az/client"
+	"github.com/iterative/terraform-provider-iterative/task/az/client"
 )
 
 // validateARMID is a regular expression for validating user-assigned identity ids.

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"terraform-provider-iterative/iterative/utils"
+	"github.com/iterative/terraform-provider-iterative/iterative/utils"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

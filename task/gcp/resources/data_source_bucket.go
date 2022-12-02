@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
 )
 
 // NewExistingBucket creates a new data source referring to a pre-allocated GCP storage bucket.

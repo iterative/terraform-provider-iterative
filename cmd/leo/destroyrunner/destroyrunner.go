@@ -7,12 +7,12 @@ import (
 	"github.com/mitchellh/go-testing-interface"
 	"github.com/spf13/cobra"
 
-	"terraform-provider-iterative/iterative/aws"
-	"terraform-provider-iterative/iterative/azure"
-	"terraform-provider-iterative/iterative/gcp"
-	"terraform-provider-iterative/iterative/kubernetes"
+	"github.com/iterative/terraform-provider-iterative/iterative/aws"
+	"github.com/iterative/terraform-provider-iterative/iterative/azure"
+	"github.com/iterative/terraform-provider-iterative/iterative/gcp"
+	"github.com/iterative/terraform-provider-iterative/iterative/kubernetes"
 
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 type Options struct {

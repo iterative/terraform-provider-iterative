@@ -8,8 +8,8 @@ import (
 	kubernetes_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/k8s/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/k8s/client"
 )
 
 // NewPermissionSet creates a new permission set.

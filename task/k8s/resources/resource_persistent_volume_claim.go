@@ -10,8 +10,8 @@ import (
 	kubernetes_meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/k8s/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/k8s/client"
 )
 
 func NewPersistentVolumeClaim(client *client.Client, identifier common.Identifier, storageClass string, size int, many bool) *PersistentVolumeClaim {

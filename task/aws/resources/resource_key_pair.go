@@ -10,9 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go"
 
-	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/aws/client"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
 )
 
 func NewKeyPair(client *client.Client, identifier common.Identifier) *KeyPair {

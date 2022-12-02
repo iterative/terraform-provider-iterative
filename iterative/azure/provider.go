@@ -17,7 +17,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	azresources "terraform-provider-iterative/task/az/resources"
+	azresources "github.com/iterative/terraform-provider-iterative/task/az/resources"
 )
 
 // ResourceMachineCreate creates AWS instance

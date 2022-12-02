@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/require"
 
-	"terraform-provider-iterative/task/aws/resources"
-	"terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/aws/resources"
+	"github.com/iterative/terraform-provider-iterative/task/common"
 )
 
 func TestExistingBucketConnectionString(t *testing.T) {

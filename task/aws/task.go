@@ -7,11 +7,11 @@ import (
 
 	"github.com/0x2b3bfa0/logrusctx"
 
-	"terraform-provider-iterative/task/aws/client"
-	"terraform-provider-iterative/task/aws/resources"
-	"terraform-provider-iterative/task/common"
-	"terraform-provider-iterative/task/common/machine"
-	"terraform-provider-iterative/task/common/ssh"
+	"github.com/iterative/terraform-provider-iterative/task/aws/client"
+	"github.com/iterative/terraform-provider-iterative/task/aws/resources"
+	"github.com/iterative/terraform-provider-iterative/task/common"
+	"github.com/iterative/terraform-provider-iterative/task/common/machine"
+	"github.com/iterative/terraform-provider-iterative/task/common/ssh"
 )
 
 const s3_region = "region"

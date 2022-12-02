@@ -1,7 +1,7 @@
 package resources_test
 
 import (
-	"terraform-provider-iterative/task/az/resources"
+	"github.com/iterative/terraform-provider-iterative/task/az/resources"
 	"testing"
 
 	"github.com/stretchr/testify/require"
