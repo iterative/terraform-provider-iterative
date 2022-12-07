@@ -208,4 +208,4 @@ Instead of using the latest stable release, a local copy of the repository must 
 This project and all contributions to it are distributed under [![Apache-2.0][licence-badge]][licence-file]
 
 [licence-badge]: https://img.shields.io/badge/licence-Apache%202.0-blue
-[licence-file]: https://github.com/iterative/terraform-provider-iterative/blob/master/LICENSE
+[licence-file]: https://github.com/iterative/terraform-provider-iterative/blob/main/LICENSE

@@ -1,7 +1,7 @@
 name: build-ami
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths: [environment/**]
 jobs:
   build-ami:
