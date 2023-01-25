@@ -8,12 +8,12 @@ on:
       - '**.md'
 jobs:
   lint:
-    if: ${{ false }} # Skipped jobs still result in 'success'.
+    if: false # Skipped jobs still result in 'success'.
     runs-on: ubuntu-latest
     steps:
-      - run: 'echo "No build required"'
+      - run: false # unreachable
   test:
-    if: ${{ false }} # Skipped jobs still result in 'success'.
+    if: false # Skipped jobs still result in 'success'.
     runs-on: ubuntu-latest
     steps:
-      - run: 'echo "No build required"'
+      - run: false # unreachable
