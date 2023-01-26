@@ -2,7 +2,7 @@
 
 ![TPI](https://static.iterative.ai/img/tpi/banner.svg)
 
-[![tests](https://img.shields.io/github/workflow/status/iterative/terraform-provider-iterative/Test?label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
+[![tests](https://img.shields.io/github/actions/workflow/status/iterative/terraform-provider-iterative/test.yml?branch=main&label=tests&logo=GitHub)](https://github.com/iterative/terraform-provider-iterative/actions/workflows/test.yml)
 [![Apache-2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)](https://github.com/iterative/terraform-provider-iterative/blob/main/LICENSE)
 
 TPI is a [Terraform](https://terraform.io) plugin built with machine learning in mind. This CLI tool offers full lifecycle management of computing resources (including GPUs and respawning spot instances) from several cloud vendors (AWS, Azure, GCP, K8s)... without needing to be a cloud expert.
