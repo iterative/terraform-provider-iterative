@@ -48,7 +48,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-$TPI_START_COMMAND
-  ExecStop=/bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStop=/bin/bash -c 'source /opt/task/variables; source /opt/task/credentials; if systemctl is-system-running | grep stopping; then status=queued; else echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"; if test $SERVICE_RESULT == timeout; then status=timeout; else; test $EXIT_STATUS == 0 && status=succeeded || status=failed; fi; fi && leo report --type=data --url $STUDIO_URL --token $STUDIO_TOKEN --repo $STUDIO_REPO_URL --param status=$status'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
   EnvironmentFile=/opt/task/variables
@@ -100,6 +100,8 @@ if test -f /etc/apt/sources.list.d/cuda.list; then
   apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/7fa2af80.pub
   for list in cuda nvidia-ml; do mv /etc/apt/sources.list.d/$list.list{.backup,}; done
 fi
+
+leo report --type=data --url $STUDIO_URL --token $STUDIO_TOKEN --repo $STUDIO_REPO_URL --param status=running
 
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
