@@ -36,11 +36,11 @@ terraform.rc
 terraform
 
 # Ignore the Go vendor directory, superseded by proxy.golang.org and go.{mod,sum}
-vendor
+/vendor
 
 # ignore binaries in the root dir
 terraform-provider-iterative
-leo
+/leo
 
 # JetBrains IDEs
 .idea/*
