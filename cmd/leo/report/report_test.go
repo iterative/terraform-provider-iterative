@@ -83,7 +83,7 @@ func TestSendReport(t *testing.T) {
 			err := json.NewDecoder(req.Body).Decode(&body)
 			require.NoError(t, err)
 			received <- body
-			resp.Write([]byte("ok"))
+			_, _ = resp.Write([]byte("ok"))
 		}))
 	cmd := New(&common.Cloud{})
 	cmd.SetArgs([]string{
