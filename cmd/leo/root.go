@@ -16,6 +16,7 @@ import (
 	"terraform-provider-iterative/cmd/leo/destroyrunner"
 	"terraform-provider-iterative/cmd/leo/list"
 	"terraform-provider-iterative/cmd/leo/read"
+	"terraform-provider-iterative/cmd/leo/report"
 	"terraform-provider-iterative/cmd/leo/stop"
 	"terraform-provider-iterative/task/common"
 )
@@ -52,6 +53,7 @@ func NewCmd() *cobra.Command {
 	cmd.AddCommand(read.New(&o.Cloud))
 	cmd.AddCommand(stop.New(&o.Cloud))
 	cmd.AddCommand(destroyrunner.New(&o.Cloud))
+	cmd.AddCommand(report.New(&o.Cloud))
 
 	cmd.PersistentFlags().StringVar(&o.Provider, "cloud", "", "cloud provider")
 	cmd.PersistentFlags().BoolVar(&o.Verbose, "verbose", false, "verbose output")
