@@ -13,16 +13,48 @@ sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 source /opt/task/credentials
 (systemctl is-system-running | grep stopping) || leo stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
 END
-
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
+
+sudo tee /usr/bin/tpi-task-studio-log << 'END'
+#!/bin/bash
+URL="${STUDIO_URL:-https://studio.iterative.ai/api/live}"
+STEP="${STUDIO_STEP:-`echo $(date +%s)`}"
+STATUS="${TPI_TASK_STATUS:-running}"
+DATE_START="${TPI_TASK_DATE_START:-0}"
+DATE_END=0
+
+if [ -n "$STUDIO_TOKEN" ]; then
+  if systemctl is-system-running | grep stopping; then 
+    STATUS=queued; 
+    if [[ "${SERVICE_RESULT}" = "timeout" ]]; then
+      STATUS=timeout
+    else
+      test $EXIT_STATUS == 0 && STATUS=succeeded || STATUS=failed;
+    fi
+  fi
+
+  if [[ "$STATUS" =~ ^(timeout|succeeded|failed)$ ]]; then 
+    DATE_END=$(date +%s)
+  fi
+
+  STUDIO_PARAMS="{\"task\": {\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"machine\": \"$TPI_TASK_MACHINE\", \"gpu\": \"$TPI_TASK_GPU\", \"dateStart\": ${DATE_START}, \"dateEnd\": ${DATE_END}}}"
+  STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"TPI_TASK:${TPI_TASK_IDENTIFIER}\", \"step\":${STEP}, \"params\": ${STUDIO_PARAMS}}"
+  curl -X POST $URL \
+    -H "Content-Type: application/json" \
+    -H "Authorization: token ${STUDIO_TOKEN}" \
+    -d "${STUDIO_PAYLOAD}"
+fi
+END
+chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-studio-log
 
 base64 --decode << END | sudo tee /opt/task/variables > /dev/null
 S0VZPSJWQUxVRSIK
 END
+chmod u=rw,g=,o= /opt/task/variables
+
 base64 --decode << END | sudo tee /opt/task/credentials > /dev/null
 ZXhwb3J0IFNFQ1JFVD1WQUxVRQo=
 END
-chmod u=rw,g=,o= /opt/task/variables
 chmod u=rw,g=,o= /opt/task/credentials
 
 while IFS= read -rd $'\0' variable; do
@@ -48,7 +80,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-$TPI_START_COMMAND
-  ExecStop=/bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStop=/usr/bin/tpi-task-studio-log && /bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
   EnvironmentFile=/opt/task/variables
@@ -100,6 +132,8 @@ if test -f /etc/apt/sources.list.d/cuda.list; then
   apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/7fa2af80.pub
   for list in cuda nvidia-ml; do mv /etc/apt/sources.list.d/$list.list{.backup,}; done
 fi
+
+/usr/bin/tpi-task-studio-log
 
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
