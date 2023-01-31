@@ -13,16 +13,41 @@ sleep 20; while pgrep rclone > /dev/null; do sleep 1; done
 source /opt/task/credentials
 (systemctl is-system-running | grep stopping) || leo stop --cloud="$TPI_TASK_CLOUD_PROVIDER" --region="$TPI_TASK_CLOUD_REGION" "$TPI_TASK_IDENTIFIER";
 END
-
 chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
+
+sudo tee /usr/bin/tpi-task-studio-log << 'END'
+#!/bin/bash
+STUDIO_URL="${2:-https://studio.iterative.ai/api/live}"
+TPI_TASK_STATUS="${1:-running}"
+re='^[0-9]+$'
+if [[ $1 =~ $re ]]; then
+  if [[ "${1}" -gt "0" ]]; then
+    TPI_TASK_STATUS='failed'
+  elif [[ "${1}" -eq "0" ]]; then
+    TPI_TASK_STATUS='succeeded'
+  fi
+fi
+
+if [ -n "$STUDIO_URL" ]; then
+  STUDIO_STEP=$(date +%s)
+  STUDIO_PARAMS="{\"task\": {\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${TPI_TASK_STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"type\": \"\", \"gpu\": \"\", \"dateStart\": \"\", \"dateEnd\": \"\"}}"
+  STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"TPI_TASK:${TPI_TASK_IDENTIFIER}\", \"step\":${STUDIO_STEP}, \"params\": ${STUDIO_PARAMS}}"
+  curl -X POST $STUDIO_URL \
+  -H "Content-Type: application/json" \
+  -H "Authorization: token ${STUDIO_TOKEN}" \
+  -d "${STUDIO_PAYLOAD}"
+fi
+END
+chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-studio-log
 
 base64 --decode << END | sudo tee /opt/task/variables > /dev/null
 {{.Environment}}
 END
+chmod u=rw,g=,o= /opt/task/variables
+
 base64 --decode << END | sudo tee /opt/task/credentials > /dev/null
 {{.Credentials}}
 END
-chmod u=rw,g=,o= /opt/task/variables
 chmod u=rw,g=,o= /opt/task/credentials
 
 while IFS= read -rd $'\0' variable; do
@@ -33,7 +58,7 @@ TPI_MACHINE_IDENTITY="$(uuidgen)"
 TPI_LOG_DIRECTORY="$(mktemp --directory)"
 TPI_DATA_DIRECTORY="/opt/task/directory"
 
-TPI_START_COMMAND="/bin/bash -lc 'exec /usr/bin/tpi-task'"
+TPI_START_COMMAND="/usr/bin/tpi-task-studio-log running && /bin/bash -lc 'exec /usr/bin/tpi-task'"
 TPI_REMAINING_RUN_TIME=$(({{.Timeout}}-$(date +%s)))
 if (( TPI_REMAINING_RUN_TIME < 1 )); then
   TPI_START_COMMAND="/bin/bash -c 'sleep infinity'"
@@ -48,7 +73,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-$TPI_START_COMMAND
-  ExecStop=/bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStop=/usr/bin/tpi-task-studio-log "$EXIT_CODE" && /bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
   EnvironmentFile=/opt/task/variables
