@@ -2,7 +2,9 @@ name: build-ami
 on:
   push:
     branches: [main]
-    paths: [environment/**]
+    paths:
+      - environment/**
+      - .github/workflows/build-ami.yml
 jobs:
   build-ami:
     environment: aws
