@@ -5,12 +5,14 @@ on:
     paths: [environment/**]
 jobs:
   build-ami:
+    environment: aws
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-2
+          role-to-assume: arn:aws:iam::260760892802:role/cml-terraform-provider
       - run: |
           packer init environment
           packer build environment
-        env:
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
