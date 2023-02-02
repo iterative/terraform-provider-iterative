@@ -5,6 +5,9 @@ on:
     paths:
       - environment/**
       - .github/workflows/build-ami.yml
+permissions:
+  contents: read
+  id-token: write
 jobs:
   build-ami:
     environment: aws
