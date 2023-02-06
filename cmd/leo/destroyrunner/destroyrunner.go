@@ -46,9 +46,9 @@ func (o *Options) Run(cmd *cobra.Command, args []string, cloud *common.Cloud) er
 		return aws.ResourceMachineDelete(cmd.Context(), d, nil)
 	case common.ProviderGCP:
 		return gcp.ResourceMachineDelete(cmd.Context(), d, nil)
-	case common.ProviderAZ:
+	case common.ProviderAZ, "azure":
 		return azure.ResourceMachineDelete(cmd.Context(), d, nil)
-	case common.ProviderK8S:
+	case common.ProviderK8S, "kubernetes":
 		return kubernetes.ResourceMachineDelete(cmd.Context(), d, nil)
 	}
 
