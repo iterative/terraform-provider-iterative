@@ -19,17 +19,20 @@ sudo tee /usr/bin/tpi-task-studio-log << 'END'
 #!/bin/bash
 URL="${STUDIO_URL:-https://studio.iterative.ai/api/live}"
 STEP="${STUDIO_STEP:-`echo $(date +%s)`}"
-STATUS="${TPI_TASK_STATUS:-running}"
+STATUS=$1
 DATE_START="${TPI_TASK_DATE_START:-0}"
 DATE_END=0
 
 if [ -n "$STUDIO_TOKEN" ]; then
-  if systemctl is-system-running | grep stopping; then 
-    STATUS=queued; 
-    if [[ "${SERVICE_RESULT}" = "timeout" ]]; then
-      STATUS=timeout
-    else
-      test $EXIT_STATUS == 0 && STATUS=succeeded || STATUS=failed;
+  if [ -z "$STATUS" ]; then
+    if systemctl is-system-running | grep stopping; then 
+      STATUS=queued; 
+    else 
+      if test $SERVICE_RESULT == timeout; then 
+        STATUS=timeout; 
+      else
+        test $EXIT_STATUS == 0 && STATUS=succeeded || STATUS=failed; 
+      fi
     fi
   fi
 
@@ -37,7 +40,7 @@ if [ -n "$STUDIO_TOKEN" ]; then
     DATE_END=$(date +%s)
   fi
 
-  STUDIO_PARAMS="{\"task\": {\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"machine\": \"$TPI_TASK_MACHINE\", \"gpu\": \"$TPI_TASK_GPU\", \"dateStart\": ${DATE_START}, \"dateEnd\": ${DATE_END}}}"
+  STUDIO_PARAMS="{\"task\": {\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"machine\": \"${TPI_MACHINE}\", \"region\": \"${TPI_REGION}\", \"diskSize\": \"${TPI_DISK_SIZE}\", \"dateStart\": ${DATE_START}, \"dateEnd\": ${DATE_END}}}"
   STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"TPI_TASK:${TPI_TASK_IDENTIFIER}\", \"step\":${STEP}, \"params\": ${STUDIO_PARAMS}}"
   curl -X POST $URL \
     -H "Content-Type: application/json" \
@@ -80,7 +83,7 @@ sudo tee /etc/systemd/system/tpi-task.service > /dev/null <<END
 [Service]
   Type=simple
   ExecStart=-$TPI_START_COMMAND
-  ExecStop=/usr/bin/tpi-task-studio-log && /bin/bash -c 'source /opt/task/credentials; systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
+  ExecStop=/bin/bash -c 'source /opt/task/credentials; /usr/bin/tpi-task-studio-log && systemctl is-system-running | grep stopping || echo "{\\\\"result\\\\": \\\\"\$SERVICE_RESULT\\\\", \\\\"code\\\\": \\\\"\$EXIT_STATUS\\\\", \\\\"status\\\\": \\\\"\$EXIT_CODE\\\\"}" > "$TPI_LOG_DIRECTORY/status-$TPI_MACHINE_IDENTITY" && RCLONE_CONFIG= rclone copy "$TPI_LOG_DIRECTORY" "\$RCLONE_REMOTE/reports"'
   ExecStopPost=/usr/bin/tpi-task-shutdown
   Environment=HOME=/root
   EnvironmentFile=/opt/task/variables
@@ -133,7 +136,7 @@ if test -f /etc/apt/sources.list.d/cuda.list; then
   for list in cuda nvidia-ml; do mv /etc/apt/sources.list.d/$list.list{.backup,}; done
 fi
 
-/usr/bin/tpi-task-studio-log
+/usr/bin/tpi-task-studio-log running
 
 sudo systemctl daemon-reload
 sudo systemctl enable tpi-task.service --now
