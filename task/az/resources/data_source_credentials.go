@@ -3,21 +3,17 @@ package resources
 import (
 	"context"
 	"errors"
-	"fmt"
-
-	"github.com/Azure/go-autorest/autorest/to"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/common"
 )
 
-func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, storageAccount *StorageAccount, blobContainer *BlobContainer) *Credentials {
+func NewCredentials(client *client.Client, identifier common.Identifier, resourceGroup *ResourceGroup, blobContainer common.StorageCredentials) *Credentials {
 	c := &Credentials{
 		client:     client,
 		Identifier: identifier.Long(),
 	}
 	c.Dependencies.ResourceGroup = resourceGroup
-	c.Dependencies.StorageAccount = storageAccount
 	c.Dependencies.BlobContainer = blobContainer
 	return c
 }
@@ -28,34 +24,27 @@ type Credentials struct {
 	Dependencies struct {
 		ResourceGroup  *ResourceGroup
 		StorageAccount *StorageAccount
-		BlobContainer  *BlobContainer
+		BlobContainer  common.StorageCredentials
 	}
 	Resource map[string]string
 }
 
 func (c *Credentials) Read(ctx context.Context) error {
-	connectionString := fmt.Sprintf(
-		":azureblob,account='%s',key='%s':%s",
-		c.Dependencies.StorageAccount.Identifier,
-		to.String(c.Dependencies.StorageAccount.Attributes.Value),
-		c.Dependencies.BlobContainer.Identifier,
-	)
-
-	credentials, err := c.client.Settings.GetClientCredentials()
-	if err != nil {
-		return err
-	}
+	credentials := c.client.Cloud.Credentials.AZCredentials
 
 	if len(credentials.ClientSecret) == 0 {
 		return errors.New("unable to find client secret")
 	}
 
-	subscriptionID := c.client.Settings.GetSubscriptionID()
+	connectionString, err := c.Dependencies.BlobContainer.ConnectionString(ctx)
+	if err != nil {
+		return err
+	}
 
 	c.Resource = map[string]string{
 		"AZURE_CLIENT_ID":         credentials.ClientID,
 		"AZURE_CLIENT_SECRET":     credentials.ClientSecret,
-		"AZURE_SUBSCRIPTION_ID":   subscriptionID,
+		"AZURE_SUBSCRIPTION_ID":   credentials.SubscriptionID,
 		"AZURE_TENANT_ID":         credentials.TenantID,
 		"RCLONE_REMOTE":           connectionString,
 		"TPI_TASK_CLOUD_PROVIDER": string(c.client.Cloud.Provider),

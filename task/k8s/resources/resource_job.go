@@ -27,7 +27,7 @@ import (
 	"terraform-provider-iterative/task/k8s/client"
 )
 
-func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim *PersistentVolumeClaim, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {
+func NewJob(client *client.Client, identifier common.Identifier, persistentVolumeClaim VolumeInfoProvider, configMap *ConfigMap, permissionSet *PermissionSet, task common.Task) *Job {
 	j := &Job{
 		client:     client,
 		Identifier: identifier.Long(),
@@ -59,7 +59,7 @@ type Job struct {
 		Events       []common.Event
 	}
 	Dependencies struct {
-		PersistentVolumeClaim *PersistentVolumeClaim
+		PersistentVolumeClaim VolumeInfoProvider
 		ConfigMap             *ConfigMap
 		PermissionSet         *PermissionSet
 	}
@@ -181,16 +181,16 @@ func (j *Job) Create(ctx context.Context) error {
 	}
 
 	if j.Attributes.Task.Environment.Directory != "" {
+		volumeSubPath, volumeClaim := j.Dependencies.PersistentVolumeClaim.VolumeInfo(ctx)
 		jobVolumeMounts = append(jobVolumeMounts, kubernetes_core.VolumeMount{
 			Name:      j.Identifier + "-pvc",
 			MountPath: "/directory",
+			SubPath:   volumeSubPath,
 		})
 		jobVolumes = append(jobVolumes, kubernetes_core.Volume{
 			Name: j.Identifier + "-pvc",
 			VolumeSource: kubernetes_core.VolumeSource{
-				PersistentVolumeClaim: &kubernetes_core.PersistentVolumeClaimVolumeSource{
-					ClaimName: j.Dependencies.PersistentVolumeClaim.Identifier,
-				},
+				PersistentVolumeClaim: volumeClaim,
 			},
 		})
 	}
@@ -380,4 +380,9 @@ func (j *Job) Logs(ctx context.Context) ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// VolumeInfoProvider is implemented by persistent volume claims.
+type VolumeInfoProvider interface {
+	VolumeInfo(context.Context) (string /*subpath*/, *kubernetes_core.PersistentVolumeClaimVolumeSource)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/az/client"
 	"terraform-provider-iterative/task/az/resources"
@@ -40,23 +40,36 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Identifier,
 	)
-	t.Resources.StorageAccount = resources.NewStorageAccount(
-		t.Client,
-		t.Identifier,
-		t.Resources.ResourceGroup,
-	)
-	t.Resources.BlobContainer = resources.NewBlobContainer(
-		t.Client,
-		t.Identifier,
-		t.Resources.ResourceGroup,
-		t.Resources.StorageAccount,
-	)
+	var bucketCredentials common.StorageCredentials
+	if task.RemoteStorage != nil {
+		// If a subdirectory was not specified, the task id will
+		// be used.
+		if task.RemoteStorage.Path == "" {
+			task.RemoteStorage.Path = t.Identifier.Short()
+		}
+		bucket := resources.NewExistingBlobContainer(t.Client, *task.RemoteStorage)
+		t.DataSources.BlobContainer = bucket
+		bucketCredentials = bucket
+	} else {
+		t.Resources.StorageAccount = resources.NewStorageAccount(
+			t.Client,
+			t.Identifier,
+			t.Resources.ResourceGroup,
+		)
+		blobContainer := resources.NewBlobContainer(
+			t.Client,
+			t.Identifier,
+			t.Resources.ResourceGroup,
+			t.Resources.StorageAccount,
+		)
+		t.Resources.BlobContainer = blobContainer
+		bucketCredentials = blobContainer
+	}
 	t.DataSources.Credentials = resources.NewCredentials(
 		t.Client,
 		t.Identifier,
 		t.Resources.ResourceGroup,
-		t.Resources.StorageAccount,
-		t.Resources.BlobContainer,
+		bucketCredentials,
 	)
 	t.Resources.VirtualNetwork = resources.NewVirtualNetwork(
 		t.Client,
@@ -94,32 +107,43 @@ type Task struct {
 	Identifier  common.Identifier
 	Attributes  common.Task
 	DataSources struct {
-		*resources.Credentials
-		*resources.PermissionSet
+		Credentials   *resources.Credentials
+		PermissionSet *resources.PermissionSet
+		BlobContainer *resources.ExistingBlobContainer
 	}
 	Resources struct {
-		*resources.ResourceGroup
-		*resources.StorageAccount
-		*resources.BlobContainer
-		*resources.VirtualNetwork
-		*resources.Subnet
-		*resources.SecurityGroup
-		*resources.VirtualMachineScaleSet
+		ResourceGroup          *resources.ResourceGroup
+		StorageAccount         *resources.StorageAccount
+		BlobContainer          *resources.BlobContainer
+		VirtualNetwork         *resources.VirtualNetwork
+		Subnet                 *resources.Subnet
+		SecurityGroup          *resources.SecurityGroup
+		VirtualMachineScaleSet *resources.VirtualMachineScaleSet
 	}
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Creating ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Create,
-	}, {
-		Description: "Creating StorageAccount...",
-		Action:      t.Resources.StorageAccount.Create,
-	}, {
-		Description: "Creating BlobContainer...",
-		Action:      t.Resources.BlobContainer.Create,
-	}, {
+	}}
+	if t.Resources.BlobContainer != nil {
+		steps = append(steps, []common.Step{{
+			Description: "Creating StorageAccount...",
+			Action:      t.Resources.StorageAccount.Create,
+		}, {
+			Description: "Creating BlobContainer...",
+			Action:      t.Resources.BlobContainer.Create,
+		}}...)
+	} else if t.DataSources.BlobContainer != nil {
+		steps = append(steps, common.Step{
+			Description: "Reading BlobContainer...",
+			Action:      t.DataSources.BlobContainer.Read,
+		})
+	}
+
+	steps = append(steps, []common.Step{{
 		Description: "Creating Credentials...",
 		Action:      t.DataSources.Credentials.Read,
 	}, {
@@ -134,13 +158,11 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Creating VirtualMachineScaleSet...",
 		Action:      t.Resources.VirtualMachineScaleSet.Create,
-	}}
+	}}...)
 	if t.Attributes.Environment.Directory != "" {
 		steps = append(steps, common.Step{
 			Description: "Uploading Directory...",
-			Action: func(ctx context.Context) error {
-				return t.Push(ctx, t.Attributes.Environment.Directory)
-			},
+			Action:      t.Push,
 		})
 	}
 	steps = append(steps, common.Step{
@@ -150,7 +172,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -158,17 +180,27 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Read,
-	}, {
-		Description: "Reading StorageAccount...",
-		Action:      t.Resources.StorageAccount.Read,
-	}, {
-		Description: "Reading BlobContainer...",
-		Action:      t.Resources.BlobContainer.Read,
-	}, {
+	}}
+	if t.Resources.BlobContainer != nil {
+		steps = append(steps, []common.Step{{
+			Description: "Reading StorageAccount...",
+			Action:      t.Resources.StorageAccount.Read,
+		}, {
+			Description: "Reading BlobContainer...",
+			Action:      t.Resources.BlobContainer.Read,
+		}}...)
+	} else {
+		steps = append(steps, common.Step{
+			Description: "Reading BlobContainer...",
+			Action:      t.DataSources.BlobContainer.Read,
+		})
+	}
+
+	steps = append(steps, []common.Step{{
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
 	}, {
@@ -183,11 +215,11 @@ func (t *Task) Read(ctx context.Context) error {
 	}, {
 		Description: "Reading VirtualMachineScaleSet...",
 		Action:      t.Resources.VirtualMachineScaleSet.Read,
-	}}
+	}}...)
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Addresses = t.Resources.VirtualMachineScaleSet.Attributes.Addresses
 	t.Attributes.Status = t.Resources.VirtualMachineScaleSet.Attributes.Status
 	t.Attributes.Events = t.Resources.VirtualMachineScaleSet.Attributes.Events
@@ -195,7 +227,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 
 	if t.Read(ctx) == nil {
@@ -203,13 +235,16 @@ func (t *Task) Delete(ctx context.Context) error {
 			steps = []common.Step{{
 				Description: "Downloading Directory...",
 				Action: func(ctx context.Context) error {
-					err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
+					err := t.Pull(ctx)
 					if err != nil && err != common.NotFoundError {
 						return err
 					}
 					return nil
 				},
-			}, {
+			}}
+		}
+		if t.Resources.BlobContainer != nil {
+			steps = append(steps, common.Step{
 				Description: "Emptying Bucket...",
 				Action: func(ctx context.Context) error {
 					err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
@@ -218,7 +253,7 @@ func (t *Task) Delete(ctx context.Context) error {
 					}
 					return nil
 				},
-			}}
+			})
 		}
 	}
 	steps = append(steps, []common.Step{{
@@ -233,45 +268,49 @@ func (t *Task) Delete(ctx context.Context) error {
 	}, {
 		Description: "Deleting VirtualNetwork...",
 		Action:      t.Resources.VirtualNetwork.Delete,
-	}, {
-		Description: "Deleting BlobContainer...",
-		Action:      t.Resources.BlobContainer.Delete,
-	}, {
-		Description: "Deleting StorageAccount...",
-		Action:      t.Resources.StorageAccount.Delete,
-	}, {
+	}}...)
+
+	if t.Resources.BlobContainer != nil {
+		steps = append(steps, []common.Step{{
+			Description: "Deleting BlobContainer...",
+			Action:      t.Resources.BlobContainer.Delete,
+		}, {
+			Description: "Deleting StorageAccount...",
+			Action:      t.Resources.StorageAccount.Delete,
+		}}...)
+	}
+	steps = append(steps, common.Step{
 		Description: "Deleting ResourceGroup...",
 		Action:      t.Resources.ResourceGroup.Delete,
-	}}...)
+	})
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Logs(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
 }
 
-func (t *Task) Pull(ctx context.Context, destination, include string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", destination, include)
+// Pull downloads the output directory from remote storage.
+func (t *Task) Pull(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
-func (t *Task) Push(ctx context.Context, source string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, source, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", "**")
+// Push uploads the work directory to remote storage.
+func (t *Task) Push(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.Attributes.Environment.Directory,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.ExcludeList,
+	)
 }
 
 func (t *Task) Start(ctx context.Context) error {
@@ -295,9 +334,6 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
 	return machine.Status(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"], t.Attributes.Status)
 }
 

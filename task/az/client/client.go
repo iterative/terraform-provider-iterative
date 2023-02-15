@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources"
 	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
 
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"terraform-provider-iterative/task/common"
@@ -16,26 +17,44 @@ import (
 )
 
 func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Client, error) {
-	settings, err := auth.GetSettingsFromEnvironment()
-	if err != nil {
-		return nil, err
-	}
+	var authorizer autorest.Authorizer
 
-	subscription := settings.GetSubscriptionID()
-	if subscription == "" {
-		return nil, errors.New("subscription environment variable not found")
-	}
+	if azCredentials := cloud.Credentials.AZCredentials; azCredentials != nil {
+		au, err := auth.NewClientCredentialsConfig(
+			azCredentials.ClientID,
+			azCredentials.ClientSecret,
+			azCredentials.TenantID,
+		).Authorizer()
+		if err != nil {
+			return nil, err
+		}
+		authorizer = au
+	} else {
+		settings, err := auth.GetSettingsFromEnvironment()
+		if err != nil {
+			return nil, err
+		}
+		credentials, err := settings.GetClientCredentials()
+		if err != nil {
+			return nil, err
+		}
+		authorizer, err = settings.GetAuthorizer()
+		if err != nil {
+			return nil, err
+		}
 
-	authorizer, err := settings.GetAuthorizer()
-	if err != nil {
-		return nil, err
+		cloud.Credentials.AZCredentials = &common.AZCredentials{
+			SubscriptionID: settings.GetSubscriptionID(),
+			ClientID:       credentials.ClientID,
+			ClientSecret:   credentials.ClientSecret,
+			TenantID:       credentials.TenantID,
+		}
 	}
 
 	agent := "tpi"
 
 	c := &Client{
-		Cloud:    cloud,
-		Settings: settings,
+		Cloud: cloud,
 	}
 
 	for key, value := range tags {
@@ -54,75 +73,79 @@ func New(ctx context.Context, cloud common.Cloud, tags map[string]string) (*Clie
 		region = val
 	}
 
+	if cloud.Credentials.AZCredentials.SubscriptionID == "" {
+		return nil, errors.New("subscription environment variable not found")
+	}
+
 	c.Region = region
 
-	c.Services.Groups = resources.NewGroupsClient(subscription)
+	c.Services.Groups = resources.NewGroupsClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.Groups.Authorizer = authorizer
 	if err := c.Services.Groups.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.SecurityGroups = network.NewSecurityGroupsClient(subscription)
+	c.Services.SecurityGroups = network.NewSecurityGroupsClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.SecurityGroups.Authorizer = authorizer
 	if err := c.Services.SecurityGroups.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.PublicIPPrefixes = network.NewPublicIPPrefixesClient(subscription)
+	c.Services.PublicIPPrefixes = network.NewPublicIPPrefixesClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.PublicIPPrefixes.Authorizer = authorizer
 	if err := c.Services.PublicIPPrefixes.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.PublicIPAddresses = network.NewPublicIPAddressesClient(subscription)
+	c.Services.PublicIPAddresses = network.NewPublicIPAddressesClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.PublicIPAddresses.Authorizer = authorizer
 	if err := c.Services.PublicIPAddresses.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualNetworks = network.NewVirtualNetworksClient(subscription)
+	c.Services.VirtualNetworks = network.NewVirtualNetworksClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.VirtualNetworks.Authorizer = authorizer
 	if err := c.Services.VirtualNetworks.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.Subnets = network.NewSubnetsClient(subscription)
+	c.Services.Subnets = network.NewSubnetsClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.Subnets.Authorizer = authorizer
 	if err := c.Services.Subnets.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.Interfaces = network.NewInterfacesClient(subscription)
+	c.Services.Interfaces = network.NewInterfacesClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.Interfaces.Authorizer = authorizer
 	if err := c.Services.Interfaces.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachines = compute.NewVirtualMachinesClient(subscription)
+	c.Services.VirtualMachines = compute.NewVirtualMachinesClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.VirtualMachines.Authorizer = authorizer
 	if err := c.Services.VirtualMachines.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSets = compute.NewVirtualMachineScaleSetsClient(subscription)
+	c.Services.VirtualMachineScaleSets = compute.NewVirtualMachineScaleSetsClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.VirtualMachineScaleSets.Authorizer = authorizer
 	if err := c.Services.VirtualMachineScaleSets.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.VirtualMachineScaleSetVMs = compute.NewVirtualMachineScaleSetVMsClient(subscription)
+	c.Services.VirtualMachineScaleSetVMs = compute.NewVirtualMachineScaleSetVMsClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.VirtualMachineScaleSetVMs.Authorizer = authorizer
 	if err := c.Services.VirtualMachineScaleSetVMs.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.StorageAccounts = storage.NewAccountsClient(subscription)
+	c.Services.StorageAccounts = storage.NewAccountsClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.StorageAccounts.Authorizer = authorizer
 	if err := c.Services.StorageAccounts.AddToUserAgent(agent); err != nil {
 		return nil, err
 	}
 
-	c.Services.BlobContainers = storage.NewBlobContainersClient(subscription)
+	c.Services.BlobContainers = storage.NewBlobContainersClient(cloud.Credentials.AZCredentials.SubscriptionID)
 	c.Services.BlobContainers.Authorizer = authorizer
 	if err := c.Services.BlobContainers.AddToUserAgent(agent); err != nil {
 		return nil, err
@@ -153,10 +176,7 @@ type Client struct {
 }
 
 func (c *Client) GetKeyPair(ctx context.Context) (*ssh.DeterministicSSHKeyPair, error) {
-	credentials, err := c.Settings.GetClientCredentials()
-	if err != nil {
-		return nil, err
-	}
+	credentials := c.Cloud.Credentials.AZCredentials
 
 	if len(credentials.ClientSecret) == 0 {
 		return nil, errors.New("unable to find client secret")

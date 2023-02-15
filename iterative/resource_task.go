@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/rclone/rclone/lib/bucket"
+	"github.com/sirupsen/logrus"
 
 	"terraform-provider-iterative/iterative/utils"
 	"terraform-provider-iterative/task"
@@ -137,6 +138,29 @@ func resourceTask() *schema.Resource {
 							ForceNew: false,
 							Optional: true,
 							Default:  "",
+						},
+						"container": {
+							Type:     schema.TypeString,
+							ForceNew: true,
+							Optional: true,
+							Default:  "",
+						},
+						"container_opts": {
+							Type:     schema.TypeMap,
+							ForceNew: true,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"exclude": {
+							Type:     schema.TypeList,
+							ForceNew: false,
+							Optional: true,
+							Default:  nil,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -336,12 +360,41 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 		Tags: tags,
 	}
 
-	directory := ""
-	directory_out := ""
+	var directory string
+	var directoryOut string
+	var excludeList []string
+	var remoteStorage *common.RemoteStorage
 	if d.Get("storage").(*schema.Set).Len() > 0 {
 		storage := d.Get("storage").(*schema.Set).List()[0].(map[string]interface{})
 		directory = storage["workdir"].(string)
-		directory_out = storage["output"].(string)
+		directoryOut = storage["output"].(string)
+		if filepath.IsAbs(directoryOut) || strings.HasPrefix(directoryOut, "../") {
+			return nil, errors.New("storage.output must be inside storage.workdir")
+		}
+		excludes := storage["exclude"].([]interface{})
+		for _, exclude := range excludes {
+			excludeList = append(excludeList, exclude.(string))
+		}
+
+		// Propagate configuration for pre-allocated storage container.
+		containerRaw := storage["container"].(string)
+		if containerRaw != "" {
+			container, containerPath := bucket.Split(containerRaw)
+			remoteStorage = &common.RemoteStorage{
+				Container: container,
+				Path:      containerPath,
+				Config:    map[string]string{},
+			}
+			if storage["container_opts"] != nil {
+				remoteConfig := storage["container_opts"].(map[string]interface{})
+				var ok bool
+				for key, value := range remoteConfig {
+					if remoteStorage.Config[key], ok = value.(string); !ok {
+						return nil, fmt.Errorf("invalid value for remote config key %q: %v", key, value)
+					}
+				}
+			}
+		}
 	}
 
 	t := common.Task{
@@ -354,7 +407,8 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			Script:       d.Get("script").(string),
 			Variables:    v,
 			Directory:    directory,
-			DirectoryOut: directory_out,
+			DirectoryOut: directoryOut,
+			ExcludeList:  excludeList,
 			Timeout:      time.Duration(d.Get("timeout").(int)) * time.Second,
 		},
 		Firewall: common.Firewall{
@@ -363,6 +417,7 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 			},
 			// Egress is open on every port
 		},
+		RemoteStorage: remoteStorage,
 		Spot:          common.Spot(d.Get("spot").(float64)),
 		Parallelism:   uint16(d.Get("parallelism").(int)),
 		PermissionSet: d.Get("permission_set").(string),

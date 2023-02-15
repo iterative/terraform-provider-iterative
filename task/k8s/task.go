@@ -15,7 +15,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/machine"
@@ -34,34 +34,22 @@ func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) 
 }
 
 func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, task common.Task) (*Task, error) {
+	// This is a temporary measure, until we reimplement file syncing on k8s.
+	if len(task.Environment.ExcludeList) != 0 {
+		logrusctx.Warn(ctx, "File excludes are not supported on k8s.")
+	}
+
 	client, err := client.New(ctx, cloud, cloud.Tags)
 	if err != nil {
 		return nil, err
-	}
-
-	persistentVolumeClaimStorageClass := ""
-	persistentVolumeClaimSize := task.Size.Storage
-	persistentVolumeDirectory := task.Environment.Directory
-
-	match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
-	if match != nil {
-		persistentVolumeClaimStorageClass = match[1]
-		if match[2] != "" {
-			number, err := strconv.Atoi(match[2])
-			if err != nil {
-				return nil, err
-			}
-			persistentVolumeClaimSize = int(number)
-		}
-		persistentVolumeDirectory = match[3]
 	}
 
 	t := new(Task)
 	t.Client = client
 	t.Identifier = identifier
 	t.Attributes.Task = task
-	t.Attributes.Directory = persistentVolumeDirectory
-	t.Attributes.DirectoryOut = persistentVolumeDirectory
+	t.Attributes.Directory = task.Environment.Directory
+	t.Attributes.DirectoryOut = task.Environment.Directory
 	if task.Environment.DirectoryOut != "" {
 		t.Attributes.DirectoryOut = task.Environment.DirectoryOut
 	}
@@ -75,17 +63,43 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Identifier,
 		map[string]string{"script": t.Attributes.Task.Environment.Script},
 	)
-	t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
-		t.Client,
-		t.Identifier,
-		persistentVolumeClaimStorageClass,
-		persistentVolumeClaimSize,
-		t.Attributes.Task.Parallelism > 1,
-	)
+	var pvc resources.VolumeInfoProvider
+	if task.RemoteStorage != nil {
+		t.DataSources.ExistingPersistentVolumeClaim = resources.NewExistingPersistentVolumeClaim(
+			t.Client, *task.RemoteStorage)
+		pvc = t.DataSources.ExistingPersistentVolumeClaim
+	} else {
+		var persistentVolumeDirectory string
+		var persistentVolumeClaimStorageClass string
+		persistentVolumeClaimSize := task.Size.Storage
+
+		match := regexp.MustCompile(`^([^:]+):(?:(\d+):)?(.+)$`).FindStringSubmatch(task.Environment.Directory)
+		if match != nil {
+			persistentVolumeClaimStorageClass = match[1]
+			if match[2] != "" {
+				number, err := strconv.Atoi(match[2])
+				if err != nil {
+					return nil, err
+				}
+				persistentVolumeClaimSize = int(number)
+			}
+			persistentVolumeDirectory = match[3]
+			t.Attributes.Directory = persistentVolumeDirectory
+		}
+
+		t.Resources.PersistentVolumeClaim = resources.NewPersistentVolumeClaim(
+			t.Client,
+			t.Identifier,
+			persistentVolumeClaimStorageClass,
+			persistentVolumeClaimSize,
+			t.Attributes.Task.Parallelism > 1,
+		)
+		pvc = t.Resources.PersistentVolumeClaim
+	}
 	t.Resources.Job = resources.NewJob(
 		t.Client,
 		t.Identifier,
-		t.Resources.PersistentVolumeClaim,
+		pvc,
 		t.Resources.ConfigMap,
 		t.DataSources.PermissionSet,
 		t.Attributes.Task,
@@ -102,27 +116,31 @@ type Task struct {
 		DirectoryOut string
 	}
 	DataSources struct {
-		*resources.PermissionSet
+		PermissionSet                 *resources.PermissionSet
+		ExistingPersistentVolumeClaim *resources.ExistingPersistentVolumeClaim
 	}
 	Resources struct {
-		*resources.ConfigMap
-		*resources.PersistentVolumeClaim
-		*resources.Job
+		ConfigMap             *resources.ConfigMap
+		PersistentVolumeClaim *resources.PersistentVolumeClaim
+		Job                   *resources.Job
 	}
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Parsing PermissionSet...",
 		Action:      t.DataSources.PermissionSet.Read,
 	}, {
 		Description: "Creating ConfigMap...",
 		Action:      t.Resources.ConfigMap.Create,
-	}, {
-		Description: "Creating PersistentVolumeClaim...",
-		Action:      t.Resources.PersistentVolumeClaim.Create,
 	}}
+	if t.Resources.PersistentVolumeClaim != nil {
+		steps = append(steps, common.Step{
+			Description: "Creating PersistentVolumeClaim...",
+			Action:      t.Resources.PersistentVolumeClaim.Create,
+		})
+	}
 
 	if t.Attributes.Directory != "" {
 		env := map[string]string{
@@ -136,9 +154,7 @@ func (t *Task) Create(ctx context.Context) error {
 			Action:      withEnv(env, t.Resources.Job.Create),
 		}, {
 			Description: "Uploading Directory...",
-			Action: withEnv(env, func(ctx context.Context) error {
-				return t.Push(ctx, t.Attributes.Directory)
-			}),
+			Action:      withEnv(env, t.Push),
 		}, {
 			Description: "Deleting ephemeral Job to upload directory...",
 			Action:      withEnv(env, t.Resources.Job.Delete),
@@ -152,7 +168,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -160,13 +176,20 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading ConfigMap...",
 		Action:      t.Resources.ConfigMap.Read,
 	}, {
 		Description: "Reading PersistentVolumeClaim...",
-		Action:      t.Resources.PersistentVolumeClaim.Read,
+		Action: func(ctx context.Context) error {
+			if t.Resources.PersistentVolumeClaim != nil {
+				return t.Resources.PersistentVolumeClaim.Read(ctx)
+			} else if t.DataSources.ExistingPersistentVolumeClaim != nil {
+				return t.DataSources.ExistingPersistentVolumeClaim.Read(ctx)
+			}
+			return fmt.Errorf("misconfigured storage")
+		},
 	}, {
 		Description: "Reading Job...",
 		Action:      t.Resources.Job.Read,
@@ -174,7 +197,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Task.Addresses = t.Resources.Job.Attributes.Addresses
 	t.Attributes.Task.Status = t.Resources.Job.Attributes.Status
 	t.Attributes.Task.Events = t.Resources.Job.Attributes.Events
@@ -182,7 +205,7 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 	if t.Attributes.DirectoryOut != "" && t.Read(ctx) == nil {
 		env := map[string]string{
@@ -198,9 +221,7 @@ func (t *Task) Delete(ctx context.Context) error {
 			Action:      withEnv(env, t.Resources.Job.Create),
 		}, {
 			Description: "Downloading Directory...",
-			Action: withEnv(env, func(ctx context.Context) error {
-				return t.Pull(ctx, t.Attributes.Directory, t.Attributes.DirectoryOut)
-			}),
+			Action:      withEnv(env, t.Pull),
 		}, {
 			// WTH?
 			Description: "Deleting ephemeral Job to retrieve directory...",
@@ -212,20 +233,25 @@ func (t *Task) Delete(ctx context.Context) error {
 		Description: "Deleting Job...",
 		Action:      t.Resources.Job.Delete,
 	}, {
-		Description: "Deleting PersistentVolumeClaim...",
-		Action:      t.Resources.PersistentVolumeClaim.Delete,
-	}, {
 		Description: "Deleting ConfigMap...",
 		Action:      t.Resources.ConfigMap.Delete,
 	}}...)
+	if t.Resources.PersistentVolumeClaim != nil {
+		steps = append(steps, common.Step{
+			Description: "Deleting PersistentVolumeClaim...",
+			Action:      t.Resources.PersistentVolumeClaim.Delete,
+		})
+	}
+
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 
-func (t *Task) Push(ctx context.Context, source string) error {
+// Push uploads the work directory to the persistent volume claim.
+func (t *Task) Push(ctx context.Context) error {
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Create, t.Client.Namespace, waitSelector)
 	if err != nil {
@@ -237,10 +263,12 @@ func (t *Task) Push(ctx context.Context, source string) error {
 	copyOptions.Clientset = t.Client.ClientSet
 	copyOptions.ClientConfig = t.Client.ClientConfig
 
-	return copyOptions.Run([]string{source, fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
+	return copyOptions.Run([]string{t.Attributes.Directory,
+		fmt.Sprintf("%s/%s:%s", t.Client.Namespace, pod, "/directory/directory")})
 }
 
-func (t *Task) Pull(ctx context.Context, destination, include string) error {
+// Pull downloads the output directory from the persistent volume claim.
+func (t *Task) Pull(ctx context.Context) error {
 	waitSelector := fmt.Sprintf("controller-uid=%s", t.Resources.Job.Resource.Spec.Selector.MatchLabels["controller-uid"])
 	pod, err := resources.WaitForPods(ctx, t.Client, 1*time.Second, t.Client.Cloud.Timeouts.Delete, t.Client.Namespace, waitSelector)
 	if err != nil {
@@ -263,7 +291,12 @@ func (t *Task) Pull(ctx context.Context, destination, include string) error {
 		return err
 	}
 
-	return machine.Transfer(ctx, dir, destination, include)
+	return machine.Transfer(ctx,
+		dir,
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {

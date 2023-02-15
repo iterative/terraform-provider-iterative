@@ -29,6 +29,10 @@ type Image struct {
 }
 
 func (i *Image) Read(ctx context.Context) error {
+	// default image to ubuntu in not present
+	if i.Identifier == "" {
+		i.Identifier = "ubuntu"
+	}
 	image := i.Identifier
 	images := map[string]string{
 		"ubuntu": "ubuntu@ubuntu-os-cloud/ubuntu-2004-lts",

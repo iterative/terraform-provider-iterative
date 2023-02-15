@@ -2,9 +2,10 @@ package gcp
 
 import (
 	"context"
+	"errors"
 	"net"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/common"
 	"terraform-provider-iterative/task/common/machine"
@@ -36,14 +37,35 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Attributes.PermissionSet,
 	)
-	t.Resources.Bucket = resources.NewBucket(
-		t.Client,
-		t.Identifier,
-	)
+	var bucketCredentials common.StorageCredentials
+	if task.RemoteStorage != nil {
+		if len(t.Client.Credentials.JSON) == 0 {
+			return nil, errors.New("unable to find credentials JSON string")
+		}
+		credentials := string(t.Client.Credentials.JSON)
+		// If a subdirectory was not specified, the task id will
+		// be used.
+		if task.RemoteStorage.Path == "" {
+			task.RemoteStorage.Path = t.Identifier.Short()
+		}
+
+		bucket := resources.NewExistingBucket(
+			credentials,
+			*task.RemoteStorage)
+		t.DataSources.Bucket = bucket
+		bucketCredentials = bucket
+	} else {
+		bucket := resources.NewBucket(
+			t.Client,
+			t.Identifier,
+		)
+		t.Resources.Bucket = bucket
+		bucketCredentials = bucket
+	}
 	t.DataSources.Credentials = resources.NewCredentials(
 		t.Client,
 		t.Identifier,
-		t.Resources.Bucket,
+		bucketCredentials,
 	)
 	t.DataSources.DefaultNetwork = resources.NewDefaultNetwork(
 		t.Client,
@@ -137,26 +159,27 @@ type Task struct {
 	Identifier  common.Identifier
 	Attributes  common.Task
 	DataSources struct {
-		*resources.DefaultNetwork
-		*resources.Credentials
-		*resources.Image
-		*resources.PermissionSet
+		DefaultNetwork *resources.DefaultNetwork
+		Credentials    *resources.Credentials
+		Image          *resources.Image
+		PermissionSet  *resources.PermissionSet
+		Bucket         *resources.ExistingBucket
 	}
 	Resources struct {
-		*resources.Bucket
+		Bucket                  *resources.Bucket
 		FirewallInternalIngress *resources.FirewallRule
 		FirewallInternalEgress  *resources.FirewallRule
 		FirewallExternalIngress *resources.FirewallRule
 		FirewallExternalEgress  *resources.FirewallRule
 		FirewallDenyIngress     *resources.FirewallRule
 		FirewallDenyEgress      *resources.FirewallRule
-		*resources.InstanceTemplate
-		*resources.InstanceGroupManager
+		InstanceTemplate        *resources.InstanceTemplate
+		InstanceGroupManager    *resources.InstanceGroupManager
 	}
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Parsing PermissionSet...",
 		Action:      t.DataSources.PermissionSet.Read,
@@ -166,10 +189,19 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Reading Image...",
 		Action:      t.DataSources.Image.Read,
-	}, {
-		Description: "Creating Bucket...",
-		Action:      t.Resources.Bucket.Create,
-	}, {
+	}}
+	if t.Resources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Creating Bucket...",
+			Action:      t.Resources.Bucket.Create,
+		})
+	} else if t.DataSources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Verifying bucket...",
+			Action:      t.DataSources.Bucket.Read,
+		})
+	}
+	steps = append(steps, []common.Step{{
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
 	}, {
@@ -196,14 +228,13 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Creating InstanceGroupManager...",
 		Action:      t.Resources.InstanceGroupManager.Create,
-	}}
+	}}...)
 
 	if t.Attributes.Environment.Directory != "" {
 		steps = append(steps, common.Step{
 			Description: "Uploading Directory...",
-			Action: func(ctx context.Context) error {
-				return t.Push(ctx, t.Attributes.Environment.Directory)
-			}})
+			Action:      t.Push,
+		})
 	}
 	steps = append(steps, common.Step{
 		Description: "Starting task...",
@@ -212,7 +243,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -220,7 +251,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading DefaultNetwork...",
 		Action:      t.DataSources.DefaultNetwork.Read,
@@ -229,7 +260,14 @@ func (t *Task) Read(ctx context.Context) error {
 		Action:      t.DataSources.Image.Read,
 	}, {
 		Description: "Reading Bucket...",
-		Action:      t.Resources.Bucket.Read,
+		Action: func(ctx context.Context) error {
+			if t.Resources.Bucket != nil {
+				return t.Resources.Bucket.Read(ctx)
+			} else if t.DataSources.Bucket != nil {
+				return t.DataSources.Bucket.Read(ctx)
+			}
+			return errors.New("storage misconfigured")
+		},
 	}, {
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
@@ -261,7 +299,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Addresses = t.Resources.InstanceGroupManager.Attributes.Addresses
 	t.Attributes.Status = t.Resources.InstanceGroupManager.Attributes.Status
 	t.Attributes.Events = t.Resources.InstanceGroupManager.Attributes.Events
@@ -269,14 +307,14 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			steps = []common.Step{{
 				Description: "Downloading Directory...",
 				Action: func(ctx context.Context) error {
-					err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
+					err := t.Pull(ctx)
 					if err != nil && err != common.NotFoundError {
 						return err
 					}
@@ -318,39 +356,41 @@ func (t *Task) Delete(ctx context.Context) error {
 	}, {
 		Description: "Deleting FirewallDenyIngress...",
 		Action:      t.Resources.FirewallDenyIngress.Delete,
-	}, {
-		Description: "Deleting Bucket...",
-		Action:      t.Resources.Bucket.Delete,
 	}}...)
+	if t.Resources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Deleting Bucket...",
+			Action:      t.Resources.Bucket.Delete,
+		})
+	}
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Logs(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
 }
 
-func (t *Task) Pull(ctx context.Context, destination, include string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", destination, include)
+// Pull downloads the output directory from remote storage.
+func (t *Task) Pull(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
-func (t *Task) Push(ctx context.Context, source string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, source, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", "**")
+// Push uploads the work directory to remote storage.
+func (t *Task) Push(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.Attributes.Environment.Directory,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.ExcludeList,
+	)
 }
 
 func (t *Task) Start(ctx context.Context) error {
@@ -374,10 +414,6 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Status(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"], t.Attributes.Status)
 }
 

@@ -31,7 +31,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	networkName := "iterative"
-	instanceName := d.Get("name").(string)
+	instanceName := d.Id()
 	instanceZone := getRegion(d.Get("region").(string))
 	instanceHddSize := int64(d.Get("instance_hdd_size").(int))
 	instancePublicSshKey := fmt.Sprintf("%s:%s %s\n", "ubuntu", strings.TrimSpace(d.Get("ssh_public").(string)), "ubuntu")
@@ -281,7 +281,7 @@ func ResourceMachineDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	instanceZone := getRegion(d.Get("region").(string))
-	instanceName := d.Get("name").(string)
+	instanceName := d.Id()
 
 	service.Instances.Delete(project, instanceZone, instanceName).Do()
 	service.Firewalls.Delete(project, instanceName+"-ingress").Do()
@@ -439,6 +439,15 @@ func getRegion(region string) string {
 
 func getInstanceType(instanceType string, instanceGPU string) (map[string]map[string]string, error) {
 	instanceTypes := make(map[string]map[string]map[string]string)
+	instanceTypes["s"] = map[string]map[string]string{
+		"accelerator": {
+			"count": "0",
+			"type":  "",
+		},
+		"machine": {
+			"type": "g1-small",
+		},
+	}
 	instanceTypes["m"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "0",
@@ -464,6 +473,15 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		},
 		"machine": {
 			"type": "n2-custom-64-262144",
+		},
+	}
+	instanceTypes["m+t4"] = map[string]map[string]string{
+		"accelerator": {
+			"count": "1",
+			"type":  "nvidia-tesla-t4",
+		},
+		"machine": {
+			"type": "n1-standard-4",
 		},
 	}
 	instanceTypes["m+k80"] = map[string]map[string]string{

@@ -46,7 +46,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	availabilityZone := GetAvailabilityZone(d.Get("region").(string))
 
 	metadata := map[string]string{
-		"Name": d.Get("name").(string),
+		"Name": d.Id(),
 		"Id":   d.Id(),
 	}
 	for key, value := range d.Get("metadata").(map[string]interface{}) {
@@ -486,17 +486,19 @@ func GetAvailabilityZone(region string) string {
 }
 
 func getInstanceType(instanceType string, instanceGPU string) string {
-	instanceTypes := make(map[string]string)
-	instanceTypes["m"] = "m5.2xlarge"
-	instanceTypes["l"] = "m5.8xlarge"
-	instanceTypes["xl"] = "m5.16xlarge"
-	instanceTypes["m+k80"] = "p2.xlarge"
-	instanceTypes["l+k80"] = "p2.8xlarge"
-	instanceTypes["xl+k80"] = "p2.16xlarge"
-	instanceTypes["m+v100"] = "p3.xlarge"
-	instanceTypes["l+v100"] = "p3.8xlarge"
-	instanceTypes["xl+v100"] = "p3.16xlarge"
-
+	instanceTypes := map[string]string{
+		"s":       "t2.micro",
+		"m":       "m5.2xlarge",
+		"l":       "m5.8xlarge",
+		"xl":      "m5.16xlarge",
+		"m+t4":    "g4dn.xlarge",
+		"m+k80":   "p2.xlarge",
+		"l+k80":   "p2.8xlarge",
+		"xl+k80":  "p2.16xlarge",
+		"m+v100":  "p3.xlarge",
+		"l+v100":  "p3.8xlarge",
+		"xl+v100": "p3.16xlarge",
+	}
 	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
 		return val
 	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {

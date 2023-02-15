@@ -51,7 +51,7 @@ func TestIdentifier(t *testing.T) {
 
 	t.Run("randomness", func(t *testing.T) {
 		name := "test"
-		
+
 		first := NewRandomIdentifier(name)
 		second := NewRandomIdentifier(name)
 
@@ -60,5 +60,16 @@ func TestIdentifier(t *testing.T) {
 
 		require.Contains(t, first.Long(), name)
 		require.Contains(t, second.Long(), name)
+	})
+
+	t.Run("prefix", func(t *testing.T) {
+		identifier := NewDeterministicIdentifierWithPrefix("ipsum", "test")
+
+		require.Equal(t, "ips-test-3z4xlzwq-3u0vweb4", identifier.Long())
+		require.Equal(t, "3z4xlzwq3u0vweb4", identifier.Short())
+
+		parsed, err := ParseIdentifier(identifier.Long())
+		require.Equal(t, parsed.Long(), identifier.Long())
+		require.NoError(t, err)
 	})
 }

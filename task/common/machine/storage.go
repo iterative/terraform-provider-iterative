@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -24,9 +27,18 @@ import (
 	"github.com/rclone/rclone/fs/sync"
 
 	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/common"
 )
+
+// defaultTransferExcludes lists files that TPI will not transfer
+// to remote storage.
+var defaultTransferExcludes = []string{
+	"- /main.tf",
+	"- /terraform.tfstate*",
+	"- /.terraform**",
+}
 
 type StatusReport struct {
 	Result string
@@ -49,7 +61,7 @@ func Reports(ctx context.Context, remote, prefix string) ([]string, error) {
 		return nil, err
 	}
 
-	entries, err := remoteFileSystem.List(ctx, "/reports")
+	entries, err := remoteFileSystem.List(ctx, "reports")
 	if err != nil {
 		return nil, err
 	}
@@ -108,20 +120,19 @@ func Status(ctx context.Context, remote string, initialStatus common.Status) (co
 	return initialStatus, nil
 }
 
-func Transfer(ctx context.Context, source, destination string, include string) error {
-	if include = filepath.Clean(include); filepath.IsAbs(include) || strings.HasPrefix(include, "../") {
-		return errors.New("storage.output must be inside storage.workdir")
-	}
-
-	rules := []string{
-		"+ " + filepath.Clean("/"+include),
-		"+ " + filepath.Clean("/"+include+"/**"),
-		"- **",
-	}
-
+func Transfer(ctx context.Context, source, destination string, exclude []string) error {
 	ctx, fi := filter.AddConfig(ctx)
-	for _, rule := range rules {
-		if err := fi.AddRule(rule); err != nil {
+
+	rules := append([]string{}, defaultTransferExcludes...)
+	if len(exclude) > 0 {
+		rules = append(rules, exclude...)
+	}
+	for _, filterRule := range rules {
+		if !isRcloneFilter(filterRule) {
+			filterRule = filepath.Join("/", filterRule)
+			filterRule = "- " + filterRule
+		}
+		if err := fi.AddRule(filterRule); err != nil {
 			return err
 		}
 	}
@@ -137,7 +148,7 @@ func Transfer(ctx context.Context, source, destination string, include string) e
 	}
 
 	if count, size, err := operations.Count(ctx, sourceFileSystem); err == nil {
-		logrus.Infof("Transferring %s (%d files)...", units.HumanSize(float64(size)), count)
+		logrusctx.Infof(ctx, "Transferring %s (%d files)...", units.HumanSize(float64(size)), count)
 	} else {
 		return err
 	}
@@ -197,4 +208,77 @@ func progress(interval time.Duration) func() {
 	return func() {
 		done <- true
 	}
+}
+
+// CheckStorage checks access to the storage by attempting to read it.
+func CheckStorage(ctx context.Context, remoteConn RcloneConnection) error {
+	remote, err := fs.NewFs(ctx, remoteConn.String())
+	if err != nil {
+		return err
+	}
+
+	_, err = remote.List(ctx, "")
+	if err != nil && err != fs.ErrorDirNotFound {
+		return fmt.Errorf("failed to access remote storage: %w", err)
+	}
+	return nil
+}
+
+type RcloneBackend string
+
+const (
+	RcloneBackendAzureBlob          = "azureblob"
+	RcloneBackendS3                 = "s3"
+	RcloneBackendGoogleCloudStorage = "googlecloudstorage"
+)
+
+// RcloneConnection is used to construct an rclone connection string.
+type RcloneConnection struct {
+	Backend   RcloneBackend
+	Config    map[string]string
+	Container string
+	Path      string
+}
+
+// String returns a generate rclone connection string.
+func (r RcloneConnection) String() string {
+	var opts []string
+	for key, val := range r.Config {
+		opts = append(opts, fmt.Sprintf("%s='%s'", key, val))
+	}
+	var connOpts string
+	if len(opts) > 0 {
+		// Sort the config elements to make the result stable in tests.
+		sort.Strings(opts)
+		connOpts = "," + strings.Join(opts, ",")
+	}
+	var pth string
+	if r.Path != "" {
+		pth = path.Clean(r.Path)
+		if pth[0] != '/' {
+			pth = "/" + pth
+		}
+	}
+	return fmt.Sprintf(":%s%s:%s%s", r.Backend, connOpts, r.Container, pth)
+}
+
+// LimitTransfer updates the list of exclusion rules so that only a single subdirectory
+// is transfered.
+func LimitTransfer(subdir string, rules []string) []string {
+	dir := filepath.Clean(subdir)
+	if dir == "." || dir == "" {
+		// No changes needed.
+		return rules
+	}
+
+	newRules := append(rules, []string{
+		"+ " + filepath.Join("/", dir),
+		"+ " + filepath.Join("/", dir, "/**"),
+		"- /**",
+	}...)
+	return newRules
+}
+
+func isRcloneFilter(rule string) bool {
+	return strings.HasPrefix(rule, "+ ") || strings.HasPrefix(rule, "- ")
 }

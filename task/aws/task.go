@@ -2,9 +2,10 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"net"
 
-	"github.com/sirupsen/logrus"
+	"github.com/0x2b3bfa0/logrusctx"
 
 	"terraform-provider-iterative/task/aws/client"
 	"terraform-provider-iterative/task/aws/resources"
@@ -12,6 +13,8 @@ import (
 	"terraform-provider-iterative/task/common/machine"
 	"terraform-provider-iterative/task/common/ssh"
 )
+
+const s3_region = "region"
 
 func List(ctx context.Context, cloud common.Cloud) ([]common.Identifier, error) {
 	client, err := client.New(ctx, cloud, nil)
@@ -47,14 +50,34 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 		t.Client,
 		t.Attributes.PermissionSet,
 	)
-	t.Resources.Bucket = resources.NewBucket(
-		t.Client,
-		t.Identifier,
-	)
+	var bucketCredentials common.StorageCredentials
+	if task.RemoteStorage != nil {
+		// If a subdirectory was not specified, the task id will
+		// be used.
+		if task.RemoteStorage.Path == "" {
+			task.RemoteStorage.Path = t.Identifier.Short()
+		}
+		// Container config may override the s3 region.
+		if region, ok := task.RemoteStorage.Config[s3_region]; !ok || region == "" {
+			task.RemoteStorage.Config[s3_region] = t.Client.Region
+		}
+		bucket := resources.NewExistingS3Bucket(
+			t.Client.Credentials(),
+			*task.RemoteStorage)
+		t.DataSources.Bucket = bucket
+		bucketCredentials = bucket
+	} else {
+		bucket := resources.NewBucket(
+			t.Client,
+			t.Identifier,
+		)
+		t.Resources.Bucket = bucket
+		bucketCredentials = bucket
+	}
 	t.DataSources.Credentials = resources.NewCredentials(
 		t.Client,
 		t.Identifier,
-		t.Resources.Bucket,
+		bucketCredentials,
 	)
 	t.Resources.SecurityGroup = resources.NewSecurityGroup(
 		t.Client,
@@ -87,28 +110,30 @@ func New(ctx context.Context, cloud common.Cloud, identifier common.Identifier, 
 	return t, nil
 }
 
+// Task represents a task running in aws with all its dependent resources.
 type Task struct {
 	Client      *client.Client
 	Identifier  common.Identifier
 	Attributes  common.Task
 	DataSources struct {
-		*resources.DefaultVPC
-		*resources.DefaultVPCSubnets
-		*resources.Image
-		*resources.Credentials
-		*resources.PermissionSet
+		DefaultVPC        *resources.DefaultVPC
+		DefaultVPCSubnets *resources.DefaultVPCSubnets
+		Image             *resources.Image
+		Credentials       *resources.Credentials
+		PermissionSet     *resources.PermissionSet
+		Bucket            *resources.ExistingS3Bucket
 	}
 	Resources struct {
-		*resources.Bucket
-		*resources.SecurityGroup
-		*resources.KeyPair
-		*resources.LaunchTemplate
-		*resources.AutoScalingGroup
+		Bucket           *resources.Bucket
+		SecurityGroup    *resources.SecurityGroup
+		KeyPair          *resources.KeyPair
+		LaunchTemplate   *resources.LaunchTemplate
+		AutoScalingGroup *resources.AutoScalingGroup
 	}
 }
 
 func (t *Task) Create(ctx context.Context) error {
-	logrus.Info("Creating resources...")
+	logrusctx.Info(ctx, "Creating resources...")
 	steps := []common.Step{{
 		Description: "Parsing PermissionSet...",
 		Action:      t.DataSources.PermissionSet.Read,
@@ -121,10 +146,19 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Reading Image...",
 		Action:      t.DataSources.Image.Read,
-	}, {
-		Description: "Creating Bucket...",
-		Action:      t.Resources.Bucket.Create,
-	}, {
+	}}
+	if t.Resources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Creating Bucket...",
+			Action:      t.Resources.Bucket.Create,
+		})
+	} else if t.DataSources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Verifying bucket...",
+			Action:      t.DataSources.Bucket.Read,
+		})
+	}
+	steps = append(steps, []common.Step{{
 		Description: "Creating SecurityGroup...",
 		Action:      t.Resources.SecurityGroup.Create,
 	}, {
@@ -139,14 +173,12 @@ func (t *Task) Create(ctx context.Context) error {
 	}, {
 		Description: "Creating AutoScalingGroup...",
 		Action:      t.Resources.AutoScalingGroup.Create,
-	}}
+	}}...)
 
 	if t.Attributes.Environment.Directory != "" {
 		steps = append(steps, common.Step{
 			Description: "Uploading Directory...",
-			Action: func(ctx context.Context) error {
-				return t.Push(ctx, t.Attributes.Environment.Directory)
-			},
+			Action:      t.Push,
 		})
 	}
 	steps = append(steps, common.Step{
@@ -156,7 +188,7 @@ func (t *Task) Create(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Creation completed")
+	logrusctx.Info(ctx, "Creation completed")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -164,7 +196,7 @@ func (t *Task) Create(ctx context.Context) error {
 }
 
 func (t *Task) Read(ctx context.Context) error {
-	logrus.Info("Reading resources... (this may happen several times)")
+	logrusctx.Info(ctx, "Reading resources... (this may happen several times)")
 	steps := []common.Step{{
 		Description: "Reading DefaultVPC...",
 		Action:      t.DataSources.DefaultVPC.Read,
@@ -176,7 +208,14 @@ func (t *Task) Read(ctx context.Context) error {
 		Action:      t.DataSources.Image.Read,
 	}, {
 		Description: "Reading Bucket...",
-		Action:      t.Resources.Bucket.Read,
+		Action: func(ctx context.Context) error {
+			if t.Resources.Bucket != nil {
+				return t.Resources.Bucket.Read(ctx)
+			} else if t.DataSources.Bucket != nil {
+				return t.DataSources.Bucket.Read(ctx)
+			}
+			return errors.New("storage misconfigured")
+		},
 	}, {
 		Description: "Reading SecurityGroup...",
 		Action:      t.Resources.SecurityGroup.Read,
@@ -196,7 +235,7 @@ func (t *Task) Read(ctx context.Context) error {
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Read completed")
+	logrusctx.Info(ctx, "Read completed")
 	t.Attributes.Addresses = t.Resources.AutoScalingGroup.Attributes.Addresses
 	t.Attributes.Status = t.Resources.AutoScalingGroup.Attributes.Status
 	t.Attributes.Events = t.Resources.AutoScalingGroup.Attributes.Events
@@ -204,29 +243,31 @@ func (t *Task) Read(ctx context.Context) error {
 }
 
 func (t *Task) Delete(ctx context.Context) error {
-	logrus.Info("Deleting resources...")
+	logrusctx.Info(ctx, "Deleting resources...")
 	steps := []common.Step{}
 	if t.Read(ctx) == nil {
 		if t.Attributes.Environment.DirectoryOut != "" {
 			steps = []common.Step{{
 				Description: "Downloading Directory...",
 				Action: func(ctx context.Context) error {
-					err := t.Pull(ctx, t.Attributes.Environment.Directory, t.Attributes.Environment.DirectoryOut)
+					err := t.Pull(ctx)
 					if err != nil && err != common.NotFoundError {
 						return err
 					}
 					return nil
 				}}}
 		}
-		steps = append(steps, common.Step{
-			Description: "Emptying Bucket...",
-			Action: func(ctx context.Context) error {
-				err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
-				if err != nil && err != common.NotFoundError {
-					return err
-				}
-				return nil
-			}})
+		if t.Resources.Bucket != nil {
+			steps = append(steps, common.Step{
+				Description: "Emptying Bucket...",
+				Action: func(ctx context.Context) error {
+					err := machine.Delete(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
+					if err != nil && err != common.NotFoundError {
+						return err
+					}
+					return nil
+				}})
+		}
 	}
 	steps = append(steps, []common.Step{{
 		Description: "Deleting AutoScalingGroup...",
@@ -243,39 +284,41 @@ func (t *Task) Delete(ctx context.Context) error {
 	}, {
 		Description: "Reading Credentials...",
 		Action:      t.DataSources.Credentials.Read,
-	}, {
-		Description: "Deleting Bucket...",
-		Action:      t.Resources.Bucket.Delete,
 	}}...)
+	if t.Resources.Bucket != nil {
+		steps = append(steps, common.Step{
+			Description: "Deleting Bucket...",
+			Action:      t.Resources.Bucket.Delete,
+		})
+	}
 	if err := common.RunSteps(ctx, steps); err != nil {
 		return err
 	}
-	logrus.Info("Deletion completed")
+	logrusctx.Info(ctx, "Deletion completed")
 	return nil
 }
 
 func (t *Task) Logs(ctx context.Context) ([]string, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Logs(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"])
 }
 
-func (t *Task) Pull(ctx context.Context, destination, include string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", destination, include)
+// Pull downloads the output directory from remote storage.
+func (t *Task) Pull(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.Directory,
+		machine.LimitTransfer(
+			t.Attributes.Environment.DirectoryOut,
+			t.Attributes.Environment.ExcludeList))
 }
 
-func (t *Task) Push(ctx context.Context, source string) error {
-	if err := t.Read(ctx); err != nil {
-		return err
-	}
-
-	return machine.Transfer(ctx, source, t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data", "**")
+// Push uploads the work directory to remote storage.
+func (t *Task) Push(ctx context.Context) error {
+	return machine.Transfer(ctx,
+		t.Attributes.Environment.Directory,
+		t.DataSources.Credentials.Resource["RCLONE_REMOTE"]+"/data",
+		t.Attributes.Environment.ExcludeList,
+	)
 }
 
 func (t *Task) Start(ctx context.Context) error {
@@ -299,10 +342,6 @@ func (t *Task) Events(ctx context.Context) []common.Event {
 }
 
 func (t *Task) Status(ctx context.Context) (common.Status, error) {
-	if err := t.Read(ctx); err != nil {
-		return nil, err
-	}
-
 	return machine.Status(ctx, t.DataSources.Credentials.Resource["RCLONE_REMOTE"], t.Attributes.Status)
 }
 

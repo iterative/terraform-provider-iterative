@@ -1,0 +1,19 @@
+# test.yml ignores docs/* and **.md changes, but since the
+# `lint` and `test` statuses are required, those PRs will block.
+name: Dummy tests for unblocking PRs
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '**.md'
+jobs:
+  lint:
+    if: false # Skipped jobs still result in 'success'.
+    runs-on: ubuntu-latest
+    steps:
+      - run: false # unreachable
+  test:
+    if: false # Skipped jobs still result in 'success'.
+    runs-on: ubuntu-latest
+    steps:
+      - run: false # unreachable

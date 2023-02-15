@@ -19,10 +19,8 @@ variables {
 }
 
 variables {
-  aws_role_session_name = "cml-packer-session"
-  aws_role_arn          = "arn:aws:iam::260760892802:role/cml-packer"
   aws_subnet_id         = "subnet-09fca08419c2f0575"
-  aws_security_group_id = "sg-0b7df7d9f902ca7ec"
+  aws_security_group_id = "sg-03ff7b083bdc991e5"
 }
 
 locals {
@@ -68,10 +66,6 @@ data "amazon-ami" "ubuntu" {
     virtualization-type = "hvm"
   }
 
-  assume_role {
-    role_arn     = var.aws_role_arn
-    session_name = var.aws_role_session_name
-  }
 }
 
 source "amazon-ebs" "source" {
@@ -96,10 +90,6 @@ source "amazon-ebs" "source" {
   run_tags        = local.aws_tags
   run_volume_tags = local.aws_tags
 
-  assume_role {
-    role_arn     = var.aws_role_arn
-    session_name = var.aws_role_session_name
-  }
 }
 
 build {

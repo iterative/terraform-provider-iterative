@@ -90,7 +90,7 @@ func TestTaskSmoke(t *testing.T) {
 		testName = "smoke test"
 	}
 
-	script := `#!/bin/sh -e
+	script := `#!/bin/bash -e
 		test -v TEST_GPU && nvidia-smi
 		mkdir --parents cache output
 		touch cache/file
