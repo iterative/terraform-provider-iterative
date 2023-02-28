@@ -13,6 +13,7 @@ require (
 	github.com/aohorodnyk/uid v1.1.0
 	github.com/aws/aws-sdk-go-v2 v1.11.0
 	github.com/aws/aws-sdk-go-v2/config v1.8.3
+	github.com/aws/aws-sdk-go-v2/credentials v1.4.3
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.14.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.18.0
@@ -74,7 +75,6 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.102 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.0.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.4.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.6.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.0.0 // indirect
@@ -166,7 +166,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.11.0 // indirect
+	github.com/prometheus/client_golang v1.11.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
