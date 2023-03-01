@@ -420,8 +420,8 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 				"model": match[3],
 				"type":  "nvidia.com/gpu",
 			},
-			"cores":  kubernetes_resource.MustParse(match[1]),
-			"memory": kubernetes_resource.MustParse(match[2] + "M"),
+			"cores":  match[1],
+			"memory": match[2] + "M",
 		}, nil
 	}
 
