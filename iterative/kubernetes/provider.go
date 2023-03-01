@@ -421,8 +421,12 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 				"model": match[3],
 				"type":  "nvidia.com/gpu",
 			},
-			"cores":  match[1],
-			"memory": match[2] + "M",
+			"cores":  {
+				"count": match[1],
+			},
+			"memory": {
+				"amount": match[2] + "M",
+			},
 		}, nil
 	}
 
