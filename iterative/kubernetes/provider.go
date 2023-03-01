@@ -391,9 +391,13 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		"memory": {"amount": "512Gi"},
 	}
 
-	if val, ok := instanceTypes[instanceType+"+"+instanceGPU]; ok {
-		return val, nil
-	} else if val, ok := instanceTypes[instanceType]; ok && instanceGPU == "" {
+	size := instanceType
+	
+	if instanceGPU != "" {
+		size += "+"+instanceGPU
+	}
+	
+	if val, ok := instanceTypes[size]; ok {
 		return val, nil
 	} else if val, ok := instanceTypes[instanceType]; ok {
 		// Allow users to specify custom accelerator selectors.
@@ -405,6 +409,19 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 			},
 			"cores":  val["cores"],
 			"memory": val["memory"],
+		}, nil
+	}
+
+	
+	if match := regexp.MustCompile(`^(\d+)-(\d+)(?:\+([^*]+)\*([1-9]\d*))?$`).FindStringSubmatch(size); match != nil {
+		return map[string]map[string]string{
+			"accelerator": {
+				"count": match[4],
+				"model": match[3],
+				"type":  "nvidia.com/gpu",
+			},
+			"cores":  kubernetes_resource.MustParse(match[1]),
+			"memory": kubernetes_resource.MustParse(match[2] + "M"),
 		}, nil
 	}
 
