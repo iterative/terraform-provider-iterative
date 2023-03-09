@@ -348,6 +348,11 @@ func resourceTaskBuild(ctx context.Context, d *schema.ResourceData, m interface{
 	v["CML_*"] = nil
 	v["REPO_TOKEN"] = nil
 
+	region := d.Get("region").(string)
+	machine := d.Get("machine").(string)
+	v["TPI_REGION"] = &region
+	v["TPI_MACHINE"] = &machine
+
 	c := common.Cloud{
 		Provider: common.Provider(d.Get("cloud").(string)),
 		Region:   common.Region(d.Get("region").(string)),
