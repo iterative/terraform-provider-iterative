@@ -115,7 +115,7 @@ while sleep 5; do
   fi
 done &
 
-while sleep 10; do
+while ! test -v TPI_DISABLE_DATA_DIRECTORY_SYNCHRONIZATION && sleep 10; do
   NEW_TPI_DATA_DIRECTORY_EPOCH="$(find "$TPI_DATA_DIRECTORY" -printf "%T@\n" | sort | tail -1)"
   if test "$NEW_TPI_DATA_DIRECTORY_EPOCH" != "$TPI_DATA_DIRECTORY_EPOCH"; then
     TPI_DATA_DIRECTORY_EPOCH="$NEW_TPI_DATA_DIRECTORY_EPOCH"
