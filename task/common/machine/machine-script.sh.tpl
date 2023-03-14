@@ -17,7 +17,7 @@ chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
 sudo tee /usr/bin/tpi-task-studio-log << 'END'
 #!/bin/bash
-URL="${STUDIO_URL:-https://studio.iterative.ai/api/live}"
+URL="${STUDIO_ENDPOINT:-https://studio.iterative.ai/api/live}"
 STEP="${STUDIO_STEP:-`echo $(date +%s)`}"
 STATUS=$1
 DATE_START="${TPI_TASK_DATE_START:-0}"
