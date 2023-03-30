@@ -310,6 +310,15 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	// TODO: consider the use of an enumeration instead of a nested string map.
 	instanceTypes := make(map[string]map[string]map[string]string)
 	// Resource amounts mirror their AWS counterparts.
+	instanceTypes["s"] = map[string]map[string]string{
+		"accelerator": {
+			"count": "0",
+			"type":  "",
+			"model": "",
+		},
+		"cores":  {"count": "1"},
+		"memory": {"amount": "1Gi"},
+	}
 	instanceTypes["m"] = map[string]map[string]string{
 		"accelerator": {
 			"count": "0",
@@ -393,11 +402,11 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 	}
 
 	size := instanceType
-	
+
 	if instanceGPU != "" {
-		size += "+"+instanceGPU
+		size += "+" + instanceGPU
 	}
-	
+
 	if val, ok := instanceTypes[size]; ok {
 		return val, nil
 	} else if val, ok := instanceTypes[instanceType]; ok {
@@ -413,7 +422,6 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 		}, nil
 	}
 
-	
 	if match := regexp.MustCompile(`^(\d+)-(\d+)(?:\+([^*]+)\*([1-9]\d*))?$`).FindStringSubmatch(size); match != nil {
 		return map[string]map[string]string{
 			"accelerator": {
@@ -421,7 +429,7 @@ func getInstanceType(instanceType string, instanceGPU string) (map[string]map[st
 				"model": match[3],
 				"type":  "nvidia.com/gpu",
 			},
-			"cores":  {
+			"cores": {
 				"count": match[1],
 			},
 			"memory": {
