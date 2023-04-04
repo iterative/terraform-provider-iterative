@@ -21,19 +21,19 @@ install: install-tpi
 tpi:
 	CGO_ENABLED=0 \
     	go build -ldflags="$(GO_LINK_FLAGS)" \
-    	-o $(shell pwd)/terraform-provider-iterative \
-    	$(TPI_PATH)
+    	-o "$(shell pwd)/terraform-provider-iterative" \
+    	"$(TPI_PATH)"
 
 .PHONY: leo
 leo:
 	CGO_ENABLED=0 \
     	go build -ldflags="$(GO_LINK_FLAGS)" \
-    	-o $(shell pwd)/leo \
-    	$(LEO_PATH)
+    	-o "$(shell pwd)/leo" \
+    	"$(LEO_PATH)"
 
 .PHONY: install-tpi
 install-tpi:
-	GOBIN=${TF_PLUGIN_INSTALL_PATH} go install -ldflags="$(GO_LINK_FLAGS)" $(TPI_PATH)
+	GOBIN=${TF_PLUGIN_INSTALL_PATH} go install -ldflags="$(GO_LINK_FLAGS)" "$(TPI_PATH)"
 
 .PHONY: test
 test:
