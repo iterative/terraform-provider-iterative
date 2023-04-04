@@ -175,6 +175,18 @@ func resourceRunner() *schema.Resource {
 				Optional: true,
 				Default:  "",
 			},
+			"kubernetes_node_selector_key": &schema.Schema{
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "accelerator",
+			},
+			"kubernetes_node_selector_value": &schema.Schema{
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Default:  "inferred",
+			},
 			"metadata": &schema.Schema{
 				Type:     schema.TypeMap,
 				ForceNew: true,
