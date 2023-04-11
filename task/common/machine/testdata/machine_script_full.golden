@@ -41,7 +41,7 @@ if [ -n "$STUDIO_TOKEN" ]; then
   fi
 
   STUDIO_PARAMS="{\"task\": {\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"machine\": \"${TPI_MACHINE}\", \"region\": \"${TPI_REGION}\", \"diskSize\": \"${TPI_DISK_SIZE}\", \"dateStart\": ${DATE_START}, \"dateEnd\": ${DATE_END}}}"
-  STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"TPI_TASK:${TPI_TASK_IDENTIFIER}\", \"step\":${STEP}, \"params\": ${STUDIO_PARAMS}}"
+  STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"${TPI_TASK_IDENTIFIER}\", \"step\":${STEP}, \"params\": ${STUDIO_PARAMS}}"
   curl -X POST $URL \
     -H "Content-Type: application/json" \
     -H "Authorization: token ${STUDIO_TOKEN}" \
