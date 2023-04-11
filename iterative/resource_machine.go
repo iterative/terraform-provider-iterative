@@ -134,17 +134,18 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
-		"kubernetes_node_selector_key": &schema.Schema{
-			Type:     schema.TypeString,
+		"kubernetes_node_selector": &schema.Schema{
+			Type:     schema.TypeMap,
 			ForceNew: true,
 			Optional: true,
-			Default:  "accelerator",
-		},
-		"kubernetes_node_selector_value": &schema.Schema{
-			Type:     schema.TypeString,
-			ForceNew: true,
-			Optional: true,
-			Default:  "inferred",
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			DefaultFunc: func() (any, error) {
+				return map[string]string{
+					"accelerator": "infer",
+				}, nil
+			},
 		},
 		"metadata": &schema.Schema{
 			Type:     schema.TypeMap,

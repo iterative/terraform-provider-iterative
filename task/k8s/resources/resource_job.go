@@ -99,11 +99,6 @@ func (j *Job) Create(ctx context.Context) error {
 		return common.NotFoundError
 	}
 
-	jobNodeSelector := map[string]string{}
-	for selector, value := range j.Attributes.NodeSelector {
-		jobNodeSelector[selector] = value
-	}
-
 	// Define the accelerator settings (i.e. GPU type, model, ...)
 	jobAccelerator := match[3]
 	jobGPUType := "nvidia.com/gpu"
@@ -117,11 +112,16 @@ func (j *Job) Create(ctx context.Context) error {
 		jobLimits[kubernetes_core.ResourceEphemeralStorage] = kubernetes_resource.MustParse(strconv.Itoa(diskAmount) + "G")
 	}
 
-	// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
-	if jobGPUCount > "0" {
-		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
-		if jobAccelerator != "" {
-			jobNodeSelector["accelerator"] = jobAccelerator
+	jobNodeSelector := map[string]string{}
+	for selector, value := range j.Attributes.NodeSelector {
+		if value != "infer" {
+			jobNodeSelector[selector] = value
+		} else if jobGPUCount > "0" {
+			// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
+			jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
+			if jobAccelerator != "" {
+				jobNodeSelector[selector] = jobAccelerator
+			}
 		}
 	}
 

@@ -51,7 +51,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	}
 
 	// Define the accelerator settings (i.e. GPU type, model, ...)
-	jobNodeSelector := map[string]string{}
 	jobAccelerator := instanceType["accelerator"]["model"]
 	jobGPUType := instanceType["accelerator"]["type"]
 	jobGPUCount := instanceType["accelerator"]["count"]
@@ -62,6 +61,20 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	jobLimits[kubernetes_core.ResourceName("cpu")] = kubernetes_resource.MustParse(instanceType["cores"]["count"])
 	if diskAmount := d.Get("instance_hdd_size").(int); diskAmount > 0 {
 		jobLimits[kubernetes_core.ResourceName("ephemeral-storage")] = kubernetes_resource.MustParse(strconv.Itoa(diskAmount) + "G")
+	}
+
+	// Define the node selector
+	jobNodeSelector := map[string]string{}
+	for selector, value := range d.Get("kubernetes_node_selector").(map[string]interface{}) {
+		if value.(string) != "infer" {
+			jobNodeSelector[selector] = value.(string)
+		} else if jobGPUCount > "0" {
+			// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
+			jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
+			if jobAccelerator != "" {
+				jobNodeSelector[selector] = jobAccelerator
+			}
+		}
 	}
 
 	// Use the default CML Docker image unless specified otherwise.
@@ -75,21 +88,6 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	jobStartupScript, err := base64.StdEncoding.DecodeString(d.Get("startup_script").(string))
 	if err != nil {
 		return err
-	}
-
-	// Get the node selector key and value
-	nodeSelectorKey := d.Get("kubernetes_node_selector_key").(string)
-	nodeSelectorValue := d.Get("kubernetes_node_selector_value").(string)
-
-	if nodeSelectorValue != "inferred" {
-		// Set the custom node selector by the user
-		jobNodeSelector = map[string]string{nodeSelectorKey: nodeSelectorValue}
-	} else if jobGPUCount > "0" {
-		// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
-		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
-		if jobAccelerator != "" {
-			jobNodeSelector = map[string]string{nodeSelectorKey: jobAccelerator}
-		}
 	}
 
 	// Lookup service account if set.
