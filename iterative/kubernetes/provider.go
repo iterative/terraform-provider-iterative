@@ -62,18 +62,17 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 	if diskAmount := d.Get("instance_hdd_size").(int); diskAmount > 0 {
 		jobLimits[kubernetes_core.ResourceName("ephemeral-storage")] = kubernetes_resource.MustParse(strconv.Itoa(diskAmount) + "G")
 	}
+	if jobGPUCount > "0" && jobGPUType != "" {
+		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
+	}
 
 	// Define the node selector
 	jobNodeSelector := map[string]string{}
 	for selector, value := range d.Get("kubernetes_node_selector").(map[string]interface{}) {
 		if value.(string) != "infer" {
 			jobNodeSelector[selector] = value.(string)
-		} else if jobGPUCount > "0" {
-			// If the resource requires GPU provisioning, determine how many GPUs and the kind of GPU it needs.
-			jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
-			if jobAccelerator != "" {
-				jobNodeSelector[selector] = jobAccelerator
-			}
+		} else if jobGPUCount > "0" && jobAccelerator != "" {
+			jobNodeSelector[selector] = jobAccelerator
 		}
 	}
 
