@@ -182,11 +182,6 @@ func resourceRunner() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				DefaultFunc: func() (any, error) {
-					return map[string]string{
-						"accelerator": "infer",
-					}, nil
-				},
 			},
 			"metadata": &schema.Schema{
 				Type:     schema.TypeMap,

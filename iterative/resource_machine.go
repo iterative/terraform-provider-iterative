@@ -141,11 +141,6 @@ func machineSchema() *map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
-			DefaultFunc: func() (any, error) {
-				return map[string]string{
-					"accelerator": "infer",
-				}, nil
-			},
 		},
 		"metadata": &schema.Schema{
 			Type:     schema.TypeMap,
