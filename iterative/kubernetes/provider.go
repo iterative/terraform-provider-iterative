@@ -66,9 +66,17 @@ func ResourceMachineCreate(ctx context.Context, d *terraform_schema.ResourceData
 		jobLimits[kubernetes_core.ResourceName(jobGPUType)] = kubernetes_resource.MustParse(jobGPUCount)
 	}
 
+	// Get the node selector defined by the user
+	kubernetesNodeSelector := d.Get("kubernetes_node_selector").(map[string]interface{})
+
+	// Set the default key value if none is defined
+	if len(kubernetesNodeSelector) == 0 {
+		kubernetesNodeSelector["accelerator"] = "infer"
+	}
+
 	// Define the node selector
 	jobNodeSelector := map[string]string{}
-	for selector, value := range d.Get("kubernetes_node_selector").(map[string]interface{}) {
+	for selector, value := range kubernetesNodeSelector {
 		if value.(string) != "infer" {
 			jobNodeSelector[selector] = value.(string)
 		} else if jobGPUCount > "0" && jobAccelerator != "" {
