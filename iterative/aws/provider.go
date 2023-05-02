@@ -124,8 +124,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if len(securityGroup) == 0 {
 		securityGroup = "iterative"
 
-		vpcsDesc, _ := svc.DescribeVpcs(ctx, &ec2.DescribeVpcsInput{})
-
+		vpcsDesc, err := svc.DescribeVpcs(ctx, &ec2.DescribeVpcsInput{})
+		if err != nil {
+			return err
+		}
+		
 		if len(vpcsDesc.Vpcs) == 0 {
 			return errors.New("no VPCs found")
 		}

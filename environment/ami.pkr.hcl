@@ -19,8 +19,8 @@ variables {
 }
 
 variables {
-  aws_subnet_id         = "subnet-09fca08419c2f0575"
-  aws_security_group_id = "sg-03ff7b083bdc991e5"
+  aws_subnet_id         = "subnet-01c5f8c843b5c7759"
+  aws_security_group_id = "sg-0da3ac1cdc286dd4e"
 }
 
 locals {
