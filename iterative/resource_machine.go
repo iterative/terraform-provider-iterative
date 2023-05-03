@@ -134,6 +134,14 @@ func machineSchema() *map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
+		"kubernetes_node_selector": &schema.Schema{
+			Type:     schema.TypeMap,
+			ForceNew: true,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
 		"metadata": &schema.Schema{
 			Type:     schema.TypeMap,
 			ForceNew: true,
