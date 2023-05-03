@@ -17,7 +17,7 @@ chmod u=rwx,g=rx,o=rx /usr/bin/tpi-task-shutdown
 
 sudo tee /usr/bin/tpi-task-studio-log << 'END'
 #!/bin/bash
-URL="${STUDIO_ENDPOINT:-https://studio.iterative.ai/api/live}"
+URL="${DVC_STUDIO_URL:-https://studio.iterative.ai}"
 STEP="${STUDIO_STEP:-`echo $(date +%s)`}"
 STATUS=$1
 DATE_START="${TPI_TASK_DATE_START:-0}"
@@ -40,11 +40,11 @@ if [ -n "$STUDIO_TOKEN" ]; then
     DATE_END=$(date +%s)
   fi
 
-  STUDIO_PARAMS="{\"task\": {\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"machine\": \"${TPI_MACHINE}\", \"region\": \"${TPI_REGION}\", \"diskSize\": \"${TPI_DISK_SIZE}\", \"dateStart\": ${DATE_START}, \"dateEnd\": ${DATE_END}}}"
-  STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"${TPI_TASK_IDENTIFIER}\", \"step\":${STEP}, \"params\": ${STUDIO_PARAMS}}"
-  curl -X POST $URL \
+  STUDIO_PARAMS="{\"id\": \"${TPI_TASK_IDENTIFIER}\", \"status\": \"${STATUS}\", \"cloud\": \"${TPI_TASK_CLOUD_PROVIDER}\", \"instance_type\": \"${TPI_MACHINE}\", \"region\": \"${TPI_REGION}\", \"diskSize\": \"${TPI_DISK_SIZE}\"}"
+  STUDIO_PAYLOAD="{\"type\": \"data\", \"client\": \"dvclive\", \"repo_url\": \"${STUDIO_REPO_URL}\", \"baseline_sha\": \"${STUDIO_BASELINE_SHA}\", \"name\": \"${TPI_TASK_IDENTIFIER}\", \"step\":${STEP}, \"machine\": ${STUDIO_PARAMS}}"
+  curl -X POST "$URL/api/live" \
     -H "Content-Type: application/json" \
-    -H "Authorization: token ${STUDIO_TOKEN}" \
+    -H "Authorization: token ${DVC_STUDIO_TOKEN}" \
     -d "${STUDIO_PAYLOAD}"
 fi
 END
