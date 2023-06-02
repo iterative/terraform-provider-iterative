@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/0x2b3bfa0/logrusctx"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -90,7 +91,12 @@ func (k *KeyPair) Read(ctx context.Context) error {
 			return common.NotFoundError
 		}
 	}
-
+	if pairs == nil {
+		// Unexpected, but it looks like DescribeKeyPairs may return no error and a nil
+		// result.
+		logrusctx.Error(ctx, "EC2 DescribeKeyPairs returned nil result.")
+		return nil
+	}
 	k.Resource = &pairs.KeyPairs[0]
 	return nil
 }
