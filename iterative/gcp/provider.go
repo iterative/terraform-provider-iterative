@@ -86,11 +86,6 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return err
 	}
 
-	instanceHostMaintenanceBehavior := "MIGRATE"
-	if instanceIsPreemptible {
-		instanceHostMaintenanceBehavior = "TERMINATE"
-	}
-
 	instanceAccelerators := []*gcp_compute.AcceleratorConfig{}
 	if instanceType["accelerator"]["count"] != "0" {
 		acceleratorType, err := service.AcceleratorTypes.Get(project, instanceZone, instanceType["accelerator"]["type"]).Do()
@@ -112,6 +107,11 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	instanceHostMaintenanceBehavior := "MIGRATE"
+	if instanceIsPreemptible || len(instanceAccelerators) > 0 {
+		instanceHostMaintenanceBehavior = "TERMINATE"
+	}
+	
 	network, err := service.Networks.Get(project, networkName).Do()
 	if err != nil {
 		networkDefinition := &gcp_compute.Network{
