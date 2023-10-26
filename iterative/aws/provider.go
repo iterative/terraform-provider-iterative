@@ -128,7 +128,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 		if err != nil {
 			return err
 		}
-		
+
 		if len(vpcsDesc.Vpcs) == 0 {
 			return errors.New("no VPCs found")
 		}
@@ -288,7 +288,7 @@ func ResourceMachineCreate(ctx context.Context, d *schema.ResourceData, m interf
 				DeleteOnTermination: aws.Bool(true),
 				Encrypted:           aws.Bool(false),
 				VolumeSize:          aws.Int32(int32(hddSize)),
-				VolumeType:          types.VolumeType("gp2"),
+				VolumeType:          types.VolumeType("gp3"),
 			},
 		},
 	}

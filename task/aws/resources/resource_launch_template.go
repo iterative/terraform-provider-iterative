@@ -91,7 +91,7 @@ func (l *LaunchTemplate) Create(ctx context.Context) error {
 					Ebs: &types.LaunchTemplateEbsBlockDeviceRequest{
 						DeleteOnTermination: aws.Bool(true),
 						Encrypted:           aws.Bool(false),
-						VolumeType:          types.VolumeType("gp2"),
+						VolumeType:          types.VolumeType("gp3"),
 					},
 				},
 			},
