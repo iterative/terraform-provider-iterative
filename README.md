@@ -35,7 +35,7 @@ Supported cloud vendors [include][auth]:
 
 ## Why TPI?
 
-There are a several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
+There are several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
 
 1. **Reduced management overhead and infrastructure cost**:
    TPI is a CLI tool, not a running service. It requires no additional orchestrating machine (control plane/head nodes) to schedule/recover/terminate instances. Instead, TPI runs (spot) instances via cloud-native scaling groups[^scalers], taking care of recovery and termination automatically on the cloud provider's side. This design reduces management overhead & infrastructure costs. You can close your laptop while cloud tasks are running -- auto-recovery happens even if you are offline.
