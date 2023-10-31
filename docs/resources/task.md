@@ -325,7 +325,7 @@ resource "iterative_task" "example" {
 ```
 
 The container name may include a path component, in this case the specified subdirectory will be used
-to store task execution results. Otherwise, a subdirectory will be created with a name matchin the
+to store task execution results. Otherwise, a subdirectory will be created with a name matching the
 task's randomly generated id.
 
 If the container name is suffixed with a forward slash, (`container-name/`), the root of the container
