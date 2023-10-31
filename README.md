@@ -35,7 +35,7 @@ Supported cloud vendors [include][auth]:
 
 ## Why TPI?
 
-There are a several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
+There are several reasons to use TPI instead of other related solutions (custom scripts and/or cloud orchestrators):
 
 1. **Reduced management overhead and infrastructure cost**:
    TPI is a CLI tool, not a running service. It requires no additional orchestrating machine (control plane/head nodes) to schedule/recover/terminate instances. Instead, TPI runs (spot) instances via cloud-native scaling groups[^scalers], taking care of recovery and termination automatically on the cloud provider's side. This design reduces management overhead & infrastructure costs. You can close your laptop while cloud tasks are running -- auto-recovery happens even if you are offline.
@@ -182,7 +182,7 @@ style C fill:#7B61FF,stroke:#333333,color:#000000
 
 ## Future Plans
 
-TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimisations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org). Plus of course more examples for Data Scientists and Machine Learning Engineers - from Jupyter, VSCode, and Codespaces to improving the live logging/monitoring/reporting experience.
+TPI is a CLI tool bringing the power of bare-metal cloud to a bare-metal local laptop. We're working on more featureful and visual interfaces. We'd also like to have more native support for distributed (multi-instance) training, more data sync optimizations & options, and tighter ecosystem integration with tools such as [DVC](https://dvc.org). Plus of course more examples for Data Scientists and Machine Learning Engineers - from Jupyter, VSCode, and Codespaces to improving the live logging/monitoring/reporting experience.
 
 ## Help
 
