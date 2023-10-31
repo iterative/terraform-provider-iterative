@@ -105,7 +105,7 @@ With spot/preemptible instances (`spot >= 0`), auto-recovery logic and persisten
 
 -> **Note:** A large `workdir` may take a long time to upload.
 
-~> **Warning:** To take full advantage of spot instance recovery, a `script` should start by cheching the disk for results (recovered from a previous interrupted run).
+~> **Warning:** To take full advantage of spot instance recovery, a `script` should start by checking the disk for results (recovered from a previous interrupted run).
 
 -> **Note:** The [`id`](https://registry.terraform.io/providers/iterative/iterative/latest/docs/resources/task#id) returned by `terraform apply` (i.e. `[id=tpi-···]`) can be used to locate the created cloud resources through the cloud's web console or command–line tool.
 
