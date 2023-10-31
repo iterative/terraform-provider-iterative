@@ -53,6 +53,7 @@ sudo tee /usr/bin/cml.sh << 'EOF'
 #!/bin/sh
 export GOOGLE_APPLICATION_CREDENTIALS_DATA=''
 export CML_GCP_ACCESS_TOKEN=''
+export _CML_RUNNER_SENSITIVE_ENV=GOOGLE_APPLICATION_CREDENTIALS_DATA:CML_GCP_ACCESS_TOKEN
 
 while lsof /var/lib/dpkg/lock; do sleep 1; done
 

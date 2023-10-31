@@ -4,6 +4,7 @@ sudo systemctl is-enabled cml.service && return 0
 sudo curl --location https://github.com/iterative/terraform-provider-iterative/releases/latest/download/leo_linux_amd64 --output /usr/bin/leo
 sudo chmod a+x /usr/bin/leo
 export KUBERNETES_CONFIGURATION='8 value with "quotes" and spaces'
+export _CML_RUNNER_SENSITIVE_ENV=KUBERNETES_CONFIGURATION
 
 while lsof /var/lib/dpkg/lock; do sleep 1; done
 
